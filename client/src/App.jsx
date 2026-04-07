@@ -153,9 +153,10 @@ export default function App() {
                     return;
                 }
                 addToast('Sai tên đăng nhập hoặc mật khẩu', 'error');
-                return;
+                throw new Error('Sai tên đăng nhập hoặc mật khẩu');
             }
             addToast(err.message || 'Đăng nhập thất bại', 'error');
+            throw err;
         }
     };
 
