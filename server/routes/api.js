@@ -2,7 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const MemberController = require('../controllers/memberController');
-const { authenticate, optionalAuth, requireAdmin, login, logout, getMe, getUsers, createUser, deleteUser, changePassword, resetPassword, forgotPassword } = require('../middleware/auth');
+const { authenticate, optionalAuth, requireAdmin, login, logout, getMe, getUsers, createUser, deleteUser, changePassword, resetPassword, forgotPassword, updateProfile } = require('../middleware/auth');
 const UpdateRequestModel = require('../models/UpdateRequest');
 
 // ─── Auth (public) ───
@@ -13,6 +13,7 @@ router.post('/auth/forgot-password', forgotPassword);
 router.post('/auth/logout', authenticate, logout);
 router.get('/auth/me', authenticate, getMe);
 router.post('/auth/change-password', authenticate, changePassword);
+router.put('/auth/profile', authenticate, updateProfile);
 
 // ─── User Management (admin only) ───
 router.get('/users', authenticate, requireAdmin, getUsers);

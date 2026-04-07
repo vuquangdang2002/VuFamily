@@ -122,6 +122,26 @@ async function getMe(req, res) {
     });
 }
 
+async function updateProfile(req, res) {
+    try {
+        const { displayName } = req.body;
+        if (!displayName) return res.status(400).json({ success: false, error: 'Tên hiển thị không được để trống' });
+        
+        const { data, error } = await supabase
+            .from('users')
+            .update({ display_name: displayName, updated_at: new Date().toISOString() })
+            .eq('id', req.user.id)
+            .select('id, username, display_name, role')
+            .single();
+            
+        if (error) throw error;
+        
+        res.json({ success: true, data: { id: data.id, username: data.username, displayName: data.display_name, role: data.role } });
+    } catch (err) {
+        res.status(500).json({ success: false, error: 'Lỗi cập nhật thông tin cá nhân' });
+    }
+}
+
 // ─── User Management (Admin only) ───
 
 async function getUsers(req, res) {
@@ -318,6 +338,7 @@ module.exports = {
     deleteUser,
     changePassword,
     resetPassword,
-    forgotPassword
+    forgotPassword,
+    updateProfile
 };
 

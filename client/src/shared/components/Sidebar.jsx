@@ -15,7 +15,7 @@ const COMMON_ITEMS = [
     { id: 'history', icon: '📜', label: 'Lịch sử' },
 ];
 
-export default function Sidebar({ activePage, onNavigate, isAdmin, user, onLogout, collapsed, onToggle, pendingCount }) {
+export default function Sidebar({ activePage, onNavigate, isAdmin, user, onLogout, collapsed, onToggle, pendingCount, onOpenProfile }) {
     const [showUserMenu, setShowUserMenu] = useState(false);
     const menuRef = useRef(null);
 
@@ -108,6 +108,11 @@ export default function Sidebar({ activePage, onNavigate, isAdmin, user, onLogou
                             </div>
                         </div>
                         <div className="sidebar-user-menu-divider" />
+                        
+                        <button className="sidebar-user-menu-item" onClick={() => { setShowUserMenu(false); onOpenProfile && onOpenProfile(); }}>
+                            <span>⚙️</span> Hồ sơ & Mật khẩu
+                        </button>
+
                         <button className="sidebar-user-menu-item" onClick={() => { setShowUserMenu(false); onNavigate('guide'); }}>
                             <span>❓</span> Hướng dẫn sử dụng
                         </button>

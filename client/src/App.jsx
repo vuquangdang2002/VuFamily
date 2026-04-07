@@ -7,6 +7,7 @@ import MemberModal from './features/tree/MemberModal';
 import NewsfeedPage from './features/newsfeed/NewsfeedPage';
 import CalendarPage from './features/calendar/CalendarPage';
 import AccountsPage from './features/accounts/AccountsPage';
+import ProfileModal from './features/auth/ProfileModal';
 import HistoryPage from './features/history/HistoryPanel';
 import RequestsPage from './features/requests/RequestsPanel';
 // ── Shared ──
@@ -38,6 +39,7 @@ export default function App() {
     const [editMember, setEditMember] = useState(null);
     const [modalParentId, setModalParentId] = useState(null);
     const [modalSpouseOfId, setModalSpouseOfId] = useState(null);
+    const [profileModalOpen, setProfileModalOpen] = useState(false);
 
     // Sidebar + page routing
     const [activePage, setActivePage] = useState('tree');
@@ -421,6 +423,7 @@ export default function App() {
                 collapsed={sidebarCollapsed}
                 onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
                 pendingCount={pendingCount}
+                onOpenProfile={() => setProfileModalOpen(true)}
             />
             <main className="main-content">
                 {renderPage()}
@@ -438,6 +441,13 @@ export default function App() {
             {/* Modals (always available) */}
             <MemberModal isOpen={modalOpen} onClose={closeModal} onSubmit={handleFormSubmit}
                 editMember={editMember} parentId={modalParentId} spouseOfId={modalSpouseOfId} members={members} />
+                
+            <ProfileModal isOpen={profileModalOpen} onClose={() => setProfileModalOpen(false)} user={user} onAddToast={addToast} 
+                onUpdateUser={(newUserData) => {
+                    const authData = { ...user, ...newUserData };
+                    localStorage.setItem(AUTH_KEY, JSON.stringify(authData));
+                    setUser(authData);
+                }} />
             
             {/* Forced Change Password Modal */}
             {forceChangePwd && (
