@@ -202,12 +202,75 @@ export default function App() {
         }
     };
 
-    const handleExport = async () => { await localApi.exportJSON(); addToast('Đã xuất file backup JSON!'); };
-    const handleImport = async (file) => {
+    const handleExport = async (format = 'json') => {
+        if (format === 'csv') {
+            const members = localApi.getMembers();
+            if (!members.length) { addToast('Không có dữ liệu để xuất', 'error'); return; }
+            const headers = ['id','name','gender','birth_date','birth_time','death_date','birth_place','death_place','occupation','phone','email','address','note','photo','birth_order','child_type','parent_id','spouse_id','generation'];
+            const csvRows = [headers.join(',')];
+            members.forEach(m => {
+                const row = headers.map(h => {
+                    const val = m[h] ?? m[h.replace(/_([a-z])/g, (_, c) => c.toUpperCase())] ?? '';
+                    const str = String(val);
+                    return str.includes(',') || str.includes('"') || str.includes('\n')
+                        ? `"${str.replace(/"/g, '""')}"` : str;
+                });
+                csvRows.push(row.join(','));
+            });
+            const blob = new Blob(['\uFEFF' + csvRows.join('\n')], { type: 'text/csv;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = `gia-pha-backup-${new Date().toISOString().slice(0,10)}.csv`;
+            a.click(); URL.revokeObjectURL(url);
+            addToast('Đã xuất file backup CSV!');
+        } else {
+            await localApi.exportJSON();
+            addToast('Đã xuất file backup JSON!');
+        }
+    };
+
+    const handleImport = async (file, format = 'json') => {
         if (!isAdmin) { addToast('Chỉ Admin mới có quyền nhập dữ liệu.', 'error'); return; }
         if (!confirm('Nhập dữ liệu từ file sẽ GHI ĐÈ toàn bộ dữ liệu hiện tại.\nBạn có chắc chắn?')) return;
-        try { await localApi.importJSON(file); refresh(); addToast('Đã nhập dữ liệu thành công!'); }
-        catch (err) { addToast(`Lỗi: ${err.message}`, 'error'); }
+        try {
+            if (format === 'csv') {
+                const text = await file.text();
+                const lines = text.replace(/^\uFEFF/, '').split('\n').filter(l => l.trim());
+                if (lines.length < 2) throw new Error('File CSV trống hoặc không hợp lệ');
+                const headers = lines[0].split(',').map(h => h.trim());
+                const members = [];
+                for (let i = 1; i < lines.length; i++) {
+                    // Parse CSV row (handle quoted fields)
+                    const row = [];
+                    let current = '', inQuotes = false;
+                    for (const ch of lines[i]) {
+                        if (ch === '"') { inQuotes = !inQuotes; continue; }
+                        if (ch === ',' && !inQuotes) { row.push(current.trim()); current = ''; continue; }
+                        current += ch;
+                    }
+                    row.push(current.trim());
+
+                    const member = {};
+                    headers.forEach((h, idx) => {
+                        const camel = h.replace(/_([a-z])/g, (_, c) => c.toUpperCase());
+                        let val = row[idx] || '';
+                        if (['id','gender','birth_order','parent_id','spouse_id','generation'].includes(h)) {
+                            val = val ? parseInt(val) : (h === 'gender' ? 1 : null);
+                        }
+                        member[camel] = val;
+                    });
+                    if (member.name) members.push(member);
+                }
+                // Save to localStorage (same as importJSON does)
+                localStorage.setItem('vuFamilyMembers', JSON.stringify(members));
+                refresh();
+                addToast(`Đã nhập ${members.length} thành viên từ CSV!`);
+            } else {
+                await localApi.importJSON(file);
+                refresh();
+                addToast('Đã nhập dữ liệu JSON thành công!');
+            }
+        } catch (err) { addToast(`Lỗi: ${err.message}`, 'error'); }
     };
     const handleReset = () => {
         if (!isAdmin) return;
