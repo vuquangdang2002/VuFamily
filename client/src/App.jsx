@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import LoginPage from './components/LoginPage';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
@@ -23,7 +23,8 @@ function getStoredAuth() {
 }
 
 export default function App() {
-    const [user, setUser] = useState(() => getStoredAuth());
+    const [user, setUser] = useState(null);
+    const [authChecked, setAuthChecked] = useState(false);
     const [members, setMembers] = useState(() => localApi.getMembers());
     const [selected, setSelected] = useState(null);
     const [detailOpen, setDetailOpen] = useState(false);
@@ -47,6 +48,42 @@ export default function App() {
         setToasts(t => [...t, { id, message, type }]);
         setTimeout(() => setToasts(t => t.filter(x => x.id !== id)), 3500);
     };
+
+    // ─── Verify token on app load ───
+    useEffect(() => {
+        const stored = getStoredAuth();
+        if (!stored || !stored.token) {
+            // No stored session or offline session → show login
+            setUser(null);
+            setAuthChecked(true);
+            return;
+        }
+        // Verify token with server
+        fetch(`${API_BASE}/auth/me`, {
+            headers: { 'x-auth-token': stored.token }
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success && data.data) {
+                    // Token valid → restore session
+                    setUser(stored);
+                } else {
+                    // Token expired/invalid → clear and show login
+                    localStorage.removeItem(AUTH_KEY);
+                    setUser(null);
+                }
+            })
+            .catch(() => {
+                // Server unreachable → allow offline access if stored
+                if (stored.source === 'local') {
+                    setUser(stored);
+                } else {
+                    localStorage.removeItem(AUTH_KEY);
+                    setUser(null);
+                }
+            })
+            .finally(() => setAuthChecked(true));
+    }, []);
 
     // ─── Auth ───
     const handleLogin = async (username, password) => {
@@ -183,6 +220,19 @@ export default function App() {
     const handleNavigate = (page) => {
         setActivePage(page);
     };
+
+    // ─── Loading: verifying auth ───
+    if (!authChecked) return (
+        <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            height: '100vh', background: 'var(--bg-primary, #0f172a)',
+            color: 'var(--text-primary, #e2e8f0)', flexDirection: 'column', gap: 16
+        }}>
+            <div style={{ fontSize: 48, animation: 'spin 1s linear infinite' }}>🏛️</div>
+            <p style={{ fontSize: 14, opacity: 0.7 }}>Đang xác thực...</p>
+            <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+        </div>
+    );
 
     // ─── Login screen ───
     if (!user) return (
