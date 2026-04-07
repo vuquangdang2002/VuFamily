@@ -8,6 +8,7 @@ const MENU_ITEMS = [
 
 const ADMIN_ITEMS = [
     { id: 'requests', icon: '📋', label: 'Yêu cầu chỉnh sửa' },
+    { id: 'accounts', icon: '👥', label: 'Quản lý tài khoản' },
 ];
 
 const COMMON_ITEMS = [

@@ -10,6 +10,7 @@ import HistoryPage from './components/HistoryPanel';
 import RequestsPage from './components/RequestsPanel';
 import NewsfeedPage from './components/NewsfeedPage';
 import CalendarPage from './components/CalendarPage';
+import AccountsPage from './components/AccountsPage';
 import Toast from './components/Toast';
 import { useTheme } from './components/ThemeToggle';
 import { localApi } from './services/api';
@@ -221,6 +222,8 @@ export default function App() {
                 return <HistoryPage isAdmin={isAdmin} user={user} onRefresh={refresh} addToast={addToast} />;
             case 'requests':
                 return <RequestsPage user={user} onRefresh={refresh} addToast={addToast} />;
+            case 'accounts':
+                return <AccountsPage addToast={addToast} />;
             default:
                 return null;
         }

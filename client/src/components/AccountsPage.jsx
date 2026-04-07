@@ -1,0 +1,226 @@
+import { useState, useEffect } from 'react';
+
+const API_BASE = '/api';
+
+function getToken() {
+    try { return JSON.parse(localStorage.getItem('vuFamilyAuth') || '{}').token || ''; }
+    catch { return ''; }
+}
+
+export default function AccountsPage({ addToast }) {
+    const [users, setUsers] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [showCreate, setShowCreate] = useState(false);
+    const [newUser, setNewUser] = useState({ username: '', password: '', displayName: '', role: 'viewer' });
+    const [resetModal, setResetModal] = useState(null);
+    const [resetPw, setResetPw] = useState('');
+
+    const fetchUsers = async () => {
+        setLoading(true);
+        try {
+            const res = await fetch(`${API_BASE}/users`, {
+                headers: { 'x-auth-token': getToken() }
+            });
+            const json = await res.json();
+            if (json.success) setUsers(json.data || []);
+        } catch (e) { console.error(e); }
+        setLoading(false);
+    };
+
+    useEffect(() => { fetchUsers(); }, []);
+
+    const handleCreate = async () => {
+        if (!newUser.username || !newUser.password) {
+            addToast('Tên đăng nhập và mật khẩu là bắt buộc', 'error');
+            return;
+        }
+        try {
+            const res = await fetch(`${API_BASE}/users`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'x-auth-token': getToken() },
+                body: JSON.stringify(newUser)
+            });
+            const json = await res.json();
+            if (json.success) {
+                addToast('Đã tạo tài khoản thành công!');
+                setShowCreate(false);
+                setNewUser({ username: '', password: '', displayName: '', role: 'viewer' });
+                fetchUsers();
+            } else {
+                addToast(json.error || 'Lỗi tạo tài khoản', 'error');
+            }
+        } catch (e) { addToast('Lỗi kết nối server', 'error'); }
+    };
+
+    const handleDelete = async (id, username) => {
+        if (!confirm(`Xóa tài khoản "${username}"? Hành động này không thể hoàn tác.`)) return;
+        try {
+            const res = await fetch(`${API_BASE}/users/${id}`, {
+                method: 'DELETE',
+                headers: { 'x-auth-token': getToken() }
+            });
+            const json = await res.json();
+            if (json.success) {
+                addToast('Đã xóa tài khoản');
+                fetchUsers();
+            } else {
+                addToast(json.error || 'Lỗi xóa tài khoản', 'error');
+            }
+        } catch (e) { addToast('Lỗi kết nối server', 'error'); }
+    };
+
+    const handleResetPassword = async () => {
+        if (!resetPw) { addToast('Vui lòng nhập mật khẩu mới', 'error'); return; }
+        try {
+            const res = await fetch(`${API_BASE}/users/${resetModal.id}/reset-password`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'x-auth-token': getToken() },
+                body: JSON.stringify({ newPassword: resetPw })
+            });
+            const json = await res.json();
+            if (json.success) {
+                addToast(`Đã đặt lại mật khẩu cho ${resetModal.username}`);
+                setResetModal(null);
+                setResetPw('');
+            } else {
+                addToast(json.error || 'Lỗi đặt lại mật khẩu', 'error');
+            }
+        } catch (e) { addToast('Lỗi kết nối server', 'error'); }
+    };
+
+    return (
+        <div className="page-container">
+            <div className="page-header">
+                <h2>👥 Quản lý tài khoản</h2>
+                <p className="page-subtitle">Thêm, xóa, đặt lại mật khẩu cho người dùng</p>
+            </div>
+
+            <div className="page-body">
+                {/* Create button */}
+                <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'flex-end' }}>
+                    <button className="btn btn-primary" onClick={() => setShowCreate(!showCreate)}>
+                        {showCreate ? '✕ Đóng' : '➕ Tạo tài khoản mới'}
+                    </button>
+                </div>
+
+                {/* Create form */}
+                {showCreate && (
+                    <div className="nf-create-post" style={{ marginBottom: 20 }}>
+                        <h3 style={{ margin: '0 0 12px', fontSize: 16 }}>Tạo tài khoản mới</h3>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                            <div>
+                                <label style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 4, display: 'block' }}>Tên đăng nhập *</label>
+                                <input className="form-input" placeholder="username"
+                                    value={newUser.username} onChange={e => setNewUser({ ...newUser, username: e.target.value })} />
+                            </div>
+                            <div>
+                                <label style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 4, display: 'block' }}>Mật khẩu *</label>
+                                <input className="form-input" type="password" placeholder="password"
+                                    value={newUser.password} onChange={e => setNewUser({ ...newUser, password: e.target.value })} />
+                            </div>
+                            <div>
+                                <label style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 4, display: 'block' }}>Tên hiển thị</label>
+                                <input className="form-input" placeholder="Nguyễn Văn A"
+                                    value={newUser.displayName} onChange={e => setNewUser({ ...newUser, displayName: e.target.value })} />
+                            </div>
+                            <div>
+                                <label style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 4, display: 'block' }}>Quyền</label>
+                                <select className="form-input" value={newUser.role} onChange={e => setNewUser({ ...newUser, role: e.target.value })}>
+                                    <option value="viewer">Thành viên (viewer)</option>
+                                    <option value="admin">Quản trị viên (admin)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div style={{ marginTop: 12, textAlign: 'right' }}>
+                            <button className="btn" style={{ marginRight: 8 }} onClick={() => setShowCreate(false)}>Hủy</button>
+                            <button className="btn btn-primary" onClick={handleCreate}>✅ Tạo tài khoản</button>
+                        </div>
+                    </div>
+                )}
+
+                {/* Users table */}
+                {loading ? (
+                    <div className="empty-state"><p>Đang tải...</p></div>
+                ) : (
+                    <div style={{ overflowX: 'auto' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
+                            <thead>
+                                <tr style={{ borderBottom: '2px solid var(--border-subtle)', textAlign: 'left' }}>
+                                    <th style={{ padding: '10px 12px', color: 'var(--text-muted)', fontWeight: 600 }}>ID</th>
+                                    <th style={{ padding: '10px 12px', color: 'var(--text-muted)', fontWeight: 600 }}>Tên đăng nhập</th>
+                                    <th style={{ padding: '10px 12px', color: 'var(--text-muted)', fontWeight: 600 }}>Tên hiển thị</th>
+                                    <th style={{ padding: '10px 12px', color: 'var(--text-muted)', fontWeight: 600 }}>Quyền</th>
+                                    <th style={{ padding: '10px 12px', color: 'var(--text-muted)', fontWeight: 600 }}>Ngày tạo</th>
+                                    <th style={{ padding: '10px 12px', color: 'var(--text-muted)', fontWeight: 600, textAlign: 'center' }}>Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {users.map(u => (
+                                    <tr key={u.id} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                                        <td style={{ padding: '10px 12px' }}>{u.id}</td>
+                                        <td style={{ padding: '10px 12px', fontWeight: 500 }}>{u.username}</td>
+                                        <td style={{ padding: '10px 12px' }}>{u.display_name}</td>
+                                        <td style={{ padding: '10px 12px' }}>
+                                            <span style={{
+                                                padding: '2px 8px', borderRadius: 12, fontSize: 12, fontWeight: 600,
+                                                background: u.role === 'admin' ? 'rgba(37,99,235,0.15)' : 'rgba(100,116,139,0.15)',
+                                                color: u.role === 'admin' ? '#2563eb' : '#64748b'
+                                            }}>
+                                                {u.role === 'admin' ? '👑 Admin' : '👤 Viewer'}
+                                            </span>
+                                        </td>
+                                        <td style={{ padding: '10px 12px', color: 'var(--text-muted)', fontSize: 13 }}>
+                                            {u.created_at ? new Date(u.created_at).toLocaleDateString('vi-VN') : '—'}
+                                        </td>
+                                        <td style={{ padding: '10px 12px', textAlign: 'center' }}>
+                                            <button className="btn btn-sm" style={{ marginRight: 6 }}
+                                                onClick={() => { setResetModal(u); setResetPw(''); }}
+                                                title="Đặt lại mật khẩu">
+                                                🔑 Reset
+                                            </button>
+                                            <button className="btn btn-sm"
+                                                onClick={() => handleDelete(u.id, u.username)}
+                                                style={{ color: '#ef4444' }}
+                                                title="Xóa tài khoản">
+                                                🗑️ Xóa
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+            </div>
+
+            {/* Reset password modal */}
+            {resetModal && (
+                <div className="modal-overlay open" onClick={e => e.target === e.currentTarget && setResetModal(null)}>
+                    <div className="modal" style={{ width: 400 }}>
+                        <div className="modal-header">
+                            <h2>🔑 Đặt lại mật khẩu</h2>
+                            <button className="detail-close" onClick={() => setResetModal(null)}>✕</button>
+                        </div>
+                        <div className="modal-body">
+                            <p style={{ marginBottom: 12 }}>
+                                Đặt lại mật khẩu cho tài khoản <strong>{resetModal.display_name || resetModal.username}</strong> ({resetModal.username})
+                            </p>
+                            <input
+                                className="form-input"
+                                type="text"
+                                placeholder="Nhập mật khẩu mới..."
+                                value={resetPw}
+                                onChange={e => setResetPw(e.target.value)}
+                                autoFocus
+                            />
+                            <div style={{ marginTop: 16, display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                                <button className="btn" onClick={() => setResetModal(null)}>Hủy</button>
+                                <button className="btn btn-primary" onClick={handleResetPassword}>Đặt lại mật khẩu</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}

@@ -2,11 +2,12 @@
 const express = require('express');
 const router = express.Router();
 const MemberController = require('../controllers/memberController');
-const { authenticate, optionalAuth, requireAdmin, login, logout, getMe, getUsers, createUser, deleteUser, changePassword } = require('../middleware/auth');
+const { authenticate, optionalAuth, requireAdmin, login, logout, getMe, getUsers, createUser, deleteUser, changePassword, resetPassword, forgotPassword } = require('../middleware/auth');
 const UpdateRequestModel = require('../models/UpdateRequest');
 
 // ─── Auth (public) ───
 router.post('/auth/login', login);
+router.post('/auth/forgot-password', forgotPassword);
 
 // ─── Auth (authenticated) ───
 router.post('/auth/logout', authenticate, logout);
@@ -17,6 +18,7 @@ router.post('/auth/change-password', authenticate, changePassword);
 router.get('/users', authenticate, requireAdmin, getUsers);
 router.post('/users', authenticate, requireAdmin, createUser);
 router.delete('/users/:id', authenticate, requireAdmin, deleteUser);
+router.post('/users/:id/reset-password', authenticate, requireAdmin, resetPassword);
 
 // ─── Stats (public for read-only) ───
 router.get('/stats', MemberController.getStats);

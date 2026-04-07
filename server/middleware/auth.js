@@ -215,6 +215,95 @@ async function changePassword(req, res) {
     }
 }
 
+// Admin reset password for any user
+async function resetPassword(req, res) {
+    const { newPassword } = req.body;
+    const userId = parseInt(req.params.id);
+    if (!newPassword) {
+        return res.status(400).json({ success: false, error: 'Mật khẩu mới là bắt buộc' });
+    }
+
+    try {
+        const newHash = await hashPassword(newPassword);
+        const { error } = await supabase
+            .from('users')
+            .update({ password: newHash, updated_at: new Date().toISOString() })
+            .eq('id', userId);
+        if (error) throw error;
+        res.json({ success: true, message: 'Đã đặt lại mật khẩu' });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+}
+
+// Forgot password - send temp password to admin email
+async function forgotPassword(req, res) {
+    const { username } = req.body;
+    if (!username) {
+        return res.status(400).json({ success: false, error: 'Vui lòng nhập tên đăng nhập' });
+    }
+
+    try {
+        const { data: user, error } = await supabase
+            .from('users')
+            .select('id, username, display_name')
+            .eq('username', username)
+            .single();
+
+        if (error || !user) {
+            return res.status(404).json({ success: false, error: 'Tài khoản không tồn tại' });
+        }
+
+        // Generate random temp password
+        const tempPassword = crypto.randomBytes(4).toString('hex'); // 8 chars
+        const hashedPw = await hashPassword(tempPassword);
+        await supabase
+            .from('users')
+            .update({ password: hashedPw, updated_at: new Date().toISOString() })
+            .eq('id', user.id);
+
+        // Send email via Resend
+        const RESEND_KEY = process.env.RESEND_API_KEY;
+        const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'vuquangdang2002@gmail.com';
+        const APP_URL = process.env.APP_URL || 'https://vu-family.vercel.app';
+
+        if (RESEND_KEY) {
+            const { Resend } = require('resend');
+            const resend = new Resend(RESEND_KEY);
+            await resend.emails.send({
+                from: 'Gia Phả <onboarding@resend.dev>',
+                to: [ADMIN_EMAIL],
+                subject: `[Gia Phả] Đặt lại mật khẩu - ${user.username}`,
+                html: `
+                    <div style="font-family:sans-serif;max-width:500px;margin:0 auto;padding:24px;background:#f8fafc;border-radius:12px">
+                        <h2 style="color:#1e293b;margin-bottom:8px">🏛️ Gia Phả - Dòng Họ Vũ</h2>
+                        <hr style="border:none;border-top:1px solid #e2e8f0;margin:16px 0">
+                        <p style="color:#475569">Tài khoản <strong>${user.display_name || user.username}</strong> (<code>${user.username}</code>) đã yêu cầu đặt lại mật khẩu.</p>
+                        <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:16px;margin:16px 0;text-align:center">
+                            <p style="margin:0 0 4px;color:#64748b;font-size:13px">Mật khẩu tạm thời:</p>
+                            <p style="margin:0;font-size:24px;font-weight:700;color:#2563eb;letter-spacing:2px">${tempPassword}</p>
+                        </div>
+                        <div style="text-align:center;margin:20px 0">
+                            <a href="${APP_URL}" style="display:inline-block;background:#2563eb;color:#fff;padding:12px 32px;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px">
+                                🔑 Đăng nhập ngay
+                            </a>
+                        </div>
+                        <p style="color:#ef4444;font-size:13px;text-align:center">⚠️ Vui lòng đổi mật khẩu ngay sau khi đăng nhập!</p>
+                        <hr style="border:none;border-top:1px solid #e2e8f0;margin:16px 0">
+                        <p style="color:#94a3b8;font-size:11px;text-align:center">Email tự động từ hệ thống Gia Phả. Không trả lời email này.</p>
+                    </div>
+                `,
+            });
+            res.json({ success: true, message: 'Mật khẩu mới đã được gửi qua email cho quản trị viên. Vui lòng liên hệ admin để nhận mật khẩu.' });
+        } else {
+            // No email key configured - just return success with password hint for admin
+            res.json({ success: true, message: 'Mật khẩu đã được đặt lại. Vui lòng liên hệ quản trị viên để nhận mật khẩu mới.' });
+        }
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+}
+
 module.exports = {
     hashPassword,
     comparePassword,
@@ -227,5 +316,8 @@ module.exports = {
     getUsers,
     createUser,
     deleteUser,
-    changePassword
+    changePassword,
+    resetPassword,
+    forgotPassword
 };
+

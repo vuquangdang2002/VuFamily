@@ -6,6 +6,10 @@ export default function LoginPage({ onLogin }) {
     const [showPass, setShowPass] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [showForgot, setShowForgot] = useState(false);
+    const [forgotUser, setForgotUser] = useState('');
+    const [forgotMsg, setForgotMsg] = useState('');
+    const [forgotLoading, setForgotLoading] = useState(false);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -22,6 +26,22 @@ export default function LoginPage({ onLogin }) {
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleForgotPassword = async () => {
+        if (!forgotUser.trim()) { setForgotMsg('Vui lòng nhập tên đăng nhập'); return; }
+        setForgotLoading(true);
+        setForgotMsg('');
+        try {
+            const res = await fetch('/api/auth/forgot-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: forgotUser.trim() })
+            });
+            const json = await res.json();
+            setForgotMsg(json.message || json.error || 'Đã xử lý yêu cầu');
+        } catch (e) { setForgotMsg('Lỗi kết nối server'); }
+        setForgotLoading(false);
     };
 
     return (
@@ -69,12 +89,56 @@ export default function LoginPage({ onLogin }) {
                         </button>
                     </form>
 
-
+                    <div style={{ textAlign: 'center', marginTop: 12 }}>
+                        <button
+                            type="button"
+                            onClick={() => { setShowForgot(true); setForgotUser(''); setForgotMsg(''); }}
+                            style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', fontSize: 13, textDecoration: 'underline' }}
+                        >
+                            Quên mật khẩu?
+                        </button>
+                    </div>
                 </div>
 
                 <div className="login-footer">
                     Copyright © 2026 by DangVQ
                 </div>
+
+                {/* Forgot password modal */}
+                {showForgot && (
+                    <div className="modal-overlay open" onClick={e => e.target === e.currentTarget && setShowForgot(false)}>
+                        <div className="modal" style={{ width: 380 }}>
+                            <div className="modal-header">
+                                <h2>🔑 Quên mật khẩu</h2>
+                                <button className="detail-close" onClick={() => setShowForgot(false)}>✕</button>
+                            </div>
+                            <div className="modal-body">
+                                <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 12 }}>
+                                    Nhập tên đăng nhập, mật khẩu mới sẽ được gửi qua email cho quản trị viên.
+                                </p>
+                                <input
+                                    className="form-input"
+                                    type="text"
+                                    placeholder="Tên đăng nhập..."
+                                    value={forgotUser}
+                                    onChange={e => setForgotUser(e.target.value)}
+                                    autoFocus
+                                />
+                                {forgotMsg && (
+                                    <div style={{ marginTop: 10, padding: '8px 12px', borderRadius: 8, background: 'rgba(37,99,235,0.1)', color: 'var(--primary)', fontSize: 13 }}>
+                                        {forgotMsg}
+                                    </div>
+                                )}
+                                <div style={{ marginTop: 16, display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                                    <button className="btn" onClick={() => setShowForgot(false)}>Đóng</button>
+                                    <button className="btn btn-primary" onClick={handleForgotPassword} disabled={forgotLoading}>
+                                        {forgotLoading ? '⏳...' : '📧 Gửi yêu cầu'}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Right side - Image/decoration */}
