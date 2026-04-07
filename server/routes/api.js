@@ -82,11 +82,28 @@ router.post('/requests/:id/reject', authenticate, requireAdmin, async (req, res)
 
 // ─── Posts (Bảng tin - shared newsfeed) ───
 const PostModel = require('../models/Post');
+const CommentModel = require('../models/Comment');
+const ReactionModel = require('../models/Reaction');
 
 router.get('/posts', async (req, res) => {
     try {
-        const data = await PostModel.getAll();
-        res.json({ success: true, data });
+        const posts = await PostModel.getAll();
+        // Enrich posts with reaction and comment counts
+        const enriched = await Promise.all(posts.map(async (post) => {
+            const [reactions, commentCount] = await Promise.all([
+                ReactionModel.getByPostId(post.id),
+                CommentModel.countByPostId(post.id)
+            ]);
+            // Group reactions by emoji
+            const reactionSummary = {};
+            reactions.forEach(r => {
+                if (!reactionSummary[r.emoji]) reactionSummary[r.emoji] = { count: 0, users: [] };
+                reactionSummary[r.emoji].count++;
+                reactionSummary[r.emoji].users.push(r.user_id);
+            });
+            return { ...post, reactions: reactionSummary, comment_count: commentCount };
+        }));
+        res.json({ success: true, data: enriched });
     } catch (e) { res.status(500).json({ success: false, error: e.message }); }
 });
 
@@ -111,5 +128,48 @@ router.delete('/posts/:id', authenticate, requireAdmin, async (req, res) => {
     } catch (e) { res.status(500).json({ success: false, error: e.message }); }
 });
 
-module.exports = router;
+// ─── Comments (bình luận bài đăng) ───
+router.get('/posts/:id/comments', async (req, res) => {
+    try {
+        const data = await CommentModel.getByPostId(parseInt(req.params.id));
+        res.json({ success: true, data });
+    } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
 
+router.post('/posts/:id/comments', authenticate, async (req, res) => {
+    try {
+        const { content } = req.body;
+        if (!content || !content.trim()) return res.status(400).json({ success: false, error: 'Nội dung không được trống' });
+        const comment = await CommentModel.create(
+            parseInt(req.params.id),
+            content.trim(),
+            req.user.display_name || req.user.username,
+            req.user.role,
+            req.user.id
+        );
+        res.status(201).json({ success: true, data: comment });
+    } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+router.delete('/comments/:id', authenticate, requireAdmin, async (req, res) => {
+    try {
+        await CommentModel.delete(parseInt(req.params.id));
+        res.json({ success: true, message: 'Đã xóa bình luận' });
+    } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ─── Reactions (cảm xúc bài đăng) ───
+router.post('/posts/:id/reactions', authenticate, async (req, res) => {
+    try {
+        const { emoji } = req.body;
+        if (!emoji) return res.status(400).json({ success: false, error: 'Emoji is required' });
+        const result = await ReactionModel.toggle(
+            parseInt(req.params.id),
+            req.user.id,
+            emoji
+        );
+        res.json({ success: true, ...result });
+    } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+module.exports = router;

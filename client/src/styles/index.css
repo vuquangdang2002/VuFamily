@@ -2768,6 +2768,192 @@ html.light .filter-btn.active {
     white-space: pre-wrap;
 }
 
+/* ── Reactions Bar ── */
+.nf-reactions-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border-subtle);
+    gap: 8px;
+}
+
+.nf-reactions-emojis {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+
+.nf-reaction-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    border: 1px solid transparent;
+    border-radius: 20px;
+    background: rgba(100, 116, 139, 0.08);
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 150ms;
+}
+
+.nf-reaction-btn:hover {
+    background: rgba(37, 99, 235, 0.12);
+    transform: scale(1.1);
+}
+
+.nf-reaction-btn.active {
+    background: rgba(37, 99, 235, 0.15);
+    border-color: rgba(37, 99, 235, 0.3);
+}
+
+.nf-reaction-count {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.nf-comment-toggle {
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 13px;
+    font-family: var(--font-body);
+    padding: 4px 8px;
+    border-radius: 8px;
+    transition: all 150ms;
+    white-space: nowrap;
+}
+
+.nf-comment-toggle:hover {
+    background: rgba(100, 116, 139, 0.1);
+    color: var(--text-primary);
+}
+
+/* ── Comments Section ── */
+.nf-comments-section {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border-subtle);
+}
+
+.nf-comment {
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(100, 116, 139, 0.06);
+}
+
+.nf-comment:last-of-type {
+    border-bottom: none;
+}
+
+.nf-comment-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 4px;
+}
+
+.nf-comment-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    flex-shrink: 0;
+}
+
+.nf-comment-author {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.nf-comment-time {
+    font-size: 11px;
+    color: var(--text-muted);
+    flex: 1;
+}
+
+.nf-comment-del {
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 12px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    opacity: 0.5;
+    transition: all 150ms;
+}
+
+.nf-comment-del:hover {
+    opacity: 1;
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+}
+
+.nf-comment-text {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    padding-left: 30px;
+}
+
+.nf-comment-input-wrap {
+    display: flex;
+    gap: 6px;
+    margin-top: 8px;
+    align-items: center;
+}
+
+.nf-comment-input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid var(--border-subtle);
+    border-radius: 20px;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    font-size: 13px;
+    outline: none;
+    transition: border-color 200ms;
+}
+
+.nf-comment-input:focus {
+    border-color: var(--primary);
+}
+
+.nf-comment-send {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: none;
+    background: var(--primary);
+    color: #fff;
+    cursor: pointer;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 150ms;
+    flex-shrink: 0;
+}
+
+.nf-comment-send:hover:not(:disabled) {
+    background: var(--primary-dark);
+    transform: scale(1.05);
+}
+
+.nf-comment-send:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
 /* ── Contact cards ── 1-column, compact width */
 .nf-contacts-grid {
     display: flex;

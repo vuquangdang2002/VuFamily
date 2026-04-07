@@ -102,6 +102,82 @@ export default function NewsfeedPage({ user, isAdmin, addToast }) {
         } catch (e) { addToast('Lỗi xóa bài'); }
     };
 
+    // ─── Reactions ───
+    const EMOJIS = ['❤️', '👍', '😂', '😮', '😢'];
+    const handleReaction = async (postId, emoji) => {
+        try {
+            const res = await fetch(`/api/posts/${postId}/reactions`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'x-auth-token': getToken() },
+                body: JSON.stringify({ emoji })
+            });
+            const json = await res.json();
+            if (json.success) fetchPosts();
+        } catch (e) { console.error(e); }
+    };
+
+    // ─── Comments ───
+    const [expandedComments, setExpandedComments] = useState({});
+    const [commentTexts, setCommentTexts] = useState({});
+    const [comments, setComments] = useState({});
+
+    const toggleComments = async (postId) => {
+        const isOpen = expandedComments[postId];
+        setExpandedComments(prev => ({ ...prev, [postId]: !isOpen }));
+        if (!isOpen && !comments[postId]) {
+            // Fetch comments
+            try {
+                const res = await fetch(`/api/posts/${postId}/comments`);
+                const json = await res.json();
+                if (json.success) setComments(prev => ({ ...prev, [postId]: json.data || [] }));
+            } catch (e) { console.error(e); }
+        }
+    };
+
+    const handleAddComment = async (postId) => {
+        const text = (commentTexts[postId] || '').trim();
+        if (!text) return;
+        try {
+            const res = await fetch(`/api/posts/${postId}/comments`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'x-auth-token': getToken() },
+                body: JSON.stringify({ content: text })
+            });
+            const json = await res.json();
+            if (json.success) {
+                setCommentTexts(prev => ({ ...prev, [postId]: '' }));
+                // Refresh comments for this post
+                const res2 = await fetch(`/api/posts/${postId}/comments`);
+                const json2 = await res2.json();
+                if (json2.success) setComments(prev => ({ ...prev, [postId]: json2.data || [] }));
+                fetchPosts(); // refresh comment count
+            }
+        } catch (e) { addToast('Lỗi gửi bình luận'); }
+    };
+
+    const handleDeleteComment = async (commentId, postId) => {
+        try {
+            const res = await fetch(`/api/comments/${commentId}`, {
+                method: 'DELETE',
+                headers: { 'x-auth-token': getToken() }
+            });
+            const json = await res.json();
+            if (json.success) {
+                setComments(prev => ({
+                    ...prev,
+                    [postId]: (prev[postId] || []).filter(c => c.id !== commentId)
+                }));
+                fetchPosts();
+            }
+        } catch (e) { addToast('Lỗi xóa bình luận'); }
+    };
+
+    // Helper: get current user ID
+    const currentUserId = (() => {
+        try { return JSON.parse(localStorage.getItem('vuFamilyAuth') || '{}').id; }
+        catch { return null; }
+    })();
+
     const handleStartEdit = (c) => {
         setEditingContact(c.id);
         setEditUrl(c.url || '');
@@ -182,6 +258,71 @@ export default function NewsfeedPage({ user, isAdmin, addToast }) {
                                             )}
                                         </div>
                                         <div className="nf-post-content">{post.content}</div>
+
+                                        {/* ── Reactions Bar ── */}
+                                        <div className="nf-reactions-bar">
+                                            <div className="nf-reactions-emojis">
+                                                {EMOJIS.map(emoji => {
+                                                    const r = post.reactions?.[emoji];
+                                                    const count = r?.count || 0;
+                                                    const userReacted = r?.users?.includes(currentUserId);
+                                                    return (
+                                                        <button
+                                                            key={emoji}
+                                                            className={`nf-reaction-btn ${userReacted ? 'active' : ''}`}
+                                                            onClick={() => handleReaction(post.id, emoji)}
+                                                            title={`${count} người`}
+                                                        >
+                                                            <span>{emoji}</span>
+                                                            {count > 0 && <span className="nf-reaction-count">{count}</span>}
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                            <button
+                                                className="nf-comment-toggle"
+                                                onClick={() => toggleComments(post.id)}
+                                            >
+                                                💬 {post.comment_count || 0} bình luận
+                                            </button>
+                                        </div>
+
+                                        {/* ── Comments Section ── */}
+                                        {expandedComments[post.id] && (
+                                            <div className="nf-comments-section">
+                                                {(comments[post.id] || []).map(c => (
+                                                    <div key={c.id} className="nf-comment">
+                                                        <div className="nf-comment-header">
+                                                            <span className="nf-comment-avatar">
+                                                                {(c.author_role) === 'admin' ? '👑' : '👤'}
+                                                            </span>
+                                                            <span className="nf-comment-author">{c.author}</span>
+                                                            <span className="nf-comment-time">{timeAgo(c.created_at)}</span>
+                                                            {isAdmin && (
+                                                                <button className="nf-comment-del" onClick={() => handleDeleteComment(c.id, post.id)} title="Xóa">✕</button>
+                                                            )}
+                                                        </div>
+                                                        <div className="nf-comment-text">{c.content}</div>
+                                                    </div>
+                                                ))}
+                                                <div className="nf-comment-input-wrap">
+                                                    <input
+                                                        className="nf-comment-input"
+                                                        placeholder="Viết bình luận..."
+                                                        value={commentTexts[post.id] || ''}
+                                                        onChange={e => setCommentTexts(prev => ({ ...prev, [post.id]: e.target.value }))}
+                                                        onKeyDown={e => e.key === 'Enter' && handleAddComment(post.id)}
+                                                    />
+                                                    <button
+                                                        className="nf-comment-send"
+                                                        onClick={() => handleAddComment(post.id)}
+                                                        disabled={!(commentTexts[post.id] || '').trim()}
+                                                    >
+                                                        ➤
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 ))}
                             </div>

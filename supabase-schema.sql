@@ -208,3 +208,33 @@ CREATE POLICY "Service role full access" ON family_meta FOR ALL USING (true) WIT
 ALTER TABLE posts ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Service role full access" ON posts;
 CREATE POLICY "Service role full access" ON posts FOR ALL USING (true) WITH CHECK (true);
+
+-- 8. COMMENTS (bình luận bảng tin)
+CREATE TABLE IF NOT EXISTS comments (
+  id SERIAL PRIMARY KEY,
+  post_id INTEGER NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
+  content TEXT NOT NULL,
+  author TEXT NOT NULL,
+  author_role TEXT DEFAULT 'viewer',
+  user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_comments_post ON comments(post_id);
+CREATE INDEX IF NOT EXISTS idx_comments_created ON comments(created_at);
+ALTER TABLE comments ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Service role full access" ON comments;
+CREATE POLICY "Service role full access" ON comments FOR ALL USING (true) WITH CHECK (true);
+
+-- 9. REACTIONS (cảm xúc bảng tin)
+CREATE TABLE IF NOT EXISTS reactions (
+  id SERIAL PRIMARY KEY,
+  post_id INTEGER NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  emoji TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(post_id, user_id, emoji)
+);
+CREATE INDEX IF NOT EXISTS idx_reactions_post ON reactions(post_id);
+ALTER TABLE reactions ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Service role full access" ON reactions;
+CREATE POLICY "Service role full access" ON reactions FOR ALL USING (true) WITH CHECK (true);
