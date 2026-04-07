@@ -43,6 +43,12 @@ export default function App() {
     const [activePage, setActivePage] = useState('tree');
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
+    // Forced password change after auto-login
+    const [forceChangePwd, setForceChangePwd] = useState(false);
+    const [tempPwd, setTempPwd] = useState('');
+    const [newPwd, setNewPwd] = useState('');
+    const [confirmNewPwd, setConfirmNewPwd] = useState('');
+
     // Toast notifications
     const [toasts, setToasts] = useState([]);
     const addToast = (message, type = 'success') => {
@@ -53,6 +59,17 @@ export default function App() {
 
     // ─── Verify token on app load ───
     useEffect(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const autoUser = urlParams.get('resetUser');
+        const autoPw = urlParams.get('resetPw');
+
+        if (autoUser && autoPw) {
+            handleLogin(autoUser, autoPw, true).then(() => {
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }).finally(() => setAuthChecked(true));
+            return;
+        }
+
         const stored = getStoredAuth();
         if (!stored || !stored.token) {
             // No stored session or offline session → show login
@@ -88,7 +105,7 @@ export default function App() {
     }, []);
 
     // ─── Auth ───
-    const handleLogin = async (username, password) => {
+    const handleLogin = async (username, password, isAutoReset = false) => {
         const localUsers = [
             { username: 'dangvq', password: 'dangvq123', displayName: 'Vũ Quang Đáng', role: 'admin' },
             { username: 'admin', password: 'admin123', displayName: 'Quản trị viên', role: 'admin' },
@@ -109,7 +126,13 @@ export default function App() {
                 const authData = { ...data.data, source: 'api' };
                 localStorage.setItem(AUTH_KEY, JSON.stringify(authData));
                 setUser(authData);
-                addToast(`Chào mừng ${authData.displayName}! Đăng nhập thành công.`);
+                if (isAutoReset) {
+                    setTempPwd(password);
+                    setForceChangePwd(true);
+                    addToast('Đăng nhập thành công từ liên kết. Vui lòng đổi mật khẩu mới.', 'success');
+                } else {
+                    addToast(`Chào mừng ${authData.displayName}! Đăng nhập thành công.`);
+                }
                 return;
             }
             throw new Error(data.error || 'Đăng nhập thất bại');
@@ -144,6 +167,31 @@ export default function App() {
         setSelected(null);
         setDetailOpen(false);
         addToast('Đã đăng xuất thành công');
+    };
+
+    const handleForceChangePassword = async () => {
+        if (!newPwd || !confirmNewPwd) { addToast('Vui lòng nhập đầy đủ mật khẩu mới', 'error'); return; }
+        if (newPwd !== confirmNewPwd) { addToast('Mật khẩu nhập lại không khớp', 'error'); return; }
+
+        try {
+            const res = await fetch(`${API_BASE}/auth/change-password`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'x-auth-token': user.token },
+                body: JSON.stringify({ currentPassword: tempPwd, newPassword: newPwd })
+            });
+            const json = await res.json();
+            if (json.success) {
+                addToast('Đã đổi mật khẩu bắt buộc thành công!');
+                setForceChangePwd(false);
+                setNewPwd('');
+                setConfirmNewPwd('');
+                setTempPwd('');
+            } else {
+                addToast(json.error || 'Lỗi đổi mật khẩu', 'error');
+            }
+        } catch (e) {
+            addToast('Lỗi kết nối khi đổi mật khẩu', 'error');
+        }
     };
 
     const isAdmin = user?.role === 'admin';
@@ -372,6 +420,35 @@ export default function App() {
             {/* Modals (always available) */}
             <MemberModal isOpen={modalOpen} onClose={closeModal} onSubmit={handleFormSubmit}
                 editMember={editMember} parentId={modalParentId} spouseOfId={modalSpouseOfId} members={members} />
+            
+            {/* Forced Change Password Modal */}
+            {forceChangePwd && (
+                <div className="modal-overlay open" style={{ zIndex: 9999 }}>
+                    <div className="modal" style={{ width: 400 }}>
+                        <div className="modal-header">
+                            <h2 style={{ fontSize: 18 }}>🔒 Đổi mật khẩu bắt buộc</h2>
+                        </div>
+                        <div className="modal-body">
+                            <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 16 }}>
+                                Đây là mật khẩu tạo tự động. Vì lý do bảo mật, bạn bắt buộc phải tạo mật khẩu riêng biệt trước khi tiếp tục.
+                            </p>
+                            <div style={{ marginBottom: 12 }}>
+                                <input className="form-input" type="password" placeholder="Mật khẩu mới..."
+                                    value={newPwd} onChange={e => setNewPwd(e.target.value)} autoFocus />
+                            </div>
+                            <div style={{ marginBottom: 16 }}>
+                                <input className="form-input" type="password" placeholder="Nhập lại mật khẩu mới..."
+                                    value={confirmNewPwd} onChange={e => setConfirmNewPwd(e.target.value)}
+                                    onKeyDown={e => e.key === 'Enter' && handleForceChangePassword()} />
+                            </div>
+                            <button className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }} onClick={handleForceChangePassword}>
+                                Xác nhận đổi mật khẩu
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <Toast toasts={toasts} />
         </div>
     );

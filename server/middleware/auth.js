@@ -284,8 +284,8 @@ async function forgotPassword(req, res) {
                             <p style="margin:0;font-size:24px;font-weight:700;color:#2563eb;letter-spacing:2px">${tempPassword}</p>
                         </div>
                         <div style="text-align:center;margin:20px 0">
-                            <a href="${APP_URL}" style="display:inline-block;background:#2563eb;color:#fff;padding:12px 32px;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px">
-                                🔑 Đăng nhập ngay
+                            <a href="${APP_URL}?resetUser=${user.username}&resetPw=${tempPassword}" style="display:inline-block;background:#2563eb;color:#fff;padding:12px 32px;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px">
+                                🔑 Đăng nhập tự động
                             </a>
                         </div>
                         <p style="color:#ef4444;font-size:13px;text-align:center">⚠️ Vui lòng đổi mật khẩu ngay sau khi đăng nhập!</p>
