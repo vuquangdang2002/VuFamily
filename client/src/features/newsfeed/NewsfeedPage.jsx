@@ -11,6 +11,136 @@ function generateQR(text, size = 200) {
     return `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(text)}`;
 }
 
+const FB_LIKE_STYLE = `
+.nf-reaction-container {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    flex: 1;
+    justify-content: center;
+}
+.nf-reaction-picker {
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    margin-bottom: 8px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: 50px;
+    padding: 6px 10px;
+    display: flex;
+    gap: 8px;
+    box-shadow: var(--shadow-lg);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px) scale(0.9);
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    z-index: 100;
+}
+.nf-reaction-container:hover .nf-reaction-picker,
+.nf-reaction-picker:hover {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0) scale(1);
+    transition-delay: 0.3s; 
+}
+.nf-reaction-picker-btn {
+    background: transparent;
+    border: none;
+    font-size: 28px;
+    cursor: pointer;
+    transition: transform 0.15s ease-out;
+    padding: 0 4px;
+    line-height: 1;
+    position: relative;
+    transform-origin: bottom center;
+}
+.nf-reaction-picker-btn:hover {
+    transform: scale(1.3) translateY(-4px);
+    z-index: 2;
+}
+.nf-reaction-picker-btn::after {
+    content: attr(data-label);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%) translateY(-4px);
+    background: rgba(0, 0, 0, 0.75);
+    color: white;
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 12px;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s 0.1s;
+    pointer-events: none;
+}
+html.dark .nf-reaction-picker-btn::after {
+    background: rgba(255, 255, 255, 0.9);
+    color: black;
+}
+.nf-reaction-picker-btn:hover::after {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+}
+.nf-action-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 6px 12px;
+    border-radius: var(--radius-sm);
+    transition: background 0.15s;
+}
+.nf-action-btn:hover {
+    background: var(--border-subtle);
+}
+.nf-action-btn.reacted-❤️ { color: #e0245e; }
+.nf-action-btn.reacted-👍 { color: #2563eb; }
+.nf-action-btn.reacted-😂 { color: #f59e0b; }
+.nf-action-btn.reacted-😮 { color: #f59e0b; }
+.nf-action-btn.reacted-😢 { color: #f59e0b; }
+.nf-action-btn.reacted-😡 { color: #dc2626; }
+
+.nf-reaction-summary {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 13px;
+    color: var(--text-muted);
+    margin: 8px 0;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-subtle);
+}
+.nf-summary-icon {
+    font-size: 18px;
+    margin-right: -6px;
+    position: relative;
+    border: 2px solid var(--bg-card);
+    border-radius: 50%;
+    display: inline-flex;
+    background: var(--bg-card);
+    line-height: 1;
+}
+.nf-summary-icon:nth-child(1) { z-index: 3; }
+.nf-summary-icon:nth-child(2) { z-index: 2; }
+.nf-summary-icon:nth-child(3) { z-index: 1; }
+.nf-actions-bar {
+    display: flex;
+    gap: 4px;
+    padding: 0;
+}
+`;
+
 function timeAgo(dateStr) {
     const d = new Date(dateStr);
     const now = new Date();
@@ -109,16 +239,36 @@ export default function NewsfeedPage({ user, isAdmin, addToast }) {
         setPosts(prev => prev.map(post => {
             if (post.id !== postId) return post;
             const reactions = { ...post.reactions };
-            const r = reactions[emoji] ? { ...reactions[emoji] } : { count: 0, users: [] };
-            const idx = r.users.indexOf(currentUserId);
-            if (idx >= 0) {
+            
+            // Allow only 1 reaction per user: check if user already reacted
+            let userPreviousReaction = null;
+            for (const em of Object.keys(reactions)) {
+                if (reactions[em]?.users?.includes(currentUserId)) {
+                    userPreviousReaction = em;
+                    break;
+                }
+            }
+
+            if (userPreviousReaction === emoji) {
+                // Toggle off
+                const r = { ...reactions[emoji] };
                 r.users = r.users.filter(u => u !== currentUserId);
                 r.count = Math.max(0, r.count - 1);
+                reactions[emoji] = r;
             } else {
-                r.users = [...r.users, currentUserId];
-                r.count++;
+                // Remove previous reaction if any
+                if (userPreviousReaction) {
+                    const pr = { ...reactions[userPreviousReaction] };
+                    pr.users = pr.users.filter(u => u !== currentUserId);
+                    pr.count = Math.max(0, pr.count - 1);
+                    reactions[userPreviousReaction] = pr;
+                }
+                // Add new reaction
+                const nr = reactions[emoji] ? { ...reactions[emoji] } : { count: 0, users: [] };
+                nr.users = [...nr.users, currentUserId];
+                nr.count++;
+                reactions[emoji] = nr;
             }
-            reactions[emoji] = r;
             return { ...post, reactions };
         }));
 
@@ -228,6 +378,7 @@ export default function NewsfeedPage({ user, isAdmin, addToast }) {
 
     return (
         <div className="page-container">
+            <style>{FB_LIKE_STYLE}</style>
             <div className="page-header">
                 <h2>📰 Bảng tin dòng họ</h2>
                 <p className="page-subtitle">Thông tin, liên hệ và hoạt động của dòng họ</p>
@@ -295,31 +446,60 @@ export default function NewsfeedPage({ user, isAdmin, addToast }) {
                                         </div>
                                         <div className="nf-post-content">{post.content}</div>
 
-                                        {/* ── Reactions Bar ── */}
-                                        <div className="nf-reactions-bar">
-                                            <div className="nf-reactions-emojis">
-                                                {EMOJIS.map(emoji => {
-                                                    const r = post.reactions?.[emoji];
-                                                    const count = r?.count || 0;
-                                                    const userReacted = r?.users?.includes(currentUserId);
-                                                    return (
+                                        {/* ── Summary & Actions Bar ── */}
+                                        <div className="nf-reaction-summary">
+                                            <div style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
+                                                {Object.keys(post.reactions || {}).filter(e => post.reactions[e].count > 0).slice(0, 3).map((e) => (
+                                                    <span key={e} className="nf-summary-icon">{e}</span>
+                                                ))}
+                                                {Object.values(post.reactions || {}).reduce((sum, r) => sum + (r.count || 0), 0) > 0 && (
+                                                    <span style={{ marginLeft: 8 }}>
+                                                        {Object.values(post.reactions || {}).reduce((sum, r) => sum + (r.count || 0), 0)}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <div style={{ display: 'flex', gap: 12 }}>
+                                                <span style={{ cursor: 'pointer' }} onClick={() => toggleComments(post.id)}>
+                                                    {post.comment_count || 0} bình luận
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <div className="nf-actions-bar">
+                                            <div className="nf-reaction-container">
+                                                <div className="nf-reaction-picker">
+                                                    {EMOJIS.map(emoji => (
                                                         <button
                                                             key={emoji}
-                                                            className={`nf-reaction-btn ${userReacted ? 'active' : ''}`}
+                                                            className="nf-reaction-picker-btn"
+                                                            data-label={emoji === '👍' ? 'Thích' : emoji === '❤️' ? 'Yêu thích' : emoji === '😂' ? 'Haha' : emoji === '😮' ? 'Hahaha' : 'Buồn'} 
                                                             onClick={() => handleReaction(post.id, emoji)}
-                                                            title={`${count} người`}
                                                         >
-                                                            <span>{emoji}</span>
-                                                            {count > 0 && <span className="nf-reaction-count">{count}</span>}
+                                                            {emoji}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                                {(() => {
+                                                    const userReaction = EMOJIS.find(e => post.reactions?.[e]?.users?.includes(currentUserId));
+                                                    const LABEL_MAP = { '👍': 'Thích', '❤️': 'Yêu thích', '😂': 'Haha', '😮': 'Wow', '😢': 'Buồn' };
+                                                    return (
+                                                        <button 
+                                                            className={`nf-action-btn ${userReaction ? 'reacted-' + userReaction : ''}`}
+                                                            onClick={() => handleReaction(post.id, userReaction ? userReaction : '👍')}
+                                                        >
+                                                            <span style={{ fontSize: 18 }}>{userReaction ? userReaction : <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path></svg>}</span>
+                                                            <span>{userReaction ? LABEL_MAP[userReaction] : 'Thích'}</span>
                                                         </button>
                                                     );
-                                                })}
+                                                })()}
                                             </div>
-                                            <button
-                                                className="nf-comment-toggle"
-                                                onClick={() => toggleComments(post.id)}
-                                            >
-                                                💬 {post.comment_count || 0} bình luận
+                                            <button className="nf-action-btn" onClick={() => toggleComments(post.id)}>
+                                                <span style={{ fontSize: 18 }}><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg></span>
+                                                <span>Bình luận</span>
+                                            </button>
+                                            <button className="nf-action-btn" onClick={() => addToast('Tính năng chia sẻ sắp ra mắt')}>
+                                                <span style={{ fontSize: 18 }}><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><polyline points="16 6 12 2 8 6"></polyline><line x1="12" y1="2" x2="12" y2="15"></line></svg></span>
+                                                <span>Chia sẻ</span>
                                             </button>
                                         </div>
 

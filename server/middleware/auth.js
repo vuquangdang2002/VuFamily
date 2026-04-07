@@ -118,25 +118,25 @@ async function logout(req, res) {
 async function getMe(req, res) {
     res.json({
         success: true,
-        data: { id: req.user.id, username: req.user.username, displayName: req.user.display_name, role: req.user.role }
+        data: { id: req.user.id, username: req.user.username, displayName: req.user.display_name, email: req.user.email, phone: req.user.phone, avatar: req.user.avatar, role: req.user.role }
     });
 }
 
 async function updateProfile(req, res) {
     try {
-        const { displayName } = req.body;
+        const { displayName, email, phone, avatar } = req.body;
         if (!displayName) return res.status(400).json({ success: false, error: 'Tên hiển thị không được để trống' });
         
         const { data, error } = await supabase
             .from('users')
-            .update({ display_name: displayName, updated_at: new Date().toISOString() })
+            .update({ display_name: displayName, email: email || '', phone: phone || '', avatar: avatar || '', updated_at: new Date().toISOString() })
             .eq('id', req.user.id)
-            .select('id, username, display_name, role')
+            .select('id, username, display_name, email, phone, avatar, role')
             .single();
             
         if (error) throw error;
         
-        res.json({ success: true, data: { id: data.id, username: data.username, displayName: data.display_name, role: data.role } });
+        res.json({ success: true, data: { id: data.id, username: data.username, displayName: data.display_name, email: data.email, phone: data.phone, avatar: data.avatar, role: data.role } });
     } catch (err) {
         res.status(500).json({ success: false, error: 'Lỗi cập nhật thông tin cá nhân' });
     }
@@ -148,7 +148,7 @@ async function getUsers(req, res) {
     try {
         const { data, error } = await supabase
             .from('users')
-            .select('id, username, display_name, role, created_at, updated_at')
+            .select('id, username, display_name, email, phone, avatar, role, created_at, updated_at')
             .order('id');
         if (error) throw error;
         res.json({ success: true, data: data || [] });
@@ -194,7 +194,7 @@ async function createUser(req, res) {
 
 async function updateUser(req, res) {
     const userId = req.params.id;
-    const { displayName, role } = req.body;
+    const { displayName, role, email, phone, avatar } = req.body;
     
     if (!displayName || !role) {
         return res.status(400).json({ success: false, error: 'Tên hiển thị và quyền là bắt buộc' });
@@ -203,7 +203,7 @@ async function updateUser(req, res) {
     try {
         const { error } = await supabase
             .from('users')
-            .update({ display_name: displayName, role, updated_at: new Date().toISOString() })
+            .update({ display_name: displayName, role, email: email || '', phone: phone || '', avatar: avatar || '', updated_at: new Date().toISOString() })
             .eq('id', userId);
 
         if (error) throw error;

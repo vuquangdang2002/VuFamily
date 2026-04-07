@@ -62,6 +62,33 @@ export default function App() {
         setTimeout(() => setToasts(t => t.filter(x => x.id !== id)), 3500);
     };
 
+    // ─── Global Ripple Effect ───
+    useEffect(() => {
+        const RIPPLE_TARGETS = 'button, .nf-tab, .sidebar-item, .action-menu-btn, .action-menu-item';
+        const createRipple = (e) => {
+            const target = e.target.closest(RIPPLE_TARGETS);
+            if (!target) return;
+            // Skip disabled buttons
+            if (target.disabled) return;
+            const circle = document.createElement('span');
+            circle.className = 'ripple-circle';
+            const rect = target.getBoundingClientRect();
+            circle.style.left = `${e.clientX - rect.left}px`;
+            circle.style.top = `${e.clientY - rect.top}px`;
+            // Ensure overflow hidden
+            const prevOverflow = target.style.overflow;
+            const prevPosition = target.style.position;
+            if (getComputedStyle(target).overflow === 'visible') target.style.overflow = 'hidden';
+            if (getComputedStyle(target).position === 'static') target.style.position = 'relative';
+            target.appendChild(circle);
+            circle.addEventListener('animationend', () => {
+                circle.remove();
+            }, { once: true });
+        };
+        document.addEventListener('click', createRipple);
+        return () => document.removeEventListener('click', createRipple);
+    }, []);
+
     // ─── Verify token on app load ───
     useEffect(() => {
         const urlParams = new URLSearchParams(window.location.search);

@@ -671,6 +671,31 @@ body {
     border-bottom: 1px solid var(--border-subtle);
 }
 
+/* ============ GLOBAL CLICK RIPPLE ============ */
+@keyframes ripple {
+    0% { transform: scale(0); opacity: 0.5; }
+    100% { transform: scale(4); opacity: 0; }
+}
+
+.ripple-host {
+    position: relative;
+    overflow: hidden;
+}
+
+.ripple-circle {
+    position: absolute;
+    border-radius: 50%;
+    background: currentColor;
+    opacity: 0.3;
+    pointer-events: none;
+    animation: ripple 0.55s ease-out forwards;
+    transform-origin: center;
+    width: 60px;
+    height: 60px;
+    margin-left: -30px;
+    margin-top: -30px;
+}
+
 /* ============ BUTTONS ============ */
 .btn {
     display: inline-flex;
@@ -688,6 +713,8 @@ body {
     cursor: pointer;
     transition: all 200ms ease;
     white-space: nowrap;
+    position: relative;
+    overflow: hidden;
 }
 
 .btn:hover {
@@ -699,7 +726,8 @@ body {
 }
 
 .btn:active {
-    transform: translateY(0);
+    transform: scale(0.95) translateY(0) !important;
+    transition-duration: 80ms;
 }
 
 .btn-icon {
@@ -2681,17 +2709,31 @@ html.light .filter-btn.active {
     cursor: pointer;
     border-bottom: 2px solid transparent;
     margin-bottom: -2px;
-    transition: all 200ms;
+    transition: color 200ms, border-color 200ms, transform 150ms;
+    position: relative;
+    overflow: hidden;
 }
 
 .nf-tab:hover {
     color: var(--text-primary);
 }
 
+.nf-tab:active {
+    transform: scale(0.95);
+    transition-duration: 80ms;
+}
+
 .nf-tab.active {
     color: var(--primary);
     border-bottom-color: var(--primary);
     font-weight: 600;
+    animation: tabActivate 250ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes tabActivate {
+    0% { transform: scaleX(0.85); opacity: 0.6; }
+    60% { transform: scaleX(1.05); }
+    100% { transform: scaleX(1); opacity: 1; }
 }
 
 /* ── Create Post ── */
@@ -2868,6 +2910,8 @@ html.light .filter-btn.active {
     font-size: 15px;
     transition: all 180ms ease;
     user-select: none;
+    position: relative;
+    overflow: hidden;
 }
 
 .nf-reaction-btn:hover {
@@ -2876,10 +2920,22 @@ html.light .filter-btn.active {
     border-color: rgba(59, 111, 207, 0.15);
 }
 
+.nf-reaction-btn:active {
+    transform: scale(0.9);
+    transition-duration: 80ms;
+}
+
 .nf-reaction-btn.active {
     background: rgba(59, 111, 207, 0.15);
     border-color: rgba(59, 111, 207, 0.35);
     box-shadow: 0 2px 8px rgba(59, 111, 207, 0.15);
+    animation: reactionPop 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes reactionPop {
+    0% { transform: scale(0.7); }
+    60% { transform: scale(1.2); }
+    100% { transform: scale(1); }
 }
 
 .nf-reaction-count {
@@ -3536,4 +3592,91 @@ html.light .filter-btn.active {
         padding: 4px 6px;
         font-size: 10px;
     }
+}/* Action Menu */
+.action-menu-container {
+    position: relative;
+    display: inline-block;
+}
+
+.action-menu-btn {
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 200ms ease;
+    opacity: 0;
+    transform: scale(0.8);
+}
+
+tr:hover .action-menu-btn {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.action-menu-btn:hover {
+    color: var(--text-primary);
+    background: rgba(0, 0, 0, 0.05);
+}
+
+html.dark .action-menu-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.action-menu-dropdown {
+    position: absolute;
+    right: 100%;
+    top: 50%;
+    transform: translateY(-50%);
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-md);
+    min-width: 160px;
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+    padding: 4px;
+    animation: zoomInFade 0.2s ease-out;
+    margin-right: 8px;
+}
+
+@keyframes zoomInFade {
+    0% { opacity: 0; transform: translateY(-50%) scale(0.95) translateX(4px); }
+    100% { opacity: 1; transform: translateY(-50%) scale(1) translateX(0); }
+}
+
+.action-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border: none;
+    background: transparent;
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    font-size: 13px;
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: background 0.15s;
+}
+
+.action-menu-item:hover {
+    background: var(--primary-glow);
+}
+
+.action-menu-item.danger {
+    color: var(--accent-error);
+}
+
+.action-menu-item.danger:hover {
+    background: rgba(232, 84, 84, 0.08);
 }

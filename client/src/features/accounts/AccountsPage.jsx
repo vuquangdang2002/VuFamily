@@ -21,6 +21,20 @@ export default function AccountsPage({ addToast }) {
     const [editModal, setEditModal] = useState(null);
     const [editUser, setEditUser] = useState({ displayName: '', role: 'viewer' });
 
+    // Action menu
+    const [actionMenuId, setActionMenuId] = useState(null);
+
+    // Close on click outside
+    useEffect(() => {
+        const handleClick = (e) => {
+            if (!e.target.closest('.action-menu-container')) {
+                setActionMenuId(null);
+            }
+        };
+        document.addEventListener('click', handleClick);
+        return () => document.removeEventListener('click', handleClick);
+    }, []);
+
     const fetchUsers = async () => {
         setLoading(true);
         try {
@@ -219,22 +233,32 @@ export default function AccountsPage({ addToast }) {
                                             {u.created_at ? new Date(u.created_at).toLocaleDateString('vi-VN') : '—'}
                                         </td>
                                         <td style={{ padding: '10px 12px', textAlign: 'center' }}>
-                                            <button className="btn btn-sm" style={{ marginRight: 6 }}
-                                                onClick={() => { setEditModal(u); setEditUser({ displayName: u.display_name, role: u.role }); }}
-                                                title="Tiến hành sửa thông tin user">
-                                                ✏️ Sửa
-                                            </button>
-                                            <button className="btn btn-sm" style={{ marginRight: 6 }}
-                                                onClick={() => { setResetModal(u); setResetPw(''); }}
-                                                title="Đặt lại mật khẩu">
-                                                🔑 Reset
-                                            </button>
-                                            <button className="btn btn-sm"
-                                                onClick={() => handleDelete(u.id, u.username)}
-                                                style={{ color: '#ef4444' }}
-                                                title="Xóa tài khoản">
-                                                🗑️ Xóa
-                                            </button>
+                                            <div className="action-menu-container">
+                                                <button 
+                                                    className="action-menu-btn" 
+                                                    onClick={() => setActionMenuId(actionMenuId === u.id ? null : u.id)}
+                                                    title="Thao tác"
+                                                >
+                                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                        <circle cx="12" cy="12" r="1" />
+                                                        <circle cx="19" cy="12" r="1" />
+                                                        <circle cx="5" cy="12" r="1" />
+                                                    </svg>
+                                                </button>
+                                                {actionMenuId === u.id && (
+                                                    <div className="action-menu-dropdown">
+                                                        <button className="action-menu-item" onClick={() => { setEditModal(u); setEditUser({ displayName: u.display_name, role: u.role }); setActionMenuId(null); }}>
+                                                            ✏️ Sửa
+                                                        </button>
+                                                        <button className="action-menu-item" onClick={() => { setResetModal(u); setResetPw(''); setActionMenuId(null); }}>
+                                                            🔑 Reset mật khẩu
+                                                        </button>
+                                                        <button className="action-menu-item danger" onClick={() => { handleDelete(u.id, u.username); setActionMenuId(null); }}>
+                                                            🗑️ Xóa
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}
