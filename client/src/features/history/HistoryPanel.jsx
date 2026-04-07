@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { localApi, formatDate } from '../../shared/services/api';
+import { useState, useEffect } from 'react';
+import { api, localApi, formatDate } from '../../shared/services/api';
 
 const ACTION_LABELS = {
     create: { icon: '➕', text: 'Thêm mới', color: '#4CAF50' },
@@ -68,33 +68,49 @@ function DiffView({ before, after }) {
 }
 
 export default function HistoryPage({ isAdmin, user, onRefresh, addToast }) {
-    const [allHistory] = useState(() => localApi.getEditHistory());
+    const [history, setHistory] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
     const [expandedId, setExpandedId] = useState(null);
 
-    // Admin sees all history, viewer sees only their own edits
-    const history = isAdmin
-        ? allHistory
-        : allHistory.filter(e => e.editedBy === user?.username);
+    const fetchHistory = async () => {
+        try {
+            setIsLoading(true);
+            const res = await api.getAllRequests();
+            if (res.success) {
+                // We consider 'approved' requests as our Edit History!
+                const approved = (res.data || []).filter(r => r.status === 'approved');
+                // Admin sees all, Viewer sees only their own
+                const filtered = isAdmin ? approved : approved.filter(r => r.requestedBy === user?.username);
+                setHistory(filtered);
+            }
+        } catch(e) {
+            addToast('Lỗi tải lịch sử chỉnh sửa', 'error');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchHistory();
+    }, []);
 
     const handleRevert = (entry) => {
-        const actionText = entry.action === 'create' ? `xóa "${entry.memberName}" (hoàn tác thêm mới)`
-            : entry.action === 'delete' ? `khôi phục "${entry.memberName}"`
-                : `hoàn tác thay đổi của "${entry.memberName}"`;
-        if (!confirm(`Bạn có chắc muốn ${actionText}?\n\nThao tác này sẽ được ghi lại trong lịch sử.`)) return;
-
-        const result = localApi.revertHistory(entry.id, user);
-        addToast(result.message, result.success ? 'success' : 'error');
-        if (result.success && onRefresh) onRefresh();
+        addToast('Tạm không hỗ trợ Hoàn tác trên hệ thống Online.', 'error');
     };
 
     return (
-        <div className="page-container">
-            <div className="page-header">
+        <div className="page-container flex flex-col h-screen pt-16 sm:pt-0 overflow-hidden">
+            <div className="page-header shrink-0">
                 <h2>{isAdmin ? '📜 Lịch sử chỉnh sửa' : '📜 Lịch sử của tôi'}</h2>
                 <p className="page-subtitle">Theo dõi các thay đổi dữ liệu gia phả</p>
             </div>
-            <div className="page-body">
-                    {history.length === 0 ? (
+            <div className="page-body flex-1 overflow-y-auto p-4 md:p-6 pb-24 relative min-h-[200px]">
+                    {isLoading ? (
+                        <div className="flex flex-col items-center justify-center p-12 text-gray-500">
+                            <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+                            Vui lòng chờ...
+                        </div>
+                    ) : history.length === 0 ? (
                         <div className="empty-state">
                             <span style={{ fontSize: 40 }}>📭</span>
                             <p>Chưa có lịch sử chỉnh sửa nào.</p>
@@ -102,10 +118,10 @@ export default function HistoryPage({ isAdmin, user, onRefresh, addToast }) {
                     ) : (
                         <div className="history-timeline">
                             {history.map(entry => {
-                                const action = ACTION_LABELS[entry.action] || ACTION_LABELS.update;
+                                const action = ACTION_LABELS.update;
                                 const isExpanded = expandedId === entry.id;
                                 return (
-                                    <div key={entry.id} className={`history-entry ${entry.action}`}>
+                                    <div key={entry.id} className="history-entry update">
                                         <div className="history-entry-header" onClick={() => setExpandedId(isExpanded ? null : entry.id)}>
                                             <div className="history-entry-icon" style={{ color: action.color }}>{action.icon}</div>
                                             <div className="history-entry-info">
@@ -113,14 +129,14 @@ export default function HistoryPage({ isAdmin, user, onRefresh, addToast }) {
                                                     <strong>{action.text}</strong> — {entry.memberName}
                                                 </div>
                                                 <div className="history-entry-meta">
-                                                    👤 {entry.editedByName} · {timeAgo(entry.editedAt)}
+                                                    👤 {entry.requestedByName} · Duyệt bởi {entry.reviewedBy} lúc {timeAgo(entry.reviewedAt)}
                                                 </div>
                                             </div>
                                             <span className="history-entry-expand">{isExpanded ? '▲' : '▼'}</span>
                                         </div>
                                         {isExpanded && (
                                             <div className="history-entry-details">
-                                                <DiffView before={entry.before} after={entry.after} />
+                                                <DiffView before={{}} after={entry.changes} />
                                                 {isAdmin && (
                                                     <button className="btn btn-sm" style={{ marginTop: 8 }}
                                                         onClick={() => handleRevert(entry)}>

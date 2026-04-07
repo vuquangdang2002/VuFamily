@@ -218,7 +218,18 @@ export default function AccountsPage({ addToast }) {
                                 {users.map(u => (
                                     <tr key={u.id} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
                                         <td style={{ padding: '10px 12px' }}>{u.id}</td>
-                                        <td style={{ padding: '10px 12px', fontWeight: 500 }}>{u.username}</td>
+                                        <td style={{ padding: '10px 12px' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                {u.avatar ? (
+                                                    <img src={u.avatar} alt={u.username} style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover' }} />
+                                                ) : (
+                                                    <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'linear-gradient(135deg, var(--gold), var(--gold-dark))', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 'bold' }}>
+                                                        {u.username.substring(0, 2).toUpperCase()}
+                                                    </div>
+                                                )}
+                                                <span style={{ fontWeight: 500 }}>{u.username}</span>
+                                            </div>
+                                        </td>
                                         <td style={{ padding: '10px 12px' }}>{u.display_name}</td>
                                         <td style={{ padding: '10px 12px' }}>
                                             <span style={{

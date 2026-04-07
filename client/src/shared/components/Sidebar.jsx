@@ -100,7 +100,11 @@ export default function Sidebar({ activePage, onNavigate, isAdmin, user, onLogou
                     <div className="sidebar-user-menu">
                         <div className="sidebar-user-menu-header">
                             <span className="sidebar-user-menu-avatar">
-                                {user?.role === 'admin' ? '👑' : '👤'}
+                                {user?.avatar ? (
+                                    <img src={user.avatar} alt="Avatar" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+                                ) : (
+                                    user?.role === 'admin' ? '👑' : '👤'
+                                )}
                             </span>
                             <div>
                                 <div className="sidebar-user-menu-name">{user?.displayName || user?.username}</div>
@@ -125,8 +129,12 @@ export default function Sidebar({ activePage, onNavigate, isAdmin, user, onLogou
 
                 <div className="sidebar-user" onClick={() => setShowUserMenu(!showUserMenu)} style={{ cursor: 'pointer' }}
                     title={user?.displayName}>
-                    <span className="sidebar-user-avatar">
-                        {user?.role === 'admin' ? '👑' : '👁️'}
+                    <span className="sidebar-user-avatar" style={user?.avatar ? { padding: 0 } : {}}>
+                        {user?.avatar ? (
+                            <img src={user.avatar} alt="Avatar" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+                        ) : (
+                            user?.role === 'admin' ? '👑' : '👁️'
+                        )}
                     </span>
                     {!collapsed && (
                         <div className="sidebar-user-info">
