@@ -2698,102 +2698,121 @@ html.light .filter-btn.active {
 .nf-create-post {
     background: var(--bg-secondary);
     border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-md);
-    padding: 16px;
-    margin-bottom: 20px;
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 24px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    transition: box-shadow 200ms;
+}
+
+.nf-create-post:focus-within {
+    box-shadow: 0 4px 16px rgba(59, 111, 207, 0.12);
+    border-color: rgba(59, 111, 207, 0.3);
 }
 
 .nf-create-header {
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin-bottom: 12px;
+    gap: 12px;
+    margin-bottom: 14px;
 }
 
 .nf-author-avatar {
-    width: 36px;
-    height: 36px;
+    width: 42px;
+    height: 42px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    background: linear-gradient(135deg, #3b6fcf, #60a5fa);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 16px;
+    font-size: 18px;
     flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(59, 111, 207, 0.25);
 }
 
 .nf-author-name {
-    font-size: 14px;
-    font-weight: 600;
+    font-size: 15px;
+    font-weight: 700;
     color: var(--text-primary);
+    letter-spacing: -0.01em;
 }
 
 .nf-post-input {
     width: 100%;
-    padding: 12px;
+    padding: 14px 16px;
     border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-sm);
+    border-radius: 12px;
     background: var(--bg-primary);
     color: var(--text-primary);
     font-family: var(--font-body);
     font-size: 14px;
     resize: vertical;
-    min-height: 60px;
+    min-height: 70px;
     outline: none;
-    transition: border-color 200ms;
+    transition: border-color 200ms, box-shadow 200ms;
+    line-height: 1.6;
 }
 
 .nf-post-input:focus {
-    border-color: var(--primary);
+    border-color: rgba(59, 111, 207, 0.5);
+    box-shadow: 0 0 0 3px rgba(59, 111, 207, 0.08);
+}
+
+.nf-post-input::placeholder {
+    color: var(--text-muted);
 }
 
 .nf-create-footer {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-top: 10px;
+    margin-top: 12px;
 }
 
 .nf-char-count {
     font-size: 12px;
     color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
 }
 
 /* ── Post Cards ── */
 .nf-posts-list {
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 16px;
 }
 
 .nf-post-card {
     background: var(--bg-secondary);
     border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-md);
-    padding: 16px;
-    transition: box-shadow 200ms;
+    border-radius: 16px;
+    padding: 20px;
+    transition: box-shadow 250ms, transform 250ms;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
 }
 
 .nf-post-card:hover {
-    box-shadow: var(--shadow-sm);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    transform: translateY(-1px);
 }
 
 .nf-post-header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: 10px;
+    margin-bottom: 12px;
 }
 
 .nf-post-author {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
 }
 
 .nf-post-time {
-    font-size: 11px;
+    font-size: 12px;
     color: var(--text-muted);
+    margin-top: 2px;
 }
 
 .nf-post-delete {
@@ -2801,20 +2820,23 @@ html.light .filter-btn.active {
     background: transparent;
     cursor: pointer;
     font-size: 14px;
-    padding: 4px;
-    opacity: 0.5;
-    transition: opacity 150ms;
+    padding: 6px;
+    opacity: 0.4;
+    transition: all 200ms;
+    border-radius: 8px;
 }
 
 .nf-post-delete:hover {
     opacity: 1;
+    background: rgba(239, 68, 68, 0.1);
 }
 
 .nf-post-content {
-    font-size: 14px;
-    line-height: 1.6;
+    font-size: 15px;
+    line-height: 1.7;
     color: var(--text-primary);
     white-space: pre-wrap;
+    word-break: break-word;
 }
 
 /* ── Reactions Bar ── */
@@ -2822,45 +2844,50 @@ html.light .filter-btn.active {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-top: 12px;
-    padding-top: 10px;
+    margin-top: 14px;
+    padding-top: 12px;
     border-top: 1px solid var(--border-subtle);
     gap: 8px;
 }
 
 .nf-reactions-emojis {
     display: flex;
-    gap: 4px;
+    gap: 6px;
     flex-wrap: wrap;
 }
 
 .nf-reaction-btn {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    padding: 4px 8px;
-    border: 1px solid transparent;
-    border-radius: 20px;
-    background: rgba(100, 116, 139, 0.08);
+    gap: 5px;
+    padding: 6px 10px;
+    border: 1.5px solid transparent;
+    border-radius: 24px;
+    background: rgba(100, 116, 139, 0.06);
     cursor: pointer;
-    font-size: 14px;
-    transition: all 150ms;
+    font-size: 15px;
+    transition: all 180ms ease;
+    user-select: none;
 }
 
 .nf-reaction-btn:hover {
-    background: rgba(37, 99, 235, 0.12);
-    transform: scale(1.1);
+    background: rgba(59, 111, 207, 0.1);
+    transform: scale(1.15);
+    border-color: rgba(59, 111, 207, 0.15);
 }
 
 .nf-reaction-btn.active {
-    background: rgba(37, 99, 235, 0.15);
-    border-color: rgba(37, 99, 235, 0.3);
+    background: rgba(59, 111, 207, 0.15);
+    border-color: rgba(59, 111, 207, 0.35);
+    box-shadow: 0 2px 8px rgba(59, 111, 207, 0.15);
 }
 
 .nf-reaction-count {
     font-size: 12px;
-    font-weight: 600;
+    font-weight: 700;
     color: var(--text-secondary);
+    min-width: 12px;
+    text-align: center;
 }
 
 .nf-comment-toggle {
@@ -2870,55 +2897,63 @@ html.light .filter-btn.active {
     cursor: pointer;
     font-size: 13px;
     font-family: var(--font-body);
-    padding: 4px 8px;
-    border-radius: 8px;
-    transition: all 150ms;
+    font-weight: 500;
+    padding: 6px 12px;
+    border-radius: 20px;
+    transition: all 180ms;
     white-space: nowrap;
 }
 
 .nf-comment-toggle:hover {
     background: rgba(100, 116, 139, 0.1);
-    color: var(--text-primary);
+    color: var(--primary);
 }
 
 /* ── Comments Section ── */
 .nf-comments-section {
-    margin-top: 10px;
-    padding-top: 10px;
+    margin-top: 12px;
+    padding-top: 12px;
     border-top: 1px solid var(--border-subtle);
+    animation: slideDown 200ms ease-out;
+}
+
+@keyframes slideDown {
+    from { opacity: 0; max-height: 0; }
+    to { opacity: 1; max-height: 1000px; }
 }
 
 .nf-comment {
-    padding: 8px 0;
-    border-bottom: 1px solid rgba(100, 116, 139, 0.06);
+    padding: 10px 0;
+    transition: background 150ms;
 }
 
-.nf-comment:last-of-type {
-    border-bottom: none;
+.nf-comment + .nf-comment {
+    border-top: 1px solid rgba(100, 116, 139, 0.06);
 }
 
 .nf-comment-header {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     margin-bottom: 4px;
 }
 
 .nf-comment-avatar {
-    width: 24px;
-    height: 24px;
+    width: 28px;
+    height: 28px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    background: linear-gradient(135deg, #3b6fcf, #93c5fd);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 11px;
+    font-size: 12px;
     flex-shrink: 0;
+    box-shadow: 0 1px 4px rgba(59, 111, 207, 0.2);
 }
 
 .nf-comment-author {
     font-size: 13px;
-    font-weight: 600;
+    font-weight: 700;
     color: var(--text-primary);
 }
 
@@ -2933,16 +2968,20 @@ html.light .filter-btn.active {
     background: transparent;
     color: var(--text-muted);
     cursor: pointer;
-    font-size: 12px;
-    padding: 2px 6px;
-    border-radius: 4px;
-    opacity: 0.5;
+    font-size: 11px;
+    padding: 3px 6px;
+    border-radius: 6px;
+    opacity: 0;
     transition: all 150ms;
 }
 
+.nf-comment:hover .nf-comment-del {
+    opacity: 0.6;
+}
+
 .nf-comment-del:hover {
-    opacity: 1;
-    background: rgba(239, 68, 68, 0.1);
+    opacity: 1 !important;
+    background: rgba(239, 68, 68, 0.12);
     color: #ef4444;
 }
 
@@ -2950,57 +2989,65 @@ html.light .filter-btn.active {
     font-size: 13px;
     color: var(--text-secondary);
     line-height: 1.5;
-    padding-left: 30px;
+    padding-left: 36px;
+    word-break: break-word;
 }
 
 .nf-comment-input-wrap {
     display: flex;
-    gap: 6px;
-    margin-top: 8px;
+    gap: 8px;
+    margin-top: 12px;
     align-items: center;
 }
 
 .nf-comment-input {
     flex: 1;
-    padding: 8px 12px;
-    border: 1px solid var(--border-subtle);
-    border-radius: 20px;
+    padding: 10px 16px;
+    border: 1.5px solid var(--border-subtle);
+    border-radius: 24px;
     background: var(--bg-primary);
     color: var(--text-primary);
     font-family: var(--font-body);
     font-size: 13px;
     outline: none;
-    transition: border-color 200ms;
+    transition: border-color 200ms, box-shadow 200ms;
 }
 
 .nf-comment-input:focus {
-    border-color: var(--primary);
+    border-color: rgba(59, 111, 207, 0.4);
+    box-shadow: 0 0 0 3px rgba(59, 111, 207, 0.06);
+}
+
+.nf-comment-input::placeholder {
+    color: var(--text-muted);
 }
 
 .nf-comment-send {
-    width: 32px;
-    height: 32px;
+    width: 34px;
+    height: 34px;
     border-radius: 50%;
     border: none;
-    background: var(--primary);
+    background: linear-gradient(135deg, #3b6fcf, #60a5fa);
     color: #fff;
     cursor: pointer;
     font-size: 14px;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 150ms;
+    transition: all 200ms;
     flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(59, 111, 207, 0.3);
 }
 
 .nf-comment-send:hover:not(:disabled) {
-    background: var(--primary-dark);
-    transform: scale(1.05);
+    transform: scale(1.08);
+    box-shadow: 0 4px 12px rgba(59, 111, 207, 0.4);
 }
 
 .nf-comment-send:disabled {
-    opacity: 0.4;
+    opacity: 0.3;
     cursor: not-allowed;
+    box-shadow: none;
 }
 
 /* ── Contact cards ── 1-column, compact width */
