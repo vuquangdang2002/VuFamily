@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { localApi } from '../services/api';
 
 // Import brand icons
@@ -30,35 +30,76 @@ const BrandIcon = ({ type, size = 36 }) => (
     <img src={BRAND_ICONS[type]} alt={type} width={size} height={size} style={{ borderRadius: 8 }} />
 );
 
+// Helper: get auth token
+function getToken() {
+    try {
+        const session = JSON.parse(localStorage.getItem('vuFamilyAuth') || '{}');
+        return session.token || '';
+    } catch { return ''; }
+}
+
 export default function NewsfeedPage({ user, isAdmin, addToast }) {
-    const [posts, setPosts] = useState(() => localApi.getPosts());
+    const [posts, setPosts] = useState([]);
     const [contacts, setContacts] = useState(() => localApi.getContacts());
     const [newPost, setNewPost] = useState('');
     const [editingContact, setEditingContact] = useState(null);
     const [editUrl, setEditUrl] = useState('');
     const [qrModal, setQrModal] = useState(null);
     const [tab, setTab] = useState('posts');
+    const [loading, setLoading] = useState(false);
+
+    // Fetch posts from API
+    const fetchPosts = async () => {
+        setLoading(true);
+        try {
+            const res = await fetch('/api/posts');
+            const json = await res.json();
+            if (json.success) setPosts(json.data || []);
+        } catch (e) { console.error('Error fetching posts:', e); }
+        setLoading(false);
+    };
+
+    useEffect(() => { fetchPosts(); }, []);
 
     // Refresh data when switching tabs
     const switchTab = (t) => {
         setTab(t);
         if (t === 'contacts') setContacts(localApi.getContacts());
-        if (t === 'posts') setPosts(localApi.getPosts());
+        if (t === 'posts') fetchPosts();
     };
 
-    const handleCreatePost = () => {
+    const handleCreatePost = async () => {
         if (!newPost.trim()) return;
-        localApi.createPost({ content: newPost.trim() }, user);
-        setPosts(localApi.getPosts());
-        setNewPost('');
-        addToast('Đã đăng bài thành công!');
+        try {
+            const res = await fetch('/api/posts', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'x-auth-token': getToken() },
+                body: JSON.stringify({ content: newPost.trim() })
+            });
+            const json = await res.json();
+            if (json.success) {
+                setNewPost('');
+                addToast('Đã đăng bài thành công!');
+                fetchPosts();
+            } else {
+                addToast(json.error || 'Lỗi đăng bài');
+            }
+        } catch (e) { addToast('Lỗi kết nối server'); }
     };
 
-    const handleDeletePost = (id) => {
+    const handleDeletePost = async (id) => {
         if (!confirm('Xóa bài đăng này?')) return;
-        localApi.deletePost(id);
-        setPosts(localApi.getPosts());
-        addToast('Đã xóa bài đăng.');
+        try {
+            const res = await fetch(`/api/posts/${id}`, {
+                method: 'DELETE',
+                headers: { 'x-auth-token': getToken() }
+            });
+            const json = await res.json();
+            if (json.success) {
+                addToast('Đã xóa bài đăng.');
+                fetchPosts();
+            }
+        } catch (e) { addToast('Lỗi xóa bài'); }
     };
 
     const handleStartEdit = (c) => {
@@ -127,11 +168,11 @@ export default function NewsfeedPage({ user, isAdmin, addToast }) {
                                         <div className="nf-post-header">
                                             <div className="nf-post-author">
                                                 <span className="nf-author-avatar">
-                                                    {post.authorRole === 'admin' ? '👑' : '👤'}
+                                                    {(post.author_role || post.authorRole) === 'admin' ? '👑' : '👤'}
                                                 </span>
                                                 <div>
                                                     <div className="nf-author-name">{post.author}</div>
-                                                    <div className="nf-post-time">{timeAgo(post.createdAt)}</div>
+                                                    <div className="nf-post-time">{timeAgo(post.created_at || post.createdAt)}</div>
                                                 </div>
                                             </div>
                                             {isAdmin && (

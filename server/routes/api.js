@@ -78,4 +78,36 @@ router.post('/requests/:id/reject', authenticate, requireAdmin, async (req, res)
     } catch (e) { res.status(500).json({ success: false, error: e.message }); }
 });
 
+// ─── Posts (Bảng tin - shared newsfeed) ───
+const PostModel = require('../models/Post');
+
+router.get('/posts', async (req, res) => {
+    try {
+        const data = await PostModel.getAll();
+        res.json({ success: true, data });
+    } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+router.post('/posts', authenticate, async (req, res) => {
+    try {
+        const { content } = req.body;
+        if (!content || !content.trim()) return res.status(400).json({ success: false, error: 'Nội dung không được trống' });
+        const post = await PostModel.create(
+            content.trim(),
+            req.user.display_name || req.user.username,
+            req.user.role,
+            req.user.id
+        );
+        res.status(201).json({ success: true, data: post });
+    } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+router.delete('/posts/:id', authenticate, requireAdmin, async (req, res) => {
+    try {
+        await PostModel.delete(req.params.id);
+        res.json({ success: true, message: 'Đã xóa bài đăng' });
+    } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
 module.exports = router;
+

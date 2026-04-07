@@ -88,6 +88,16 @@ CREATE TABLE IF NOT EXISTS update_requests (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- 7. POSTS (Bảng tin dòng họ)
+CREATE TABLE IF NOT EXISTS posts (
+  id SERIAL PRIMARY KEY,
+  content TEXT NOT NULL,
+  author TEXT NOT NULL,
+  author_role TEXT DEFAULT 'viewer',
+  user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- ═══════════════════════════════════════════
 -- INDEXES
 -- ═══════════════════════════════════════════
@@ -99,6 +109,7 @@ CREATE INDEX IF NOT EXISTS idx_achievements_member ON achievements(member_id);
 CREATE INDEX IF NOT EXISTS idx_events_member ON events(member_id);
 CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
 CREATE INDEX IF NOT EXISTS idx_update_requests_status ON update_requests(status);
+CREATE INDEX IF NOT EXISTS idx_posts_created ON posts(created_at DESC);
 
 -- ═══════════════════════════════════════════
 -- SEED DATA: Family metadata
@@ -194,3 +205,6 @@ DROP POLICY IF EXISTS "Service role full access" ON update_requests;
 CREATE POLICY "Service role full access" ON update_requests FOR ALL USING (true) WITH CHECK (true);
 DROP POLICY IF EXISTS "Service role full access" ON family_meta;
 CREATE POLICY "Service role full access" ON family_meta FOR ALL USING (true) WITH CHECK (true);
+ALTER TABLE posts ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Service role full access" ON posts;
+CREATE POLICY "Service role full access" ON posts FOR ALL USING (true) WITH CHECK (true);
