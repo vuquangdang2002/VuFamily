@@ -48,6 +48,8 @@ export default function App() {
     const [tempPwd, setTempPwd] = useState('');
     const [newPwd, setNewPwd] = useState('');
     const [confirmNewPwd, setConfirmNewPwd] = useState('');
+    const [showNewPwd, setShowNewPwd] = useState(false);
+    const [showConfirmPwd, setShowConfirmPwd] = useState(false);
 
     // Toast notifications
     const [toasts, setToasts] = useState([]);
@@ -171,6 +173,13 @@ export default function App() {
 
     const handleForceChangePassword = async () => {
         if (!newPwd || !confirmNewPwd) { addToast('Vui lòng nhập đầy đủ mật khẩu mới', 'error'); return; }
+        
+        const strongRegex = new RegExp("^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\\$%\\^&\\*])(?=.{8,})");
+        if (!strongRegex.test(newPwd)) {
+            addToast('Mật khẩu phải từ 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt (!@#$)', 'error');
+            return;
+        }
+        
         if (newPwd !== confirmNewPwd) { addToast('Mật khẩu nhập lại không khớp', 'error'); return; }
 
         try {
@@ -431,15 +440,25 @@ export default function App() {
                         <div className="modal-body">
                             <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 16 }}>
                                 Đây là mật khẩu tạo tự động. Vì lý do bảo mật, bạn bắt buộc phải tạo mật khẩu riêng biệt trước khi tiếp tục.
+                                <br/><br/>
+                                <span style={{color: '#eab308'}}>⚠️ Yêu cầu: Ít nhất 8 ký tự, bao gồm chữ HOA, chữ thường, số và ký tự đặc biệt (!@#$...).</span>
                             </p>
-                            <div style={{ marginBottom: 12 }}>
-                                <input className="form-input" type="password" placeholder="Mật khẩu mới..."
-                                    value={newPwd} onChange={e => setNewPwd(e.target.value)} autoFocus />
+                            <div style={{ marginBottom: 12, position: 'relative' }}>
+                                <input className="form-input" type={showNewPwd ? "text" : "password"} placeholder="Mật khẩu mới..."
+                                    value={newPwd} onChange={e => setNewPwd(e.target.value)} autoFocus style={{ paddingRight: 40 }} />
+                                <button type="button" onClick={() => setShowNewPwd(!showNewPwd)}
+                                    style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, opacity: 0.6, padding: 4 }}>
+                                    {showNewPwd ? '🙈' : '👁️'}
+                                </button>
                             </div>
-                            <div style={{ marginBottom: 16 }}>
-                                <input className="form-input" type="password" placeholder="Nhập lại mật khẩu mới..."
+                            <div style={{ marginBottom: 16, position: 'relative' }}>
+                                <input className="form-input" type={showConfirmPwd ? "text" : "password"} placeholder="Nhập lại mật khẩu mới..."
                                     value={confirmNewPwd} onChange={e => setConfirmNewPwd(e.target.value)}
-                                    onKeyDown={e => e.key === 'Enter' && handleForceChangePassword()} />
+                                    onKeyDown={e => e.key === 'Enter' && handleForceChangePassword()} style={{ paddingRight: 40 }} />
+                                <button type="button" onClick={() => setShowConfirmPwd(!showConfirmPwd)}
+                                    style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, opacity: 0.6, padding: 4 }}>
+                                    {showConfirmPwd ? '🙈' : '👁️'}
+                                </button>
                             </div>
                             <button className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }} onClick={handleForceChangePassword}>
                                 Xác nhận đổi mật khẩu

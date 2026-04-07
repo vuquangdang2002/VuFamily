@@ -17,15 +17,15 @@ app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve static files from public/
-app.use(express.static(path.join(__dirname, '..', 'public')));
+// Serve static files from client/dist/ (built Vite app)
+app.use(express.static(path.join(__dirname, '..', 'client', 'dist')));
 
 // API routes
 app.use('/api', apiRoutes);
 
 // Serve SPA for all other routes
 app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
+    res.sendFile(path.join(__dirname, '..', 'client', 'dist', 'index.html'));
 });
 
 // Error handling
