@@ -238,5 +238,17 @@ CREATE TABLE IF NOT EXISTS reactions (
 );
 CREATE INDEX IF NOT EXISTS idx_reactions_post ON reactions(post_id);
 ALTER TABLE reactions ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Service role full access" ON reactions;
 CREATE POLICY "Service role full access" ON reactions FOR ALL USING (true) WITH CHECK (true);
+
+-- ═══════════════════════════════════════════
+-- UPGRADE SCRIPTS (For existing databases)
+-- ═══════════════════════════════════════════
+-- Ensure new columns are added to existing users table
+ALTER TABLE users 
+ADD COLUMN IF NOT EXISTS email TEXT DEFAULT '',
+ADD COLUMN IF NOT EXISTS phone TEXT DEFAULT '',
+ADD COLUMN IF NOT EXISTS avatar TEXT DEFAULT '';
+
+-- Force Supabase to reload schema cache to recognize new columns
+NOTIFY pgrst, 'reload schema';
+
