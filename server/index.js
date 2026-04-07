@@ -32,23 +32,27 @@ app.get('*', (req, res) => {
 app.use(notFound);
 app.use(errorHandler);
 
-// Start server
-app.listen(config.port, () => {
-    console.log('');
-    console.log('🏛️  ═══════════════════════════════════════');
-    console.log('    GIA PHẢ - Family Genealogy Server');
-    console.log('    ═══════════════════════════════════════');
-    console.log(`    🌐 http://localhost:${config.port}`);
-    console.log(`    📁 Database: ${config.dbPath}`);
-    console.log(`    🔧 Environment: ${config.env}`);
-    console.log('    ═══════════════════════════════════════');
-    console.log('');
-});
+// Start server only if running directly
+if (require.main === module) {
+    app.listen(config.port, () => {
+        console.log('');
+        console.log('🏛️  ═══════════════════════════════════════');
+        console.log('    GIA PHẢ - Family Genealogy Server');
+        console.log('    ═══════════════════════════════════════');
+        console.log(`    🌐 http://localhost:${config.port}`);
+        console.log(`    📁 Database: ${config.dbPath || 'Supabase PostgreSQL'}`);
+        console.log(`    🔧 Environment: ${config.env}`);
+        console.log('    ═══════════════════════════════════════');
+        console.log('');
+    });
 
-// Graceful shutdown
-process.on('SIGTERM', () => {
-    console.log('👋 Đang tắt server...');
-    const { closeAll } = require('../database/connection');
-    closeAll();
-    process.exit(0);
-});
+    // Graceful shutdown
+    process.on('SIGTERM', () => {
+        console.log('👋 Đang tắt server...');
+        process.exit(0);
+    });
+}
+
+// Export cho Vercel Serverless Function
+module.exports = app;
+
