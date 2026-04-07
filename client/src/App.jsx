@@ -50,6 +50,7 @@ export default function App() {
     const [confirmNewPwd, setConfirmNewPwd] = useState('');
     const [showNewPwd, setShowNewPwd] = useState(false);
     const [showConfirmPwd, setShowConfirmPwd] = useState(false);
+    const [forceChangeError, setForceChangeError] = useState('');
 
     // Toast notifications
     const [toasts, setToasts] = useState([]);
@@ -66,9 +67,15 @@ export default function App() {
         const autoPw = urlParams.get('resetPw');
 
         if (autoUser && autoPw) {
-            handleLogin(autoUser, autoPw, true).then(() => {
-                window.history.replaceState({}, document.title, window.location.pathname);
-            }).finally(() => setAuthChecked(true));
+            handleLogin(autoUser, autoPw, true)
+                .then(() => {
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                })
+                .catch(() => {
+                    // if it fails, clear the URL as well so they are not stuck
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                })
+                .finally(() => setAuthChecked(true));
             return;
         }
 
@@ -172,15 +179,16 @@ export default function App() {
     };
 
     const handleForceChangePassword = async () => {
-        if (!newPwd || !confirmNewPwd) { addToast('Vui lòng nhập đầy đủ mật khẩu mới', 'error'); return; }
+        setForceChangeError('');
+        if (!newPwd || !confirmNewPwd) { setForceChangeError('Vui lòng nhập đầy đủ mật khẩu mới'); return; }
         
         const strongRegex = new RegExp("^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\\$%\\^&\\*])(?=.{8,})");
         if (!strongRegex.test(newPwd)) {
-            addToast('Mật khẩu phải từ 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt (!@#$)', 'error');
+            setForceChangeError('Mật khẩu yếu, chưa đủ bảo mật. Hãy xem lại yêu cầu ở trên.');
             return;
         }
         
-        if (newPwd !== confirmNewPwd) { addToast('Mật khẩu nhập lại không khớp', 'error'); return; }
+        if (newPwd !== confirmNewPwd) { setForceChangeError('Mật khẩu nhập lại không khớp'); return; }
 
         try {
             const res = await fetch(`${API_BASE}/auth/change-password`, {
@@ -195,11 +203,12 @@ export default function App() {
                 setNewPwd('');
                 setConfirmNewPwd('');
                 setTempPwd('');
+                setForceChangeError('');
             } else {
-                addToast(json.error || 'Lỗi đổi mật khẩu', 'error');
+                setForceChangeError(json.error || 'Lỗi đổi mật khẩu');
             }
         } catch (e) {
-            addToast('Lỗi kết nối khi đổi mật khẩu', 'error');
+            setForceChangeError('Lỗi kết nối khi đổi mật khẩu');
         }
     };
 
@@ -443,6 +452,9 @@ export default function App() {
                                 <br/><br/>
                                 <span style={{color: '#eab308'}}>⚠️ Yêu cầu: Ít nhất 8 ký tự, bao gồm chữ HOA, chữ thường, số và ký tự đặc biệt (!@#$...).</span>
                             </p>
+                            
+                            {forceChangeError && <div className="login-error" style={{ marginBottom: 12 }}>⚠️ {forceChangeError}</div>}
+                            
                             <div style={{ marginBottom: 12, position: 'relative' }}>
                                 <input className="form-input" type={showNewPwd ? "text" : "password"} placeholder="Mật khẩu mới..."
                                     value={newPwd} onChange={e => setNewPwd(e.target.value)} autoFocus style={{ paddingRight: 40 }} />
