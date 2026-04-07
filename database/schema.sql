@@ -238,6 +238,7 @@ CREATE TABLE IF NOT EXISTS reactions (
 );
 CREATE INDEX IF NOT EXISTS idx_reactions_post ON reactions(post_id);
 ALTER TABLE reactions ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Service role full access" ON reactions;
 CREATE POLICY "Service role full access" ON reactions FOR ALL USING (true) WITH CHECK (true);
 
 -- ═══════════════════════════════════════════
