@@ -16,7 +16,7 @@ import Header from './shared/components/Header';
 import Toolbar from './shared/components/Toolbar';
 import Toast from './shared/components/Toast';
 import { useTheme } from './shared/components/ThemeToggle';
-import { localApi } from './shared/services/api';
+import { api, localApi } from './shared/services/api';
 
 const AUTH_KEY = 'vuFamilyAuth';
 const API_BASE = '/api';
@@ -28,7 +28,8 @@ function getStoredAuth() {
 export default function App() {
     const [user, setUser] = useState(null);
     const [authChecked, setAuthChecked] = useState(false);
-    const [members, setMembers] = useState(() => localApi.getMembers());
+    const [members, setMembers] = useState([]);
+    const [isLoadingMembers, setIsLoadingMembers] = useState(true);
     const [selected, setSelected] = useState(null);
     const [detailOpen, setDetailOpen] = useState(false);
     const [searchResults, setSearchResults] = useState([]);
@@ -245,10 +246,26 @@ export default function App() {
 
     const isAdmin = user?.role === 'admin';
 
-    const refresh = () => {
-        setMembers(localApi.getMembers());
-        if (selected) setSelected(localApi.getMember(selected.id));
+    const refresh = async () => {
+        try {
+            const res = await api.getMembers();
+            if (res.success) {
+                setMembers(res.data || []);
+                if (selected) {
+                    const fresh = res.data.find(m => m.id === selected.id);
+                    if (fresh) setSelected(fresh);
+                }
+            }
+        } catch(e) {
+            addToast('Lỗi tải gia phả từ máy chủ', 'error');
+        } finally {
+            setIsLoadingMembers(false);
+        }
     };
+
+    useEffect(() => {
+        refresh();
+    }, []);
 
     // ─── Tree page handlers ───
     const stats = { totalMembers: members.length, totalGenerations: Math.max(...members.map(m => m.generation || 0), 0) };
@@ -262,40 +279,50 @@ export default function App() {
     const closeModal = () => setModalOpen(false);
 
     // ─── Form Submit: Admin → direct, Viewer → request ───
-    const handleFormSubmit = (data) => {
-        if (data.id) {
-            if (isAdmin) {
-                localApi.update(data.id, data, user);
-                addToast(`Đã cập nhật thông tin "${data.name}" thành công!`);
+    const handleFormSubmit = async (data) => {
+        try {
+            if (data.id) {
+                if (isAdmin) {
+                    await api.updateMember(data.id, data);
+                    addToast(`Đã cập nhật thông tin "${data.name}" thành công!`);
+                } else {
+                    const result = await api.submitRequest(data.id, JSON.stringify(data), 'Chỉnh sửa thành viên');
+                    addToast(result.message || 'Đã gửi yêu cầu', result.success ? 'success' : 'error');
+                }
             } else {
-                const result = localApi.submitRequest(data.id, data, user);
-                addToast(result.message, result.success ? 'success' : 'error');
+                if (!isAdmin) { addToast('Chỉ Admin mới có quyền thêm thành viên mới.', 'error'); return; }
+                const res = await api.createMember(data);
+                if (data.newAchievements?.length > 0 && res.data?.id) {
+                    for (const a of data.newAchievements) {
+                        await api.addAchievement({ ...a, memberId: res.data.id });
+                    }
+                }
+                addToast(`Đã thêm thành viên "${data.name}" thành công!`);
             }
-        } else {
-            if (!isAdmin) { addToast('Chỉ Admin mới có quyền thêm thành viên mới.', 'error'); return; }
-            const newM = localApi.create(data, user);
-            if (data.newAchievements?.length > 0) {
-                data.newAchievements.forEach(a => localApi.addAchievement({ ...a, memberId: newM.id }));
-            }
-            addToast(`Đã thêm thành viên "${newM.name}" thành công!`);
+            await refresh();
+            closeModal();
+        } catch (e) {
+            addToast(e.message || 'Lỗi khi lưu thông tin', 'error');
         }
-        refresh();
-        closeModal();
     };
 
-    const handleDelete = (id) => {
+    const handleDelete = async (id) => {
         if (!isAdmin) { addToast('Chỉ Admin mới có quyền xóa thành viên.', 'error'); return; }
         const m = members.find(x => x.id === id);
         if (!m) return;
         const children = members.filter(x => x.parentId === id);
         const msg = children.length > 0
-            ? `Xóa "${m.name}"?\n\n⚠️ ${children.length} con sẽ mất liên kết cha/mẹ.\nThao tác này sẽ được ghi lại trong lịch sử.`
-            : `Xóa "${m.name}"?\n\nThao tác này sẽ được ghi lại trong lịch sử.`;
+            ? `Xóa "${m.name}"?\n\n⚠️ ${children.length} con sẽ mất liên kết cha/mẹ.\nThao tác này là vĩnh viễn (không thể hoàn tác).`
+            : `Xóa "${m.name}"?\n\nThao tác này là vĩnh viễn (không thể hoàn tác).`;
         if (confirm(msg)) {
-            localApi.delete(id, user);
-            closeDetail();
-            refresh();
-            addToast(`Đã xóa "${m.name}". Có thể hoàn tác trong Lịch sử.`);
+            try {
+                await api.deleteMember(id);
+                closeDetail();
+                await refresh();
+                addToast(`Đã xóa "${m.name}".`);
+            } catch (e) {
+                addToast(e.message || 'Lỗi khi xóa', 'error');
+            }
         }
     };
 
@@ -409,7 +436,7 @@ export default function App() {
         switch (activePage) {
             case 'tree':
                 return (
-                    <div className="tree-page">
+                    <div className="tree-page relative">
                         <Header stats={stats} onSearch={handleSearch} searchResults={searchResults} onSelectResult={handleSelect}
                             onAddRoot={isAdmin ? () => openAddModal(null) : null}
                             onExport={isAdmin ? handleExport : null}
@@ -417,6 +444,14 @@ export default function App() {
                             onReset={isAdmin ? handleReset : null}
                             isAdmin={isAdmin} />
                         <Toolbar theme={theme} setTheme={setTheme} />
+                        
+                        {isLoadingMembers && (
+                            <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-slate-900/40 backdrop-blur-sm rounded-xl m-4">
+                                <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4 shadow-lg"></div>
+                                <span className="text-white font-medium text-lg drop-shadow-md">Đang tải gia phả...</span>
+                            </div>
+                        )}
+                        
                         <TreeCanvas members={members} selectedId={selected?.id}
                             searchResultIds={searchResults.map(r => r.id)}
                             onSelectMember={handleSelect} onDeselect={closeDetail} />

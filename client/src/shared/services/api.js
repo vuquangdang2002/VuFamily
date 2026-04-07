@@ -5,20 +5,57 @@ import { ganZhiToViet } from '../utils/vietLunar.js';
 const API_BASE = '/api';
 
 async function request(url, options = {}) {
+    let headers = { 'Content-Type': 'application/json', ...options.headers };
+    try {
+        const auth = JSON.parse(localStorage.getItem('vuFamilyAuth'));
+        if (auth && auth.token) headers['x-auth-token'] = auth.token;
+    } catch (e) {}
+
     const res = await fetch(`${API_BASE}${url}`, {
-        headers: { 'Content-Type': 'application/json', ...options.headers },
         ...options,
+        headers,
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Lỗi server');
     return data;
 }
 
+export const mapToCamelCase = (m) => ({
+    ...m,
+    id: String(m.id),
+    birthDate: m.birth_date,
+    birthTime: m.birth_time,
+    deathDate: m.death_date,
+    deathDateLunar: m.death_date_lunar,
+    birthPlace: m.birth_place,
+    deathPlace: m.death_place,
+    birthOrder: m.birth_order,
+    childType: m.child_type,
+    parentId: m.parent_id ? String(m.parent_id) : null,
+    spouseId: m.spouse_id ? String(m.spouse_id) : null,
+});
+
 export const api = {
-    getMembers: () => request('/members'),
-    getMember: (id) => request(`/members/${id}`),
-    searchMembers: (q) => request(`/members/search?q=${encodeURIComponent(q)}`),
-    getChildren: (id) => request(`/members/${id}/children`),
+    getMembers: async () => {
+        const res = await request('/members');
+        if (res.success) res.data = res.data.map(mapToCamelCase);
+        return res;
+    },
+    getMember: async (id) => {
+        const res = await request(`/members/${id}`);
+        if (res.success && res.data) res.data = mapToCamelCase(res.data);
+        return res;
+    },
+    searchMembers: async (q) => {
+        const res = await request(`/members/search?q=${encodeURIComponent(q)}`);
+        if (res.success) res.data = res.data.map(mapToCamelCase);
+        return res;
+    },
+    getChildren: async (id) => {
+        const res = await request(`/members/${id}/children`);
+        if (res.success) res.data = res.data.map(mapToCamelCase);
+        return res;
+    },
     createMember: (data) => request('/members', { method: 'POST', body: JSON.stringify(data) }),
     updateMember: (id, data) => request(`/members/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
     deleteMember: (id) => request(`/members/${id}`, { method: 'DELETE' }),
@@ -26,6 +63,11 @@ export const api = {
     getAchievements: (id) => request(`/members/${id}/achievements`),
     addAchievement: (data) => request('/achievements', { method: 'POST', body: JSON.stringify(data) }),
     deleteAchievement: (id) => request(`/achievements/${id}`, { method: 'DELETE' }),
+    // Requests
+    submitRequest: (memberId, changes, note) => request('/requests', { method: 'POST', body: JSON.stringify({ memberId, changes, note }) }),
+    getPendingRequests: () => request('/requests/pending'),
+    approveRequest: (id) => request(`/requests/${id}/approve`, { method: 'POST' }),
+    rejectRequest: (id, reason) => request(`/requests/${id}/reject`, { method: 'POST', body: JSON.stringify({ rejectReason: reason }) }),
 };
 
 // ====================================

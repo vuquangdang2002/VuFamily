@@ -147,6 +147,7 @@ async function updateProfile(req, res) {
         
         res.json({ success: true, data: { id: data.id, username: data.username, displayName: data.display_name, email: data.email, phone: data.phone, avatar: data.avatar, role: data.role } });
     } catch (err) {
+        console.error('[DangVQ Log] [API: updateProfile] Error:', err.message);
         res.status(500).json({ success: false, error: err.message || 'Lỗi cập nhật thông tin cá nhân' });
     }
 }
