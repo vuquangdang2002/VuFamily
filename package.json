@@ -1,0 +1,36 @@
+{
+  "name": "vu-family-genealogy",
+  "version": "1.0.0",
+  "description": "Gia Phả - Ứng dụng web Gia phả dòng họ Vũ",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "server": "nodemon server/index.js",
+    "client": "cd client && npm run dev",
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "build": "cd client && npm run build",
+    "db:init": "node database/init.js",
+    "db:hash": "node scripts/generate-hashes.js",
+    "install:all": "npm install && cd client && npm install",
+    "vercel-build": "cd client && npm install && npm run build"
+  },
+  "keywords": [
+    "genealogy",
+    "family-tree",
+    "gia-pha"
+  ],
+  "author": "Vũ Family",
+  "license": "MIT",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.101.1",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "morgan": "^1.10.0"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "nodemon": "^3.0.2"
+  }
+}

@@ -1,0 +1,7 @@
+node_modules/
+client/node_modules/
+database/*.db
+.env
+.vercel
+client/dist/
+public/
