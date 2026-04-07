@@ -2,6 +2,32 @@
 const { supabase } = require('../../database/supabase');
 
 class UpdateRequestModel {
+    static async mapRequestsWithNames(requests) {
+        if (!requests || requests.length === 0) return [];
+        const [{ data: users }, { data: members }] = await Promise.all([
+            supabase.from('users').select('id, username, display_name'),
+            supabase.from('members').select('id, name')
+        ]);
+        return requests.map(req => {
+            const user = users?.find(u => u.id === req.user_id);
+            const reviewer = users?.find(u => u.id === req.reviewed_by);
+            const member = members?.find(m => String(m.id) === String(req.member_id));
+            return {
+                id: req.id,
+                memberName: member ? member.name : `ID #${req.member_id}`,
+                requestedBy: user ? user.username : 'Unknown',
+                requestedByName: user ? user.display_name : 'Unknown',
+                requestedAt: req.created_at,
+                changes: typeof req.changes === 'string' ? JSON.parse(req.changes) : req.changes,
+                note: req.note,
+                status: req.status,
+                rejectReason: req.reject_reason,
+                reviewedBy: reviewer ? reviewer.display_name : null,
+                reviewedAt: req.reviewed_at
+            };
+        });
+    }
+
     static async getAll(status = null) {
         let query = supabase
             .from('update_requests')
@@ -14,7 +40,7 @@ class UpdateRequestModel {
 
         const { data, error } = await query;
         if (error) throw new Error(error.message);
-        return data || [];
+        return this.mapRequestsWithNames(data);
     }
 
     static async getByUser(userId) {
@@ -24,7 +50,7 @@ class UpdateRequestModel {
             .eq('user_id', parseInt(userId))
             .order('created_at', { ascending: false });
         if (error) throw new Error(error.message);
-        return data || [];
+        return this.mapRequestsWithNames(data);
     }
 
     static async create(userId, memberId, changes, note) {

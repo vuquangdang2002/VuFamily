@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { localApi, formatDate } from '../../shared/services/api';
+import { useState, useEffect } from 'react';
+import { api, localApi, formatDate } from '../../shared/services/api';
 
 const FIELD_LABELS = {
     name: 'Họ tên', gender: 'Giới tính', birthDate: 'Ngày sinh', birthTime: 'Giờ sinh',
@@ -62,30 +62,48 @@ function ChangesView({ before, changes }) {
 export default function RequestsPage({ user, onRefresh, addToast }) {
     const isAdmin = user?.role === 'admin';
     const [filter, setFilter] = useState('pending');
-    const [requests, setRequests] = useState(() => {
-        const all = localApi.getAllRequests();
-        return isAdmin ? all : all.filter(r => r.requestedBy === user?.username);
-    });
+    const [requests, setRequests] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
 
-    const filtered = filter === 'all' ? requests : requests.filter(r => r.status === filter);
-
-    const handleApprove = (req) => {
-        if (!confirm(`Duyệt yêu cầu cập nhật "${req.memberName}" từ ${req.requestedByName}?\n\nCác thay đổi sẽ được áp dụng ngay.`)) return;
-        const result = localApi.approveRequest(req.id, user);
-        addToast(result.message, result.success ? 'success' : 'error');
-        if (result.success) {
-            setRequests(localApi.getAllRequests());
-            if (onRefresh) onRefresh();
+    const fetchRequests = async () => {
+        try {
+            setIsLoading(true);
+            const res = await api.getAllRequests();
+            if (res.success) setRequests(res.data || []);
+        } catch (e) {
+            addToast('Lỗi khi tải danh sách yêu cầu', 'error');
+        } finally {
+            setIsLoading(false);
         }
     };
 
-    const handleReject = (req) => {
+    useEffect(() => {
+        fetchRequests();
+    }, []);
+
+    const filtered = filter === 'all' ? requests : requests.filter(r => r.status === filter);
+
+    const handleApprove = async (req) => {
+        if (!confirm(`Duyệt yêu cầu cập nhật "${req.memberName}" từ ${req.requestedByName}?\n\nCác thay đổi sẽ được áp dụng ngay.`)) return;
+        try {
+            const result = await api.approveRequest(req.id);
+            addToast('Đã duyệt yêu cầu thành công', 'success');
+            await fetchRequests();
+            if (onRefresh) onRefresh();
+        } catch(e) {
+            addToast(e.message || 'Lỗi khi duyệt', 'error');
+        }
+    };
+
+    const handleReject = async (req) => {
         const reason = prompt(`Từ chối yêu cầu của ${req.requestedByName}?\n\nNhập lý do (không bắt buộc):`);
         if (reason === null) return; // User pressed Cancel
-        const result = localApi.rejectRequest(req.id, user, reason);
-        addToast(result.message, result.success ? 'success' : 'error');
-        if (result.success) {
-            setRequests(localApi.getAllRequests());
+        try {
+            const result = await api.rejectRequest(req.id, reason);
+            addToast('Đã từ chối yêu cầu', 'success');
+            await fetchRequests();
+        } catch(e) {
+            addToast(e.message || 'Lỗi khi từ chối', 'error');
         }
     };
 
@@ -114,8 +132,13 @@ export default function RequestsPage({ user, onRefresh, addToast }) {
                     </button>
                 </div>
 
-                <div className="side-panel-body">
-                    {filtered.length === 0 ? (
+                <div className="side-panel-body relative min-h-[200px]">
+                    {isLoading ? (
+                        <div className="flex flex-col items-center justify-center p-12 text-gray-500">
+                            <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+                            Vui lòng chờ...
+                        </div>
+                    ) : filtered.length === 0 ? (
                         <div className="empty-state">
                             <span style={{ fontSize: 40 }}>{filter === 'pending' ? '✅' : '📭'}</span>
                             <p>{filter === 'pending' ? 'Không có yêu cầu nào đang chờ duyệt.' : 'Không có yêu cầu nào.'}</p>

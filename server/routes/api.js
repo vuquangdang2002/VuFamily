@@ -76,14 +76,14 @@ router.get('/requests', authenticate, async (req, res) => {
             ? await UpdateRequestModel.getAll()
             : await UpdateRequestModel.getByUser(req.user.id);
         res.json({ success: true, data });
-    } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+    } catch (e) { console.error('[DangVQ Log] [API: getRequests] Error:', e.message); res.status(500).json({ success: false, error: e.message }); }
 });
 
 router.get('/requests/pending', authenticate, requireAdmin, async (req, res) => {
     try {
         const data = await UpdateRequestModel.getAll('pending');
         res.json({ success: true, data });
-    } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+    } catch (e) { console.error('[DangVQ Log] [API: getPendingRequests] Error:', e.message); res.status(500).json({ success: false, error: e.message }); }
 });
 
 router.post('/requests', authenticate, async (req, res) => {
@@ -92,7 +92,7 @@ router.post('/requests', authenticate, async (req, res) => {
         if (!memberId || !changes) return res.status(400).json({ success: false, error: 'Thiếu thông tin' });
         const id = await UpdateRequestModel.create(req.user.id, memberId, changes, note);
         res.status(201).json({ success: true, data: { id }, message: 'Đã gửi yêu cầu cập nhật. Vui lòng chờ Admin duyệt.' });
-    } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+    } catch (e) { console.error('[DangVQ Log] [API: createRequest] Error:', e.message); res.status(500).json({ success: false, error: e.message }); }
 });
 
 router.post('/requests/:id/approve', authenticate, requireAdmin, async (req, res) => {
@@ -100,14 +100,14 @@ router.post('/requests/:id/approve', authenticate, requireAdmin, async (req, res
         const result = await UpdateRequestModel.approve(req.params.id, req.user.id);
         if (!result) return res.status(404).json({ success: false, error: 'Không tìm thấy yêu cầu' });
         res.json({ success: true, message: 'Đã duyệt yêu cầu cập nhật' });
-    } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+    } catch (e) { console.error(`[DangVQ Log] [API: approveRequest ${req.params.id}] Error:`, e.message); res.status(500).json({ success: false, error: e.message }); }
 });
 
 router.post('/requests/:id/reject', authenticate, requireAdmin, async (req, res) => {
     try {
-        await UpdateRequestModel.reject(req.params.id, req.user.id, req.body.reason);
+        await UpdateRequestModel.reject(req.params.id, req.user.id, req.body.rejectReason || req.body.reason);
         res.json({ success: true, message: 'Đã từ chối yêu cầu' });
-    } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+    } catch (e) { console.error(`[DangVQ Log] [API: rejectRequest ${req.params.id}] Error:`, e.message); res.status(500).json({ success: false, error: e.message }); }
 });
 
 // ─── Posts (Bảng tin - shared newsfeed) ───
