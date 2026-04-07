@@ -282,12 +282,30 @@ export default function App() {
     const handleFormSubmit = async (data) => {
         try {
             if (data.id) {
+                const original = members.find(m => m.id === data.id) || {};
+                const skipFields = ['id', 'spouseId', 'parentId', 'newAchievements'];
+                const keys = Object.keys(data).filter(k => !skipFields.includes(k));
+                let hasChanges = false;
+                const actualChanges = {};
+                for (const k of keys) {
+                    if (String(original[k] ?? '') !== String(data[k] ?? '')) {
+                        hasChanges = true;
+                        actualChanges[k] = data[k];
+                    }
+                }
+
+                if (!hasChanges) {
+                    addToast('Không có thông tin nào được thay đổi.', 'error');
+                    closeModal();
+                    return;
+                }
+
                 if (isAdmin) {
-                    const result = await api.submitRequest(data.id, data, 'Cập nhật trực tiếp bởi Admin');
+                    const result = await api.submitRequest(data.id, actualChanges, 'Cập nhật trực tiếp bởi Admin');
                     await api.approveRequest(result.data.id);
                     addToast(`Đã cập nhật thông tin "${data.name}" thành công!`);
                 } else {
-                    const result = await api.submitRequest(data.id, data, 'Chỉnh sửa thành viên');
+                    const result = await api.submitRequest(data.id, actualChanges, 'Chỉnh sửa thành viên');
                     addToast(result.message || 'Đã gửi yêu cầu', result.success ? 'success' : 'error');
                 }
             } else {
@@ -467,9 +485,9 @@ export default function App() {
             case 'calendar':
                 return <CalendarPage members={members} />;
             case 'history':
-                return <HistoryPage isAdmin={isAdmin} user={user} onRefresh={refresh} addToast={addToast} />;
+                return <HistoryPage isAdmin={isAdmin} user={user} onRefresh={refresh} addToast={addToast} members={members} />;
             case 'requests':
-                return <RequestsPage user={user} onRefresh={refresh} addToast={addToast} />;
+                return <RequestsPage user={user} members={members} onRefresh={refresh} addToast={addToast} />;
             case 'accounts':
                 return <AccountsPage addToast={addToast} />;
             default:

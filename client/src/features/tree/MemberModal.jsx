@@ -109,6 +109,19 @@ export default function MemberModal({ isOpen, onClose, onSubmit, editMember, par
         ? `Sửa: ${editMember.name}`
         : spouseOfId ? 'Thêm vợ/chồng' : parentId ? 'Thêm con' : 'Thêm thành viên mới';
 
+    const hasChanges = () => {
+        if (!editMember) return true;
+        if (achievements.length > 0) return true; // Though normally disabled for edit
+        const skipFields = ['id', 'spouseId', 'parentId'];
+        for (const k in form) {
+            if (skipFields.includes(k)) continue;
+            if (String(form[k] ?? '') !== String(editMember[k] ?? '')) return true;
+        }
+        return false;
+    };
+
+    const isSaveDisabled = !hasChanges() || !form.name.trim();
+
     return (
         <div className={`modal-overlay ${isOpen ? 'open' : ''}`} onClick={e => e.target === e.currentTarget && onClose()}>
             <div className="modal" style={{ maxHeight: '90vh' }}>
@@ -312,7 +325,7 @@ export default function MemberModal({ isOpen, onClose, onSubmit, editMember, par
 
                     <div className="modal-footer">
                         <button type="button" className="btn" onClick={onClose}>Hủy</button>
-                        <button type="submit" className="btn btn-primary">
+                        <button type="submit" className="btn btn-primary" disabled={isSaveDisabled} style={{ opacity: isSaveDisabled ? 0.5 : 1, cursor: isSaveDisabled ? 'not-allowed' : 'pointer' }}>
                             {editMember ? '💾 Lưu thay đổi' : '＋ Thêm thành viên'}
                         </button>
                     </div>

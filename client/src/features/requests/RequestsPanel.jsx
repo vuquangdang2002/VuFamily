@@ -67,7 +67,7 @@ function ChangesView({ before, changes }) {
     );
 }
 
-export default function RequestsPage({ user, onRefresh, addToast }) {
+export default function RequestsPage({ user, onRefresh, addToast, members = [] }) {
     const isAdmin = user?.role === 'admin';
     const [filter, setFilter] = useState('pending');
     const [requests, setRequests] = useState([]);
@@ -171,7 +171,7 @@ export default function RequestsPage({ user, onRefresh, addToast }) {
                                         </div>
                                         {req.note && <div className="request-card-note">💬 {req.note}</div>}
 
-                                        <ChangesView before={req.before} changes={req.changes} />
+                                        <ChangesView before={members.find(m => String(m.id) === String(req.memberId))} changes={req.changes} />
 
                                         {req.status === 'pending' && (
                                             <div className="request-card-actions">

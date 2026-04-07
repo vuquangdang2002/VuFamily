@@ -28,15 +28,23 @@ function timeAgo(dateStr) {
 }
 
 function DiffView({ before, after }) {
-    if (!before && !after) return null;
-    const fields = new Set([...Object.keys(before || {}), ...Object.keys(after || {})]);
-    const skipFields = ['id', 'spouseId', 'parentId'];
+    let finalAfter = after;
+    if (typeof finalAfter === 'string') {
+        try { finalAfter = JSON.parse(finalAfter); } catch(e) {}
+    }
+    if (typeof finalAfter === 'string') {
+        try { finalAfter = JSON.parse(finalAfter); } catch(e) {}
+    }
+
+    if (!before && !finalAfter) return null;
+    const fields = new Set([...Object.keys(before || {}), ...Object.keys(finalAfter || {})]);
+    const skipFields = ['id', 'spouseId', 'parentId', 'newAchievements'];
     const changed = [];
     fields.forEach(f => {
         if (skipFields.includes(f)) return;
         const bv = before?.[f] ?? '';
-        const av = after?.[f] ?? '';
-        if (String(bv) !== String(av)) {
+        const av = finalAfter?.[f] ?? '';
+        if (String(bv) !== String(av) && String(av) !== '') {
             changed.push({ field: f, before: bv, after: av });
         }
     });
@@ -67,7 +75,7 @@ function DiffView({ before, after }) {
     );
 }
 
-export default function HistoryPage({ isAdmin, user, onRefresh, addToast }) {
+export default function HistoryPage({ isAdmin, user, onRefresh, addToast, members = [] }) {
     const [history, setHistory] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [expandedId, setExpandedId] = useState(null);
@@ -136,7 +144,7 @@ export default function HistoryPage({ isAdmin, user, onRefresh, addToast }) {
                                         </div>
                                         {isExpanded && (
                                             <div className="history-entry-details">
-                                                <DiffView before={{}} after={entry.changes} />
+                                                <DiffView before={members.find(m => String(m.id) === String(entry.memberId))} after={entry.changes} />
                                                 {isAdmin && (
                                                     <button className="btn btn-sm" style={{ marginTop: 8 }}
                                                         onClick={() => handleRevert(entry)}>

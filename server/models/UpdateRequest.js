@@ -14,6 +14,7 @@ class UpdateRequestModel {
             const member = members?.find(m => String(m.id) === String(req.member_id));
             return {
                 id: req.id,
+                memberId: req.member_id,
                 memberName: member ? member.name : `ID #${req.member_id}`,
                 requestedBy: user ? user.username : 'Unknown',
                 requestedByName: user ? user.display_name : 'Unknown',
