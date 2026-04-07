@@ -1,0 +1,8 @@
+node_modules
+server
+database
+scripts
+*.db
+.env
+.env.example
+README.md
