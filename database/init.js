@@ -228,7 +228,7 @@ async function init() {
     // Admin chính
     const dangvqHash = bcrypt.hashSync('test123', 10);
     accountsDb.run('INSERT INTO users (username, password, display_name, role) VALUES (?, ?, ?, ?)',
-      ['dangvq', dangvqHash, 'Vũ Quang Đăng', 'admin']);
+      ['dangvq', dangvqHash, 'Vũ Quang Đáng', 'admin']);
     // Admin phụ
     const adminHash = bcrypt.hashSync('admin123', 10);
     accountsDb.run('INSERT INTO users (username, password, display_name, role) VALUES (?, ?, ?, ?)',

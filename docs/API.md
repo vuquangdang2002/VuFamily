@@ -20,7 +20,7 @@
   "data": {
     "id": 1,
     "username": "dangvq",
-    "displayName": "Vũ Quang Đăng",
+    "displayName": "Vũ Quang Đáng",
     "role": "admin",
     "token": "abc123..."
   }

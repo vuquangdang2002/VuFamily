@@ -79,7 +79,7 @@ Truy cập URL Vercel cung cấp → đăng nhập bằng:
 
 | Username | Password | Role | Tên |
 |----------|----------|------|-----|
-| dangvq | test123 | admin | Vũ Quang Đăng |
+| dangvq | test123 | admin | Vũ Quang Đáng |
 | admin | admin123 | admin | Quản trị viên |
 | viewer | viewer123 | viewer | Khách xem |
 

@@ -171,7 +171,7 @@ ON CONFLICT DO NOTHING;
 -- NOTE: Bạn nên chạy script tạo hash riêng hoặc đổi password sau khi deploy
 -- ═══════════════════════════════════════════
 INSERT INTO users (username, password, display_name, role) VALUES
-('dangvq', '$2a$10$uiahYWZhUIGezRSdkwwpieQKgwWk0eAj6zkABqgYvRxfTaSK4UBdy', 'Vũ Quang Đăng', 'admin'),
+('dangvq', '$2a$10$uiahYWZhUIGezRSdkwwpieQKgwWk0eAj6zkABqgYvRxfTaSK4UBdy', 'Vũ Quang Đáng', 'admin'),
 ('admin', '$2a$10$Px3aH2vHg2.2h0i.6Sf.U.lx2HvR4I7d6Zs2p8Q/ZJaDWCx//FUwa', 'Quản trị viên', 'admin'),
 ('viewer', '$2a$10$VNYuN7Sp47V70MMzjCh66eA.ajXmoL8W1wX/tUdzjGWo1hTHrS5ui', 'Khách xem', 'viewer')
 ON CONFLICT (username) DO NOTHING;
