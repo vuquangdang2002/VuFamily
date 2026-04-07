@@ -147,7 +147,7 @@ async function updateProfile(req, res) {
         
         res.json({ success: true, data: { id: data.id, username: data.username, displayName: data.display_name, email: data.email, phone: data.phone, avatar: data.avatar, role: data.role } });
     } catch (err) {
-        res.status(500).json({ success: false, error: 'Lỗi cập nhật thông tin cá nhân' });
+        res.status(500).json({ success: false, error: err.message || 'Lỗi cập nhật thông tin cá nhân' });
     }
 }
 
