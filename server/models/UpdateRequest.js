@@ -18,7 +18,14 @@ class UpdateRequestModel {
                 requestedBy: user ? user.username : 'Unknown',
                 requestedByName: user ? user.display_name : 'Unknown',
                 requestedAt: req.created_at,
-                changes: typeof req.changes === 'string' ? JSON.parse(req.changes) : req.changes,
+                changes: (() => {
+                    let c = req.changes;
+                    try {
+                        if (typeof c === 'string') c = JSON.parse(c);
+                        if (typeof c === 'string') c = JSON.parse(c);
+                    } catch(e) {}
+                    return typeof c === 'object' ? c : {};
+                })(),
                 note: req.note,
                 status: req.status,
                 rejectReason: req.reject_reason,

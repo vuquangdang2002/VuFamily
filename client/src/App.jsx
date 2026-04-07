@@ -286,7 +286,7 @@ export default function App() {
                     await api.updateMember(data.id, data);
                     addToast(`Đã cập nhật thông tin "${data.name}" thành công!`);
                 } else {
-                    const result = await api.submitRequest(data.id, JSON.stringify(data), 'Chỉnh sửa thành viên');
+                    const result = await api.submitRequest(data.id, data, 'Chỉnh sửa thành viên');
                     addToast(result.message || 'Đã gửi yêu cầu', result.success ? 'success' : 'error');
                 }
             } else {

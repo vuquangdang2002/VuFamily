@@ -27,11 +27,19 @@ function timeAgo(dateStr) {
 }
 
 function ChangesView({ before, changes }) {
-    if (!changes) return null;
+    let finalChanges = changes;
+    if (typeof finalChanges === 'string') {
+        try { finalChanges = JSON.parse(finalChanges); } catch(e) {}
+    }
+    if (typeof finalChanges === 'string') {
+        try { finalChanges = JSON.parse(finalChanges); } catch(e) {}
+    }
+    if (!finalChanges || typeof finalChanges !== 'object') return null;
+
     const skipFields = ['id', 'spouseId', 'parentId', 'newAchievements'];
-    const entries = Object.entries(changes).filter(([k]) => !skipFields.includes(k));
+    const entries = Object.entries(finalChanges).filter(([k]) => !skipFields.includes(k));
     const changed = entries.filter(([k, v]) => String(before?.[k] ?? '') !== String(v));
-    if (changed.length === 0) return <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Không có thay đổi</div>;
+    if (changed.length === 0) return <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Không có thay đổi rõ rệt</div>;
 
     return (
         <div className="diff-view">
@@ -110,13 +118,13 @@ export default function RequestsPage({ user, onRefresh, addToast }) {
     const pendingCount = requests.filter(r => r.status === 'pending').length;
 
     return (
-        <div className="page-container">
-            <div className="page-header">
+        <div className="page-container flex flex-col h-screen pt-16 sm:pt-0 overflow-hidden">
+            <div className="page-header shrink-0">
                 <h2>📋 Yêu cầu chỉnh sửa {pendingCount > 0 && <span className="badge">{pendingCount}</span>}</h2>
                 <p className="page-subtitle">Quản lý các yêu cầu cập nhật gia phả</p>
             </div>
 
-            <div className="page-body">
+            <div className="page-body flex-1 overflow-y-auto p-4 md:p-6 pb-24">
                 <div className="request-filters" style={{ marginBottom: 16 }}>
                     <button className={`filter-btn ${filter === 'pending' ? 'active' : ''}`} onClick={() => setFilter('pending')}>
                         ⏳ Chờ duyệt {pendingCount > 0 && `(${pendingCount})`}
