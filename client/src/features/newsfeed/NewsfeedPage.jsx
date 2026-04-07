@@ -102,21 +102,37 @@ export default function NewsfeedPage({ user, isAdmin, addToast }) {
         } catch (e) { addToast('Lỗi xóa bài'); }
     };
 
-    // ─── Reactions ───
+    // ─── Reactions (optimistic) ───
     const EMOJIS = ['❤️', '👍', '😂', '😮', '😢'];
     const handleReaction = async (postId, emoji) => {
+        // Optimistic update
+        setPosts(prev => prev.map(post => {
+            if (post.id !== postId) return post;
+            const reactions = { ...post.reactions };
+            const r = reactions[emoji] ? { ...reactions[emoji] } : { count: 0, users: [] };
+            const idx = r.users.indexOf(currentUserId);
+            if (idx >= 0) {
+                r.users = r.users.filter(u => u !== currentUserId);
+                r.count = Math.max(0, r.count - 1);
+            } else {
+                r.users = [...r.users, currentUserId];
+                r.count++;
+            }
+            reactions[emoji] = r;
+            return { ...post, reactions };
+        }));
+
+        // Sync with server (fire-and-forget)
         try {
-            const res = await fetch(`/api/posts/${postId}/reactions`, {
+            await fetch(`/api/posts/${postId}/reactions`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'x-auth-token': getToken() },
                 body: JSON.stringify({ emoji })
             });
-            const json = await res.json();
-            if (json.success) fetchPosts();
         } catch (e) { console.error(e); }
     };
 
-    // ─── Comments ───
+    // ─── Comments (optimistic) ───
     const [expandedComments, setExpandedComments] = useState({});
     const [commentTexts, setCommentTexts] = useState({});
     const [comments, setComments] = useState({});
@@ -125,7 +141,6 @@ export default function NewsfeedPage({ user, isAdmin, addToast }) {
         const isOpen = expandedComments[postId];
         setExpandedComments(prev => ({ ...prev, [postId]: !isOpen }));
         if (!isOpen && !comments[postId]) {
-            // Fetch comments
             try {
                 const res = await fetch(`/api/posts/${postId}/comments`);
                 const json = await res.json();
@@ -137,6 +152,25 @@ export default function NewsfeedPage({ user, isAdmin, addToast }) {
     const handleAddComment = async (postId) => {
         const text = (commentTexts[postId] || '').trim();
         if (!text) return;
+
+        // Optimistic: add comment immediately
+        const tempComment = {
+            id: `temp-${Date.now()}`,
+            content: text,
+            author: user?.displayName || 'Bạn',
+            author_role: user?.role || 'viewer',
+            created_at: new Date().toISOString()
+        };
+        setComments(prev => ({
+            ...prev,
+            [postId]: [...(prev[postId] || []), tempComment]
+        }));
+        setPosts(prev => prev.map(p =>
+            p.id === postId ? { ...p, comment_count: (p.comment_count || 0) + 1 } : p
+        ));
+        setCommentTexts(prev => ({ ...prev, [postId]: '' }));
+
+        // Sync with server
         try {
             const res = await fetch(`/api/posts/${postId}/comments`, {
                 method: 'POST',
@@ -144,31 +178,33 @@ export default function NewsfeedPage({ user, isAdmin, addToast }) {
                 body: JSON.stringify({ content: text })
             });
             const json = await res.json();
-            if (json.success) {
-                setCommentTexts(prev => ({ ...prev, [postId]: '' }));
-                // Refresh comments for this post
-                const res2 = await fetch(`/api/posts/${postId}/comments`);
-                const json2 = await res2.json();
-                if (json2.success) setComments(prev => ({ ...prev, [postId]: json2.data || [] }));
-                fetchPosts(); // refresh comment count
+            if (json.success && json.data) {
+                // Replace temp comment with real one
+                setComments(prev => ({
+                    ...prev,
+                    [postId]: (prev[postId] || []).map(c =>
+                        c.id === tempComment.id ? json.data : c
+                    )
+                }));
             }
         } catch (e) { addToast('Lỗi gửi bình luận'); }
     };
 
     const handleDeleteComment = async (commentId, postId) => {
+        // Optimistic remove
+        setComments(prev => ({
+            ...prev,
+            [postId]: (prev[postId] || []).filter(c => c.id !== commentId)
+        }));
+        setPosts(prev => prev.map(p =>
+            p.id === postId ? { ...p, comment_count: Math.max(0, (p.comment_count || 1) - 1) } : p
+        ));
+
         try {
-            const res = await fetch(`/api/comments/${commentId}`, {
+            await fetch(`/api/comments/${commentId}`, {
                 method: 'DELETE',
                 headers: { 'x-auth-token': getToken() }
             });
-            const json = await res.json();
-            if (json.success) {
-                setComments(prev => ({
-                    ...prev,
-                    [postId]: (prev[postId] || []).filter(c => c.id !== commentId)
-                }));
-                fetchPosts();
-            }
         } catch (e) { addToast('Lỗi xóa bình luận'); }
     };
 

@@ -88,21 +88,42 @@ const ReactionModel = require('../models/Reaction');
 router.get('/posts', async (req, res) => {
     try {
         const posts = await PostModel.getAll();
-        // Enrich posts with reaction and comment counts
-        const enriched = await Promise.all(posts.map(async (post) => {
-            const [reactions, commentCount] = await Promise.all([
-                ReactionModel.getByPostId(post.id),
-                CommentModel.countByPostId(post.id)
-            ]);
-            // Group reactions by emoji
+        if (!posts.length) return res.json({ success: true, data: [] });
+
+        const postIds = posts.map(p => p.id);
+        const { supabase } = require('../../database/supabase');
+
+        // Batch: 2 queries instead of 2N
+        const [reactionsRes, commentsRes] = await Promise.all([
+            supabase.from('reactions').select('*').in('post_id', postIds),
+            supabase.from('comments').select('post_id').in('post_id', postIds)
+        ]);
+
+        // Group reactions by post_id
+        const reactionsByPost = {};
+        (reactionsRes.data || []).forEach(r => {
+            if (!reactionsByPost[r.post_id]) reactionsByPost[r.post_id] = [];
+            reactionsByPost[r.post_id].push(r);
+        });
+
+        // Count comments by post_id
+        const commentCountByPost = {};
+        (commentsRes.data || []).forEach(c => {
+            commentCountByPost[c.post_id] = (commentCountByPost[c.post_id] || 0) + 1;
+        });
+
+        // Merge
+        const enriched = posts.map(post => {
+            const reactions = reactionsByPost[post.id] || [];
             const reactionSummary = {};
             reactions.forEach(r => {
                 if (!reactionSummary[r.emoji]) reactionSummary[r.emoji] = { count: 0, users: [] };
                 reactionSummary[r.emoji].count++;
                 reactionSummary[r.emoji].users.push(r.user_id);
             });
-            return { ...post, reactions: reactionSummary, comment_count: commentCount };
-        }));
+            return { ...post, reactions: reactionSummary, comment_count: commentCountByPost[post.id] || 0 };
+        });
+
         res.json({ success: true, data: enriched });
     } catch (e) { res.status(500).json({ success: false, error: e.message }); }
 });
