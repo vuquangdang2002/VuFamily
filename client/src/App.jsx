@@ -283,7 +283,8 @@ export default function App() {
         try {
             if (data.id) {
                 if (isAdmin) {
-                    await api.updateMember(data.id, data);
+                    const result = await api.submitRequest(data.id, data, 'Cập nhật trực tiếp bởi Admin');
+                    await api.approveRequest(result.data.id);
                     addToast(`Đã cập nhật thông tin "${data.name}" thành công!`);
                 } else {
                     const result = await api.submitRequest(data.id, data, 'Chỉnh sửa thành viên');
