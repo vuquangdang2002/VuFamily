@@ -12,8 +12,10 @@ export default function AccountsPage({ addToast }) {
     const [loading, setLoading] = useState(false);
     const [showCreate, setShowCreate] = useState(false);
     const [newUser, setNewUser] = useState({ username: '', password: '', displayName: '', role: 'viewer' });
+    const [showCreatePw, setShowCreatePw] = useState(false);
     const [resetModal, setResetModal] = useState(null);
     const [resetPw, setResetPw] = useState('');
+    const [showResetPw, setShowResetPw] = useState(false);
 
     const fetchUsers = async () => {
         setLoading(true);
@@ -115,8 +117,16 @@ export default function AccountsPage({ addToast }) {
                             </div>
                             <div>
                                 <label style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 4, display: 'block' }}>Mật khẩu *</label>
-                                <input className="form-input" type="password" placeholder="password"
-                                    value={newUser.password} onChange={e => setNewUser({ ...newUser, password: e.target.value })} />
+                                <div style={{ position: 'relative' }}>
+                                    <input className="form-input" type={showCreatePw ? 'text' : 'password'} placeholder="password"
+                                        value={newUser.password} onChange={e => setNewUser({ ...newUser, password: e.target.value })}
+                                        style={{ paddingRight: 40 }} />
+                                    <button type="button" onClick={() => setShowCreatePw(!showCreatePw)}
+                                        style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, opacity: 0.6, padding: 4 }}
+                                        title={showCreatePw ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}>
+                                        {showCreatePw ? '🙈' : '👁️'}
+                                    </button>
+                                </div>
                             </div>
                             <div>
                                 <label style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 4, display: 'block' }}>Tên hiển thị</label>
@@ -205,14 +215,22 @@ export default function AccountsPage({ addToast }) {
                             <p style={{ marginBottom: 12 }}>
                                 Đặt lại mật khẩu cho tài khoản <strong>{resetModal.display_name || resetModal.username}</strong> ({resetModal.username})
                             </p>
-                            <input
-                                className="form-input"
-                                type="text"
-                                placeholder="Nhập mật khẩu mới..."
-                                value={resetPw}
-                                onChange={e => setResetPw(e.target.value)}
-                                autoFocus
-                            />
+                            <div style={{ position: 'relative' }}>
+                                <input
+                                    className="form-input"
+                                    type={showResetPw ? 'text' : 'password'}
+                                    placeholder="Nhập mật khẩu mới..."
+                                    value={resetPw}
+                                    onChange={e => setResetPw(e.target.value)}
+                                    autoFocus
+                                    style={{ paddingRight: 40 }}
+                                />
+                                <button type="button" onClick={() => setShowResetPw(!showResetPw)}
+                                    style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, opacity: 0.6, padding: 4 }}
+                                    title={showResetPw ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}>
+                                    {showResetPw ? '🙈' : '👁️'}
+                                </button>
+                            </div>
                             <div style={{ marginTop: 16, display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
                                 <button className="btn" onClick={() => setResetModal(null)}>Hủy</button>
                                 <button className="btn btn-primary" onClick={handleResetPassword}>Đặt lại mật khẩu</button>
