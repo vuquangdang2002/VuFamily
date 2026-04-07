@@ -16,6 +16,10 @@ export default function AccountsPage({ addToast }) {
     const [resetModal, setResetModal] = useState(null);
     const [resetPw, setResetPw] = useState('');
     const [showResetPw, setShowResetPw] = useState(false);
+    
+    // Edit modal
+    const [editModal, setEditModal] = useState(null);
+    const [editUser, setEditUser] = useState({ displayName: '', role: 'viewer' });
 
     const fetchUsers = async () => {
         setLoading(true);
@@ -100,6 +104,26 @@ export default function AccountsPage({ addToast }) {
                 addToast(json.error || 'Lỗi đặt lại mật khẩu', 'error');
             }
         } catch (e) { addToast('Lỗi kết nối server', 'error'); }
+    };
+
+    const handleEditUser = async () => {
+        try {
+            const res = await fetch(`${API_BASE}/users/${editModal.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'x-auth-token': getToken() },
+                body: JSON.stringify(editUser)
+            });
+            const json = await res.json();
+            if (json.success) {
+                addToast('Đã cập nhật thông tin tài khoản!');
+                setEditModal(null);
+                fetchUsers();
+            } else {
+                addToast(json.error || 'Lỗi cập nhật tài khoản', 'error');
+            }
+        } catch (e) {
+            addToast('Lỗi kết nối khi cập nhật tài khoản', 'error');
+        }
     };
 
     return (
@@ -196,6 +220,11 @@ export default function AccountsPage({ addToast }) {
                                         </td>
                                         <td style={{ padding: '10px 12px', textAlign: 'center' }}>
                                             <button className="btn btn-sm" style={{ marginRight: 6 }}
+                                                onClick={() => { setEditModal(u); setEditUser({ displayName: u.display_name, role: u.role }); }}
+                                                title="Tiến hành sửa thông tin user">
+                                                ✏️ Sửa
+                                            </button>
+                                            <button className="btn btn-sm" style={{ marginRight: 6 }}
                                                 onClick={() => { setResetModal(u); setResetPw(''); }}
                                                 title="Đặt lại mật khẩu">
                                                 🔑 Reset
@@ -246,6 +275,45 @@ export default function AccountsPage({ addToast }) {
                             <div style={{ marginTop: 16, display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
                                 <button className="btn" onClick={() => setResetModal(null)}>Hủy</button>
                                 <button className="btn btn-primary" onClick={handleResetPassword}>Đặt lại mật khẩu</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Edit User modal */}
+            {editModal && (
+                <div className="modal-overlay open" onClick={e => e.target === e.currentTarget && setEditModal(null)}>
+                    <div className="modal" style={{ width: 400 }}>
+                        <div className="modal-header">
+                            <h2>✏️ Chỉnh sửa tài khoản</h2>
+                            <button className="detail-close" onClick={() => setEditModal(null)}>✕</button>
+                        </div>
+                        <div className="modal-body">
+                            <p style={{ marginBottom: 12, color: 'var(--text-muted)' }}>
+                                Sửa thông tin tài khoản <strong>{editModal.username}</strong>
+                            </p>
+                            <div className="form-group" style={{ marginBottom: 16 }}>
+                                <label className="form-label">Tên hiển thị</label>
+                                <input
+                                    className="form-input"
+                                    type="text"
+                                    placeholder="Tên hiển thị..."
+                                    value={editUser.displayName}
+                                    onChange={e => setEditUser({...editUser, displayName: e.target.value})}
+                                    autoFocus
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Quyền</label>
+                                <select className="form-input" value={editUser.role} onChange={e => setEditUser({...editUser, role: e.target.value})}>
+                                    <option value="viewer">Thành viên (viewer)</option>
+                                    <option value="admin">Quản trị viên (admin)</option>
+                                </select>
+                            </div>
+                            <div style={{ marginTop: 16, display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                                <button className="btn" onClick={() => setEditModal(null)}>Hủy</button>
+                                <button className="btn btn-primary" onClick={handleEditUser}>Lưu thay đổi</button>
                             </div>
                         </div>
                     </div>

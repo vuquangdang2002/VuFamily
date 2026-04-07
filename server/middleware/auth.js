@@ -192,6 +192,27 @@ async function createUser(req, res) {
     }
 }
 
+async function updateUser(req, res) {
+    const userId = req.params.id;
+    const { displayName, role } = req.body;
+    
+    if (!displayName || !role) {
+        return res.status(400).json({ success: false, error: 'Tên hiển thị và quyền là bắt buộc' });
+    }
+
+    try {
+        const { error } = await supabase
+            .from('users')
+            .update({ display_name: displayName, role, updated_at: new Date().toISOString() })
+            .eq('id', userId);
+
+        if (error) throw error;
+        res.json({ success: true, message: 'Cập nhật tài khoản thành công' });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+}
+
 async function deleteUser(req, res) {
     try {
         if (parseInt(req.params.id) === req.user.id) {
@@ -335,6 +356,7 @@ module.exports = {
     getMe,
     getUsers,
     createUser,
+    updateUser,
     deleteUser,
     changePassword,
     resetPassword,
