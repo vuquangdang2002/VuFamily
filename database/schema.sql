@@ -165,15 +165,14 @@ ON CONFLICT DO NOTHING;
 -- ═══════════════════════════════════════════
 -- SEED DATA: Default accounts
 -- Password hashes (bcrypt):
---   test123  → $2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy
---   admin123 → $2a$10$YQ8HaA1GAz39GOLPXRM5iO/FxNj6kQZntf.VzFV7vPiNH0QSlEEAS
---   viewer123 → $2a$10$IvDT0K3rJhRwbDDvNWTkbuGehFABjWEd1rQlJlSqQwZ0G9X0G4DIS
--- NOTE: Bạn nên chạy script tạo hash riêng hoặc đổi password sau khi deploy
+--   DangVQ@2002  → $2a$10$Wk9qgWNnap3v.nXvM8in6.LNLgzTGhejo7GdyUXbnnUVbI1z3Vpty
+--   Admin@1234 → $2a$10$Su0NSYtZ2GLvzNyopSbLN.PP5Oc0wY.mqiaoXzquUE8GKffG28buq
+--   Viewer@1234 → $2a$10$PaIpm3CwdYtJYkPx1nNNA.FlZ75UQiiLbt3b4jtFZgp.jYEkUEVPi
 -- ═══════════════════════════════════════════
 INSERT INTO users (username, password, display_name, role) VALUES
-('dangvq', '$2a$10$uiahYWZhUIGezRSdkwwpieQKgwWk0eAj6zkABqgYvRxfTaSK4UBdy', 'Vũ Quang Đáng', 'admin'),
-('admin', '$2a$10$Px3aH2vHg2.2h0i.6Sf.U.lx2HvR4I7d6Zs2p8Q/ZJaDWCx//FUwa', 'Quản trị viên', 'admin'),
-('viewer', '$2a$10$VNYuN7Sp47V70MMzjCh66eA.ajXmoL8W1wX/tUdzjGWo1hTHrS5ui', 'Khách xem', 'viewer')
+('dangvq', '$2a$10$Wk9qgWNnap3v.nXvM8in6.LNLgzTGhejo7GdyUXbnnUVbI1z3Vpty', 'Vũ Quang Đáng', 'admin'),
+('admin', '$2a$10$Su0NSYtZ2GLvzNyopSbLN.PP5Oc0wY.mqiaoXzquUE8GKffG28buq', 'Quản trị viên', 'admin'),
+('viewer', '$2a$10$PaIpm3CwdYtJYkPx1nNNA.FlZ75UQiiLbt3b4jtFZgp.jYEkUEVPi', 'Khách xem', 'viewer')
 ON CONFLICT (username) DO NOTHING;
 
 -- Reset sequences

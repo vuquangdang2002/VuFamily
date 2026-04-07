@@ -20,3 +20,8 @@ Tất cả các route yêu cầu xác thực (`/api/auth/*` hoặc có middlewar
 4. **Bảo mật**:
    - Middleware `authenticate`: chặn truy cập các Endpoint nhạy cảm nếu không có token.
    - Middleware `requireAdmin`: chỉ cho phép những API đặc quyền cho Role `admin`.
+5. **Tiêu chuẩn Mật khẩu (Password Policy)**:
+   - Hệ thống bắt buộc sử dụng Mật khẩu mạnh (Strong Password) khi tạo mới đổi mật khẩu.
+   - Thỏa mãn Regex: `^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*])(?=.{8,})`
+   - **Tối thiểu 8 ký tự**.
+   - Phải chứa ít nhất **1 chữ IN HOA**, **1 chữ thường**, **1 chữ số**, và **1 ký tự đặc biệt (VD: !@#$)**.

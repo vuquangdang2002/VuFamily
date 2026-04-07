@@ -109,10 +109,9 @@ export default function App() {
     // ─── Auth ───
     const handleLogin = async (username, password, isAutoReset = false) => {
         const localUsers = [
-            { username: 'dangvq', password: 'dangvq123', displayName: 'Vũ Quang Đáng', role: 'admin' },
-            { username: 'admin', password: 'admin123', displayName: 'Quản trị viên', role: 'admin' },
-            { username: 'viewer', password: 'viewer123', displayName: 'Khách xem', role: 'viewer' },
-            { username: 'user', password: 'user123', displayName: 'Thành viên', role: 'user' },
+            { username: 'dangvq', password: 'DangVQ@2002', displayName: 'Vũ Quang Đáng', role: 'admin' },
+            { username: 'admin', password: 'Admin@1234', displayName: 'Quản trị viên', role: 'admin' },
+            { username: 'viewer', password: 'Viewer@1234', displayName: 'Khách xem', role: 'viewer' },
         ];
 
         try {

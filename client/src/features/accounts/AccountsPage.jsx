@@ -36,6 +36,12 @@ export default function AccountsPage({ addToast }) {
             addToast('Tên đăng nhập và mật khẩu là bắt buộc', 'error');
             return;
         }
+
+        const strongRegex = new RegExp("^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\\$%\\^&\\*])(?=.{8,})");
+        if (!strongRegex.test(newUser.password)) {
+            addToast('Mật khẩu phải từ 8 ký tự, gồm chữ hoa, thường, số và ký tự đặc biệt', 'error');
+            return;
+        }
         try {
             const res = await fetch(`${API_BASE}/users`, {
                 method: 'POST',
@@ -73,6 +79,12 @@ export default function AccountsPage({ addToast }) {
 
     const handleResetPassword = async () => {
         if (!resetPw) { addToast('Vui lòng nhập mật khẩu mới', 'error'); return; }
+
+        const strongRegex = new RegExp("^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\\$%\\^&\\*])(?=.{8,})");
+        if (!strongRegex.test(resetPw)) {
+            addToast('Mật khẩu phải từ 8 ký tự, gồm chữ hoa, thường, số và ký tự đặc biệt', 'error');
+            return;
+        }
         try {
             const res = await fetch(`${API_BASE}/users/${resetModal.id}/reset-password`, {
                 method: 'POST',

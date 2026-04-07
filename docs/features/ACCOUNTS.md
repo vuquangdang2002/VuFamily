@@ -18,3 +18,8 @@ Dành riêng cho Quản trị viên (Admin) để cấp phát, chỉnh sửa và
 ## UI/UX
 - Giao diện dạng Data Table hiển thị thông tin Users, Roles.
 - Có tính năng bật/tắt (show/hide) mật khẩu khi gõ để kiểm tra trực quan.
+
+## Tiêu chuẩn Mật khẩu (Password Policy)
+Mọi tài khoản tạo mới hoặc đặt lại mật khẩu đều phải tuân thủ chuẩn bảo mật mạnh:
+- **Ngắn nhất**: 8 ký tự.
+- **Thành phần**: Ít nhất một chữ hoa (A-Z), một chữ thường (a-z), một chữ số (0-9), và một ký tự đặc biệt (`!@#$%^&*...`).
