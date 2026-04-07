@@ -122,8 +122,10 @@ export default function App() {
             .then(res => res.json())
             .then(data => {
                 if (data.success && data.data) {
-                    // Token valid → restore session
-                    setUser(stored);
+                    // Token valid → merge server data with local token and update state
+                    const freshUser = { ...stored, ...data.data };
+                    localStorage.setItem(AUTH_KEY, JSON.stringify(freshUser));
+                    setUser(freshUser);
                 } else {
                     // Token expired/invalid → clear and show login
                     localStorage.removeItem(AUTH_KEY);

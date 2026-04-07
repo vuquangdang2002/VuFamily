@@ -96,7 +96,16 @@ async function login(req, res) {
 
         res.json({
             success: true,
-            data: { id: user.id, username: user.username, displayName: user.display_name, role: user.role, token }
+            data: { 
+                id: user.id, 
+                username: user.username, 
+                displayName: user.display_name, 
+                email: user.email,
+                phone: user.phone,
+                avatar: user.avatar,
+                role: user.role, 
+                token 
+            }
         });
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
