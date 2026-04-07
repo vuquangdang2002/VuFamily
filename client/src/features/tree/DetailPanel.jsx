@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { localApi, formatDate } from '../services/api';
+import { localApi, formatDate } from '../../shared/services/api';
 
 const CATEGORY_LABELS = { education: '🎓 Học tập', work: '💼 Công tác', social: '🏅 Đoàn thể', award: '🏆 Giải thưởng', other: '📌 Khác' };
 const CHILD_TYPE_LABELS = { biological: 'Con đẻ', adopted: 'Con nuôi' };

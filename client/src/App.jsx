@@ -1,19 +1,21 @@
 import { useState, useCallback, useEffect } from 'react';
-import LoginPage from './components/LoginPage';
-import Sidebar from './components/Sidebar';
-import Header from './components/Header';
-import Toolbar from './components/Toolbar';
-import TreeCanvas from './components/TreeCanvas';
-import DetailPanel from './components/DetailPanel';
-import MemberModal from './components/MemberModal';
-import HistoryPage from './components/HistoryPanel';
-import RequestsPage from './components/RequestsPanel';
-import NewsfeedPage from './components/NewsfeedPage';
-import CalendarPage from './components/CalendarPage';
-import AccountsPage from './components/AccountsPage';
-import Toast from './components/Toast';
-import { useTheme } from './components/ThemeToggle';
-import { localApi } from './services/api';
+// ── Features ──
+import LoginPage from './features/auth/LoginPage';
+import TreeCanvas from './features/tree/TreeCanvas';
+import DetailPanel from './features/tree/DetailPanel';
+import MemberModal from './features/tree/MemberModal';
+import NewsfeedPage from './features/newsfeed/NewsfeedPage';
+import CalendarPage from './features/calendar/CalendarPage';
+import AccountsPage from './features/accounts/AccountsPage';
+import HistoryPage from './features/history/HistoryPanel';
+import RequestsPage from './features/requests/RequestsPanel';
+// ── Shared ──
+import Sidebar from './shared/components/Sidebar';
+import Header from './shared/components/Header';
+import Toolbar from './shared/components/Toolbar';
+import Toast from './shared/components/Toast';
+import { useTheme } from './shared/components/ThemeToggle';
+import { localApi } from './shared/services/api';
 
 const AUTH_KEY = 'vuFamilyAuth';
 const API_BASE = '/api';

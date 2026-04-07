@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
-import { Solar, Lunar } from '../utils/lunar.js';
-import { ganZhiToViet, lunarDayLabel } from '../utils/vietLunar.js';
+import { Solar, Lunar } from '../../shared/utils/lunar.js';
+import { ganZhiToViet, lunarDayLabel } from '../../shared/utils/vietLunar.js';
 
 const WEEKDAYS = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
 const MONTH_NAMES = [

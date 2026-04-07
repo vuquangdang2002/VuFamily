@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { localApi, formatDate } from '../services/api';
+import { localApi, formatDate } from '../../shared/services/api';
 
 const FIELD_LABELS = {
     name: 'Họ tên', gender: 'Giới tính', birthDate: 'Ngày sinh', birthTime: 'Giờ sinh',

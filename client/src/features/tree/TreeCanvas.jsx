@@ -1,5 +1,5 @@
 import { useRef, useEffect, useCallback } from 'react';
-import { buildHierarchy, calculateLayout } from '../utils/treeLayout';
+import { buildHierarchy, calculateLayout } from '../../shared/utils/treeLayout';
 
 export default function TreeCanvas({ members, selectedId, searchResultIds, onSelectMember, onDeselect }) {
     const canvasRef = useRef(null);

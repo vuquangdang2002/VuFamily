@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
-import { localApi } from '../services/api';
+import { localApi } from '../../shared/services/api';
 
 // Import brand icons
-import iconZalo from '../assets/icons/icon_zalo.png';
-import iconFacebook from '../assets/icons/icon_facebook.png';
-import iconMessenger from '../assets/icons/icon_messenger.png';
+import iconZalo from '../../assets/icons/icon_zalo.png';
+import iconFacebook from '../../assets/icons/icon_facebook.png';
+import iconMessenger from '../../assets/icons/icon_messenger.png';
 
 // Simple QR Code generator using public API
 function generateQR(text, size = 200) {

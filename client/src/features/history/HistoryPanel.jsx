@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { localApi, formatDate } from '../services/api';
+import { localApi, formatDate } from '../../shared/services/api';
 
 const ACTION_LABELS = {
     create: { icon: '➕', text: 'Thêm mới', color: '#4CAF50' },
