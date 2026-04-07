@@ -15,6 +15,34 @@ router.get('/auth/me', authenticate, getMe);
 router.post('/auth/change-password', authenticate, changePassword);
 router.put('/auth/profile', authenticate, updateProfile);
 
+// ─── Avatar Upload (raw binary) ───
+router.post('/auth/avatar', authenticate, require('express').raw({ type: 'image/*', limit: '5mb' }), async (req, res) => {
+    try {
+        const buffer = req.body;
+        if (!buffer || !buffer.length) return res.status(400).json({ success: false, error: 'Không có dữ liệu ảnh' });
+
+        const contentType = req.headers['content-type'] || 'image/jpeg';
+        const ext = contentType.split('/')[1]?.split(';')[0] || 'jpg';
+        const fileName = `${req.user.id}_${Date.now()}.${ext}`;
+
+        const { supabase } = require('../../database/supabase');
+        const { error } = await supabase.storage
+            .from('avatars')
+            .upload(fileName, buffer, { contentType, upsert: true });
+
+        if (error) throw error;
+
+        const { data: { publicUrl } } = supabase.storage
+            .from('avatars')
+            .getPublicUrl(fileName);
+
+        res.json({ success: true, url: publicUrl });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+
 // ─── User Management (admin only) ───
 router.get('/users', authenticate, requireAdmin, getUsers);
 router.post('/users', authenticate, requireAdmin, createUser);
