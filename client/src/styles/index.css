@@ -5,7 +5,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
 
 :root {
-    --bg-primary: #F0F2F8;
+    --bg-primary: #F4F7FB;
     --bg-secondary: #ffffff;
     --bg-card: #ffffff;
     --bg-glass: rgba(255, 255, 255, 0.85);
@@ -13,11 +13,11 @@
     --gold-light: #F0D060;
     --gold-dark: #A08520;
     --gold-glow: rgba(212, 175, 55, 0.1);
-    --primary: #3B6FCF;
-    --primary-light: #5A8FE8;
-    --primary-dark: #2A5AB8;
+    --primary: #2B5CA0;
+    --primary-light: #3F75C4;
+    --primary-dark: #1E4680;
     --primary-glow: rgba(59, 111, 207, 0.12);
-    --sidebar-bg: linear-gradient(180deg, #3B6FCF 0%, #2A4E99 100%);
+    --sidebar-bg: #2B5CA0;
     --text-primary: #1a2138;
     --text-secondary: #5a6478;
     --text-muted: #9ba3b5;
@@ -108,7 +108,7 @@ body {
     height: 100vh;
     width: 100vw;
     overflow: hidden;
-    padding: 10px 0 10px 10px;
+    padding: 0;
     background: var(--bg-primary);
 }
 
@@ -120,7 +120,7 @@ body {
     height: 100%;
     overflow: auto;
     background: var(--bg-secondary);
-    border-radius: 20px 0 0 20px;
+    border-radius: 0;
     z-index: 1;
     box-shadow: -4px 0 20px rgba(0, 0, 0, 0.08);
 }
@@ -138,7 +138,7 @@ body {
     height: 100%;
     background: var(--sidebar-bg);
     border-right: none;
-    border-radius: 16px;
+    border-radius: 0;
     display: flex;
     flex-direction: column;
     transition: width 250ms ease, min-width 250ms ease;
@@ -802,7 +802,7 @@ body {
 .search-input:focus {
     border-color: var(--primary);
     box-shadow: 0 0 8px rgba(59, 111, 207, 0.12);
-    background: #fff;
+    background: var(--bg-secondary);
 }
 
 .btn-clear-search {
@@ -894,7 +894,7 @@ body {
     align-items: center;
     justify-content: space-between;
     padding: 4px 24px;
-    background: rgba(15, 15, 25, 0.6);
+    background: var(--bg-secondary);
     border-bottom: 1px solid var(--border-subtle);
     flex-shrink: 0;
     flex-wrap: wrap;
@@ -1019,7 +1019,7 @@ body {
     align-items: center;
     gap: 6px;
     padding: 4px 12px;
-    border-radius: 16px;
+    border-radius: 0;
     font-size: 13px;
     font-weight: 500;
     margin-bottom: 4px;
@@ -1058,7 +1058,7 @@ body {
 
 .detail-field {
     padding: 10px 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    border-bottom: 1px solid var(--border-subtle);
 }
 
 .detail-field-label {
@@ -1726,7 +1726,7 @@ body {
 
 .photo-cropper-modal {
     background: var(--bg-secondary, #1a1a2e);
-    border-radius: 16px;
+    border-radius: 0;
     border: 1px solid var(--border-subtle);
     padding: 20px;
     width: 400px;
@@ -2028,7 +2028,7 @@ html.light .photo-cropper-modal {
     padding: 5px 10px;
     font-size: 11px;
     border: 1px solid var(--border-subtle);
-    border-radius: 16px;
+    border-radius: 0;
     background: transparent;
     color: var(--text-secondary);
     cursor: pointer;
@@ -2192,7 +2192,7 @@ html.light .filter-btn.active {
 /* ── Calendar Card ── */
 .calendar-card {
     background: var(--bg-card);
-    border-radius: 16px;
+    border-radius: 0;
     border: 1px solid var(--border-subtle);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
     padding: 24px;
@@ -2509,7 +2509,7 @@ html.light .filter-btn.active {
 /* ── Upcoming Cards ── */
 .cal-upcoming-card {
     background: var(--bg-card);
-    border-radius: 16px;
+    border-radius: 0;
     border: 1px solid var(--border-subtle);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
     overflow: hidden;
@@ -2740,7 +2740,7 @@ html.light .filter-btn.active {
 .nf-create-post {
     background: var(--bg-secondary);
     border: 1px solid var(--border-subtle);
-    border-radius: 16px;
+    border-radius: 0;
     padding: 20px;
     margin-bottom: 24px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
@@ -2827,7 +2827,7 @@ html.light .filter-btn.active {
 .nf-post-card {
     background: var(--bg-secondary);
     border: 1px solid var(--border-subtle);
-    border-radius: 16px;
+    border-radius: 0;
     padding: 20px;
     transition: box-shadow 250ms, transform 250ms;
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);

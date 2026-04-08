@@ -1,6 +1,49 @@
 import { useRef, useEffect, useCallback } from 'react';
 import { buildHierarchy, calculateLayout } from '../../shared/utils/treeLayout';
 
+// ─── Theme-aware color palettes for canvas drawing ───
+function getThemeColors() {
+    const isDark = document.documentElement.classList.contains('dark');
+    if (isDark) {
+        return {
+            bg: '#0f0f1a',
+            grid: 'rgba(59, 111, 207, 0.06)',
+            nodeFill: '#1a1a2e',
+            nodeBorder: 'rgba(255,255,255,0.1)',
+            nodeBorderSelected: '#5A8FE8',
+            nodeBorderSearch: '#5A8FE8',
+            nodeShadow: 'rgba(0,0,0,0.4)',
+            nodeShadowSelected: 'rgba(90,143,232,0.35)',
+            textPrimary: '#e8e6e3',
+            textDead: '#6a6a7a',
+            textMuted: '#6a6a7a',
+            genBadgeBg: 'rgba(59,111,207,0.15)',
+            genBadgeBorder: 'rgba(59,111,207,0.3)',
+            genBadgeText: '#7BAFFF',
+            spouseLine: 'rgba(209, 107, 138, 0.45)',
+            childLine: 'rgba(90, 143, 232, 0.5)',
+        };
+    }
+    return {
+        bg: '#EDF0F7',
+        grid: 'rgba(59, 111, 207, 0.04)',
+        nodeFill: '#ffffff',
+        nodeBorder: 'rgba(0,0,0,0.08)',
+        nodeBorderSelected: '#3B6FCF',
+        nodeBorderSearch: '#5A8FE8',
+        nodeShadow: 'rgba(0,0,0,0.1)',
+        nodeShadowSelected: 'rgba(59,111,207,0.4)',
+        textPrimary: '#1a2138',
+        textDead: '#9ba3b5',
+        textMuted: '#9ba3b5',
+        genBadgeBg: 'rgba(59,111,207,0.08)',
+        genBadgeBorder: 'rgba(59,111,207,0.2)',
+        genBadgeText: '#3B6FCF',
+        spouseLine: 'rgba(209, 107, 138, 0.5)',
+        childLine: 'rgba(59, 111, 207, 0.4)',
+    };
+}
+
 export default function TreeCanvas({ members, selectedId, searchResultIds, onSelectMember, onDeselect }) {
     const canvasRef = useRef(null);
     const stateRef = useRef({ panX: 0, panY: 0, scale: 1, isPanning: false, lastPt: null });
@@ -35,15 +78,16 @@ export default function TreeCanvas({ members, selectedId, searchResultIds, onSel
         const { panX, panY, scale } = stateRef.current;
         const dpr = window.devicePixelRatio || 1;
         const w = canvas.width / dpr, h = canvas.height / dpr;
+        const colors = getThemeColors();
 
         // Reset transform and clear with DPR
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         ctx.clearRect(0, 0, w, h);
-        // Light background fill
-        ctx.fillStyle = '#EDF0F7';
+        // Background fill
+        ctx.fillStyle = colors.bg;
         ctx.fillRect(0, 0, w, h);
         // Subtle grid
-        ctx.strokeStyle = 'rgba(59, 111, 207, 0.04)';
+        ctx.strokeStyle = colors.grid;
         ctx.lineWidth = 1;
         for (let x = 0; x < w; x += 50) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke(); }
         for (let y = 0; y < h; y += 50) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke(); }
@@ -55,18 +99,25 @@ export default function TreeCanvas({ members, selectedId, searchResultIds, onSel
         const hierarchy = buildHierarchy(members);
         if (!hierarchy) { ctx.restore(); return; }
         const positions = calculateLayout(hierarchy);
-        drawConnections(ctx, hierarchy, positions);
-        positions.forEach(p => drawNode(ctx, p, selectedId, searchResultIds || [], imgCacheRef.current));
+        drawConnections(ctx, hierarchy, positions, colors);
+        positions.forEach(p => drawNode(ctx, p, selectedId, searchResultIds || [], imgCacheRef.current, colors));
         ctx.restore();
     }, [members, selectedId, searchResultIds]);
 
-    function drawConnections(ctx, node, positions) {
+    // ─── Observe theme changes and redraw ───
+    useEffect(() => {
+        const observer = new MutationObserver(() => { draw(); });
+        observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+        return () => observer.disconnect();
+    }, [draw]);
+
+    function drawConnections(ctx, node, positions, colors) {
         const posMap = new Map();
         positions.forEach(p => posMap.set(p.member.id, p));
-        drawConRec(ctx, node, posMap);
+        drawConRec(ctx, node, posMap, colors);
     }
 
-    function drawConRec(ctx, node, posMap) {
+    function drawConRec(ctx, node, posMap, colors) {
         const pp = posMap.get(node.member.id);
         if (!pp) return;
         let parentCX;
@@ -74,7 +125,7 @@ export default function TreeCanvas({ members, selectedId, searchResultIds, onSel
             const sp = posMap.get(node.spouse.id);
             if (sp) {
                 parentCX = (pp.x + sp.x + sp.width) / 2;
-                ctx.strokeStyle = 'rgba(209, 107, 138, 0.5)';
+                ctx.strokeStyle = colors.spouseLine;
                 ctx.lineWidth = 2; ctx.setLineDash([5, 5]);
                 ctx.beginPath();
                 ctx.moveTo(pp.x + pp.width, pp.y + pp.height / 2);
@@ -86,7 +137,7 @@ export default function TreeCanvas({ members, selectedId, searchResultIds, onSel
         const botY = pp.y + pp.height;
         if (node.children.length > 0) {
             const midY = botY + 50;
-            ctx.strokeStyle = 'rgba(59, 111, 207, 0.4)';
+            ctx.strokeStyle = colors.childLine;
             ctx.lineWidth = 2.5;
             ctx.beginPath(); ctx.moveTo(parentCX, botY); ctx.lineTo(parentCX, midY); ctx.stroke();
             const ccs = node.children.map(c => {
@@ -102,7 +153,7 @@ export default function TreeCanvas({ members, selectedId, searchResultIds, onSel
                 ctx.beginPath(); ctx.moveTo(ccs[i], midY); ctx.lineTo(ccs[i], cp.y); ctx.stroke();
             });
         }
-        node.children.forEach(c => drawConRec(ctx, c, posMap));
+        node.children.forEach(c => drawConRec(ctx, c, posMap, colors));
     }
 
     function getYearFromDate(dateStr) {
@@ -111,7 +162,7 @@ export default function TreeCanvas({ members, selectedId, searchResultIds, onSel
         return isNaN(y) ? null : y;
     }
 
-    function drawNode(ctx, nodePos, selId, searchIds, imgCache) {
+    function drawNode(ctx, nodePos, selId, searchIds, imgCache, colors) {
         const { member, x, y, width: w, height: h } = nodePos;
         const isSel = selId === member.id;
         const isSearch = searchIds.includes(member.id);
@@ -122,15 +173,15 @@ export default function TreeCanvas({ members, selectedId, searchResultIds, onSel
         const birthYear = getYearFromDate(member.birthDate);
         const deathYear = getYearFromDate(member.deathDate);
 
-        ctx.shadowColor = isSel ? 'rgba(59,111,207,0.4)' : 'rgba(0,0,0,0.1)';
+        ctx.shadowColor = isSel ? colors.nodeShadowSelected : colors.nodeShadow;
         ctx.shadowBlur = isSel ? 20 : 10; ctx.shadowOffsetY = 4;
 
         ctx.beginPath(); roundRect(ctx, x, y, w, h, r);
-        ctx.fillStyle = '#fff';
+        ctx.fillStyle = colors.nodeFill;
         ctx.fill();
 
         ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
-        ctx.strokeStyle = isSel ? '#3B6FCF' : isSearch ? '#5A8FE8' : 'rgba(0,0,0,0.08)';
+        ctx.strokeStyle = isSel ? colors.nodeBorderSelected : isSearch ? colors.nodeBorderSearch : colors.nodeBorder;
         ctx.lineWidth = isSel ? 3 : 1; ctx.stroke();
 
         // Gender bar (thicker)
@@ -169,7 +220,7 @@ export default function TreeCanvas({ members, selectedId, searchResultIds, onSel
         }
 
         // Name — bigger, bolder
-        ctx.fillStyle = isDead ? '#9ba3b5' : '#1a2138';
+        ctx.fillStyle = isDead ? colors.textDead : colors.textPrimary;
         ctx.font = 'bold 16px "Inter", sans-serif';
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         let dn = member.name;
@@ -179,7 +230,7 @@ export default function TreeCanvas({ members, selectedId, searchResultIds, onSel
 
         // Years — larger
         const yt = deathYear ? `${birthYear || '?'} - ${deathYear}` : birthYear ? `${birthYear} - nay` : '';
-        if (yt) { ctx.fillStyle = '#9ba3b5'; ctx.font = '13px "Inter", sans-serif'; ctx.fillText(yt, x + w / 2, y + 105); }
+        if (yt) { ctx.fillStyle = colors.textMuted; ctx.font = '13px "Inter", sans-serif'; ctx.fillText(yt, x + w / 2, y + 105); }
 
         // Gen badge — bigger
         if (member.generation) {
@@ -188,13 +239,13 @@ export default function TreeCanvas({ members, selectedId, searchResultIds, onSel
             const bw = ctx.measureText(bt).width + 16;
             const bx = x + w / 2 - bw / 2, by = y + 120;
             ctx.beginPath(); roundRect(ctx, bx, by, bw, 22, 11);
-            ctx.fillStyle = 'rgba(59,111,207,0.08)'; ctx.fill();
-            ctx.strokeStyle = 'rgba(59,111,207,0.2)'; ctx.lineWidth = 0.5; ctx.stroke();
-            ctx.fillStyle = '#3B6FCF'; ctx.fillText(bt, x + w / 2, by + 11);
+            ctx.fillStyle = colors.genBadgeBg; ctx.fill();
+            ctx.strokeStyle = colors.genBadgeBorder; ctx.lineWidth = 0.5; ctx.stroke();
+            ctx.fillStyle = colors.genBadgeText; ctx.fillText(bt, x + w / 2, by + 11);
         }
 
         if (isDead) {
-            ctx.fillStyle = '#9ba3b5'; ctx.font = '13px "Inter", sans-serif';
+            ctx.fillStyle = colors.textMuted; ctx.font = '13px "Inter", sans-serif';
             ctx.textAlign = 'center'; ctx.fillText('✝', x + w - 18, y + 18);
         }
     }
