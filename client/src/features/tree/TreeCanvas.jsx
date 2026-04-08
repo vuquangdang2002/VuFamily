@@ -1,48 +1,35 @@
 import { useRef, useEffect, useCallback } from 'react';
 import { buildHierarchy, calculateLayout } from '../../shared/utils/treeLayout';
 
-// ─── Theme-aware color palettes for canvas drawing ───
+// ─── Read canvas colors from CSS custom properties (cached) ───
+let _cachedColors = null;
+
 function getThemeColors() {
-    const isDark = document.documentElement.classList.contains('dark');
-    if (isDark) {
-        return {
-            bg: '#0f0f1a',
-            grid: 'rgba(59, 111, 207, 0.06)',
-            nodeFill: '#1a1a2e',
-            nodeBorder: 'rgba(255,255,255,0.1)',
-            nodeBorderSelected: '#5A8FE8',
-            nodeBorderSearch: '#5A8FE8',
-            nodeShadow: 'rgba(0,0,0,0.4)',
-            nodeShadowSelected: 'rgba(90,143,232,0.35)',
-            textPrimary: '#e8e6e3',
-            textDead: '#6a6a7a',
-            textMuted: '#6a6a7a',
-            genBadgeBg: 'rgba(59,111,207,0.15)',
-            genBadgeBorder: 'rgba(59,111,207,0.3)',
-            genBadgeText: '#7BAFFF',
-            spouseLine: 'rgba(209, 107, 138, 0.45)',
-            childLine: 'rgba(90, 143, 232, 0.5)',
-        };
-    }
-    return {
-        bg: '#EDF0F7',
-        grid: 'rgba(59, 111, 207, 0.04)',
-        nodeFill: '#ffffff',
-        nodeBorder: 'rgba(0,0,0,0.08)',
-        nodeBorderSelected: '#3B6FCF',
-        nodeBorderSearch: '#5A8FE8',
-        nodeShadow: 'rgba(0,0,0,0.1)',
-        nodeShadowSelected: 'rgba(59,111,207,0.4)',
-        textPrimary: '#1a2138',
-        textDead: '#9ba3b5',
-        textMuted: '#9ba3b5',
-        genBadgeBg: 'rgba(59,111,207,0.08)',
-        genBadgeBorder: 'rgba(59,111,207,0.2)',
-        genBadgeText: '#3B6FCF',
-        spouseLine: 'rgba(209, 107, 138, 0.5)',
-        childLine: 'rgba(59, 111, 207, 0.4)',
+    if (_cachedColors) return _cachedColors;
+    const s = getComputedStyle(document.documentElement);
+    const v = (name) => s.getPropertyValue(name).trim();
+    _cachedColors = {
+        bg:                  v('--tree-bg'),
+        grid:                v('--tree-grid'),
+        nodeFill:            v('--tree-node-bg'),
+        nodeBorder:          v('--tree-node-border'),
+        nodeBorderSelected:  v('--tree-node-border-active'),
+        nodeBorderSearch:    v('--tree-node-border-active'),
+        nodeShadow:          v('--tree-node-shadow'),
+        nodeShadowSelected:  v('--tree-node-shadow-active'),
+        textPrimary:         v('--text-primary'),
+        textDead:            v('--text-muted'),
+        textMuted:           v('--text-muted'),
+        genBadgeBg:          v('--tree-badge-bg'),
+        genBadgeBorder:      v('--tree-badge-border'),
+        genBadgeText:        v('--tree-badge-text'),
+        spouseLine:          v('--tree-line-spouse'),
+        childLine:           v('--tree-line-parent'),
     };
+    return _cachedColors;
 }
+
+function invalidateThemeColors() { _cachedColors = null; }
 
 export default function TreeCanvas({ members, selectedId, searchResultIds, onSelectMember, onDeselect }) {
     const canvasRef = useRef(null);
@@ -106,7 +93,7 @@ export default function TreeCanvas({ members, selectedId, searchResultIds, onSel
 
     // ─── Observe theme changes and redraw ───
     useEffect(() => {
-        const observer = new MutationObserver(() => { draw(); });
+        const observer = new MutationObserver(() => { invalidateThemeColors(); draw(); });
         observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
         return () => observer.disconnect();
     }, [draw]);

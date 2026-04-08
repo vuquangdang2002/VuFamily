@@ -44,6 +44,20 @@
     --input-placeholder: #9ca3af;
     --input-focus-border: var(--primary);
     --input-focus-shadow: rgba(59, 111, 207, 0.12);
+
+    /* ── Tree Canvas ── */
+    --tree-bg: #EDF0F7;
+    --tree-grid: rgba(59, 111, 207, 0.04);
+    --tree-node-bg: #ffffff;
+    --tree-node-border: rgba(0, 0, 0, 0.08);
+    --tree-node-border-active: #3B6FCF;
+    --tree-node-shadow: rgba(0, 0, 0, 0.1);
+    --tree-node-shadow-active: rgba(59, 111, 207, 0.4);
+    --tree-line-parent: rgba(59, 111, 207, 0.4);
+    --tree-line-spouse: rgba(209, 107, 138, 0.5);
+    --tree-badge-bg: rgba(59, 111, 207, 0.08);
+    --tree-badge-border: rgba(59, 111, 207, 0.2);
+    --tree-badge-text: #3B6FCF;
 }
 
 html.dark {
@@ -67,6 +81,20 @@ html.dark {
     --input-placeholder: rgba(255, 255, 255, 0.35);
     --input-focus-border: var(--gold);
     --input-focus-shadow: rgba(212, 175, 55, 0.1);
+
+    /* ── Tree Canvas ── */
+    --tree-bg: #0f0f1a;
+    --tree-grid: rgba(59, 111, 207, 0.06);
+    --tree-node-bg: #1a1a2e;
+    --tree-node-border: rgba(255, 255, 255, 0.1);
+    --tree-node-border-active: #5A8FE8;
+    --tree-node-shadow: rgba(0, 0, 0, 0.4);
+    --tree-node-shadow-active: rgba(90, 143, 232, 0.35);
+    --tree-line-parent: rgba(90, 143, 232, 0.5);
+    --tree-line-spouse: rgba(209, 107, 138, 0.45);
+    --tree-badge-bg: rgba(59, 111, 207, 0.15);
+    --tree-badge-border: rgba(59, 111, 207, 0.3);
+    --tree-badge-text: #7BAFFF;
 }
 
 *,
