@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 // ── Features ──
 import LoginPage from './features/auth/LoginPage';
 import TreeCanvas from './features/tree/TreeCanvas';
@@ -620,6 +621,7 @@ export default function App() {
 
             <Toast toasts={toasts} />
             <VoiceCall user={user} activeCallRoom={activeCallRoom} onClearActiveCallRoom={() => setActiveCallRoom(null)} addToast={addToast} />
+            <SpeedInsights />
         </div>
     );
 }
