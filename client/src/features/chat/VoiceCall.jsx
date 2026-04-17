@@ -20,6 +20,8 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
     const remoteAudioRef = useRef(null);
     const pollIntervalRef = useRef(null);
     const durationIntervalRef = useRef(null);
+    const candidatePollRef = useRef(null);
+    const addedCandidatesRef = useRef(new Set());
 
     // --- Media Setup ---
     const getMedia = async () => {
@@ -286,12 +288,16 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
             const json = await res.json();
             if (json.success && json.data) {
                 for (let c of json.data) {
-                    try { await pc.addIceCandidate(new RTCIceCandidate(JSON.parse(c.candidate))); } catch (e) { }
+                    try {
+                        if (!addedCandidatesRef.current.has(c.id)) {
+                            await pc.addIceCandidate(new RTCIceCandidate(JSON.parse(c.candidate)));
+                            addedCandidatesRef.current.add(c.id);
+                        }
+                    } catch (e) { }
                 }
             }
         }, 2000);
-        // Save interval to some ref to clear on cleanup
-        // We'll just hook onto pollIntervalRef too or skip clearing it to leak less
+        candidatePollRef.current = interval;
     };
 
     const toggleMute = () => {
@@ -314,7 +320,9 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
         stopMedia();
         if (pcRef.current) { pcRef.current.close(); pcRef.current = null; }
         if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+        if (candidatePollRef.current) clearInterval(candidatePollRef.current);
         if (durationIntervalRef.current) clearInterval(durationIntervalRef.current);
+        addedCandidatesRef.current.clear();
         setDuration(0);
         setIsMuted(false);
         setIsSpeakerOff(false);
