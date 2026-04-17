@@ -82,6 +82,22 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
                 if (json.success && json.data) {
                     setCallData(json.data);
                     setCallState('RINGING');
+
+                    // Trigger notification
+                    if (window.Capacitor && window.Capacitor.Plugins.LocalNotifications) {
+                        try {
+                            await LocalNotifications.schedule({
+                                notifications: [{
+                                    title: "Cuộc gọi đến 📞",
+                                    body: `${json.data?.caller?.displayName || 'Ai đó'} đang gọi cho bạn...`,
+                                    id: Math.floor(Math.random() * 100000),
+                                    schedule: { at: new Date() }
+                                }]
+                            });
+                        } catch (e) { }
+                    } else if ('Notification' in window && Notification.permission === 'granted') {
+                        new Notification("Cuộc gọi đến 📞", { body: `${json.data?.caller?.displayName || 'Ai đó'} đang gọi cho bạn...` });
+                    }
                 }
             } catch (e) { }
         }, 3000);
