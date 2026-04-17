@@ -338,57 +338,105 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
 
     if (callState === 'IDLE') return null;
 
+    const callerName = callData?.caller?.display_name || callData?.caller?.displayName || callData?.caller?.username || 'Người thân';
+    const callerAvatar = callData?.caller?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(callerName)}&background=random`;
+    const isMobile = window.innerWidth <= 600;
+
     return (
         <>
-            <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 99998, backdropFilter: 'blur(2px)' }} />
-            <div className="voice-call-overlay" style={{
-                position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '90%', maxWidth: 350,
-                background: 'var(--bg-secondary)', borderRadius: 24,
-                boxShadow: '0 20px 40px rgba(0,0,0,0.4), 0 0 0 1px var(--border-subtle)',
-                zIndex: 99999, overflow: 'hidden', display: 'flex', flexDirection: 'column',
-                animation: 'popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+            <div style={{ position: 'fixed', inset: 0, background: isMobile ? '#1f2937' : 'rgba(0,0,0,0.7)', zIndex: 99998, backdropFilter: 'blur(8px)' }} />
+
+            <div className="voice-call-ui" style={{
+                position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+                width: isMobile ? '100%' : 400, height: isMobile ? '100%' : 550,
+                background: isMobile ? 'transparent' : 'linear-gradient(to bottom, #1f2937, #111827)', color: 'white',
+                borderRadius: isMobile ? 0 : 32, boxShadow: isMobile ? 'none' : '0 25px 50px -12px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.1)',
+                zIndex: 99999, display: 'flex', flexDirection: 'column',
+                animation: 'popIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)'
             }}>
-                <div style={{ padding: 20, textAlign: 'center' }}>
-                    <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'var(--primary)', color: '#fff', fontSize: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
-                        {callData?.caller?.avatar ? <img src={callData.caller.avatar} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} /> : '📞'}
-                    </div>
-                    <h3 style={{ margin: '0 0 4px', fontSize: 18 }}>{callState === 'CALLING' ? 'Đang gọi...' : (callData?.caller?.display_name || callData?.caller?.username || 'Người lạ')}</h3>
-                    <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: 14 }}>
-                        {callState === 'RINGING' && 'Đang gọi cho bạn...'}
-                        {callState === 'CALLING' && 'Chờ nhấc máy...'}
-                        {callState === 'CONNECTED' && formatDuration(duration)}
-                    </p>
+                {/* Header Tiêu đề */}
+                <div style={{ padding: '30px 20px 20px', textAlign: 'center', opacity: 0.8, fontSize: 14, letterSpacing: 1 }}>
+                    Hệ thống Cuộc gọi VuFamily
                 </div>
 
-                {['CALLING', 'CONNECTED'].includes(callState) && (
-                    <div style={{ display: 'flex', justifyContent: 'space-evenly', padding: '10px 0', borderTop: '1px solid var(--border-subtle)' }}>
-                        <button title="Bật/tắt Micro" onClick={toggleMute} style={{ cursor: 'pointer', borderRadius: '50%', width: 44, height: 44, padding: 0, background: isMuted ? '#fecaca' : 'var(--bg-primary)', color: isMuted ? '#ef4444' : 'var(--text-primary)', border: '1px solid var(--border-subtle)', fontSize: 20 }}>
-                            {isMuted ? '🔇' : '🎤'}
-                        </button>
-                        <button title="Bật/tắt Loa" onClick={toggleSpeaker} style={{ cursor: 'pointer', borderRadius: '50%', width: 44, height: 44, padding: 0, background: isSpeakerOff ? '#fecaca' : 'var(--bg-primary)', color: isSpeakerOff ? '#ef4444' : 'var(--text-primary)', border: '1px solid var(--border-subtle)', fontSize: 20 }}>
-                            {isSpeakerOff ? '🔇' : '🔊'}
-                        </button>
+                {/* Khu vực Avatar */}
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                    <div style={{ position: 'relative', width: 140, height: 140, marginBottom: 24 }}>
+                        <img src={callerAvatar} style={{
+                            width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover',
+                            border: '4px solid #374151',
+                            boxShadow: ['CALLING', 'RINGING'].includes(callState) ? '0 0 0 10px rgba(255,255,255,0.1)' : '0 10px 25px rgba(0,0,0,0.5)',
+                            animation: ['CALLING', 'RINGING'].includes(callState) ? 'pulseRing 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite' : 'none'
+                        }} />
                     </div>
-                )}
 
-                <div style={{ display: 'flex', borderTop: '1px solid var(--border-subtle)' }}>
+                    <h2 style={{ margin: '0 0 8px 0', fontSize: 28, fontWeight: 600, textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>
+                        {callerName}
+                    </h2>
+
+                    <div style={{ fontSize: 16, opacity: 0.8 }}>
+                        {callState === 'RINGING' && 'Đang gọi cho bạn...'}
+                        {callState === 'CALLING' && 'Đang đổ chuông...'}
+                        {callState === 'CONNECTED' && <span style={{ color: '#34d399', fontWeight: 600 }}>{formatDuration(duration)}</span>}
+                    </div>
+                </div>
+
+                {/* Khu vực Bảng điều khiển (Controls) */}
+                <div style={{
+                    padding: '30px 20px 40px', display: 'flex', justifyContent: 'center', gap: 30,
+                    background: isMobile ? 'rgba(0,0,0,0.3)' : 'transparent', borderTopLeftRadius: 40, borderTopRightRadius: 40
+                }}>
                     {callState === 'RINGING' ? (
                         <>
-                            <button style={{ flex: 1, padding: 16, background: '#ef4444', color: '#fff', border: 'none', fontWeight: 'bold', cursor: 'pointer' }} onClick={rejectCall}>Từ chối</button>
-                            <button style={{ flex: 1, padding: 16, background: '#10b981', color: '#fff', border: 'none', fontWeight: 'bold', cursor: 'pointer' }} onClick={acceptCall}>Nghe máy</button>
+                            <button onClick={rejectCall} style={{ width: 72, height: 72, borderRadius: '50%', background: '#ef4444', color: 'white', border: 'none', cursor: 'pointer', fontSize: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 24px rgba(239, 68, 68, 0.4)', transition: 'all 0.2s' }}>
+                                <i style={{ transform: 'rotate(135deg)', fontStyle: 'normal' }}>📞</i>
+                            </button>
+                            <button onClick={acceptCall} style={{ width: 72, height: 72, borderRadius: '50%', background: '#10b981', color: 'white', border: 'none', cursor: 'pointer', fontSize: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 24px rgba(16, 185, 129, 0.4)', animation: 'bounce 1s infinite' }}>
+                                <i style={{ fontStyle: 'normal' }}>📞</i>
+                            </button>
                         </>
                     ) : (
-                        <button style={{ flex: 1, padding: 16, background: '#ef4444', color: '#fff', border: 'none', fontWeight: 'bold', cursor: 'pointer' }} onClick={endCall}>Kết thúc</button>
+                        <>
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
+                                <button onClick={toggleMute} style={{ width: 60, height: 60, borderRadius: '50%', background: isMuted ? 'white' : 'rgba(255,255,255,0.15)', color: isMuted ? '#111' : 'white', border: 'none', cursor: 'pointer', fontSize: 24, transition: 'all 0.2s' }}>
+                                    {isMuted ? '🔇' : '🎤'}
+                                </button>
+                                <span style={{ fontSize: 13, opacity: 0.8 }}>Micro</span>
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, transform: 'translateY(-15px)' }}>
+                                <button onClick={endCall} style={{ width: 72, height: 72, borderRadius: '50%', background: '#ef4444', color: 'white', border: 'none', cursor: 'pointer', fontSize: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 24px rgba(239, 68, 68, 0.4)', transition: 'all 0.2s' }}>
+                                    <i style={{ transform: 'rotate(135deg)', fontStyle: 'normal' }}>📞</i>
+                                </button>
+                                <span style={{ fontSize: 13, opacity: 0.8 }}>Kết thúc</span>
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
+                                <button onClick={toggleSpeaker} style={{ width: 60, height: 60, borderRadius: '50%', background: isSpeakerOff ? 'rgba(255,255,255,0.15)' : 'white', color: isSpeakerOff ? 'white' : '#111', border: 'none', cursor: 'pointer', fontSize: 24, transition: 'all 0.2s' }}>
+                                    {isSpeakerOff ? '🔈' : '🔊'}
+                                </button>
+                                <span style={{ fontSize: 13, opacity: 0.8 }}>Loa ngoài</span>
+                            </div>
+                        </>
                     )}
                 </div>
-
-                <audio ref={localAudioRef} autoPlay muted style={{ display: 'none' }} />
-                <audio ref={remoteAudioRef} autoPlay style={{ display: 'none' }} />
-
-                <style>
-                    {`@keyframes popIn { 0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0; } 100% { transform: translate(-50%, -50%) scale(1); opacity: 1; } }`}
-                </style>
             </div>
+
+            <audio ref={localAudioRef} autoPlay muted style={{ display: 'none' }} />
+            <audio ref={remoteAudioRef} autoPlay style={{ display: 'none' }} />
+
+            <style>
+                {`
+                @keyframes popIn { 0% { transform: translate(-50%, -40%) scale(0.9); opacity: 0; } 100% { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
+                @keyframes pulseRing { 
+                    0% { box-shadow: 0 0 0 0 rgba(255,255,255,0.3); } 
+                    70% { box-shadow: 0 0 0 30px rgba(255,255,255,0); }
+                    100% { box-shadow: 0 0 0 0 rgba(255,255,255,0); }
+                }
+                @keyframes bounce { 
+                    0%, 100% { transform: translateY(0); } 
+                    50% { transform: translateY(-8px); } 
+                }
+                `}
+            </style>
         </>
     );
 }
