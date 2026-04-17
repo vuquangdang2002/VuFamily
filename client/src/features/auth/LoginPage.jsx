@@ -11,8 +11,42 @@ export default function LoginPage({ onLogin }) {
     const [forgotMsg, setForgotMsg] = useState('');
     const [forgotLoading, setForgotLoading] = useState(false);
 
+    // Registration state
+    const [isRegisterMode, setIsRegisterMode] = useState(false);
+    const [displayName, setDisplayName] = useState('');
+
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        if (isRegisterMode) {
+            if (!username.trim() || !password.trim()) {
+                setError('Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu');
+                return;
+            }
+            setLoading(true);
+            setError('');
+            try {
+                const res = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: username.trim(), password, displayName: displayName.trim() })
+                });
+                const json = await res.json();
+                if (json.success) {
+                    setIsRegisterMode(false);
+                    setError('');
+                    alert(json.message); // Show success msg, flip to login
+                } else {
+                    setError(json.error || 'Đăng ký thất bại');
+                }
+            } catch (err) {
+                setError('Lỗi kết nối server');
+            } finally {
+                setLoading(false);
+            }
+            return;
+        }
+
         if (!username.trim() || !password.trim()) {
             setError('Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu');
             return;
@@ -62,7 +96,7 @@ export default function LoginPage({ onLogin }) {
 
                     <form onSubmit={handleSubmit}>
                         <div className="form-group">
-                            <label className="form-label">Tên đăng nhập</label>
+                            <label className="form-label">Tên đăng nhập *</label>
                             <div className="input-with-icon">
                                 <span className="input-icon">👤</span>
                                 <input className="form-input" type="text" value={username}
@@ -71,8 +105,20 @@ export default function LoginPage({ onLogin }) {
                             </div>
                         </div>
 
+                        {isRegisterMode && (
+                            <div className="form-group">
+                                <label className="form-label">Tên hiển thị (Tùy chọn)</label>
+                                <div className="input-with-icon">
+                                    <span className="input-icon">🏷️</span>
+                                    <input className="form-input" type="text" value={displayName}
+                                        onChange={e => setDisplayName(e.target.value)}
+                                        placeholder="Nhập tên hiển thị..." />
+                                </div>
+                            </div>
+                        )}
+
                         <div className="form-group">
-                            <label className="form-label">Mật khẩu</label>
+                            <label className="form-label">Mật khẩu *</label>
                             <div className="input-with-icon">
                                 <span className="input-icon">🔒</span>
                                 <input className="form-input" type={showPass ? 'text' : 'password'}
@@ -82,20 +128,36 @@ export default function LoginPage({ onLogin }) {
                                     {showPass ? '🙈' : '👁️'}
                                 </button>
                             </div>
+                            {isRegisterMode && (
+                                <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>
+                                    Mật khẩu phải từ 8 ký tự, gồm chữ hoa, thường, số và ký tự đặc biệt.
+                                </p>
+                            )}
                         </div>
 
                         <button className="btn btn-primary login-btn" type="submit" disabled={loading}>
-                            {loading ? '⏳ Đang đăng nhập...' : '🔑 Đăng nhập'}
+                            {loading
+                                ? (isRegisterMode ? '⏳ Đang đăng ký...' : '⏳ Đang đăng nhập...')
+                                : (isRegisterMode ? '📝 Đăng ký tài khoản' : '🔑 Đăng nhập')}
                         </button>
                     </form>
 
-                    <div style={{ textAlign: 'center', marginTop: 12 }}>
+                    <div style={{ textAlign: 'center', marginTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        {!isRegisterMode && (
+                            <button
+                                type="button"
+                                onClick={() => { setShowForgot(true); setForgotUser(''); setForgotMsg(''); }}
+                                style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', fontSize: 13, textDecoration: 'underline' }}
+                            >
+                                Quên mật khẩu?
+                            </button>
+                        )}
                         <button
                             type="button"
-                            onClick={() => { setShowForgot(true); setForgotUser(''); setForgotMsg(''); }}
-                            style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', fontSize: 13, textDecoration: 'underline' }}
+                            onClick={() => { setIsRegisterMode(!isRegisterMode); setError(''); }}
+                            style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 13, textDecoration: 'underline' }}
                         >
-                            Quên mật khẩu?
+                            {isRegisterMode ? 'Đã có tài khoản? Đăng nhập ngay' : 'Chưa có tài khoản? Đăng ký ngay'}
                         </button>
                     </div>
                 </div>

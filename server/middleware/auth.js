@@ -96,15 +96,15 @@ async function login(req, res) {
 
         res.json({
             success: true,
-            data: { 
-                id: user.id, 
-                username: user.username, 
-                displayName: user.display_name, 
+            data: {
+                id: user.id,
+                username: user.username,
+                displayName: user.display_name,
                 email: user.email,
                 phone: user.phone,
                 avatar: user.avatar,
-                role: user.role, 
-                token 
+                role: user.role,
+                token
             }
         });
     } catch (err) {
@@ -135,16 +135,16 @@ async function updateProfile(req, res) {
     try {
         const { displayName, email, phone, avatar } = req.body;
         if (!displayName) return res.status(400).json({ success: false, error: 'Tên hiển thị không được để trống' });
-        
+
         const { data, error } = await supabase
             .from('users')
             .update({ display_name: displayName, email: email || '', phone: phone || '', avatar: avatar || '', updated_at: new Date().toISOString() })
             .eq('id', req.user.id)
             .select('id, username, display_name, email, phone, avatar, role')
             .single();
-            
+
         if (error) throw error;
-        
+
         res.json({ success: true, data: { id: data.id, username: data.username, displayName: data.display_name, email: data.email, phone: data.phone, avatar: data.avatar, role: data.role } });
     } catch (err) {
         console.error('[DangVQ Log] [API: updateProfile] Error:', err.message);
@@ -202,10 +202,51 @@ async function createUser(req, res) {
     }
 }
 
+async function register(req, res) {
+    const { username, password, displayName } = req.body;
+    if (!username || !password) {
+        return res.status(400).json({ success: false, error: 'Tên đăng nhập và mật khẩu là bắt buộc' });
+    }
+
+    // Validate strong password
+    const strongRegex = new RegExp("^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\\$%\\^&\\*])(?=.{8,})");
+    if (!strongRegex.test(password)) {
+        return res.status(400).json({ success: false, error: 'Mật khẩu phải từ 8 ký tự, gồm chữ hoa, thường, số và ký tự đặc biệt' });
+    }
+
+    try {
+        // Check duplicate
+        const { data: existing } = await supabase
+            .from('users')
+            .select('id')
+            .eq('username', username)
+            .single();
+
+        if (existing) {
+            return res.status(400).json({ success: false, error: 'Tên đăng nhập đã tồn tại' });
+        }
+
+        const hashedPw = await hashPassword(password);
+        const { error } = await supabase
+            .from('users')
+            .insert({
+                username,
+                password: hashedPw,
+                display_name: displayName || username,
+                role: 'viewer', // Always viewer
+            });
+        if (error) throw error;
+
+        res.status(201).json({ success: true, message: 'Đăng ký tài khoản thành công! Bạn có thể đăng nhập ngay.' });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+}
+
 async function updateUser(req, res) {
     const userId = req.params.id;
     const { displayName, role, email, phone, avatar } = req.body;
-    
+
     if (!displayName || !role) {
         return res.status(400).json({ success: false, error: 'Tên hiển thị và quyền là bắt buộc' });
     }
@@ -371,6 +412,7 @@ module.exports = {
     changePassword,
     resetPassword,
     forgotPassword,
-    updateProfile
+    updateProfile,
+    register
 };
 

@@ -27,6 +27,19 @@
 }
 ```
 
+### `POST /auth/register`
+Đăng ký tài khoản (mặc định quyền `viewer`).
+```json
+// Request
+{ "username": "newuser", "password": "***", "displayName": "Tên Hiển Thị" }
+
+// Response 201
+{
+  "success": true,
+  "message": "Đăng ký tài khoản thành công!..."
+}
+```
+
 ### `POST /auth/logout` 🔒
 Hủy session token.
 
