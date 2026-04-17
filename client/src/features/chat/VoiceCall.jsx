@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-
-const API_BASE = '/api';
+import { API_BASE } from '../../shared/services/api';
 function getToken() {
     try { return JSON.parse(localStorage.getItem('vuFamilyAuth') || '{}').token || ''; }
     catch { return ''; }
@@ -316,7 +315,7 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
                 </p>
             </div>
 
-            {callState === 'CONNECTED' && (
+            {['CALLING', 'CONNECTED'].includes(callState) && (
                 <div style={{ display: 'flex', justifyContent: 'space-evenly', padding: '10px 0', borderTop: '1px solid var(--border-subtle)' }}>
                     <button title="Bật/tắt Micro" onClick={toggleMute} style={{ cursor: 'pointer', borderRadius: '50%', width: 44, height: 44, padding: 0, background: isMuted ? '#fecaca' : 'var(--bg-primary)', color: isMuted ? '#ef4444' : 'var(--text-primary)', border: '1px solid var(--border-subtle)', fontSize: 20 }}>
                         {isMuted ? '🔇' : '🎤'}

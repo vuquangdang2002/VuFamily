@@ -2,14 +2,14 @@
 import { Solar, Lunar } from '../utils/lunar.js';
 import { ganZhiToViet } from '../utils/vietLunar.js';
 
-const API_BASE = '/api';
+export const API_BASE = (window.Capacitor || (window.location.hostname === 'localhost' && !window.location.port)) ? 'https://vufamily.vercel.app/api' : '/api';
 
 async function request(url, options = {}) {
     let headers = { 'Content-Type': 'application/json', ...options.headers };
     try {
         const auth = JSON.parse(localStorage.getItem('vuFamilyAuth'));
         if (auth && auth.token) headers['x-auth-token'] = auth.token;
-    } catch (e) {}
+    } catch (e) { }
 
     const res = await fetch(`${API_BASE}${url}`, {
         ...options,

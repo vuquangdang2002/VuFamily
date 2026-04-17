@@ -18,10 +18,9 @@ import Header from './shared/components/Header';
 import Toolbar from './shared/components/Toolbar';
 import Toast from './shared/components/Toast';
 import { useTheme } from './shared/components/ThemeToggle';
-import { api, localApi } from './shared/services/api';
+import { api, localApi, API_BASE } from './shared/services/api';
 
 const AUTH_KEY = 'vuFamilyAuth';
-const API_BASE = '/api';
 
 function getStoredAuth() {
     try { return JSON.parse(localStorage.getItem(AUTH_KEY)); } catch { return null; }
