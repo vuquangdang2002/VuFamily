@@ -70,39 +70,65 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
         return pc;
     };
 
-    // --- Poller for Incoming Calls ---
+    // --- Poller for Incoming Calls & Ringing Sync ---
     useEffect(() => {
         if (!user) return;
         const interval = setInterval(async () => {
-            if (callState !== 'IDLE') return; // Don't block polling if busy, actually we should refuse other calls, but simplified:
+            if (callState === 'IDLE') {
+                try {
+                    const res = await fetch(`${API_BASE}/calls/incoming`, { headers: { 'x-auth-token': getToken() } });
+                    const json = await res.json();
+                    if (json.success && json.data) {
+                        setCallData(json.data);
+                        setCallState('RINGING');
 
-            try {
-                const res = await fetch(`${API_BASE}/calls/incoming`, { headers: { 'x-auth-token': getToken() } });
-                const json = await res.json();
-                if (json.success && json.data) {
-                    setCallData(json.data);
-                    setCallState('RINGING');
-
-                    // Trigger notification
-                    if (window.Capacitor && window.Capacitor.Plugins.LocalNotifications) {
-                        try {
-                            await LocalNotifications.schedule({
-                                notifications: [{
-                                    title: "Cuộc gọi đến 📞",
-                                    body: `${json.data?.caller?.displayName || 'Ai đó'} đang gọi cho bạn...`,
-                                    id: Math.floor(Math.random() * 100000),
-                                    schedule: { at: new Date() }
-                                }]
-                            });
-                        } catch (e) { }
-                    } else if ('Notification' in window && Notification.permission === 'granted') {
-                        new Notification("Cuộc gọi đến 📞", { body: `${json.data?.caller?.displayName || 'Ai đó'} đang gọi cho bạn...` });
+                        // Trigger notification
+                        if (window.Capacitor && window.Capacitor.Plugins.LocalNotifications) {
+                            try {
+                                await LocalNotifications.schedule({
+                                    notifications: [{
+                                        title: "Cuộc gọi đến 📞",
+                                        body: `${json.data?.caller?.displayName || 'Ai đó'} đang gọi cho bạn...`,
+                                        id: Math.floor(Math.random() * 100000),
+                                        schedule: { at: new Date() }
+                                    }]
+                                });
+                            } catch (e) { }
+                        } else if ('Notification' in window && Notification.permission === 'granted') {
+                            new Notification("Cuộc gọi đến 📞", { body: `${json.data?.caller?.displayName || 'Ai đó'} đang gọi cho bạn...` });
+                        }
                     }
-                }
-            } catch (e) { }
+                } catch (e) { }
+            } else if (callState === 'RINGING' && callData?.id) {
+                // Sync check: nếu người gọi tự ngắt khi mình chưa nhấc máy
+                try {
+                    const res = await fetch(`${API_BASE}/calls/${callData.id}`, { headers: { 'x-auth-token': getToken() } });
+                    const json = await res.json();
+                    if (json.success && json.data && ['ended', 'rejected', 'missed'].includes(json.data.status)) {
+                        cleanupCall();
+                        addToast('Cuộc gọi nhỡ.', 'info');
+                    }
+                } catch (e) { }
+            }
         }, 3000);
         return () => clearInterval(interval);
-    }, [user, callState]);
+    }, [user, callState, callData]);
+
+    // --- 30 Second Call Timeout ---
+    useEffect(() => {
+        if (callState === 'CALLING' || callState === 'RINGING') {
+            const timeout = setTimeout(() => {
+                if (callState === 'CALLING' && callData?.id) {
+                    endCall();
+                    addToast('Không có ai trả lời.', 'info');
+                } else if (callState === 'RINGING' && callData?.id) {
+                    rejectCall();
+                    addToast('Đã bỏ lỡ một cuộc gọi.', 'info');
+                }
+            }, 30000);
+            return () => clearTimeout(timeout);
+        }
+    }, [callState, callData]);
 
     // --- Handle Outbound Call (Triggered from ChatPage) ---
     useEffect(() => {
@@ -160,7 +186,7 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
                             fetch(`${API_BASE}/chats/${room.id}/messages`, {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json', 'x-auth-token': getToken() },
-                                body: JSON.stringify({ content: '📞 Cuộc gọi bật đầu.' })
+                                body: JSON.stringify({ content: '📞 Cuộc gọi bắt đầu.' })
                             }).catch(() => { });
                         } else if (['ended', 'rejected', 'missed'].includes(updatedCall.status)) {
                             cleanupCall();

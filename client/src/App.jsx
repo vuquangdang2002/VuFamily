@@ -68,7 +68,7 @@ export default function App() {
 
     // Yêu cầu quyền thông báo ngay khi mở app
     useEffect(() => {
-        async function requestNotificationPermissions() {
+        async function requestAppPermissions() {
             try {
                 if (window.Capacitor) {
                     await LocalNotifications.requestPermissions();
@@ -78,8 +78,18 @@ export default function App() {
             } catch (e) {
                 console.warn('Không thể xin quyền thông báo:', e);
             }
+
+            // Tính năng đồng bộ: Xin quyền Microphone ngay để Native chặn popup một lần duy nhất lúc mở App
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    stream.getTracks().forEach(t => t.stop()); // Tắt mic đi luôn, chỉ lấy quyền
+                } catch (e) {
+                    console.warn('Chưa có quyền Micro:', e);
+                }
+            }
         }
-        requestNotificationPermissions();
+        requestAppPermissions();
     }, []);
 
     // ─── Global Ripple Effect ───
