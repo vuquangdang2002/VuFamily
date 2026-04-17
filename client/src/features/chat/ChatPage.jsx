@@ -147,12 +147,9 @@ export default function ChatPage({ user, addToast, onStartCall }) {
 
     return (
         <div className="page-container" style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: 0 }}>
-            <div style={{ display: 'flex', height: '100%', overflow: 'hidden' }}>
+            <div className={`chat-layout ${activeRoomId ? 'room-active' : ''}`}>
                 {/* INBOX PANEL */}
-                <div style={{
-                    width: 320, borderRight: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column',
-                    background: 'var(--bg-secondary)'
-                }}>
+                <div className="chat-inbox-panel">
                     <div style={{ padding: '16px', borderBottom: '1px solid var(--border-subtle)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <h2 style={{ fontSize: 18, margin: 0 }}>💬 Tin nhắn</h2>
                         <button className="btn btn-primary" style={{ padding: '6px 12px', fontSize: 13 }} onClick={() => setShowNewChat(true)}>
@@ -202,11 +199,14 @@ export default function ChatPage({ user, addToast, onStartCall }) {
                 </div>
 
                 {/* MESSAGES PANEL */}
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: 'var(--bg-primary)' }}>
+                <div className="chat-messages-panel">
                     {activeRoomId ? (
                         <>
                             {/* Chat header */}
                             <div style={{ padding: '16px 24px', borderBottom: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', gap: 12, background: 'var(--bg-secondary)' }}>
+                                <button className="btn" style={{ padding: '4px 8px', borderRadius: '50%', border: 'none', background: 'transparent', fontSize: '20px' }} onClick={() => setActiveRoomId(null)}>
+                                    ‹
+                                </button>
                                 <div style={{ width: 36, height: 36, borderRadius: '50%', background: activeRoom?.type === 'group' ? 'linear-gradient(135deg, #10b981, #047857)' : 'linear-gradient(135deg, var(--gold), var(--gold-dark))', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 'bold' }}>
                                     {activeRoom?.avatar ? <img src={activeRoom.avatar} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} /> : (activeRoom?.type === 'group' ? '👥' : activeRoom?.display_name?.substring(0, 2).toUpperCase())}
                                 </div>
@@ -219,9 +219,7 @@ export default function ChatPage({ user, addToast, onStartCall }) {
                                     )}
                                 </div>
                                 <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
-                                    {activeRoom?.type === 'direct' && (
-                                        <button className="btn" title="Gọi thoại" style={{ padding: '6px 12px' }} onClick={() => onStartCall(activeRoom)}>📞 Gọi</button>
-                                    )}
+                                    <button className="btn" title="Gọi thoại" style={{ padding: '6px 12px' }} onClick={() => onStartCall(activeRoom)}>📞 Gọi</button>
                                 </div>
                             </div>
 

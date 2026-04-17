@@ -3754,3 +3754,26 @@ html.dark .action-menu-btn:hover {
     padding: 2px 6px;
     border-radius: 4px;
 }
+/* ============ MULTI-DEVICE / MOBILE OVERRIDES ============ */
+@media (max-width: 768px) {
+    .chat-layout.room-active .chat-inbox-panel {
+        display: none !important;
+    }
+    .chat-layout:not(.room-active) .chat-messages-panel {
+        display: none !important;
+    }
+    .chat-inbox-panel {
+        width: 100% !important;
+        border-right: none !important;
+    }
+    .voice-call-overlay {
+        top: 0 !important;
+        right: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        border-radius: 0 !important;
+    }
+    .sidebar {
+        overflow: visible !important;
+    }
+}

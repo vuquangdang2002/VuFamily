@@ -12,6 +12,8 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
     const [localStream, setLocalStream] = useState(null);
     const [remoteStream, setRemoteStream] = useState(null);
     const [duration, setDuration] = useState(0);
+    const [isMuted, setIsMuted] = useState(false);
+    const [isSpeakerOff, setIsSpeakerOff] = useState(false);
 
     const pcRef = useRef(null);
     const localAudioRef = useRef(null);
@@ -139,6 +141,11 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
                             await pc.setRemoteDescription(new RTCSessionDescription(JSON.parse(updatedCall.answer)));
                             setCallState('CONNECTED');
                             startCandidatePolling(json.data.id, pc);
+                            fetch(`${API_BASE}/chats/${room.id}/messages`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json', 'x-auth-token': getToken() },
+                                body: JSON.stringify({ content: '📞 Cuộc gọi bật đầu.' })
+                            }).catch(() => { });
                         } else if (['ended', 'rejected', 'missed'].includes(updatedCall.status)) {
                             cleanupCall();
                             addToast('Cuộc gọi kết thúc.', 'info');
@@ -222,6 +229,11 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
                 headers: { 'Content-Type': 'application/json', 'x-auth-token': getToken() },
                 body: JSON.stringify({ status: 'ended' })
             }).catch(() => { });
+            await fetch(`${API_BASE}/chats/${callData.room_id}/messages`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'x-auth-token': getToken() },
+                body: JSON.stringify({ content: `📞 Cuộc gọi đã kết thúc (${formatDuration(duration)}).` })
+            }).catch(() => { });
         }
         cleanupCall();
     };
@@ -240,6 +252,20 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
         // We'll just hook onto pollIntervalRef too or skip clearing it to leak less
     };
 
+    const toggleMute = () => {
+        if (localStream) {
+            localStream.getAudioTracks().forEach(t => t.enabled = !t.enabled);
+            setIsMuted(!localStream.getAudioTracks()[0]?.enabled);
+        }
+    };
+
+    const toggleSpeaker = () => {
+        if (remoteAudioRef.current) {
+            remoteAudioRef.current.muted = !remoteAudioRef.current.muted;
+            setIsSpeakerOff(remoteAudioRef.current.muted);
+        }
+    };
+
     const cleanupCall = () => {
         setCallState('IDLE');
         setCallData(null);
@@ -248,6 +274,8 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
         if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
         if (durationIntervalRef.current) clearInterval(durationIntervalRef.current);
         setDuration(0);
+        setIsMuted(false);
+        setIsSpeakerOff(false);
         onClearActiveCallRoom();
     };
 
@@ -269,7 +297,7 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
     if (callState === 'IDLE') return null;
 
     return (
-        <div style={{
+        <div className="voice-call-overlay" style={{
             position: 'fixed', top: 20, right: 20, width: 300,
             background: 'var(--bg-secondary)', borderRadius: 16,
             boxShadow: '0 10px 30px rgba(0,0,0,0.2), 0 0 0 1px var(--border-subtle)',
@@ -287,6 +315,17 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
                     {callState === 'CONNECTED' && formatDuration(duration)}
                 </p>
             </div>
+
+            {callState === 'CONNECTED' && (
+                <div style={{ display: 'flex', justifyContent: 'space-evenly', padding: '10px 0', borderTop: '1px solid var(--border-subtle)' }}>
+                    <button title="Bật/tắt Micro" onClick={toggleMute} style={{ cursor: 'pointer', borderRadius: '50%', width: 44, height: 44, padding: 0, background: isMuted ? '#fecaca' : 'var(--bg-primary)', color: isMuted ? '#ef4444' : 'var(--text-primary)', border: '1px solid var(--border-subtle)', fontSize: 20 }}>
+                        {isMuted ? '🔇' : '🎤'}
+                    </button>
+                    <button title="Bật/tắt Loa" onClick={toggleSpeaker} style={{ cursor: 'pointer', borderRadius: '50%', width: 44, height: 44, padding: 0, background: isSpeakerOff ? '#fecaca' : 'var(--bg-primary)', color: isSpeakerOff ? '#ef4444' : 'var(--text-primary)', border: '1px solid var(--border-subtle)', fontSize: 20 }}>
+                        {isSpeakerOff ? '🔇' : '🔊'}
+                    </button>
+                </div>
+            )}
 
             <div style={{ display: 'flex', borderTop: '1px solid var(--border-subtle)' }}>
                 {callState === 'RINGING' ? (
