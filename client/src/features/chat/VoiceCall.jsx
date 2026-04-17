@@ -340,103 +340,153 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
 
     const callerName = callData?.caller?.display_name || callData?.caller?.displayName || callData?.caller?.username || 'Người thân';
     const callerAvatar = callData?.caller?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(callerName)}&background=random`;
-    const isMobile = window.innerWidth <= 600;
 
     return (
-        <>
-            <div style={{ position: 'fixed', inset: 0, background: isMobile ? '#1f2937' : 'rgba(0,0,0,0.7)', zIndex: 99998, backdropFilter: 'blur(8px)' }} />
-
-            <div className="voice-call-ui" style={{
-                position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
-                width: isMobile ? '100%' : 400, height: isMobile ? '100%' : 550,
-                background: isMobile ? 'transparent' : 'linear-gradient(to bottom, #1f2937, #111827)', color: 'white',
-                borderRadius: isMobile ? 0 : 32, boxShadow: isMobile ? 'none' : '0 25px 50px -12px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.1)',
-                zIndex: 99999, display: 'flex', flexDirection: 'column',
-                animation: 'popIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)'
-            }}>
-                {/* Header Tiêu đề */}
-                <div style={{ padding: '30px 20px 20px', textAlign: 'center', opacity: 0.8, fontSize: 14, letterSpacing: 1 }}>
-                    Hệ thống Cuộc gọi VuFamily
-                </div>
-
-                {/* Khu vực Avatar */}
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                    <div style={{ position: 'relative', width: 140, height: 140, marginBottom: 24 }}>
-                        <img src={callerAvatar} style={{
-                            width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover',
-                            border: '4px solid #374151',
-                            boxShadow: ['CALLING', 'RINGING'].includes(callState) ? '0 0 0 10px rgba(255,255,255,0.1)' : '0 10px 25px rgba(0,0,0,0.5)',
-                            animation: ['CALLING', 'RINGING'].includes(callState) ? 'pulseRing 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite' : 'none'
-                        }} />
+        <React.Fragment>
+            <div className={`voice-call-wrapper ${callState}`}>
+                <div className="vc-ui">
+                    {/* Header */}
+                    <div className="vc-header">
+                        Hệ thống Cuộc gọi VuFamily
                     </div>
 
-                    <h2 style={{ margin: '0 0 8px 0', fontSize: 28, fontWeight: 600, textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>
-                        {callerName}
-                    </h2>
+                    {/* Avatar Area */}
+                    <div className="vc-avatar-area">
+                        <div className="vc-avatar-wrapper">
+                            <img src={callerAvatar} className={['CALLING', 'RINGING'].includes(callState) ? 'pulse-anim' : ''} />
+                            {user?.avatar && <img src={user.avatar} className="vc-my-avatar" />}
+                        </div>
 
-                    <div style={{ fontSize: 16, opacity: 0.8 }}>
-                        {callState === 'RINGING' && 'Đang gọi cho bạn...'}
-                        {callState === 'CALLING' && 'Đang đổ chuông...'}
-                        {callState === 'CONNECTED' && <span style={{ color: '#34d399', fontWeight: 600 }}>{formatDuration(duration)}</span>}
+                        <h2 className="vc-title">{callerName}</h2>
+
+                        <div className="vc-status">
+                            {callState === 'RINGING' && 'Đang gọi cho bạn...'}
+                            {callState === 'CALLING' && 'Đang đổ chuông...'}
+                            {callState === 'CONNECTED' && <span style={{ color: '#34d399', fontWeight: 600 }}>{formatDuration(duration)}</span>}
+                        </div>
                     </div>
-                </div>
 
-                {/* Khu vực Bảng điều khiển (Controls) */}
-                <div style={{
-                    padding: '30px 20px 40px', display: 'flex', justifyContent: 'center', gap: 30,
-                    background: isMobile ? 'rgba(0,0,0,0.3)' : 'transparent', borderTopLeftRadius: 40, borderTopRightRadius: 40
-                }}>
-                    {callState === 'RINGING' ? (
-                        <>
-                            <button onClick={rejectCall} style={{ width: 72, height: 72, borderRadius: '50%', background: '#ef4444', color: 'white', border: 'none', cursor: 'pointer', fontSize: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 24px rgba(239, 68, 68, 0.4)', transition: 'all 0.2s' }}>
-                                <i style={{ transform: 'rotate(135deg)', fontStyle: 'normal' }}>📞</i>
-                            </button>
-                            <button onClick={acceptCall} style={{ width: 72, height: 72, borderRadius: '50%', background: '#10b981', color: 'white', border: 'none', cursor: 'pointer', fontSize: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 24px rgba(16, 185, 129, 0.4)', animation: 'bounce 1s infinite' }}>
-                                <i style={{ fontStyle: 'normal' }}>📞</i>
-                            </button>
-                        </>
-                    ) : (
-                        <>
-                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
-                                <button onClick={toggleMute} style={{ width: 60, height: 60, borderRadius: '50%', background: isMuted ? 'white' : 'rgba(255,255,255,0.15)', color: isMuted ? '#111' : 'white', border: 'none', cursor: 'pointer', fontSize: 24, transition: 'all 0.2s' }}>
-                                    {isMuted ? '🔇' : '🎤'}
-                                </button>
-                                <span style={{ fontSize: 13, opacity: 0.8 }}>Micro</span>
-                            </div>
-                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, transform: 'translateY(-15px)' }}>
-                                <button onClick={endCall} style={{ width: 72, height: 72, borderRadius: '50%', background: '#ef4444', color: 'white', border: 'none', cursor: 'pointer', fontSize: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 24px rgba(239, 68, 68, 0.4)', transition: 'all 0.2s' }}>
+                    {/* Controls Area */}
+                    <div className="vc-controls">
+                        {callState === 'RINGING' ? (
+                            <>
+                                <button onClick={rejectCall} className="vc-btn reject">
                                     <i style={{ transform: 'rotate(135deg)', fontStyle: 'normal' }}>📞</i>
                                 </button>
-                                <span style={{ fontSize: 13, opacity: 0.8 }}>Kết thúc</span>
-                            </div>
-                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
-                                <button onClick={toggleSpeaker} style={{ width: 60, height: 60, borderRadius: '50%', background: isSpeakerOff ? 'rgba(255,255,255,0.15)' : 'white', color: isSpeakerOff ? 'white' : '#111', border: 'none', cursor: 'pointer', fontSize: 24, transition: 'all 0.2s' }}>
-                                    {isSpeakerOff ? '🔈' : '🔊'}
+                                <button onClick={acceptCall} className="vc-btn accept pulse-btn">
+                                    <i style={{ fontStyle: 'normal' }}>📞</i>
                                 </button>
-                                <span style={{ fontSize: 13, opacity: 0.8 }}>Loa ngoài</span>
-                            </div>
-                        </>
-                    )}
+                            </>
+                        ) : (
+                            <>
+                                <div className="vc-control-item">
+                                    <button onClick={toggleMute} className={`vc-btn small ${isMuted ? 'muted' : ''}`}>
+                                        {isMuted ? '🔇' : '🎤'}
+                                    </button>
+                                    <span>Micro</span>
+                                </div>
+                                <div className="vc-control-item">
+                                    <button onClick={endCall} className="vc-btn reject drop-down">
+                                        <i style={{ transform: 'rotate(135deg)', fontStyle: 'normal' }}>📞</i>
+                                    </button>
+                                    <span>Kết thúc</span>
+                                </div>
+                                <div className="vc-control-item">
+                                    <button onClick={toggleSpeaker} className={`vc-btn small ${isSpeakerOff ? 'muted' : ''}`}>
+                                        {isSpeakerOff ? '🔈' : '🔊'}
+                                    </button>
+                                    <span>Loa ngoài</span>
+                                </div>
+                            </>
+                        )}
+                    </div>
                 </div>
+
+                <audio ref={localAudioRef} autoPlay muted style={{ display: 'none' }} />
+                <audio ref={remoteAudioRef} autoPlay style={{ display: 'none' }} />
+
+                <style>{`
+                    .vc-ui {
+                        position: fixed;
+                        z-index: 99999;
+                        display: flex;
+                        flex-direction: column;
+                        background: linear-gradient(to bottom, #1f2937, #111827);
+                        color: white;
+                        animation: vcPopIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+                    }
+                    .vc-header {
+                        padding: 20px 20px 10px; text-align: center; opacity: 0.8; font-size: 14px; letter-spacing: 1px;
+                    }
+                    .vc-avatar-area {
+                        flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+                    }
+                    .vc-avatar-wrapper {
+                        position: relative; width: 140px; height: 140px; margin-bottom: 24px;
+                    }
+                    .vc-avatar-wrapper > img:not(.vc-my-avatar) {
+                        width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 4px solid #374151; box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+                    }
+                    .vc-my-avatar {
+                        width: 48px; height: 48px; border-radius: 50%; border: 3px solid #1f2937; position: absolute; bottom: -5px; right: -5px; z-index: 2; object-fit: cover;
+                    }
+                    .vc-title {
+                        margin: 0 0 8px 0; font-size: 26px; font-weight: 600; text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+                    }
+                    .vc-status {
+                        font-size: 16px; opacity: 0.8;
+                    }
+                    .vc-controls {
+                        padding: 20px 20px 40px; display: flex; justify-content: center; gap: 30px;
+                        background: rgba(0,0,0,0.2); border-top-left-radius: 40px; border-top-right-radius: 40px;
+                    }
+                    .vc-control-item {
+                        display: flex; flex-direction: column; align-items: center; gap: 10px;
+                    }
+                    .vc-control-item span {
+                        font-size: 13px; opacity: 0.8;
+                    }
+                    .vc-btn {
+                        border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;
+                    }
+                    .vc-btn.reject { width: 72px; height: 72px; background: #ef4444; color: white; font-size: 32px; box-shadow: 0 8px 24px rgba(239,68,68,0.4); }
+                    .vc-btn.accept { width: 72px; height: 72px; background: #10b981; color: white; font-size: 32px; box-shadow: 0 8px 24px rgba(16,185,129,0.4); }
+                    .vc-btn.small { width: 60px; height: 60px; background: rgba(255,255,255,0.15); color: white; font-size: 24px; }
+                    .vc-btn.small.muted { background: white; color: #111; }
+                    .drop-down { transform: translateY(-15px); }
+
+                    /* WEB PC */
+                    @media (min-width: 601px) {
+                        .voice-call-wrapper.RINGING::before {
+                            content: ""; position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); z-index: 99998;
+                        }
+                        .vc-ui {
+                            bottom: 30px; right: 30px; width: 360px; height: 520px; border-radius: 32px;
+                            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.1);
+                        }
+                        .voice-call-wrapper.RINGING .vc-ui, .voice-call-wrapper.CALLING .vc-ui {
+                            top: 50%; left: 50%; transform: translate(-50%, -50%); bottom: auto; right: auto;
+                        }
+                    }
+
+                    /* MOBILE */
+                    @media (max-width: 600px) {
+                        .voice-call-wrapper::before {
+                            content: ""; position: fixed; inset: 0; background: #1f2937; z-index: 99998;
+                        }
+                        .vc-ui {
+                            top: 0; left: 0; width: 100%; height: 100%; border-radius: 0;
+                        }
+                        .vc-controls { background: transparent; }
+                    }
+
+                    @keyframes vcPopIn { 0% { opacity: 0; transform: scale(0.9) translateY(20px); } 100% { opacity: 1; transform: scale(1) translateY(0); } }
+                    @keyframes pulseRing { 0% { box-shadow: 0 0 0 0 rgba(255,255,255,0.3); } 70% { box-shadow: 0 0 0 30px rgba(255,255,255,0); } 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0); } }
+                    .pulse-anim { animation: pulseRing 1.5s infinite; }
+                    .pulse-btn { animation: pulseBtn 1s infinite; }
+                    @keyframes pulseBtn { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+                `}</style>
             </div>
-
-            <audio ref={localAudioRef} autoPlay muted style={{ display: 'none' }} />
-            <audio ref={remoteAudioRef} autoPlay style={{ display: 'none' }} />
-
-            <style>
-                {`
-                @keyframes popIn { 0% { transform: translate(-50%, -40%) scale(0.9); opacity: 0; } 100% { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
-                @keyframes pulseRing { 
-                    0% { box-shadow: 0 0 0 0 rgba(255,255,255,0.3); } 
-                    70% { box-shadow: 0 0 0 30px rgba(255,255,255,0); }
-                    100% { box-shadow: 0 0 0 0 rgba(255,255,255,0); }
-                }
-                @keyframes bounce { 
-                    0%, 100% { transform: translateY(0); } 
-                    50% { transform: translateY(-8px); } 
-                }
-                `}
-            </style>
-        </>
+        </React.Fragment>
     );
 }
