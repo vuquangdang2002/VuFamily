@@ -19,6 +19,7 @@ import Toolbar from './shared/components/Toolbar';
 import Toast from './shared/components/Toast';
 import { useTheme } from './shared/components/ThemeToggle';
 import { api, localApi, API_BASE } from './shared/services/api';
+import { LocalNotifications } from '@capacitor/local-notifications';
 
 const AUTH_KEY = 'vuFamilyAuth';
 
@@ -64,6 +65,22 @@ export default function App() {
         setToasts(t => [...t, { id, message, type }]);
         setTimeout(() => setToasts(t => t.filter(x => x.id !== id)), 3500);
     };
+
+    // Yêu cầu quyền thông báo ngay khi mở app
+    useEffect(() => {
+        async function requestNotificationPermissions() {
+            try {
+                if (window.Capacitor) {
+                    await LocalNotifications.requestPermissions();
+                } else if ('Notification' in window) {
+                    await Notification.requestPermission();
+                }
+            } catch (e) {
+                console.warn('Không thể xin quyền thông báo:', e);
+            }
+        }
+        requestNotificationPermissions();
+    }, []);
 
     // ─── Global Ripple Effect ───
     useEffect(() => {

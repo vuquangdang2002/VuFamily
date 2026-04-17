@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { API_BASE } from '../../shared/services/api';
+import { LocalNotifications } from '@capacitor/local-notifications';
 function getToken() {
     try { return JSON.parse(localStorage.getItem('vuFamilyAuth') || '{}').token || ''; }
     catch { return ''; }
@@ -296,53 +297,56 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
     if (callState === 'IDLE') return null;
 
     return (
-        <div className="voice-call-overlay" style={{
-            position: 'fixed', top: 20, right: 20, width: 300,
-            background: 'var(--bg-secondary)', borderRadius: 16,
-            boxShadow: '0 10px 30px rgba(0,0,0,0.2), 0 0 0 1px var(--border-subtle)',
-            zIndex: 9999, overflow: 'hidden', display: 'flex', flexDirection: 'column',
-            animation: 'slideIn 0.3s ease-out'
-        }}>
-            <div style={{ padding: 20, textAlign: 'center' }}>
-                <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'var(--primary)', color: '#fff', fontSize: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
-                    {callData?.caller?.avatar ? <img src={callData.caller.avatar} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} /> : '📞'}
+        <>
+            <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 99998, backdropFilter: 'blur(2px)' }} />
+            <div className="voice-call-overlay" style={{
+                position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '90%', maxWidth: 350,
+                background: 'var(--bg-secondary)', borderRadius: 24,
+                boxShadow: '0 20px 40px rgba(0,0,0,0.4), 0 0 0 1px var(--border-subtle)',
+                zIndex: 99999, overflow: 'hidden', display: 'flex', flexDirection: 'column',
+                animation: 'popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+            }}>
+                <div style={{ padding: 20, textAlign: 'center' }}>
+                    <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'var(--primary)', color: '#fff', fontSize: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+                        {callData?.caller?.avatar ? <img src={callData.caller.avatar} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} /> : '📞'}
+                    </div>
+                    <h3 style={{ margin: '0 0 4px', fontSize: 18 }}>{callState === 'CALLING' ? 'Đang gọi...' : (callData?.caller?.display_name || callData?.caller?.username || 'Người lạ')}</h3>
+                    <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: 14 }}>
+                        {callState === 'RINGING' && 'Đang gọi cho bạn...'}
+                        {callState === 'CALLING' && 'Chờ nhấc máy...'}
+                        {callState === 'CONNECTED' && formatDuration(duration)}
+                    </p>
                 </div>
-                <h3 style={{ margin: '0 0 4px', fontSize: 18 }}>{callState === 'CALLING' ? 'Đang gọi...' : (callData?.caller?.display_name || callData?.caller?.username || 'Người lạ')}</h3>
-                <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: 14 }}>
-                    {callState === 'RINGING' && 'Đang gọi cho bạn...'}
-                    {callState === 'CALLING' && 'Chờ nhấc máy...'}
-                    {callState === 'CONNECTED' && formatDuration(duration)}
-                </p>
-            </div>
 
-            {['CALLING', 'CONNECTED'].includes(callState) && (
-                <div style={{ display: 'flex', justifyContent: 'space-evenly', padding: '10px 0', borderTop: '1px solid var(--border-subtle)' }}>
-                    <button title="Bật/tắt Micro" onClick={toggleMute} style={{ cursor: 'pointer', borderRadius: '50%', width: 44, height: 44, padding: 0, background: isMuted ? '#fecaca' : 'var(--bg-primary)', color: isMuted ? '#ef4444' : 'var(--text-primary)', border: '1px solid var(--border-subtle)', fontSize: 20 }}>
-                        {isMuted ? '🔇' : '🎤'}
-                    </button>
-                    <button title="Bật/tắt Loa" onClick={toggleSpeaker} style={{ cursor: 'pointer', borderRadius: '50%', width: 44, height: 44, padding: 0, background: isSpeakerOff ? '#fecaca' : 'var(--bg-primary)', color: isSpeakerOff ? '#ef4444' : 'var(--text-primary)', border: '1px solid var(--border-subtle)', fontSize: 20 }}>
-                        {isSpeakerOff ? '🔇' : '🔊'}
-                    </button>
-                </div>
-            )}
-
-            <div style={{ display: 'flex', borderTop: '1px solid var(--border-subtle)' }}>
-                {callState === 'RINGING' ? (
-                    <>
-                        <button style={{ flex: 1, padding: 16, background: '#ef4444', color: '#fff', border: 'none', fontWeight: 'bold', cursor: 'pointer' }} onClick={rejectCall}>Từ chối</button>
-                        <button style={{ flex: 1, padding: 16, background: '#10b981', color: '#fff', border: 'none', fontWeight: 'bold', cursor: 'pointer' }} onClick={acceptCall}>Nghe máy</button>
-                    </>
-                ) : (
-                    <button style={{ flex: 1, padding: 16, background: '#ef4444', color: '#fff', border: 'none', fontWeight: 'bold', cursor: 'pointer' }} onClick={endCall}>Kết thúc</button>
+                {['CALLING', 'CONNECTED'].includes(callState) && (
+                    <div style={{ display: 'flex', justifyContent: 'space-evenly', padding: '10px 0', borderTop: '1px solid var(--border-subtle)' }}>
+                        <button title="Bật/tắt Micro" onClick={toggleMute} style={{ cursor: 'pointer', borderRadius: '50%', width: 44, height: 44, padding: 0, background: isMuted ? '#fecaca' : 'var(--bg-primary)', color: isMuted ? '#ef4444' : 'var(--text-primary)', border: '1px solid var(--border-subtle)', fontSize: 20 }}>
+                            {isMuted ? '🔇' : '🎤'}
+                        </button>
+                        <button title="Bật/tắt Loa" onClick={toggleSpeaker} style={{ cursor: 'pointer', borderRadius: '50%', width: 44, height: 44, padding: 0, background: isSpeakerOff ? '#fecaca' : 'var(--bg-primary)', color: isSpeakerOff ? '#ef4444' : 'var(--text-primary)', border: '1px solid var(--border-subtle)', fontSize: 20 }}>
+                            {isSpeakerOff ? '🔇' : '🔊'}
+                        </button>
+                    </div>
                 )}
+
+                <div style={{ display: 'flex', borderTop: '1px solid var(--border-subtle)' }}>
+                    {callState === 'RINGING' ? (
+                        <>
+                            <button style={{ flex: 1, padding: 16, background: '#ef4444', color: '#fff', border: 'none', fontWeight: 'bold', cursor: 'pointer' }} onClick={rejectCall}>Từ chối</button>
+                            <button style={{ flex: 1, padding: 16, background: '#10b981', color: '#fff', border: 'none', fontWeight: 'bold', cursor: 'pointer' }} onClick={acceptCall}>Nghe máy</button>
+                        </>
+                    ) : (
+                        <button style={{ flex: 1, padding: 16, background: '#ef4444', color: '#fff', border: 'none', fontWeight: 'bold', cursor: 'pointer' }} onClick={endCall}>Kết thúc</button>
+                    )}
+                </div>
+
+                <audio ref={localAudioRef} autoPlay muted style={{ display: 'none' }} />
+                <audio ref={remoteAudioRef} autoPlay style={{ display: 'none' }} />
+
+                <style>
+                    {`@keyframes popIn { 0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0; } 100% { transform: translate(-50%, -50%) scale(1); opacity: 1; } }`}
+                </style>
             </div>
-
-            <audio ref={localAudioRef} autoPlay muted style={{ display: 'none' }} />
-            <audio ref={remoteAudioRef} autoPlay style={{ display: 'none' }} />
-
-            <style>
-                {`@keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }`}
-            </style>
-        </div>
+        </>
     );
 }
