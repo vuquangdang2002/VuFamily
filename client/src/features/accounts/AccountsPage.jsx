@@ -16,10 +16,10 @@ export default function AccountsPage({ addToast }) {
     const [resetModal, setResetModal] = useState(null);
     const [resetPw, setResetPw] = useState('');
     const [showResetPw, setShowResetPw] = useState(false);
-    
+
     // Edit modal
     const [editModal, setEditModal] = useState(null);
-    const [editUser, setEditUser] = useState({ displayName: '', role: 'viewer' });
+    const [editUser, setEditUser] = useState({ displayName: '', role: 'viewer', status: 'active' });
 
     // Action menu
     const [actionMenuId, setActionMenuId] = useState(null);
@@ -210,69 +210,87 @@ export default function AccountsPage({ addToast }) {
                                     <th style={{ padding: '10px 12px', color: 'var(--text-muted)', fontWeight: 600 }}>Tên đăng nhập</th>
                                     <th style={{ padding: '10px 12px', color: 'var(--text-muted)', fontWeight: 600 }}>Tên hiển thị</th>
                                     <th style={{ padding: '10px 12px', color: 'var(--text-muted)', fontWeight: 600 }}>Quyền</th>
-                                    <th style={{ padding: '10px 12px', color: 'var(--text-muted)', fontWeight: 600 }}>Ngày tạo</th>
+                                    <th style={{ padding: '10px 12px', color: 'var(--text-muted)', fontWeight: 600 }}>Trạng thái</th>
+                                    <th style={{ padding: '10px 12px', color: 'var(--text-muted)', fontWeight: 600 }}>Hoạt động</th>
                                     <th style={{ padding: '10px 12px', color: 'var(--text-muted)', fontWeight: 600, textAlign: 'center' }}>Thao tác</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {users.map(u => (
-                                    <tr key={u.id} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-                                        <td style={{ padding: '10px 12px' }}>{u.id}</td>
-                                        <td style={{ padding: '10px 12px' }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                {u.avatar ? (
-                                                    <img src={u.avatar} alt={u.username} style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover' }} />
+                                {users.map(u => {
+                                    const isOfflineLongTime = u.last_active ? (new Date() - new Date(u.last_active)) > 5 * 60000 : true;
+                                    const actuallyOnline = u.is_online && !isOfflineLongTime;
+
+                                    return (
+                                        <tr key={u.id} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                                            <td style={{ padding: '10px 12px' }}>{u.id}</td>
+                                            <td style={{ padding: '10px 12px' }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                    <div style={{ position: 'relative' }}>
+                                                        {u.avatar ? (
+                                                            <img src={u.avatar} alt={u.username} style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover' }} />
+                                                        ) : (
+                                                            <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'linear-gradient(135deg, var(--gold), var(--gold-dark))', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 'bold' }}>
+                                                                {u.username.substring(0, 2).toUpperCase()}
+                                                            </div>
+                                                        )}
+                                                        {actuallyOnline && (
+                                                            <span style={{ position: 'absolute', bottom: -2, right: -2, width: 10, height: 10, borderRadius: '50%', background: '#10b981', border: '2px solid var(--bg-primary, #0f172a)' }}></span>
+                                                        )}
+                                                    </div>
+                                                    <span style={{ fontWeight: 500 }}>{u.username}</span>
+                                                </div>
+                                            </td>
+                                            <td style={{ padding: '10px 12px' }}>{u.display_name}</td>
+                                            <td style={{ padding: '10px 12px' }}>
+                                                <span style={{
+                                                    padding: '2px 8px', borderRadius: 12, fontSize: 12, fontWeight: 600,
+                                                    background: u.role === 'admin' ? 'rgba(37,99,235,0.15)' : 'rgba(100,116,139,0.15)',
+                                                    color: u.role === 'admin' ? '#2563eb' : '#64748b'
+                                                }}>
+                                                    {u.role === 'admin' ? '👑 Admin' : '👤 Viewer'}
+                                                </span>
+                                            </td>
+                                            <td style={{ padding: '10px 12px' }}>
+                                                {u.status === 'banned' ? (
+                                                    <span style={{ color: '#ef4444', fontWeight: 500, fontSize: 13 }}>Khóa (Banned)</span>
                                                 ) : (
-                                                    <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'linear-gradient(135deg, var(--gold), var(--gold-dark))', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 'bold' }}>
-                                                        {u.username.substring(0, 2).toUpperCase()}
-                                                    </div>
+                                                    <span style={{ color: '#10b981', fontWeight: 500, fontSize: 13 }}>Bình thường</span>
                                                 )}
-                                                <span style={{ fontWeight: 500 }}>{u.username}</span>
-                                            </div>
-                                        </td>
-                                        <td style={{ padding: '10px 12px' }}>{u.display_name}</td>
-                                        <td style={{ padding: '10px 12px' }}>
-                                            <span style={{
-                                                padding: '2px 8px', borderRadius: 12, fontSize: 12, fontWeight: 600,
-                                                background: u.role === 'admin' ? 'rgba(37,99,235,0.15)' : 'rgba(100,116,139,0.15)',
-                                                color: u.role === 'admin' ? '#2563eb' : '#64748b'
-                                            }}>
-                                                {u.role === 'admin' ? '👑 Admin' : '👤 Viewer'}
-                                            </span>
-                                        </td>
-                                        <td style={{ padding: '10px 12px', color: 'var(--text-muted)', fontSize: 13 }}>
-                                            {u.created_at ? new Date(u.created_at).toLocaleDateString('vi-VN') : '—'}
-                                        </td>
-                                        <td style={{ padding: '10px 12px', textAlign: 'center' }}>
-                                            <div className="action-menu-container">
-                                                <button 
-                                                    className="action-menu-btn" 
-                                                    onClick={() => setActionMenuId(actionMenuId === u.id ? null : u.id)}
-                                                    title="Thao tác"
-                                                >
-                                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                        <circle cx="12" cy="12" r="1" />
-                                                        <circle cx="19" cy="12" r="1" />
-                                                        <circle cx="5" cy="12" r="1" />
-                                                    </svg>
-                                                </button>
-                                                {actionMenuId === u.id && (
-                                                    <div className="action-menu-dropdown">
-                                                        <button className="action-menu-item" onClick={() => { setEditModal(u); setEditUser({ displayName: u.display_name, role: u.role }); setActionMenuId(null); }}>
-                                                            ✏️ Sửa
-                                                        </button>
-                                                        <button className="action-menu-item" onClick={() => { setResetModal(u); setResetPw(''); setActionMenuId(null); }}>
-                                                            🔑 Reset mật khẩu
-                                                        </button>
-                                                        <button className="action-menu-item danger" onClick={() => { handleDelete(u.id, u.username); setActionMenuId(null); }}>
-                                                            🗑️ Xóa
-                                                        </button>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
+                                            </td>
+                                            <td style={{ padding: '10px 12px', color: 'var(--text-muted)', fontSize: 13 }}>
+                                                {actuallyOnline ? '🟢 Đang Online' : (u.last_active ? `Lần cuối: ${new Date(u.last_active).toLocaleString('vi-VN')}` : 'Chưa từng')}
+                                            </td>
+                                            <td style={{ padding: '10px 12px', textAlign: 'center' }}>
+                                                <div className="action-menu-container">
+                                                    <button
+                                                        className="action-menu-btn"
+                                                        onClick={() => setActionMenuId(actionMenuId === u.id ? null : u.id)}
+                                                        title="Thao tác"
+                                                    >
+                                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                            <circle cx="12" cy="12" r="1" />
+                                                            <circle cx="19" cy="12" r="1" />
+                                                            <circle cx="5" cy="12" r="1" />
+                                                        </svg>
+                                                    </button>
+                                                    {actionMenuId === u.id && (
+                                                        <div className="action-menu-dropdown">
+                                                            <button className="action-menu-item" onClick={() => { setEditModal(u); setEditUser({ displayName: u.display_name, role: u.role, status: u.status || 'active' }); setActionMenuId(null); }}>
+                                                                ✏️ Sửa
+                                                            </button>
+                                                            <button className="action-menu-item" onClick={() => { setResetModal(u); setResetPw(''); setActionMenuId(null); }}>
+                                                                🔑 Reset mật khẩu
+                                                            </button>
+                                                            <button className="action-menu-item danger" onClick={() => { handleDelete(u.id, u.username); setActionMenuId(null); }}>
+                                                                🗑️ Xóa
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    )
+                                })}
                             </tbody>
                         </table>
                     </div>
@@ -335,16 +353,24 @@ export default function AccountsPage({ addToast }) {
                                     type="text"
                                     placeholder="Tên hiển thị..."
                                     value={editUser.displayName}
-                                    onChange={e => setEditUser({...editUser, displayName: e.target.value})}
+                                    onChange={e => setEditUser({ ...editUser, displayName: e.target.value })}
                                     autoFocus
                                 />
                             </div>
-                            <div className="form-group">
+                            <div className="form-group" style={{ marginBottom: 16 }}>
                                 <label className="form-label">Quyền</label>
-                                <select className="form-input" value={editUser.role} onChange={e => setEditUser({...editUser, role: e.target.value})}>
+                                <select className="form-input" value={editUser.role} onChange={e => setEditUser({ ...editUser, role: e.target.value })}>
                                     <option value="viewer">Thành viên (viewer)</option>
                                     <option value="admin">Quản trị viên (admin)</option>
                                 </select>
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Trạng thái (Khóa tài khoản)</label>
+                                <select className="form-input" value={editUser.status} onChange={e => setEditUser({ ...editUser, status: e.target.value })}>
+                                    <option value="active">Bình thường</option>
+                                    <option value="banned">Khóa (Banned)</option>
+                                </select>
+                                <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>Nếu đặt thành "Khóa", người dùng sẽ không thể đăng nhập hoặc bị văng ra ngoài.</p>
                             </div>
                             <div style={{ marginTop: 16, display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
                                 <button className="btn" onClick={() => setEditModal(null)}>Hủy</button>

@@ -31,6 +31,10 @@ async function authenticate(req, res, next) {
             return res.status(401).json({ success: false, error: 'Phiên đăng nhập không hợp lệ' });
         }
 
+        if (user.status === 'banned') {
+            return res.status(403).json({ success: false, error: 'Tài khoản của bạn đã bị khóa' });
+        }
+
         req.user = user;
         next();
     } catch (err) {
@@ -87,11 +91,20 @@ async function login(req, res) {
             return res.status(401).json({ success: false, error: 'Sai tên đăng nhập hoặc mật khẩu' });
         }
 
+        if (user.status === 'banned') {
+            return res.status(403).json({ success: false, error: 'Tài khoản của bạn đã bị khóa. Vui lòng liên hệ Admin.' });
+        }
+
         // Generate session token
         const token = crypto.randomBytes(32).toString('hex');
         await supabase
             .from('users')
-            .update({ token, updated_at: new Date().toISOString() })
+            .update({
+                token,
+                is_online: true,
+                last_active: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+            })
             .eq('id', user.id);
 
         res.json({
@@ -116,7 +129,7 @@ async function logout(req, res) {
     try {
         await supabase
             .from('users')
-            .update({ token: null })
+            .update({ token: null, is_online: false })
             .eq('id', req.user.id);
         res.json({ success: true, message: 'Đã đăng xuất' });
     } catch (err) {
@@ -158,8 +171,22 @@ async function getUsers(req, res) {
     try {
         const { data, error } = await supabase
             .from('users')
-            .select('id, username, display_name, email, phone, avatar, role, created_at, updated_at')
+            .select('id, username, display_name, email, phone, avatar, role, status, is_online, last_active, created_at, updated_at')
             .order('id');
+        if (error) throw error;
+        res.json({ success: true, data: data || [] });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+}
+
+async function getPublicUsers(req, res) {
+    try {
+        const { data, error } = await supabase
+            .from('users')
+            .select('id, username, display_name, avatar, is_online, last_active')
+            .eq('status', 'active') // Only fetch active users to talk to
+            .order('display_name');
         if (error) throw error;
         res.json({ success: true, data: data || [] });
     } catch (err) {
@@ -245,20 +272,43 @@ async function register(req, res) {
 
 async function updateUser(req, res) {
     const userId = req.params.id;
-    const { displayName, role, email, phone, avatar } = req.body;
+    const { displayName, role, email, phone, avatar, status } = req.body;
 
     if (!displayName || !role) {
         return res.status(400).json({ success: false, error: 'Tên hiển thị và quyền là bắt buộc' });
     }
 
+    // Protect superadmin from being banned by accident
+    if (status === 'banned' && userId == req.user.id) {
+        return res.status(400).json({ success: false, error: 'Bạn không thể tự khóa tài khoản của chính mình' });
+    }
+
     try {
+        const updateData = { display_name: displayName, role, email: email || '', phone: phone || '', avatar: avatar || '', updated_at: new Date().toISOString() };
+        if (status) updateData.status = status;
+
         const { error } = await supabase
             .from('users')
-            .update({ display_name: displayName, role, email: email || '', phone: phone || '', avatar: avatar || '', updated_at: new Date().toISOString() })
+            .update(updateData)
             .eq('id', userId);
 
         if (error) throw error;
         res.json({ success: true, message: 'Cập nhật tài khoản thành công' });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+}
+
+async function ping(req, res) {
+    try {
+        await supabase
+            .from('users')
+            .update({
+                is_online: true,
+                last_active: new Date().toISOString()
+            })
+            .eq('id', req.user.id);
+        res.json({ success: true });
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
     }
@@ -413,6 +463,8 @@ module.exports = {
     resetPassword,
     forgotPassword,
     updateProfile,
-    register
+    register,
+    ping,
+    getPublicUsers
 };
 

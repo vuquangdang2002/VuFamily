@@ -10,6 +10,8 @@ import AccountsPage from './features/accounts/AccountsPage';
 import ProfileModal from './features/auth/ProfileModal';
 import HistoryPage from './features/history/HistoryPanel';
 import RequestsPage from './features/requests/RequestsPanel';
+import ChatPage from './features/chat/ChatPage';
+import VoiceCall from './features/chat/VoiceCall';
 // ── Shared ──
 import Sidebar from './shared/components/Sidebar';
 import Header from './shared/components/Header';
@@ -34,6 +36,7 @@ export default function App() {
     const [detailOpen, setDetailOpen] = useState(false);
     const [searchResults, setSearchResults] = useState([]);
     const { theme, setTheme } = useTheme();
+    const [activeCallRoom, setActiveCallRoom] = useState(null);
 
     // Modal state
     const [modalOpen, setModalOpen] = useState(false);
@@ -145,6 +148,27 @@ export default function App() {
             .finally(() => setAuthChecked(true));
     }, []);
 
+    // ─── Set up User Online Ping ───
+    useEffect(() => {
+        if (!user?.token) return;
+
+        // Ping immediately on mount if user exists
+        fetch(`${API_BASE}/users/ping`, {
+            method: 'POST',
+            headers: { 'x-auth-token': user.token }
+        }).catch(() => { });
+
+        // Then ping every 60 seconds
+        const intervalId = setInterval(() => {
+            fetch(`${API_BASE}/users/ping`, {
+                method: 'POST',
+                headers: { 'x-auth-token': user.token }
+            }).catch(() => { });
+        }, 60000);
+
+        return () => clearInterval(intervalId);
+    }, [user?.token]);
+
     // ─── Auth ───
     const handleLogin = async (username, password, isAutoReset = false) => {
         const localUsers = [
@@ -208,18 +232,21 @@ export default function App() {
         setSelected(null);
         setDetailOpen(false);
         addToast('Đã đăng xuất thành công');
+
+        // Let's reset URL in case of auto-login
+        window.history.replaceState({}, document.title, window.location.pathname);
     };
 
     const handleForceChangePassword = async () => {
         setForceChangeError('');
         if (!newPwd || !confirmNewPwd) { setForceChangeError('Vui lòng nhập đầy đủ mật khẩu mới'); return; }
-        
+
         const strongRegex = new RegExp("^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\\$%\\^&\\*])(?=.{8,})");
         if (!strongRegex.test(newPwd)) {
             setForceChangeError('Mật khẩu yếu, chưa đủ bảo mật. Hãy xem lại yêu cầu ở trên.');
             return;
         }
-        
+
         if (newPwd !== confirmNewPwd) { setForceChangeError('Mật khẩu nhập lại không khớp'); return; }
 
         try {
@@ -256,7 +283,7 @@ export default function App() {
                     if (fresh) setSelected(fresh);
                 }
             }
-        } catch(e) {
+        } catch (e) {
             addToast('Lỗi tải gia phả từ máy chủ', 'error');
         } finally {
             setIsLoadingMembers(false);
@@ -349,7 +376,7 @@ export default function App() {
         if (format === 'csv') {
             const members = localApi.getMembers();
             if (!members.length) { addToast('Không có dữ liệu để xuất', 'error'); return; }
-            const headers = ['id','name','gender','birth_date','birth_time','death_date','birth_place','death_place','occupation','phone','email','address','note','photo','birth_order','child_type','parent_id','spouse_id','generation'];
+            const headers = ['id', 'name', 'gender', 'birth_date', 'birth_time', 'death_date', 'birth_place', 'death_place', 'occupation', 'phone', 'email', 'address', 'note', 'photo', 'birth_order', 'child_type', 'parent_id', 'spouse_id', 'generation'];
             const csvRows = [headers.join(',')];
             members.forEach(m => {
                 const row = headers.map(h => {
@@ -363,7 +390,7 @@ export default function App() {
             const blob = new Blob(['\uFEFF' + csvRows.join('\n')], { type: 'text/csv;charset=utf-8' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
-            a.href = url; a.download = `gia-pha-backup-${new Date().toISOString().slice(0,10)}.csv`;
+            a.href = url; a.download = `gia-pha-backup-${new Date().toISOString().slice(0, 10)}.csv`;
             a.click(); URL.revokeObjectURL(url);
             addToast('Đã xuất file backup CSV!');
         } else {
@@ -397,7 +424,7 @@ export default function App() {
                     headers.forEach((h, idx) => {
                         const camel = h.replace(/_([a-z])/g, (_, c) => c.toUpperCase());
                         let val = row[idx] || '';
-                        if (['id','gender','birth_order','parent_id','spouse_id','generation'].includes(h)) {
+                        if (['id', 'gender', 'birth_order', 'parent_id', 'spouse_id', 'generation'].includes(h)) {
                             val = val ? parseInt(val) : (h === 'gender' ? 1 : null);
                         }
                         member[camel] = val;
@@ -463,14 +490,14 @@ export default function App() {
                             onReset={isAdmin ? handleReset : null}
                             isAdmin={isAdmin} />
                         <Toolbar theme={theme} setTheme={setTheme} />
-                        
+
                         {isLoadingMembers && (
                             <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-slate-900/40 backdrop-blur-sm rounded-xl m-4">
                                 <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4 shadow-lg"></div>
                                 <span className="text-white font-medium text-lg drop-shadow-md">Đang tải gia phả...</span>
                             </div>
                         )}
-                        
+
                         <TreeCanvas members={members} selectedId={selected?.id}
                             searchResultIds={searchResults.map(r => r.id)}
                             onSelectMember={handleSelect} onDeselect={closeDetail} />
@@ -486,6 +513,8 @@ export default function App() {
                 return <CalendarPage members={members} />;
             case 'history':
                 return <HistoryPage isAdmin={isAdmin} user={user} onRefresh={refresh} addToast={addToast} members={members} />;
+            case 'chat':
+                return <ChatPage user={user} addToast={addToast} onStartCall={setActiveCallRoom} />;
             case 'requests':
                 return <RequestsPage user={user} members={members} onRefresh={refresh} addToast={addToast} />;
             case 'accounts':
@@ -524,14 +553,14 @@ export default function App() {
             {/* Modals (always available) */}
             <MemberModal isOpen={modalOpen} onClose={closeModal} onSubmit={handleFormSubmit}
                 editMember={editMember} parentId={modalParentId} spouseOfId={modalSpouseOfId} members={members} />
-                
-            <ProfileModal isOpen={profileModalOpen} onClose={() => setProfileModalOpen(false)} user={user} onAddToast={addToast} 
+
+            <ProfileModal isOpen={profileModalOpen} onClose={() => setProfileModalOpen(false)} user={user} onAddToast={addToast}
                 onUpdateUser={(newUserData) => {
                     const authData = { ...user, ...newUserData };
                     localStorage.setItem(AUTH_KEY, JSON.stringify(authData));
                     setUser(authData);
                 }} />
-            
+
             {/* Forced Change Password Modal */}
             {forceChangePwd && (
                 <div className="modal-overlay open" style={{ zIndex: 9999 }}>
@@ -542,12 +571,12 @@ export default function App() {
                         <div className="modal-body">
                             <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 16 }}>
                                 Đây là mật khẩu tạo tự động. Vì lý do bảo mật, bạn bắt buộc phải tạo mật khẩu riêng biệt trước khi tiếp tục.
-                                <br/><br/>
-                                <span style={{color: '#eab308'}}>⚠️ Yêu cầu: Ít nhất 8 ký tự, bao gồm chữ HOA, chữ thường, số và ký tự đặc biệt (!@#$...).</span>
+                                <br /><br />
+                                <span style={{ color: '#eab308' }}>⚠️ Yêu cầu: Ít nhất 8 ký tự, bao gồm chữ HOA, chữ thường, số và ký tự đặc biệt (!@#$...).</span>
                             </p>
-                            
+
                             {forceChangeError && <div className="login-error" style={{ marginBottom: 12 }}>⚠️ {forceChangeError}</div>}
-                            
+
                             <div style={{ marginBottom: 12, position: 'relative' }}>
                                 <input className="form-input" type={showNewPwd ? "text" : "password"} placeholder="Mật khẩu mới..."
                                     value={newPwd} onChange={e => setNewPwd(e.target.value)} autoFocus style={{ paddingRight: 40 }} />
@@ -574,6 +603,7 @@ export default function App() {
             )}
 
             <Toast toasts={toasts} />
+            <VoiceCall user={user} activeCallRoom={activeCallRoom} onClearActiveCallRoom={() => setActiveCallRoom(null)} addToast={addToast} />
         </div>
     );
 }

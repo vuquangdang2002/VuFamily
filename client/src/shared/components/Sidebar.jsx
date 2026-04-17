@@ -12,6 +12,7 @@ const ADMIN_ITEMS = [
 ];
 
 const COMMON_ITEMS = [
+    { id: 'chat', icon: '💬', label: 'Trò chuyện' },
     { id: 'history', icon: '📜', label: 'Lịch sử' },
 ];
 
@@ -112,7 +113,7 @@ export default function Sidebar({ activePage, onNavigate, isAdmin, user, onLogou
                             </div>
                         </div>
                         <div className="sidebar-user-menu-divider" />
-                        
+
                         <button className="sidebar-user-menu-item" onClick={() => { setShowUserMenu(false); onOpenProfile && onOpenProfile(); }}>
                             <span>⚙️</span> Hồ sơ & Mật khẩu
                         </button>

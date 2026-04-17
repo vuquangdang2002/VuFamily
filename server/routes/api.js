@@ -15,6 +15,7 @@ router.post('/auth/logout', authenticate, logout);
 router.get('/auth/me', authenticate, getMe);
 router.post('/auth/change-password', authenticate, changePassword);
 router.put('/auth/profile', authenticate, updateProfile);
+router.post('/users/ping', authenticate, require('../middleware/auth').ping);
 
 // ─── Avatar Upload (raw binary) ───
 router.post('/auth/avatar', authenticate, require('express').raw({ type: 'image/*', limit: '5mb' }), async (req, res) => {
@@ -45,6 +46,7 @@ router.post('/auth/avatar', authenticate, require('express').raw({ type: 'image/
 
 
 // ─── User Management (admin only) ───
+router.get('/users/public', authenticate, require('../middleware/auth').getPublicUsers);
 router.get('/users', authenticate, requireAdmin, getUsers);
 router.post('/users', authenticate, requireAdmin, createUser);
 router.put('/users/:id', authenticate, requireAdmin, updateUser);
@@ -223,5 +225,23 @@ router.post('/posts/:id/reactions', authenticate, async (req, res) => {
         res.json({ success: true, ...result });
     } catch (e) { res.status(500).json({ success: false, error: e.message }); }
 });
+
+// ─── Chat System ───
+const ChatController = require('../controllers/chatController');
+
+router.get('/chats', authenticate, ChatController.getRooms);
+router.post('/chats', authenticate, ChatController.createRoom);
+router.get('/chats/:id/messages', authenticate, ChatController.getMessages);
+router.post('/chats/:id/messages', authenticate, ChatController.sendMessage);
+
+// ─── Voice Calls (WebRTC Signaling) ───
+const CallController = require('../controllers/callController');
+router.post('/calls', authenticate, CallController.initiateCall);
+router.get('/calls/incoming', authenticate, CallController.pollIncoming);
+router.get('/calls/:id', authenticate, CallController.getCall);
+router.put('/calls/:id/answer', authenticate, CallController.answerCall);
+router.put('/calls/:id/status', authenticate, CallController.updateStatus);
+router.post('/calls/:id/candidates', authenticate, CallController.addCandidate);
+router.get('/calls/:id/candidates', authenticate, CallController.getCandidates);
 
 module.exports = router;
