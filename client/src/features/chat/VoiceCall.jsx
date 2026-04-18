@@ -209,7 +209,7 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
                 await fetch(`${API_BASE}/chats/${callData.room_id}/messages`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'x-auth-token': getToken() },
-                    body: JSON.stringify({ content: \`📞 Cuộc gọi đã kết thúc (\${formatDuration(duration)}).\` })
+                    body: JSON.stringify({ content: `📞 Cuộc gọi đã kết thúc (${formatDuration(duration)}).` })
                 }).catch(() => { });
             }
         }
@@ -221,10 +221,10 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
         pollIntervalRef.current = setInterval(async () => {
             try {
                 // Poll for signals and candidates targeting me
-                const res = await fetch(`${ API_BASE } / calls / ${ callId } / signals`, { headers: { 'x-auth-token': getToken() } });
+                const res = await fetch(`${API_BASE} / calls / ${callId} / signals`, { headers: { 'x-auth-token': getToken() } });
                 const json = await res.json();
                 if (json.success && json.data) {
-                    
+
                     // Process Signals (Offers / Answers)
                     for (let sig of json.data.signals) {
                         if (processedSignalsRef.current.has(sig.id)) continue;
@@ -237,13 +237,13 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
                             await pc.setRemoteDescription(new RTCSessionDescription(JSON.parse(sig.payload)));
                             const answer = await pc.createAnswer();
                             await pc.setLocalDescription(answer);
-                            
+
                             // Send Answer back
-                            await fetch(`${ API_BASE } / calls / ${ callId } / signals`, {
+                            await fetch(`${API_BASE} / calls / ${callId} / signals`, {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json', 'x-auth-token': getToken() },
                                 body: JSON.stringify({ toUserId: targetUserId, type: 'answer', payload: JSON.stringify(answer) })
-                            }).catch(()=>{});
+                            }).catch(() => { });
 
                         } else if (sig.type === 'answer') {
                             await pc.setRemoteDescription(new RTCSessionDescription(JSON.parse(sig.payload)));
@@ -258,14 +258,14 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
                         const targetUserId = c.sender_id;
                         const pc = pcsRef.current[targetUserId];
                         if (pc) {
-                            await pc.addIceCandidate(new RTCIceCandidate(JSON.parse(c.candidate))).catch(()=>{});
+                            await pc.addIceCandidate(new RTCIceCandidate(JSON.parse(c.candidate))).catch(() => { });
                         }
                     }
 
                 }
 
                 // Poll check if call was force ended by creator
-                const statusRes = await fetch(`${ API_BASE } / calls / ${ callId }`, { headers: { 'x-auth-token': getToken() } });
+                const statusRes = await fetch(`${API_BASE} / calls / ${callId}`, { headers: { 'x-auth-token': getToken() } });
                 const statusJson = await statusRes.json();
                 if (statusJson.success && statusJson.data && ['ended'].includes(statusJson.data.status)) {
                     cleanupCall();
@@ -311,7 +311,7 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
     const formatDuration = (d) => {
         const m = Math.floor(d / 60);
         const s = d % 60;
-        return \`\${m < 10 ? '0' : ''}\${m}:\${s < 10 ? '0' : ''}\${s}\`;
+        return `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
     };
 
     if (callState === 'IDLE') return null;
@@ -324,7 +324,7 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
 
     return (
         <React.Fragment>
-            <div className={\`voice-call-wrapper \${callState}\`}>
+            <div className={`voice-call-wrapper ${callState}`}>
                 <div className="vc-ui">
                     <div className="vc-header">
                         Hệ thống Cuộc gọi VuFamily
@@ -336,29 +336,29 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
                     {/* MESH GRID AREA */}
                     {callState === 'CONNECTED' ? (
                         <div className="vc-grid-area" style={{ flex: 1, padding: 16 }}>
-                            <div className={\`vc-grid grid-\${Math.min(totalParticipants, 4)}\`} style={{ 
-                                display: 'grid', 
-                                gap: '12px', 
+                            <div className={`vc-grid grid-${Math.min(totalParticipants, 4)}`} style={{
+                                display: 'grid',
+                                gap: '12px',
                                 height: '100%',
                                 gridTemplateColumns: totalParticipants === 1 ? '1fr' : (totalParticipants === 2 ? '1fr' : '1fr 1fr'),
                                 gridTemplateRows: totalParticipants <= 2 ? '1fr' : '1fr 1fr'
                             }}>
                                 {/* Local User */}
                                 <div className="vc-grid-cell">
-                                    <img src={user?.avatar || \`https://ui-avatars.com/api/?name=ME\`} />
+                                    <img src={user?.avatar || `https://ui-avatars.com/api/?name=ME`} />
                                     <div className="vc-cell-name">Bạn {isMuted ? '🔇' : ''}</div>
                                 </div>
-                                
+
                                 {/* Remote Users */}
                                 {activeRemoteKeys.map(uid => (
                                     <div key={uid} className="vc-grid-cell">
                                         <div className="pulse-anim-small" style={{ width: '100%', height: '100%', borderRadius: 16, border: '2px solid rgba(255,255,255,0.2)' }}>
-                                            <img src={\`https://ui-avatars.com/api/?name=USER\`} />
+                                            <img src={`https://ui-avatars.com/api/?name=USER`} />
                                         </div>
                                         <div className="vc-cell-name">Thành viên</div>
-                                        <audio 
-                                            ref={el => { if (el && remoteStreams[uid]) el.srcObject = remoteStreams[uid]; }} 
-                                            autoPlay 
+                                        <audio
+                                            ref={el => { if (el && remoteStreams[uid]) el.srcObject = remoteStreams[uid]; }}
+                                            autoPlay
                                             muted={isSpeakerOff}
                                         />
                                     </div>
@@ -368,7 +368,7 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
                     ) : (
                         <div className="vc-avatar-area">
                             <div className="vc-avatar-wrapper">
-                                <img src={\`https://ui-avatars.com/api/?name=\${encodeURIComponent(callerName)}&background=random\`} className={['CALLING', 'RINGING'].includes(callState) ? 'pulse-anim' : ''} />
+                                <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(callerName)}&background=random`} className={['CALLING', 'RINGING'].includes(callState) ? 'pulse-anim' : ''} />
                             </div>
                             <h2 className="vc-title">{callerName}</h2>
                             <div className="vc-status">
@@ -391,7 +391,7 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
                         ) : (
                             <>
                                 <div className="vc-control-item">
-                                    <button onClick={toggleMute} className={\`vc-btn small \${isMuted ? 'muted' : ''}\`}>
+                                    <button onClick={toggleMute} className={`vc-btn small ${isMuted ? 'muted' : ''}`}>
                                         {isMuted ? '🔇' : '🎤'}
                                     </button>
                                     <span>Micro</span>
@@ -403,7 +403,7 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
                                     <span>Kết thúc</span>
                                 </div>
                                 <div className="vc-control-item">
-                                    <button onClick={() => setIsSpeakerOff(!isSpeakerOff)} className={\`vc-btn small \${isSpeakerOff ? 'muted' : ''}\`}>
+                                    <button onClick={() => setIsSpeakerOff(!isSpeakerOff)} className={`vc-btn small ${isSpeakerOff ? 'muted' : ''}`}>
                                         {isSpeakerOff ? '🔈' : '🔊'}
                                     </button>
                                     <span>Loa ngoài</span>
@@ -415,7 +415,7 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
 
                 <audio ref={localAudioRef} autoPlay muted style={{ display: 'none' }} />
 
-                <style>{\`
+                <style>{`
                     .vc-ui {
                         position: fixed; z-index: 99999; display: flex; flex-direction: column;
                         background: linear-gradient(to bottom, #1f2937, #111827); color: white;
@@ -457,7 +457,7 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
                     @keyframes pulseRing { 0% { box-shadow: 0 0 0 0 rgba(255,255,255,0.3); } 70% { box-shadow: 0 0 0 30px rgba(255,255,255,0); } 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0); } }
                     .pulse-anim { animation: pulseRing 1.5s infinite; }
                     .pulse-anim-small { animation: pulseRing 1s infinite alternate; }
-                \`}</style>
+                `}</style>
             </div>
         </React.Fragment>
     );
