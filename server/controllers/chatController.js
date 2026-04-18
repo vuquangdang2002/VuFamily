@@ -28,7 +28,7 @@ async function getRooms(req, res) {
         // Fetch members for these rooms to figure out names (for direct chats)
         const { data: members, error: allMembersErr } = await supabase
             .from('chat_members')
-            .select('room_id, user_id, users(id, username, display_name, avatar, is_online, last_active)')
+            .select('room_id, user_id, role, users(id, username, display_name, avatar, is_online, last_active)')
             .in('room_id', roomIds);
 
         if (allMembersErr) throw allMembersErr;
@@ -56,7 +56,7 @@ async function getRooms(req, res) {
                 display_name,
                 avatar,
                 is_online,
-                members: roomMembers.map(m => m.users)
+                members: roomMembers.map(m => ({ ...m.users, role: m.role || 'member' }))
             };
         });
 
@@ -203,7 +203,8 @@ async function createRoom(req, res) {
         // Insert members
         const membersToInsert = [req.user.id, ...participantIds].map(uid => ({
             room_id: newRoom.id,
-            user_id: uid
+            user_id: uid,
+            role: (uid === req.user.id && actualType === 'group') ? 'admin' : 'member'
         }));
 
         const { error: membersErr } = await supabase.from('chat_members').insert(membersToInsert);
@@ -249,10 +250,64 @@ async function renameRoom(req, res) {
     }
 }
 
+// Leave a room
+async function leaveRoom(req, res) {
+    try {
+        const roomId = parseInt(req.params.id);
+
+        const { error } = await supabase
+            .from('chat_members')
+            .delete()
+            .eq('room_id', roomId)
+            .eq('user_id', req.user.id);
+
+        if (error) throw error;
+
+        // Note: We leave deleting empty rooms to a cron job, or we can check here.
+        // For simplicity, just successfully remove member.
+        res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ success: false, error: e.message });
+    }
+}
+
+// Kick a member from a group (Admin only)
+async function kickMember(req, res) {
+    try {
+        const roomId = parseInt(req.params.id);
+        const targetUserId = parseInt(req.params.userId);
+
+        // Check if current user is admin
+        const { data: membership } = await supabase
+            .from('chat_members')
+            .select('role')
+            .eq('room_id', roomId)
+            .eq('user_id', req.user.id)
+            .single();
+
+        if (!membership || membership.role !== 'admin') {
+            return res.status(403).json({ success: false, error: 'Chỉ quản trị viên nhóm mới có quyền này' });
+        }
+
+        const { error } = await supabase
+            .from('chat_members')
+            .delete()
+            .eq('room_id', roomId)
+            .eq('user_id', targetUserId);
+
+        if (error) throw error;
+        res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ success: false, error: e.message });
+    }
+}
+
 module.exports = {
     getRooms,
     getMessages,
     sendMessage,
     createRoom,
-    renameRoom
+    renameRoom,
+    leaveRoom,
+    kickMember
 };

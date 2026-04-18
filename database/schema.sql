@@ -261,6 +261,7 @@ CREATE POLICY "Service role full access" ON chat_rooms FOR ALL USING (true) WITH
 CREATE TABLE IF NOT EXISTS chat_members (
   room_id INTEGER NOT NULL REFERENCES chat_rooms(id) ON DELETE CASCADE,
   user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  role TEXT CHECK(role IN ('admin', 'member')) DEFAULT 'member',
   last_read_at TIMESTAMPTZ DEFAULT NOW(),
   joined_at TIMESTAMPTZ DEFAULT NOW(),
   PRIMARY KEY(room_id, user_id)

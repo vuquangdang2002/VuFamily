@@ -15,6 +15,7 @@ export default function ChatPage({ user, addToast, onStartCall }) {
 
     // Select participants for new chat
     const [showNewChat, setShowNewChat] = useState(false);
+    const [showGroupInfo, setShowGroupInfo] = useState(false);
     const [allUsers, setAllUsers] = useState([]);
     const [selectedUserIds, setSelectedUserIds] = useState([]);
 
@@ -171,8 +172,51 @@ export default function ChatPage({ user, addToast, onStartCall }) {
             addToast('Lỗi kết nối mạng', 'error');
         }
     };
+    const handleLeaveGroup = async () => {
+        if (!window.confirm("Bạn có chắc muốn rời khỏi nhóm này?")) return;
+        try {
+            const res = await fetch(`${API_BASE}/chats/${activeRoomId}/leave`, {
+                method: 'POST',
+                headers: { 'x-auth-token': getToken() }
+            });
+            const json = await res.json();
+            if (json.success) {
+                setActiveRoomId(null);
+                setShowGroupInfo(false);
+                fetchRooms();
+                addToast("Đã rời khỏi nhóm");
+            } else {
+                addToast(json.error || "Lỗi rời nhóm", "error");
+            }
+        } catch (e) {
+            addToast("Lỗi kết nối mạng", "error");
+        }
+    };
+
+    const handleKickMember = async (userId, memberName) => {
+        if (!window.confirm(`Bạn có chắc muốn đuổi ${memberName} khỏi nhóm?`)) return;
+        try {
+            const res = await fetch(`${API_BASE}/chats/${activeRoomId}/kick/${userId}`, {
+                method: 'POST',
+                headers: { 'x-auth-token': getToken() }
+            });
+            const json = await res.json();
+            if (json.success) {
+                fetchRooms();
+                fetchMessages(activeRoomId);
+                addToast(`Đã mời ${memberName} rời nhóm`);
+            } else {
+                addToast(json.error || "Lỗi thao tác", "error");
+            }
+        } catch (e) {
+            addToast("Lỗi kết nối", "error");
+        }
+    };
 
     const activeRoom = rooms.find(r => r.id === activeRoomId);
+
+    // Determine current user role in the active group
+    const currentUserRole = activeRoom?.type === 'group' ? (activeRoom.members?.find(m => m.id === user.id)?.role || 'member') : 'member';
 
     return (
         <div className="page-container" style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: 0 }}>
@@ -254,6 +298,7 @@ export default function ChatPage({ user, addToast, onStartCall }) {
                                 </div>
                                 <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
                                     <button className="btn" title="Gọi thoại" style={{ padding: '6px 12px' }} onClick={() => onStartCall(activeRoom)}>📞 Gọi</button>
+                                    <button className="btn btn-icon" title="Chi tiết nhóm" style={{ fontSize: 18 }} onClick={() => setShowGroupInfo(true)}>ℹ️</button>
                                 </div>
                             </div>
 
@@ -365,6 +410,61 @@ export default function ChatPage({ user, addToast, onStartCall }) {
                                 <button className="btn btn-primary" style={{ width: '100%', marginTop: 24, justifyContent: 'center' }} onClick={handleCreateRoom}>
                                     Bắt đầu Chat ({selectedUserIds.length})
                                 </button>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* GROUP INFO MODAL */}
+            {showGroupInfo && activeRoom && (
+                <div className="modal-overlay open" onClick={e => e.target === e.currentTarget && setShowGroupInfo(false)}>
+                    <div className="modal" style={{ width: 440 }}>
+                        <div className="modal-header">
+                            <h2>Chi tiết {activeRoom.type === 'group' ? 'nhóm' : 'trò chuyện'}</h2>
+                            <button className="detail-close" onClick={() => setShowGroupInfo(false)}>✕</button>
+                        </div>
+                        <div className="modal-body" style={{ maxHeight: '70vh', overflowY: 'auto' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 24 }}>
+                                <div style={{ width: 80, height: 80, borderRadius: '50%', background: activeRoom.type === 'group' ? 'linear-gradient(135deg, #10b981, #047857)' : 'linear-gradient(135deg, var(--gold), var(--gold-dark))', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, fontWeight: 'bold', marginBottom: 12 }}>
+                                    {activeRoom?.avatar ? <img src={activeRoom.avatar} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} /> : (activeRoom.type === 'group' ? '👥' : activeRoom.display_name?.substring(0, 2).toUpperCase())}
+                                </div>
+                                <h3 style={{ margin: 0, fontSize: 20 }}>{activeRoom.display_name}</h3>
+                                {activeRoom.type === 'group' && (
+                                    <div style={{ color: 'var(--text-muted)', fontSize: 14, marginTop: 4 }}>{activeRoom.members?.length || 0} thành viên</div>
+                                )}
+                            </div>
+
+                            {activeRoom.type === 'group' && (
+                                <>
+                                    <h4 style={{ fontSize: 15, borderBottom: '1px solid var(--border-subtle)', paddingBottom: 8, marginBottom: 16 }}>Thành viên nhóm</h4>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 24 }}>
+                                        {activeRoom.members?.map(m => (
+                                            <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                                                <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--gold)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }}>
+                                                    {m.avatar ? <img src={m.avatar} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} /> : m.display_name?.substring(0, 2).toUpperCase()}
+                                                </div>
+                                                <div style={{ flex: 1 }}>
+                                                    <div style={{ fontWeight: 500, display: 'flex', alignItems: 'center', gap: 6 }}>
+                                                        {m.id === user.id ? 'Bạn' : (m.display_name || m.username)}
+                                                        {m.role === 'admin' && <span style={{ fontSize: 10, background: 'var(--primary)', color: '#fff', padding: '2px 6px', borderRadius: 10 }}>Quản trị viên</span>}
+                                                    </div>
+                                                    <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{m.is_online ? '🟢 Đang Online' : '⚪ Ngoại tuyến'}</div>
+                                                </div>
+                                                {currentUserRole === 'admin' && m.id !== user.id && m.role !== 'admin' && (
+                                                    <button className="btn btn-danger" style={{ padding: '4px 8px', fontSize: 12 }} onClick={() => handleKickMember(m.id, m.display_name || m.username)}>
+                                                        Xóa
+                                                    </button>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: 16 }}>
+                                        <button className="btn btn-danger" style={{ width: '100%', justifyContent: 'center', padding: '10px' }} onClick={handleLeaveGroup}>
+                                            👋 Rời khỏi nhóm
+                                        </button>
+                                    </div>
+                                </>
                             )}
                         </div>
                     </div>
