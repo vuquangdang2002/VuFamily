@@ -64,10 +64,10 @@ export default function ChatPage({ user, addToast, onStartCall }) {
         fetchRooms();
         fetchPublicUsers();
 
-        // Polling rooms for updates
+        // Polling rooms for updates (every 15s instead of 3s to reduce server load)
         const interval = setInterval(() => {
             fetchRooms();
-        }, 3000);
+        }, 15000);
         return () => clearInterval(interval);
     }, []);
 
@@ -76,10 +76,10 @@ export default function ChatPage({ user, addToast, onStartCall }) {
         isFirstLoadRef.current = true;
         fetchMessages(activeRoomId);
 
-        // Polling messages
+        // Polling messages (every 5s instead of 2s to reduce server load)
         const interval = setInterval(() => {
             fetchMessages(activeRoomId);
-        }, 2000); // 2s short polling
+        }, 5000);
 
         return () => clearInterval(interval);
     }, [activeRoomId]);
