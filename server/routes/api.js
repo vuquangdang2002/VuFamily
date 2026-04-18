@@ -247,5 +247,7 @@ router.put('/calls/:id/answer', authenticate, CallController.answerCall);
 router.put('/calls/:id/status', authenticate, CallController.updateStatus);
 router.post('/calls/:id/candidates', authenticate, CallController.addCandidate);
 router.get('/calls/:id/candidates', authenticate, CallController.getCandidates);
+router.post('/calls/:id/signals', authenticate, CallController.addSignal);
+router.get('/calls/:id/signals', authenticate, CallController.getSignals);
 
 module.exports = router;

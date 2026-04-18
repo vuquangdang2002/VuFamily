@@ -303,12 +303,27 @@ CREATE TABLE IF NOT EXISTS call_ice_candidates (
   id SERIAL PRIMARY KEY,
   call_id INTEGER REFERENCES calls(id) ON DELETE CASCADE,
   sender_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+  to_user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
   candidate TEXT NOT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 ALTER TABLE call_ice_candidates ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Service role full access" ON call_ice_candidates;
 CREATE POLICY "Service role full access" ON call_ice_candidates FOR ALL USING (true) WITH CHECK (true);
+
+-- 15. CALL SIGNALS (Mesh WebRTC)
+CREATE TABLE IF NOT EXISTS call_signals (
+  id SERIAL PRIMARY KEY,
+  call_id INTEGER REFERENCES calls(id) ON DELETE CASCADE,
+  from_user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+  to_user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+  type TEXT CHECK(type IN ('offer', 'answer')),
+  payload TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE call_signals ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Service role full access" ON call_signals;
+CREATE POLICY "Service role full access" ON call_signals FOR ALL USING (true) WITH CHECK (true);
 
 -- ═══════════════════════════════════════════
 -- UPGRADE SCRIPTS (For existing databases)
