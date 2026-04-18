@@ -95,6 +95,10 @@ async function login(req, res) {
             return res.status(403).json({ success: false, error: 'Tài khoản của bạn đã bị khóa. Vui lòng liên hệ Admin.' });
         }
 
+        if (!user.email_verified) {
+            return res.status(403).json({ success: false, error: 'Tài khoản chưa xác nhận email. Vui lòng kiểm tra hộp thư và click link xác nhận.' });
+        }
+
         // Generate session token
         const token = crypto.randomBytes(32).toString('hex');
         await supabase
@@ -230,9 +234,15 @@ async function createUser(req, res) {
 }
 
 async function register(req, res) {
-    const { username, password, displayName } = req.body;
-    if (!username || !password) {
-        return res.status(400).json({ success: false, error: 'Tên đăng nhập và mật khẩu là bắt buộc' });
+    const { username, password, displayName, email } = req.body;
+    if (!username || !password || !email) {
+        return res.status(400).json({ success: false, error: 'Tên đăng nhập, email và mật khẩu là bắt buộc' });
+    }
+
+    // Basic email format check
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        return res.status(400).json({ success: false, error: 'Email không hợp lệ' });
     }
 
     // Validate strong password
@@ -242,29 +252,119 @@ async function register(req, res) {
     }
 
     try {
-        // Check duplicate
-        const { data: existing } = await supabase
+        // Check duplicate username
+        const { data: existingUser } = await supabase
             .from('users')
             .select('id')
             .eq('username', username)
             .single();
-
-        if (existing) {
+        if (existingUser) {
             return res.status(400).json({ success: false, error: 'Tên đăng nhập đã tồn tại' });
         }
 
+        // Check duplicate email
+        const { data: existingEmail } = await supabase
+            .from('users')
+            .select('id')
+            .eq('email', email)
+            .single();
+        if (existingEmail) {
+            return res.status(400).json({ success: false, error: 'Email này đã được đăng ký' });
+        }
+
         const hashedPw = await hashPassword(password);
+        const verToken = crypto.randomBytes(32).toString('hex');
+        const verExpires = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(); // 24h
+
         const { error } = await supabase
             .from('users')
             .insert({
                 username,
                 password: hashedPw,
                 display_name: displayName || username,
-                role: 'viewer', // Always viewer
+                email,
+                role: 'viewer',
+                email_verified: false,
+                verification_token: verToken,
+                verification_token_expires_at: verExpires,
             });
         if (error) throw error;
 
-        res.status(201).json({ success: true, message: 'Đăng ký tài khoản thành công! Bạn có thể đăng nhập ngay.' });
+        // Send verification email
+        const RESEND_KEY = process.env.RESEND_API_KEY;
+        const APP_URL = process.env.APP_URL || 'https://vu-family.vercel.app';
+        const verifyLink = `${APP_URL}?verifyToken=${verToken}`;
+
+        if (RESEND_KEY) {
+            const { Resend } = require('resend');
+            const resend = new Resend(RESEND_KEY);
+            await resend.emails.send({
+                from: 'Gia Phả <onboarding@resend.dev>',
+                to: [email],
+                subject: '[Gia Phả] Xác nhận tài khoản của bạn',
+                html: `
+                    <div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:32px;background:#f8fafc;border-radius:16px">
+                        <h2 style="color:#1e293b;margin-bottom:4px">🏛️ Gia Phả - Dòng Họ Vũ</h2>
+                        <hr style="border:none;border-top:1px solid #e2e8f0;margin:16px 0">
+                        <p style="color:#475569">Xin chào <strong>${displayName || username}</strong>,</p>
+                        <p style="color:#475569">Cảm ơn bạn đã đăng ký. Vui lòng click nút bên dưới để xác nhận email và kích hoạt tài khoản.</p>
+                        <div style="text-align:center;margin:28px 0">
+                            <a href="${verifyLink}" style="display:inline-block;background:#2563eb;color:#fff;padding:14px 36px;border-radius:10px;text-decoration:none;font-weight:700;font-size:15px">
+                                ✅ Xác nhận tài khoản
+                            </a>
+                        </div>
+                        <p style="color:#94a3b8;font-size:12px;text-align:center">Link có hiệu lực trong 24 giờ. Nếu bạn không đăng ký, hãy bỏ qua email này.</p>
+                    </div>
+                `,
+            });
+        }
+
+        res.status(201).json({
+            success: true,
+            message: `Đăng ký thành công! Vui lòng kiểm tra email <strong>${email}</strong> và click link xác nhận để kích hoạt tài khoản.`
+        });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+}
+
+async function verifyEmail(req, res) {
+    const { token } = req.query;
+    if (!token) {
+        return res.status(400).json({ success: false, error: 'Token không hợp lệ' });
+    }
+
+    try {
+        const { data: user, error } = await supabase
+            .from('users')
+            .select('id, email_verified, verification_token_expires_at')
+            .eq('verification_token', token)
+            .single();
+
+        if (error || !user) {
+            return res.status(400).json({ success: false, error: 'Link xác nhận không hợp lệ hoặc đã được sử dụng' });
+        }
+
+        if (user.email_verified) {
+            return res.json({ success: true, message: 'Tài khoản đã được xác nhận trước đó. Bạn có thể đăng nhập.' });
+        }
+
+        if (new Date(user.verification_token_expires_at) < new Date()) {
+            return res.status(400).json({ success: false, error: 'Link xác nhận đã hết hạn (24h). Vui lòng liên hệ admin.' });
+        }
+
+        await supabase
+            .from('users')
+            .update({
+                email_verified: true,
+                verification_token: null,
+                verification_token_expires_at: null,
+                status: 'active',
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', user.id);
+
+        res.json({ success: true, message: 'Xác nhận email thành công! Bạn có thể đăng nhập ngay.' });
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
     }
@@ -464,6 +564,7 @@ module.exports = {
     forgotPassword,
     updateProfile,
     register,
+    verifyEmail,
     ping,
     getPublicUsers
 };

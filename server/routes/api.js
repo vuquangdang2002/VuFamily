@@ -2,13 +2,14 @@
 const express = require('express');
 const router = express.Router();
 const MemberController = require('../controllers/memberController');
-const { authenticate, optionalAuth, requireAdmin, login, logout, getMe, getUsers, createUser, updateUser, deleteUser, changePassword, resetPassword, forgotPassword, updateProfile, register } = require('../middleware/auth');
+const { authenticate, optionalAuth, requireAdmin, login, logout, getMe, getUsers, createUser, updateUser, deleteUser, changePassword, resetPassword, forgotPassword, updateProfile, register, verifyEmail } = require('../middleware/auth');
 const UpdateRequestModel = require('../models/UpdateRequest');
 
 // ─── Auth (public) ───
 router.post('/auth/login', login);
 router.post('/auth/register', register);
 router.post('/auth/forgot-password', forgotPassword);
+router.get('/auth/verify-email', verifyEmail);
 
 // ─── Auth (authenticated) ───
 router.post('/auth/logout', authenticate, logout);

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-export default function LoginPage({ onLogin }) {
+export default function LoginPage({ onLogin, verifyMsg }) {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [showPass, setShowPass] = useState(false);
@@ -14,6 +14,8 @@ export default function LoginPage({ onLogin }) {
     // Registration state
     const [isRegisterMode, setIsRegisterMode] = useState(false);
     const [displayName, setDisplayName] = useState('');
+    const [email, setEmail] = useState('');
+    const [registerSuccess, setRegisterSuccess] = useState('');
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -29,13 +31,13 @@ export default function LoginPage({ onLogin }) {
                 const res = await fetch('/api/auth/register', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username: username.trim(), password, displayName: displayName.trim() })
+                    body: JSON.stringify({ username: username.trim(), password, displayName: displayName.trim(), email: email.trim() })
                 });
                 const json = await res.json();
                 if (json.success) {
                     setIsRegisterMode(false);
                     setError('');
-                    alert(json.message);
+                    setRegisterSuccess(json.message);
                 } else {
                     setError(json.error || 'Đăng ký thất bại');
                 }
@@ -180,6 +182,27 @@ export default function LoginPage({ onLogin }) {
                     {isRegisterMode ? 'Đăng ký tài khoản thành viên dòng họ' : 'Đăng nhập để quản lý & đóng góp thông tin'}
                 </p>
 
+                {/* Email verification result banner */}
+                {verifyMsg && (
+                    <div style={{
+                        width: '100%', borderRadius: 10, padding: '10px 14px', marginBottom: 16,
+                        background: verifyMsg.success ? '#ECFDF5' : '#FEF2F2',
+                        border: `1px solid ${verifyMsg.success ? '#A7F3D0' : '#FECACA'}`,
+                        color: verifyMsg.success ? '#065F46' : '#DC2626',
+                        fontSize: 13
+                    }}>
+                        {verifyMsg.success ? '✅ ' : '❌ '}{verifyMsg.text}
+                    </div>
+                )}
+
+                {/* Register success banner */}
+                {registerSuccess && (
+                    <div style={{
+                        width: '100%', borderRadius: 10, padding: '12px 14px', marginBottom: 16,
+                        background: '#ECFDF5', border: '1px solid #A7F3D0', color: '#065F46', fontSize: 13
+                    }} dangerouslySetInnerHTML={{ __html: '📧 ' + registerSuccess }} />
+                )}
+
                 {error && <div className="lp-error">{error}</div>}
 
                 {showForgot && (
@@ -205,17 +228,30 @@ export default function LoginPage({ onLogin }) {
                     )}
 
                     <div className="lp-field">
-                        <label className="lp-label">{isRegisterMode ? 'Email' : 'Tên đăng nhập'}</label>
+                        <label className="lp-label">{isRegisterMode ? 'Tên đăng nhập' : 'Tên đăng nhập'}</label>
                         <input
                             className="lp-input"
                             type="text"
                             value={username}
                             onChange={e => setUsername(e.target.value)}
-                            placeholder={isRegisterMode ? 'email@example.com' : 'Nhập tên đăng nhập...'}
+                            placeholder={isRegisterMode ? 'ten_dang_nhap' : 'Nhập tên đăng nhập...'}
                             autoFocus
                         />
                     </div>
 
+                    {isRegisterMode && (
+                        <div className="lp-field">
+                            <label className="lp-label">Email <span style={{ color: '#ef4444' }}>*</span></label>
+                            <input
+                                className="lp-input"
+                                type="email"
+                                value={email}
+                                onChange={e => setEmail(e.target.value)}
+                                placeholder="email@example.com"
+                            />
+                            <p className="lp-input-hint">Link xác nhận sẽ được gửi đến email này.</p>
+                        </div>
+                    )}
                     <div className="lp-field">
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <label className="lp-label">Mật khẩu</label>

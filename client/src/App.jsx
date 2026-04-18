@@ -37,6 +37,7 @@ export default function App() {
     const [searchResults, setSearchResults] = useState([]);
     const { theme, setTheme } = useTheme();
     const [activeCallRoom, setActiveCallRoom] = useState(null);
+    const [verifyMsg, setVerifyMsg] = useState(null); // { success, text }
 
     // Modal state
     const [modalOpen, setModalOpen] = useState(false);
@@ -122,6 +123,21 @@ export default function App() {
     // ─── Verify token on app load ───
     useEffect(() => {
         const urlParams = new URLSearchParams(window.location.search);
+
+        // Handle email verification link
+        const verifyToken = urlParams.get('verifyToken');
+        if (verifyToken) {
+            window.history.replaceState({}, document.title, window.location.pathname);
+            fetch(`${API_BASE}/auth/verify-email?token=${encodeURIComponent(verifyToken)}`)
+                .then(r => r.json())
+                .then(data => {
+                    setVerifyMsg({ success: data.success, text: data.message || data.error || 'Đã xử lý xác nhận' });
+                })
+                .catch(() => setVerifyMsg({ success: false, text: 'Lỗi kết nối khi xác nhận email' }))
+                .finally(() => setAuthChecked(true));
+            return;
+        }
+
         const autoUser = urlParams.get('resetUser');
         const autoPw = urlParams.get('resetPw');
 
@@ -498,7 +514,7 @@ export default function App() {
     // ─── Login screen ───
     if (!user) return (
         <>
-            <LoginPage onLogin={handleLogin} />
+            <LoginPage onLogin={handleLogin} verifyMsg={verifyMsg} />
             <Toast toasts={toasts} />
         </>
     );
