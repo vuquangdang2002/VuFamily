@@ -15,6 +15,8 @@ export default function LoginPage({ onLogin, verifyMsg }) {
     const [isRegisterMode, setIsRegisterMode] = useState(false);
     const [displayName, setDisplayName] = useState('');
     const [email, setEmail] = useState('');
+    const [phone, setPhone] = useState('');
+    const [facebook, setFacebook] = useState('');
     const [registerSuccess, setRegisterSuccess] = useState('');
 
     const handleSubmit = async (e) => {
@@ -31,7 +33,14 @@ export default function LoginPage({ onLogin, verifyMsg }) {
                 const res = await fetch('/api/auth/register', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username: username.trim(), password, displayName: displayName.trim(), email: email.trim() })
+                    body: JSON.stringify({
+                        username: username.trim(),
+                        password,
+                        displayName: displayName.trim(),
+                        email: email.trim(),
+                        phone: phone.trim(),
+                        facebook: facebook.trim()
+                    })
                 });
                 const json = await res.json();
                 if (json.success) {
@@ -240,17 +249,41 @@ export default function LoginPage({ onLogin, verifyMsg }) {
                     </div>
 
                     {isRegisterMode && (
-                        <div className="lp-field">
-                            <label className="lp-label">Email <span style={{ color: '#ef4444' }}>*</span></label>
-                            <input
-                                className="lp-input"
-                                type="email"
-                                value={email}
-                                onChange={e => setEmail(e.target.value)}
-                                placeholder="email@example.com"
-                            />
-                            <p className="lp-input-hint">Link xác nhận sẽ được gửi đến email này.</p>
-                        </div>
+                        <>
+                            <div className="lp-field">
+                                <label className="lp-label">Email <span style={{ color: '#ef4444' }}>*</span></label>
+                                <input
+                                    className="lp-input"
+                                    type="email"
+                                    value={email}
+                                    onChange={e => setEmail(e.target.value)}
+                                    placeholder="email@example.com"
+                                />
+                                <p className="lp-input-hint">Link xác nhận sẽ được gửi đến email này.</p>
+                            </div>
+
+                            <div className="lp-field">
+                                <label className="lp-label">Số điện thoại <span style={{ color: '#9CA3AF', fontWeight: 'normal' }}>(Tùy chọn)</span></label>
+                                <input
+                                    className="lp-input"
+                                    type="tel"
+                                    value={phone}
+                                    onChange={e => setPhone(e.target.value)}
+                                    placeholder="0912345678"
+                                />
+                            </div>
+
+                            <div className="lp-field">
+                                <label className="lp-label">Link Facebook <span style={{ color: '#9CA3AF', fontWeight: 'normal' }}>(Tùy chọn)</span></label>
+                                <input
+                                    className="lp-input"
+                                    type="url"
+                                    value={facebook}
+                                    onChange={e => setFacebook(e.target.value)}
+                                    placeholder="https://facebook.com/..."
+                                />
+                            </div>
+                        </>
                     )}
                     <div className="lp-field">
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

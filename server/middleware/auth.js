@@ -234,7 +234,7 @@ async function createUser(req, res) {
 }
 
 async function register(req, res) {
-    const { username, password, displayName, email } = req.body;
+    const { username, password, displayName, email, phone, facebook } = req.body;
     if (!username || !password || !email) {
         return res.status(400).json({ success: false, error: 'Tên đăng nhập, email và mật khẩu là bắt buộc' });
     }
@@ -283,6 +283,8 @@ async function register(req, res) {
                 password: hashedPw,
                 display_name: displayName || username,
                 email,
+                phone: phone || '',
+                facebook: facebook || '',
                 role: 'viewer',
                 email_verified: false,
                 verification_token: verToken,
@@ -298,6 +300,12 @@ async function register(req, res) {
         if (RESEND_KEY) {
             const { Resend } = require('resend');
             const resend = new Resend(RESEND_KEY);
+
+            // Generate masked password for display
+            const maskedPassword = password.length > 2
+                ? `${password.substring(0, 2)}${'*'.repeat(password.length - 3)}${password.slice(-1)}`
+                : '********';
+
             await resend.emails.send({
                 from: 'Gia Phả <onboarding@resend.dev>',
                 to: [email],
@@ -307,7 +315,38 @@ async function register(req, res) {
                         <h2 style="color:#1e293b;margin-bottom:4px">🏛️ Gia Phả - Dòng Họ Vũ</h2>
                         <hr style="border:none;border-top:1px solid #e2e8f0;margin:16px 0">
                         <p style="color:#475569">Xin chào <strong>${displayName || username}</strong>,</p>
-                        <p style="color:#475569">Cảm ơn bạn đã đăng ký. Vui lòng click nút bên dưới để xác nhận email và kích hoạt tài khoản.</p>
+                        <p style="color:#475569">Cảm ơn bạn đã đăng ký tài khoản. Vui lòng kiểm tra lại thông tin bên dưới:</p>
+                        
+                        <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:8px; padding:16px; margin:20px 0;">
+                            <table style="width:100%; color:#334155; font-size:14px; line-height:1.6;" cellpadding="0" cellspacing="0">
+                                <tr>
+                                    <td style="width:35%; font-weight:600; padding:4px 0;">Tên hiển thị:</td>
+                                    <td style="padding:4px 0;">${displayName || username}</td>
+                                </tr>
+                                <tr>
+                                    <td style="font-weight:600; padding:4px 0;">Tên đăng nhập:</td>
+                                    <td style="padding:4px 0;"><code>${username}</code></td>
+                                </tr>
+                                <tr>
+                                    <td style="font-weight:600; padding:4px 0;">Email:</td>
+                                    <td style="padding:4px 0;">${email}</td>
+                                </tr>
+                                <tr>
+                                    <td style="font-weight:600; padding:4px 0;">Số điện thoại:</td>
+                                    <td style="padding:4px 0;">${phone || '<i>Không cung cấp</i>'}</td>
+                                </tr>
+                                <tr>
+                                    <td style="font-weight:600; padding:4px 0;">Facebook:</td>
+                                    <td style="padding:4px 0;">${facebook ? `<a href="${facebook}" style="color:#2563eb;text-decoration:none;">Link Facebook</a>` : '<i>Không cung cấp</i>'}</td>
+                                </tr>
+                                <tr>
+                                    <td style="font-weight:600; padding:4px 0; color:#b91c1c;">Mật khẩu:</td>
+                                    <td style="padding:4px 0; color:#b91c1c;"><code>${maskedPassword}</code></td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <p style="color:#475569">Vui lòng click nút bên dưới để xác nhận email và kích hoạt tài khoản.</p>
                         <div style="text-align:center;margin:28px 0">
                             <a href="${verifyLink}" style="display:inline-block;background:#2563eb;color:#fff;padding:14px 36px;border-radius:10px;text-decoration:none;font-weight:700;font-size:15px">
                                 ✅ Xác nhận tài khoản
