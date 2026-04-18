@@ -215,9 +215,44 @@ async function createRoom(req, res) {
     }
 }
 
+// Rename a room (group chat)
+async function renameRoom(req, res) {
+    try {
+        const roomId = parseInt(req.params.id);
+        const { name } = req.body;
+
+        if (!name || !name.trim()) return res.status(400).json({ success: false, error: 'Tên nhóm không hợp lệ' });
+
+        // Verify membership
+        const { data: membership, error: membershipErr } = await supabase
+            .from('chat_members')
+            .select('*')
+            .eq('room_id', roomId)
+            .eq('user_id', req.user.id)
+            .single();
+
+        if (membershipErr || !membership) {
+            return res.status(403).json({ success: false, error: 'Bạn không có quyền sửa nhóm này' });
+        }
+
+        const { error: updateErr } = await supabase
+            .from('chat_rooms')
+            .update({ name: name.trim(), updated_at: new Date().toISOString() })
+            .eq('id', roomId)
+            .eq('type', 'group'); // Only group chats can be renamed
+
+        if (updateErr) throw updateErr;
+
+        res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ success: false, error: e.message });
+    }
+}
+
 module.exports = {
     getRooms,
     getMessages,
     sendMessage,
-    createRoom
+    createRoom,
+    renameRoom
 };

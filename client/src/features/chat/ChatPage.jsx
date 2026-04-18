@@ -19,6 +19,7 @@ export default function ChatPage({ user, addToast, onStartCall }) {
     const [selectedUserIds, setSelectedUserIds] = useState([]);
 
     const messagesEndRef = useRef(null);
+    const isFirstLoadRef = useRef(true);
 
     const fetchRooms = async () => {
         try {
@@ -49,7 +50,10 @@ export default function ChatPage({ user, addToast, onStartCall }) {
             const json = await res.json();
             if (json.success) {
                 setMessages(json.data || []);
-                scrollToBottom();
+                if (isFirstLoadRef.current) {
+                    scrollToBottom();
+                    isFirstLoadRef.current = false;
+                }
             }
         } catch (e) {
             console.error(e);
@@ -69,6 +73,7 @@ export default function ChatPage({ user, addToast, onStartCall }) {
 
     useEffect(() => {
         if (!activeRoomId) return;
+        isFirstLoadRef.current = true;
         fetchMessages(activeRoomId);
 
         // Polling messages
@@ -142,6 +147,31 @@ export default function ChatPage({ user, addToast, onStartCall }) {
         setSelectedUserIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
     };
 
+    const handleRenameGroup = async () => {
+        const activeRoom = rooms.find(r => r.id === activeRoomId);
+        if (activeRoom?.type !== 'group') return;
+
+        const newName = prompt('Nhập tên nhóm mới:', activeRoom.display_name || '');
+        if (!newName || newName.trim() === '' || newName.trim() === activeRoom.display_name) return;
+
+        try {
+            const res = await fetch(`${API_BASE}/chats/${activeRoomId}/name`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'x-auth-token': getToken() },
+                body: JSON.stringify({ name: newName.trim() })
+            });
+            const json = await res.json();
+            if (json.success) {
+                fetchRooms();
+                addToast('Đã đổi tên nhóm thành công');
+            } else {
+                addToast(json.error || 'Lỗi đổi tên nhóm', 'error');
+            }
+        } catch (e) {
+            addToast('Lỗi kết nối mạng', 'error');
+        }
+    };
+
     const activeRoom = rooms.find(r => r.id === activeRoomId);
 
     return (
@@ -210,7 +240,12 @@ export default function ChatPage({ user, addToast, onStartCall }) {
                                     {activeRoom?.avatar ? <img src={activeRoom.avatar} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} /> : (activeRoom?.type === 'group' ? '👥' : activeRoom?.display_name?.substring(0, 2).toUpperCase())}
                                 </div>
                                 <div>
-                                    <h3 style={{ margin: 0, fontSize: 16 }}>{activeRoom?.display_name || 'Nhóm'}</h3>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                        <h3 style={{ margin: 0, fontSize: 16 }}>{activeRoom?.display_name || 'Nhóm'}</h3>
+                                        {activeRoom?.type === 'group' && (
+                                            <button className="btn" title="Đổi tên nhóm" style={{ padding: '2px 6px', fontSize: 12, background: 'transparent', border: '1px solid var(--border-subtle)', borderRadius: 4 }} onClick={handleRenameGroup}>✏️</button>
+                                        )}
+                                    </div>
                                     {activeRoom?.type === 'direct' && (
                                         <span style={{ fontSize: 12, color: activeRoom.is_online ? '#10b981' : 'var(--text-muted)' }}>
                                             {activeRoom.is_online ? '🟢 Đang trực tuyến' : '⚪ Ngoại tuyến'}

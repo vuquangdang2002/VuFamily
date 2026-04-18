@@ -228,12 +228,13 @@ router.post('/posts/:id/reactions', authenticate, async (req, res) => {
 });
 
 // ─── Chat System ───
-const ChatController = require('../controllers/chatController');
+const { getRooms, getMessages, sendMessage, createRoom, renameRoom } = require('../controllers/chatController');
 
-router.get('/chats', authenticate, ChatController.getRooms);
-router.post('/chats', authenticate, ChatController.createRoom);
-router.get('/chats/:id/messages', authenticate, ChatController.getMessages);
-router.post('/chats/:id/messages', authenticate, ChatController.sendMessage);
+router.get('/chats', authenticate, getRooms);
+router.post('/chats', authenticate, createRoom);
+router.get('/chats/:id/messages', authenticate, getMessages);
+router.post('/chats/:id/messages', authenticate, sendMessage);
+router.put('/chats/:id/name', authenticate, renameRoom);
 
 // ─── Voice Calls (WebRTC Signaling) ───
 const CallController = require('../controllers/callController');
