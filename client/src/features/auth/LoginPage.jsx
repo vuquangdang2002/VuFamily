@@ -220,8 +220,8 @@ export default function LoginPage({ onLogin, verifyMsg }) {
                         <input className="lp-input" type="text" placeholder="Tên đăng nhập..." value={forgotUser} onChange={e => setForgotUser(e.target.value)} autoFocus />
                         {forgotMsg && <div className="lp-forgot-msg">{forgotMsg}</div>}
                         <div style={{ display: 'flex', gap: 8 }}>
-                            <button className="lp-btn-primary" style={{ flex: 1 }} onClick={handleForgotPassword} disabled={forgotLoading}>
-                                {forgotLoading ? '⏳ Đang gửi...' : '📧 Gửi yêu cầu'}
+                            <button className="lp-btn-primary" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }} onClick={handleForgotPassword} disabled={forgotLoading}>
+                                {forgotLoading ? <><div className="spinner spinner-sm" style={{ borderTopColor: '#fff', borderColor: 'rgba(255,255,255,0.3)' }}></div> Đang gửi...</> : '📧 Gửi yêu cầu'}
                             </button>
                             <button className="lp-btn-outline" style={{ flex: 1 }} onClick={() => setShowForgot(false)}>Hủy</button>
                         </div>
@@ -313,9 +313,9 @@ export default function LoginPage({ onLogin, verifyMsg }) {
                         {isRegisterMode && <p className="lp-input-hint">Tối thiểu 8 ký tự, gồm chữ hoa, thường, số và ký tự đặc biệt.</p>}
                     </div>
 
-                    <button className="lp-btn-primary" type="submit" disabled={loading}>
+                    <button className="lp-btn-primary" type="submit" disabled={loading} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
                         {loading
-                            ? (isRegisterMode ? '⏳ Đang đăng ký...' : '⏳ Đang đăng nhập...')
+                            ? <><div className="spinner spinner-sm" style={{ borderTopColor: '#fff', borderColor: 'rgba(255,255,255,0.3)' }}></div> {isRegisterMode ? 'Đang đăng ký...' : 'Đang đăng nhập...'}</>
                             : (isRegisterMode
                                 ? <><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><line x1="19" y1="8" x2="19" y2="14" /><line x1="22" y1="11" x2="16" y2="11" /></svg>Đăng ký</>
                                 : <><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" /><polyline points="10 17 15 12 10 7" /><line x1="15" y1="12" x2="3" y2="12" /></svg>Đăng nhập</>
