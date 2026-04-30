@@ -67,6 +67,15 @@ function requireAdmin(req, res, next) {
     }
 }
 
+// Editor or Admin middleware (for content editing operations)
+function requireEditorOrAdmin(req, res, next) {
+    if (req.user && (req.user.role === 'admin' || req.user.role === 'editor')) {
+        next();
+    } else {
+        res.status(403).json({ success: false, error: 'Bạn cần quyền Biên tập viên trở lên để thực hiện thao tác này' });
+    }
+}
+
 // ─── Auth Controller ───
 
 async function login(req, res) {
@@ -223,7 +232,7 @@ async function createUser(req, res) {
                 username,
                 password: hashedPw,
                 display_name: displayName || username,
-                role: role || 'viewer',
+                role: ['admin', 'editor', 'viewer'].includes(role) ? role : 'viewer',
             });
         if (error) throw error;
 
@@ -591,6 +600,7 @@ module.exports = {
     authenticate,
     optionalAuth,
     requireAdmin,
+    requireEditorOrAdmin,
     login,
     logout,
     getMe,

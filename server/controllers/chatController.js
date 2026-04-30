@@ -83,12 +83,21 @@ async function getMessages(req, res) {
             return res.status(403).json({ success: false, error: 'Bạn không có quyền xem nhóm chat này' });
         }
 
-        const { data: messages, error } = await supabase
+        // Support incremental fetch: ?since=ISO_timestamp
+        const sinceParam = req.query.since;
+        let query = supabase
             .from('chat_messages')
             .select('*, users!chat_messages_sender_id_fkey(id, username, display_name, avatar)')
-            .eq('room_id', roomId)
+            .eq('room_id', roomId);
+
+        if (sinceParam) {
+            // Only fetch messages created after this timestamp (for incremental sync)
+            query = query.gt('created_at', sinceParam);
+        }
+
+        const { data: messages, error } = await query
             .order('created_at', { ascending: true })
-            .limit(100); // Last 100 max for now
+            .limit(100);
 
         if (error) throw error;
 

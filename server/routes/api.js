@@ -2,7 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const MemberController = require('../controllers/memberController');
-const { authenticate, optionalAuth, requireAdmin, login, logout, getMe, getUsers, createUser, updateUser, deleteUser, changePassword, resetPassword, forgotPassword, updateProfile, register, verifyEmail } = require('../middleware/auth');
+const { authenticate, optionalAuth, requireAdmin, requireEditorOrAdmin, login, logout, getMe, getUsers, createUser, updateUser, deleteUser, changePassword, resetPassword, forgotPassword, updateProfile, register, verifyEmail } = require('../middleware/auth');
 const UpdateRequestModel = require('../models/UpdateRequest');
 
 // ─── Auth (public) ───
@@ -64,26 +64,26 @@ router.get('/members/:id', MemberController.getById);
 router.get('/members/:id/children', MemberController.getChildren);
 router.get('/members/:id/achievements', MemberController.getAchievements);
 
-// Write operations: admin can directly modify, viewer sends request
-router.post('/members', authenticate, requireAdmin, MemberController.create);
-router.put('/members/:id', authenticate, requireAdmin, MemberController.update);
-router.delete('/members/:id', authenticate, requireAdmin, MemberController.delete);
+// Write operations: admin/editor can directly modify, viewer sends request
+router.post('/members', authenticate, requireEditorOrAdmin, MemberController.create);
+router.put('/members/:id', authenticate, requireEditorOrAdmin, MemberController.update);
+router.delete('/members/:id', authenticate, requireEditorOrAdmin, MemberController.delete);
 
-// Achievements (admin only)
-router.post('/achievements', authenticate, requireAdmin, MemberController.addAchievement);
-router.delete('/achievements/:id', authenticate, requireAdmin, MemberController.deleteAchievement);
+// Achievements (editor or admin)
+router.post('/achievements', authenticate, requireEditorOrAdmin, MemberController.addAchievement);
+router.delete('/achievements/:id', authenticate, requireEditorOrAdmin, MemberController.deleteAchievement);
 
 // ─── Update Requests (viewer submits, admin reviews) ───
 router.get('/requests', authenticate, async (req, res) => {
     try {
-        const data = req.user.role === 'admin'
+        const data = (req.user.role === 'admin' || req.user.role === 'editor')
             ? await UpdateRequestModel.getAll()
             : await UpdateRequestModel.getByUser(req.user.id);
         res.json({ success: true, data });
     } catch (e) { console.error('[DangVQ Log] [API: getRequests] Error:', e.message); res.status(500).json({ success: false, error: e.message }); }
 });
 
-router.get('/requests/pending', authenticate, requireAdmin, async (req, res) => {
+router.get('/requests/pending', authenticate, requireEditorOrAdmin, async (req, res) => {
     try {
         const data = await UpdateRequestModel.getAll('pending');
         res.json({ success: true, data });
@@ -99,7 +99,7 @@ router.post('/requests', authenticate, async (req, res) => {
     } catch (e) { console.error('[DangVQ Log] [API: createRequest] Error:', e.message); res.status(500).json({ success: false, error: e.message }); }
 });
 
-router.post('/requests/:id/approve', authenticate, requireAdmin, async (req, res) => {
+router.post('/requests/:id/approve', authenticate, requireEditorOrAdmin, async (req, res) => {
     try {
         const result = await UpdateRequestModel.approve(req.params.id, req.user.id);
         if (!result) return res.status(404).json({ success: false, error: 'Không tìm thấy yêu cầu' });
@@ -107,7 +107,7 @@ router.post('/requests/:id/approve', authenticate, requireAdmin, async (req, res
     } catch (e) { console.error(`[DangVQ Log] [API: approveRequest ${req.params.id}] Error:`, e.message); res.status(500).json({ success: false, error: e.message }); }
 });
 
-router.post('/requests/:id/reject', authenticate, requireAdmin, async (req, res) => {
+router.post('/requests/:id/reject', authenticate, requireEditorOrAdmin, async (req, res) => {
     try {
         await UpdateRequestModel.reject(req.params.id, req.user.id, req.body.rejectReason || req.body.reason);
         res.json({ success: true, message: 'Đã từ chối yêu cầu' });
