@@ -101,12 +101,13 @@ export default function LoginPage({ onLogin, verifyMsg }) {
 
                 /* ── Left panel (form) ── */
                 .lp-left {
-                    width: 480px;
-                    min-width: 380px;
+                    width: 45%;
+                    max-width: 480px;
+                    min-width: 320px;
                     display: flex;
                     flex-direction: column;
                     justify-content: center;
-                    padding: 48px 56px;
+                    padding: 40px;
                     background: #fff;
                     position: relative;
                     z-index: 2;
@@ -255,7 +256,7 @@ export default function LoginPage({ onLogin, verifyMsg }) {
                 /* ── Responsive ── */
                 @media (max-width: 900px) {
                     .lp-right { display: none; }
-                    .lp-left { width: 100%; min-width: unset; padding: 32px 24px; }
+                    .lp-left { width: 100%; max-width: 100%; padding: 32px 24px; min-width: auto; }
                     .lp-root { justify-content: center; align-items: center; background: #F9FAFB; }
                     .lp-left { max-width: 460px; border-radius: 16px; box-shadow: 0 4px 32px rgba(0,0,0,0.08); }
                 }
@@ -350,11 +351,6 @@ export default function LoginPage({ onLogin, verifyMsg }) {
                     <div className="lp-field">
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <label className="lp-label"><span className="req">*</span>Mật khẩu</label>
-                            {!isRegisterMode && (
-                                <button type="button" className="lp-forgot-link" onClick={() => { setShowForgot(!showForgot); setForgotMsg(''); }}>
-                                    Quên mật khẩu?
-                                </button>
-                            )}
                         </div>
                         <div className="lp-input-wrap">
                             <span className="lp-input-icon">
@@ -375,7 +371,18 @@ export default function LoginPage({ onLogin, verifyMsg }) {
                                 }
                             </button>
                         </div>
-                        {isRegisterMode && <p className="lp-input-hint">Tối thiểu 8 ký tự, gồm chữ hoa, thường, số và ký tự đặc biệt.</p>}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px' }}>
+                            {isRegisterMode ? (
+                                <p className="lp-input-hint" style={{ margin: 0 }}>Tối thiểu 8 ký tự, gồm chữ hoa, thường, số và ký tự đặc biệt.</p>
+                            ) : (
+                                <div style={{ flex: 1 }} /> // Spacer
+                            )}
+                            {!isRegisterMode && (
+                                <button type="button" className="lp-forgot-link" onClick={() => { setShowForgot(!showForgot); setForgotMsg(''); }}>
+                                    Quên mật khẩu?
+                                </button>
+                            )}
+                        </div>
                     </div>
 
                     <button className="lp-btn-primary" type="submit" disabled={loading}>
