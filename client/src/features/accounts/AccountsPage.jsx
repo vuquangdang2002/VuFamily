@@ -186,6 +186,7 @@ export default function AccountsPage({ addToast }) {
                                 <label style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 4, display: 'block' }}>Quyền</label>
                                 <select className="form-input" value={newUser.role} onChange={e => setNewUser({ ...newUser, role: e.target.value })}>
                                     <option value="viewer">Thành viên (viewer)</option>
+                                    <option value="editor">Biên tập viên (editor)</option>
                                     <option value="admin">Quản trị viên (admin)</option>
                                 </select>
                             </div>
@@ -243,10 +244,10 @@ export default function AccountsPage({ addToast }) {
                                             <td style={{ padding: '10px 12px' }}>
                                                 <span style={{
                                                     padding: '2px 8px', borderRadius: 12, fontSize: 12, fontWeight: 600,
-                                                    background: u.role === 'admin' ? 'rgba(37,99,235,0.15)' : 'rgba(100,116,139,0.15)',
-                                                    color: u.role === 'admin' ? '#2563eb' : '#64748b'
+                                                    background: u.role === 'admin' ? 'rgba(37,99,235,0.15)' : u.role === 'editor' ? 'rgba(16,185,129,0.15)' : 'rgba(100,116,139,0.15)',
+                                                    color: u.role === 'admin' ? '#2563eb' : u.role === 'editor' ? '#10b981' : '#64748b'
                                                 }}>
-                                                    {u.role === 'admin' ? '👑 Admin' : '👤 Viewer'}
+                                                    {u.role === 'admin' ? '👑 Admin' : u.role === 'editor' ? '✏️ Editor' : '👤 Viewer'}
                                                 </span>
                                             </td>
                                             <td style={{ padding: '10px 12px' }}>
@@ -360,6 +361,7 @@ export default function AccountsPage({ addToast }) {
                                 <label className="form-label">Quyền</label>
                                 <select className="form-input" value={editUser.role} onChange={e => setEditUser({ ...editUser, role: e.target.value })}>
                                     <option value="viewer">Thành viên (viewer)</option>
+                                    <option value="editor">Biên tập viên (editor)</option>
                                     <option value="admin">Quản trị viên (admin)</option>
                                 </select>
                             </div>

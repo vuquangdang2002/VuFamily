@@ -71,7 +71,7 @@ CREATE TABLE IF NOT EXISTS users (
   email TEXT DEFAULT '',
   phone TEXT DEFAULT '',
   avatar TEXT DEFAULT '',
-  role TEXT CHECK(role IN ('admin', 'viewer')) DEFAULT 'viewer',
+  role TEXT CHECK(role IN ('admin', 'editor', 'viewer')) DEFAULT 'viewer',
   status TEXT CHECK(status IN ('active', 'banned')) DEFAULT 'active',
   last_active TIMESTAMPTZ,
   is_online BOOLEAN DEFAULT false,

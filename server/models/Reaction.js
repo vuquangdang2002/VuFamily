@@ -1,5 +1,5 @@
 // Reaction model — Supabase
-const { supabase } = require('../../database/supabase');
+const { supabase } = require('../config/supabase');
 
 const ReactionModel = {
     // Get reactions grouped by emoji for a post

@@ -6,8 +6,13 @@ const MENU_ITEMS = [
     { id: 'calendar', icon: '📅', label: 'Lịch & Sự kiện' },
 ];
 
-const ADMIN_ITEMS = [
+// Items visible to editors AND admins
+const EDITOR_ITEMS = [
     { id: 'requests', icon: '📋', label: 'Yêu cầu chỉnh sửa' },
+];
+
+// Items visible to admins ONLY
+const ADMIN_ITEMS = [
     { id: 'accounts', icon: '👥', label: 'Quản lý tài khoản' },
 ];
 
@@ -16,7 +21,14 @@ const COMMON_ITEMS = [
     { id: 'history', icon: '📜', label: 'Lịch sử' },
 ];
 
+function getRoleLabel(role) {
+    if (role === 'admin') return 'Quản trị viên';
+    if (role === 'editor') return 'Biên tập viên';
+    return 'Thành viên';
+}
+
 export default function Sidebar({ activePage, onNavigate, isAdmin, user, onLogout, collapsed, onToggle, pendingCount, onOpenProfile }) {
+    const isEditorOrAdmin = user?.role === 'admin' || user?.role === 'editor';
     const [showUserMenu, setShowUserMenu] = useState(false);
     const menuRef = useRef(null);
 
@@ -66,7 +78,7 @@ export default function Sidebar({ activePage, onNavigate, isAdmin, user, onLogou
 
                 <div className="sidebar-divider" />
 
-                {isAdmin && ADMIN_ITEMS.map(item => (
+                {isEditorOrAdmin && EDITOR_ITEMS.map(item => (
                     <button
                         key={item.id}
                         className={`sidebar-item ${activePage === item.id ? 'active' : ''}`}
@@ -78,6 +90,17 @@ export default function Sidebar({ activePage, onNavigate, isAdmin, user, onLogou
                         {item.id === 'requests' && pendingCount > 0 && (
                             <span className="sidebar-badge">{pendingCount}</span>
                         )}
+                    </button>
+                ))}
+                {isAdmin && ADMIN_ITEMS.map(item => (
+                    <button
+                        key={item.id}
+                        className={`sidebar-item ${activePage === item.id ? 'active' : ''}`}
+                        onClick={() => onNavigate(item.id)}
+                        title={collapsed ? item.label : ''}
+                    >
+                        <span className="sidebar-item-icon">{item.icon}</span>
+                        {!collapsed && <span className="sidebar-item-label">{item.label}</span>}
                     </button>
                 ))}
 
@@ -109,7 +132,7 @@ export default function Sidebar({ activePage, onNavigate, isAdmin, user, onLogou
                             </span>
                             <div>
                                 <div className="sidebar-user-menu-name">{user?.displayName || user?.username}</div>
-                                <div className="sidebar-user-menu-role">{user?.role === 'admin' ? 'Quản trị viên' : 'Thành viên'}</div>
+                                <div className="sidebar-user-menu-role">{getRoleLabel(user?.role)}</div>
                             </div>
                         </div>
                         <div className="sidebar-user-menu-divider" />
@@ -140,7 +163,7 @@ export default function Sidebar({ activePage, onNavigate, isAdmin, user, onLogou
                     {!collapsed && (
                         <div className="sidebar-user-info">
                             <span className="sidebar-user-name">{user?.displayName || user?.username}</span>
-                            <span className="sidebar-user-role">{user?.role === 'admin' ? 'Quản trị viên' : 'Thành viên'}</span>
+                            <span className="sidebar-user-role">{getRoleLabel(user?.role)}</span>
                         </div>
                     )}
                     {!collapsed && (

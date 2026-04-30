@@ -1,5 +1,5 @@
 // Authentication & Authorization Middleware — Supabase version
-const { supabase } = require('../../database/supabase');
+const { supabase } = require('../config/supabase');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 

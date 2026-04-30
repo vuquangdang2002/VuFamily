@@ -1,5 +1,5 @@
 // Update Request model - Supabase version
-const { supabase } = require('../../database/supabase');
+const { supabase } = require('../config/supabase');
 
 class UpdateRequestModel {
     static async mapRequestsWithNames(requests) {

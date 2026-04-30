@@ -19,6 +19,7 @@ import Toolbar from './shared/components/Toolbar';
 import Toast from './shared/components/Toast';
 import { useTheme } from './shared/components/ThemeToggle';
 import { api, localApi, API_BASE } from './shared/services/api';
+import { clearAllCache as clearChatCache } from './shared/services/chatCache';
 import { LocalNotifications } from '@capacitor/local-notifications';
 
 const AUTH_KEY = 'vuFamilyAuth';
@@ -270,6 +271,8 @@ export default function App() {
             try { await fetch(`${API_BASE}/auth/logout`, { method: 'POST', headers: { 'x-auth-token': user.token } }); } catch { }
         }
         localStorage.removeItem(AUTH_KEY);
+        // Clear chat cache on logout
+        clearChatCache().catch(() => {});
         setUser(null);
         setSelected(null);
         setDetailOpen(false);
@@ -314,6 +317,7 @@ export default function App() {
     };
 
     const isAdmin = user?.role === 'admin';
+    const canEdit = user?.role === 'admin' || user?.role === 'editor';
 
     const refresh = async () => {
         try {
@@ -369,8 +373,8 @@ export default function App() {
                     return;
                 }
 
-                if (isAdmin) {
-                    const result = await api.submitRequest(data.id, actualChanges, 'Cập nhật trực tiếp bởi Admin');
+                if (isAdmin || canEdit) {
+                    const result = await api.submitRequest(data.id, actualChanges, 'Cập nhật trực tiếp bởi ' + (isAdmin ? 'Admin' : 'Editor'));
                     await api.approveRequest(result.data.id);
                     addToast(`Đã cập nhật thông tin "${data.name}" thành công!`);
                 } else {
@@ -378,7 +382,7 @@ export default function App() {
                     addToast(result.message || 'Đã gửi yêu cầu', result.success ? 'success' : 'error');
                 }
             } else {
-                if (!isAdmin) { addToast('Chỉ Admin mới có quyền thêm thành viên mới.', 'error'); return; }
+                if (!canEdit) { addToast('Chỉ Biên tập viên hoặc Admin mới có quyền thêm thành viên mới.', 'error'); return; }
                 const res = await api.createMember(data);
                 if (data.newAchievements?.length > 0 && res.data?.id) {
                     for (const a of data.newAchievements) {
@@ -395,7 +399,7 @@ export default function App() {
     };
 
     const handleDelete = async (id) => {
-        if (!isAdmin) { addToast('Chỉ Admin mới có quyền xóa thành viên.', 'error'); return; }
+        if (!canEdit) { addToast('Chỉ Biên tập viên hoặc Admin mới có quyền xóa thành viên.', 'error'); return; }
         const m = members.find(x => x.id === id);
         if (!m) return;
         const children = members.filter(x => x.parentId === id);
@@ -442,7 +446,7 @@ export default function App() {
     };
 
     const handleImport = async (file, format = 'json') => {
-        if (!isAdmin) { addToast('Chỉ Admin mới có quyền nhập dữ liệu.', 'error'); return; }
+        if (!canEdit) { addToast('Chỉ Biên tập viên hoặc Admin mới có quyền nhập dữ liệu.', 'error'); return; }
         if (!confirm('Nhập dữ liệu từ file sẽ GHI ĐÈ toàn bộ dữ liệu hiện tại.\nBạn có chắc chắn?')) return;
         try {
             if (format === 'csv') {
@@ -526,11 +530,11 @@ export default function App() {
                 return (
                     <div className="tree-page relative">
                         <Header stats={stats} onSearch={handleSearch} searchResults={searchResults} onSelectResult={handleSelect}
-                            onAddRoot={isAdmin ? () => openAddModal(null) : null}
-                            onExport={isAdmin ? handleExport : null}
-                            onImport={isAdmin ? handleImport : null}
+                            onAddRoot={canEdit ? () => openAddModal(null) : null}
+                            onExport={canEdit ? handleExport : null}
+                            onImport={canEdit ? handleImport : null}
                             onReset={isAdmin ? handleReset : null}
-                            isAdmin={isAdmin} />
+                            isAdmin={isAdmin} canEdit={canEdit} />
                         <Toolbar theme={theme} setTheme={setTheme} />
 
                         {isLoadingMembers && (
@@ -544,9 +548,9 @@ export default function App() {
                             searchResultIds={searchResults.map(r => r.id)}
                             onSelectMember={handleSelect} onDeselect={closeDetail} />
                         <DetailPanel member={selected} members={members} isOpen={detailOpen} onClose={closeDetail}
-                            onEdit={isAdmin ? openEditModal : null} onDelete={isAdmin ? handleDelete : null}
-                            onAddChild={isAdmin ? openAddModal : null} onAddSpouse={isAdmin ? openAddSpouseModal : null}
-                            onRefresh={refresh} isAdmin={isAdmin} onSelfEdit={openEditModal} />
+                            onEdit={canEdit ? openEditModal : null} onDelete={canEdit ? handleDelete : null}
+                            onAddChild={canEdit ? openAddModal : null} onAddSpouse={canEdit ? openAddSpouseModal : null}
+                            onRefresh={refresh} isAdmin={isAdmin} canEdit={canEdit} onSelfEdit={openEditModal} />
                     </div>
                 );
             case 'newsfeed':

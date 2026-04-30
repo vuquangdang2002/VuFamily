@@ -1,5 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { API_BASE } from '../../shared/services/api';
+import {
+    cacheRooms, getCachedRooms,
+    cacheMessages, getCachedMessages, getLatestMessageTime, cacheSingleMessage
+} from '../../shared/services/chatCache';
 
 function getToken() {
     try { return JSON.parse(localStorage.getItem('vuFamilyAuth') || '{}').token || ''; }
@@ -12,6 +16,7 @@ export default function ChatPage({ user, addToast, onStartCall }) {
     const [messages, setMessages] = useState([]);
     const [inputText, setInputText] = useState('');
     const [loadingRooms, setLoadingRooms] = useState(true);
+    const [isCacheLoaded, setIsCacheLoaded] = useState(false);
 
     // Select participants for new chat
     const [showNewChat, setShowNewChat] = useState(false);
@@ -21,14 +26,23 @@ export default function ChatPage({ user, addToast, onStartCall }) {
 
     const messagesEndRef = useRef(null);
     const isFirstLoadRef = useRef(true);
+    const latestMsgTimeRef = useRef(null);
+
+    // ── Messenger-style: Load from cache first, then sync with server ──
 
     const fetchRooms = async () => {
         try {
             const res = await fetch(`${API_BASE}/chats`, { headers: { 'x-auth-token': getToken() } });
             const json = await res.json();
-            if (json.success) setRooms(json.data || []);
+            if (json.success) {
+                const serverRooms = json.data || [];
+                setRooms(serverRooms);
+                // Save to IndexedDB cache (keeps last 10)
+                cacheRooms(serverRooms).catch(() => {});
+            }
         } catch (e) {
             console.error(e);
+            // Offline: keep using cached rooms
         } finally {
             setLoadingRooms(false);
         }
@@ -39,18 +53,25 @@ export default function ChatPage({ user, addToast, onStartCall }) {
             const res = await fetch(`${API_BASE}/users/public`, { headers: { 'x-auth-token': getToken() } });
             const json = await res.json();
             if (json.success) {
-                // exclude self
                 setAllUsers(json.data.filter(u => u.id !== user.id));
             }
         } catch (e) { }
     };
 
-    const fetchMessages = async (roomId) => {
+    // Full fetch (first load or room switch)
+    const fetchMessagesFull = async (roomId) => {
         try {
             const res = await fetch(`${API_BASE}/chats/${roomId}/messages`, { headers: { 'x-auth-token': getToken() } });
             const json = await res.json();
             if (json.success) {
-                setMessages(json.data || []);
+                const serverMsgs = json.data || [];
+                setMessages(serverMsgs);
+                // Update cache
+                cacheMessages(roomId, serverMsgs).catch(() => {});
+                // Track latest for incremental polling
+                if (serverMsgs.length > 0) {
+                    latestMsgTimeRef.current = serverMsgs[serverMsgs.length - 1].created_at;
+                }
                 if (isFirstLoadRef.current) {
                     scrollToBottom();
                     isFirstLoadRef.current = false;
@@ -58,28 +79,87 @@ export default function ChatPage({ user, addToast, onStartCall }) {
             }
         } catch (e) {
             console.error(e);
+            // Offline: keep cached messages
         }
     };
 
+    // Incremental fetch (polling — only new messages since last known)
+    const fetchMessagesIncremental = async (roomId) => {
+        if (!latestMsgTimeRef.current) {
+            return fetchMessagesFull(roomId);
+        }
+        try {
+            const since = encodeURIComponent(latestMsgTimeRef.current);
+            const res = await fetch(`${API_BASE}/chats/${roomId}/messages?since=${since}`, {
+                headers: { 'x-auth-token': getToken() }
+            });
+            const json = await res.json();
+            if (json.success && json.data && json.data.length > 0) {
+                const newMsgs = json.data;
+                setMessages(prev => {
+                    // Deduplicate by id
+                    const existingIds = new Set(prev.map(m => m.id));
+                    const unique = newMsgs.filter(m => !existingIds.has(m.id));
+                    if (unique.length === 0) return prev;
+                    const merged = [...prev, ...unique];
+                    // Cache the new messages
+                    cacheMessages(roomId, merged).catch(() => {});
+                    return merged;
+                });
+                latestMsgTimeRef.current = newMsgs[newMsgs.length - 1].created_at;
+                scrollToBottom();
+            }
+        } catch (e) {
+            // Offline — keep cached
+        }
+    };
+
+    // ── Mount: Load cached data instantly, then background sync ──
     useEffect(() => {
+        // Step 1: Load rooms from IndexedDB cache (instant)
+        getCachedRooms().then(cached => {
+            if (cached.length > 0) {
+                setRooms(cached);
+                setLoadingRooms(false);
+                setIsCacheLoaded(true);
+            }
+        }).catch(() => {});
+
+        // Step 2: Background sync from server
         fetchRooms();
         fetchPublicUsers();
 
-        // Polling rooms for updates (every 15s instead of 3s to reduce server load)
+        // Polling rooms for updates
         const interval = setInterval(() => {
             fetchRooms();
         }, 15000);
         return () => clearInterval(interval);
     }, []);
 
+    // ── Room switch: Load cached messages first, then full fetch ──
     useEffect(() => {
         if (!activeRoomId) return;
         isFirstLoadRef.current = true;
-        fetchMessages(activeRoomId);
+        latestMsgTimeRef.current = null;
 
-        // Polling messages (every 5s instead of 2s to reduce server load)
+        // Step 1: Show cached messages immediately
+        getCachedMessages(activeRoomId).then(cached => {
+            if (cached.length > 0) {
+                setMessages(cached);
+                if (cached.length > 0) {
+                    latestMsgTimeRef.current = cached[cached.length - 1].created_at;
+                }
+                scrollToBottom();
+                isFirstLoadRef.current = false;
+            }
+        }).catch(() => {});
+
+        // Step 2: Full fetch from server (to get latest)
+        fetchMessagesFull(activeRoomId);
+
+        // Polling: incremental only (just new messages)
         const interval = setInterval(() => {
-            fetchMessages(activeRoomId);
+            fetchMessagesIncremental(activeRoomId);
         }, 5000);
 
         return () => clearInterval(interval);
@@ -106,8 +186,10 @@ export default function ChatPage({ user, addToast, onStartCall }) {
             });
             const json = await res.json();
             if (json.success) {
-                // Immediately append
+                // Immediately append + cache
                 setMessages(prev => [...prev, json.data]);
+                cacheSingleMessage(activeRoomId, json.data).catch(() => {});
+                latestMsgTimeRef.current = json.data.created_at;
                 scrollToBottom();
                 fetchRooms(); // to update read/last msg time
             } else {
@@ -203,7 +285,7 @@ export default function ChatPage({ user, addToast, onStartCall }) {
             const json = await res.json();
             if (json.success) {
                 fetchRooms();
-                fetchMessages(activeRoomId);
+                fetchMessagesFull(activeRoomId);
                 addToast(`Đã mời ${memberName} rời nhóm`);
             } else {
                 addToast(json.error || "Lỗi thao tác", "error");

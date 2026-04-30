@@ -1,8 +1,14 @@
-const { supabase } = require('../../database/supabase');
+const { supabase } = require('../config/supabase');
+const { FEATURES } = require('../config/constants');
+const CALL_CONFIG = require('../config/features/call');
 
 // --- Signal a new call (Send Offer or just start the context) ---
 async function initiateCall(req, res) {
     try {
+        if (!FEATURES.ENABLE_CALL_SYSTEM) {
+            return res.status(503).json({ success: false, error: 'Hệ thống gọi điện đang được bảo trì.' });
+        }
+
         const { roomId, offer } = req.body;
         if (!roomId) return res.status(400).json({ success: false, error: 'roomId required' });
 
@@ -19,13 +25,18 @@ async function initiateCall(req, res) {
         if (error) throw error;
         res.status(201).json({ success: true, data: call });
     } catch (e) {
-        res.status(500).json({ success: false, error: e.message });
+        console.error('[CallController - initiateCall] Lỗi:', e);
+        res.status(500).json({ success: false, error: e.message || 'Lỗi server' });
     }
 }
 
 // --- Poll for incoming calls ---
 async function pollIncoming(req, res) {
     try {
+        if (!FEATURES.ENABLE_CALL_SYSTEM) {
+            return res.json({ success: true, data: null });
+        }
+
         const { data: myRooms } = await supabase.from('chat_members').select('room_id').eq('user_id', req.user.id);
         if (!myRooms || myRooms.length === 0) return res.json({ success: true, data: null });
         const roomIds = myRooms.map(r => r.room_id);
@@ -38,8 +49,37 @@ async function pollIncoming(req, res) {
             .order('started_at', { ascending: false })
             .limit(1);
 
-        res.json({ success: true, data: calls && calls.length > 0 ? calls[0] : null });
-    } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+        if (calls && calls.length > 0) {
+            const incomingCall = calls[0];
+            
+            // Auto timeout missed call logic
+            if (incomingCall.status === 'calling') {
+                const elapsedMs = new Date() - new Date(incomingCall.started_at);
+                if (elapsedMs > CALL_CONFIG.CALL_RINGING_TIMEOUT_MS) {
+                    // Update to missed
+                    await supabase.from('calls')
+                        .update({ status: 'missed', ended_at: new Date().toISOString() })
+                        .eq('id', incomingCall.id);
+                    
+                    // Insert missed call message to chat
+                    await supabase.from('chat_messages').insert({
+                        room_id: incomingCall.room_id,
+                        sender_id: incomingCall.caller_id,
+                        content: '📞 Cuộc gọi nhỡ'
+                    });
+
+                    return res.json({ success: true, data: null });
+                }
+            }
+
+            return res.json({ success: true, data: incomingCall });
+        }
+
+        res.json({ success: true, data: null });
+    } catch (e) { 
+        console.error('[CallController - pollIncoming] Lỗi:', e);
+        res.status(500).json({ success: false, error: e.message || 'Lỗi server' }); 
+    }
 }
 
 async function getCall(req, res) {
