@@ -117,15 +117,30 @@ Hệ thống phải được thiết kế để chịu tải khi lượng dữ l
 
 ---
 
-## 6. Các Nguyên tắc Lập trình (Coding Rules)
+## 6. Tiêu chuẩn Giao diện (UI/UX) & Responsive
+- **100% Responsive Đa màn hình**: TẤT CẢ các giao diện (màn hình chính, popup, form) bắt buộc phải hiển thị chuẩn trên mọi thiết bị (Mobile, Tablet, Desktop).
+- **Không vỡ layout**: Không được có hiện tượng đè chữ, tràn khung (overflow), nút bấm bị che khuất hoặc các thành phần UI bị lệch khi thu nhỏ màn hình (đặc biệt trên điện thoại).
+- **Kiểm thử đa thiết bị**: Bất kỳ tính năng Frontend nào mới làm ra đều phải test bằng Chrome DevTools trên các thiết bị ảo (iPhone 12/Pro, iPad) trước khi commit.
 
-### 6.1. Phân tách trách nhiệm (Separation of Concerns - MVC)
+---
+
+## 7. Cơ chế Chống sập (Failover) & Auto-Backup cho Database/API
+Để tránh việc sập 1 server làm chết toàn bộ hệ thống, dự án thiết lập kiến trúc dự phòng:
+- **Primary & Backup Database**: Hệ thống phải có 2 chuỗi kết nối (Primary và Fallback/Backup). Khi Database chính không phản hồi (timeout) hoặc sập, luồng kết nối phải tự động chuyển hướng (failover) sang Database dự phòng.
+- **Auto-Backup**: Cơ sở dữ liệu cần có cơ chế sao lưu tự động theo lịch (Daily/Weekly) thông qua Cronjob hoặc cấu hình của nhà cung cấp (Supabase/AWS).
+- **Service/API Fallback**: Các tính năng gọi API bên thứ 3 (Ví dụ: Server Call WebRTC) phải có config chuyển đổi sang cụm Server khác nếu Server chính bị down.
+
+---
+
+## 8. Các Nguyên tắc Lập trình (Coding Rules)
+
+### 8.1. Phân tách trách nhiệm (Separation of Concerns - MVC)
 - **API (Routes)**: Chỉ làm nhiệm vụ định nghĩa endpoint, middleware (xác thực) và gọi Controller. KHÔNG viết logic xử lý dữ liệu ở đây.
 - **Controller**: Xử lý logic nghiệp vụ (business logic), nhận request từ Route, gọi Model để lấy/lưu dữ liệu, xử lý kết quả và trả về response cho View (Client).
 - **Model**: Chỉ chịu trách nhiệm tương tác với Database (Supabase). Các câu query, insert, update, delete phải nằm ở đây.
 - **View (Client)**: Chỉ hiển thị dữ liệu và nhận tương tác từ người dùng. Mọi logic gọi data phải tách ra service hoặc utils.
 
-### 6.2. Chuẩn mực Viết Code & Fallback (Xử lý lỗi)
+### 8.2. Chuẩn mực Viết Code & Fallback (Xử lý lỗi)
 Mọi tính năng quan trọng (đặc biệt là call API hoặc tương tác DB) bắt buộc phải có cơ chế xử lý lỗi và fallback.
 
 - **Luôn dùng `try...catch`**: Bao bọc các thao tác bất đồng bộ (`async/await`) trong khối `try...catch`.
@@ -149,7 +164,7 @@ async function getMessages(req, res) {
 }
 ```
 
-### 6.3. Xử lý Log (Logging)
+### 8.3. Xử lý Log (Logging)
 Để dễ dàng debug và bảo trì sau này, cần thiết lập quy tắc ghi log rõ ràng:
 - **Client**: Hạn chế `console.log` bừa bãi. Chỉ log khi có `error` hoặc trong môi trường `development`.
 - **Server**: Phải log các thông tin quan trọng:
@@ -157,17 +172,17 @@ async function getMessages(req, res) {
   - Các hành động nhạy cảm (Đăng nhập sai nhiều lần, Xóa user, Thay đổi phân quyền).
 - Tương lai: Nên tích hợp 1 thư viện logging chuyên dụng (như Winston hoặc Morgan) để ghi log ra file hoặc service theo dõi (Sentry).
 
-### 6.4. Quản lý Cấu hình (Configuration)
+### 8.4. Quản lý Cấu hình (Configuration)
 - **Tách biệt Config**: Tất cả các giá trị cấu hình (URL, API keys, timeout, hằng số phân quyền) **KHÔNG** được hardcode rải rác trong code.
 - **Môi trường (.env)**: Thông tin nhạy cảm (Supabase Key, JWT Secret) phải nằm trong `.env`.
 - **File Config**: Tạo file `server/config/constants.js` hoặc `client/src/shared/utils/constants.js` để chứa các hằng số dùng chung (ví dụ: `MAX_CACHE_ITEMS = 10`, `ROLE_ADMIN = 'admin'`). Khi cần đổi, chỉ sửa 1 file duy nhất.
 
-### 6.5. Bảo trì & Nâng cấp dễ dàng (Maintainability)
+### 8.5. Bảo trì & Nâng cấp dễ dàng (Maintainability)
 - **Hàm nhỏ và tập trung (Single Responsibility Principle)**: Mỗi hàm chỉ làm 1 việc duy nhất. Nếu hàm quá dài (>100 dòng), hãy tách nhỏ thành các helper functions.
 - **Comment Code**: Viết JSDoc hoặc comment giải thích rõ ràng TẠI SAO (Why) đoạn code này tồn tại cho những logic phức tạp, thay vì mô tả NÓ LÀM GÌ (What - vì code tự mô tả).
 - **Tái sử dụng (Reusable)**: Các đoạn UI lặp lại (Button, Input, Modal) hoặc logic lặp lại (hàm format ngày, gọi API) phải được chuyển vào thư mục `shared`.
 
-### 6.6. Quản lý Package và Dependency
+### 8.6. Quản lý Package và Dependency
 - **Sử dụng bản MỚI nhưng ỔN ĐỊNH**: Khi cài mới hoặc nâng cấp package, ưu tiên các bản phát hành ổn định (Stable/LTS), tránh các bản Alpha/Beta/RC.
 - **Ghim phiên bản**: Trong `package.json`, nên ghim cứng phiên bản (ví dụ `"react": "18.2.0"`) hoặc dùng dấu `^` một cách có kiểm soát để tránh việc tự động cập nhật lên phiên bản có breaking changes làm hỏng app.
 - **Xóa package rác**: Định kỳ kiểm tra và gỡ bỏ các thư viện không còn sử dụng để giảm dung lượng bundle và rủi ro bảo mật.

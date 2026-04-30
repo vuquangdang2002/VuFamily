@@ -99,13 +99,13 @@ router.delete('/comments/:id', authenticate, requireAdmin, PostController.delete
 router.post('/posts/:id/reactions', authenticate, PostController.toggleReaction);
 
 // ─── Chat System ───
-const { getRooms, getMessages, sendMessage, createRoom, renameRoom, leaveRoom, kickMember } = require('../controllers/chatController');
+const { getRooms, getMessages, sendMessage, createRoom, updateRoomName, leaveRoom, kickMember } = require('../controllers/chatController');
 
 router.get('/chats', authenticate, getRooms);
 router.post('/chats', authenticate, createRoom);
 router.get('/chats/:id/messages', authenticate, getMessages);
 router.post('/chats/:id/messages', authenticate, sendMessage);
-router.put('/chats/:id/name', authenticate, renameRoom);
+router.put('/chats/:id/name', authenticate, updateRoomName);
 router.post('/chats/:id/leave', authenticate, leaveRoom);
 router.post('/chats/:id/kick/:userId', authenticate, kickMember);
 
