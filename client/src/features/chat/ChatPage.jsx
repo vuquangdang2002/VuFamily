@@ -39,7 +39,7 @@ export default function ChatPage({ user, addToast, onStartCall }) {
                 const serverRooms = json.data || [];
                 setRooms(serverRooms);
                 // Save to IndexedDB cache (keeps last 10)
-                cacheRooms(serverRooms).catch(() => {});
+                cacheRooms(serverRooms).catch((e) => { console.error("ChatPage Background Sync Error:", e); });
             }
         } catch (e) {
             console.error(e);
@@ -68,7 +68,7 @@ export default function ChatPage({ user, addToast, onStartCall }) {
                 const serverMsgs = json.data || [];
                 setMessages(serverMsgs);
                 // Update cache
-                cacheMessages(roomId, serverMsgs).catch(() => {});
+                cacheMessages(roomId, serverMsgs).catch((e) => { console.error("ChatPage Background Sync Error:", e); });
                 // Track latest for incremental polling
                 if (serverMsgs.length > 0) {
                     latestMsgTimeRef.current = serverMsgs[serverMsgs.length - 1].created_at;
@@ -104,7 +104,7 @@ export default function ChatPage({ user, addToast, onStartCall }) {
                     if (unique.length === 0) return prev;
                     const merged = [...prev, ...unique];
                     // Cache the new messages
-                    cacheMessages(roomId, merged).catch(() => {});
+                    cacheMessages(roomId, merged).catch((e) => { console.error("ChatPage Background Sync Error:", e); });
                     return merged;
                 });
                 latestMsgTimeRef.current = newMsgs[newMsgs.length - 1].created_at;
@@ -124,7 +124,7 @@ export default function ChatPage({ user, addToast, onStartCall }) {
                 setLoadingRooms(false);
                 setIsCacheLoaded(true);
             }
-        }).catch(() => {});
+        }).catch((e) => { console.error("ChatPage Background Sync Error:", e); });
 
         // Step 2: Background sync from server
         fetchRooms();
@@ -153,7 +153,7 @@ export default function ChatPage({ user, addToast, onStartCall }) {
                 scrollToBottom();
                 isFirstLoadRef.current = false;
             }
-        }).catch(() => {});
+        }).catch((e) => { console.error("ChatPage Background Sync Error:", e); });
 
         // Step 2: Full fetch from server (to get latest)
         fetchMessagesFull(activeRoomId);
@@ -189,7 +189,7 @@ export default function ChatPage({ user, addToast, onStartCall }) {
             if (json.success) {
                 // Immediately append + cache
                 setMessages(prev => [...prev, json.data]);
-                cacheSingleMessage(activeRoomId, json.data).catch(() => {});
+                cacheSingleMessage(activeRoomId, json.data).catch((e) => { console.error("ChatPage Background Sync Error:", e); });
                 latestMsgTimeRef.current = json.data.created_at;
                 scrollToBottom();
                 fetchRooms(); // to update read/last msg time

@@ -9,7 +9,7 @@ async function request(url, options = {}) {
     try {
         const auth = JSON.parse(localStorage.getItem('vuFamilyAuth'));
         if (auth && auth.token) headers['x-auth-token'] = auth.token;
-    } catch (e) { }
+    } catch (e) { console.error("Auth Token Fetch Error:", e); }
 
     const res = await fetch(`${API_BASE}${url}`, {
         ...options,

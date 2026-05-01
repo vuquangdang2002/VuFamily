@@ -73,7 +73,7 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'x-auth-token': getToken() },
                     body: JSON.stringify({ toUserId: targetUserId, candidate: JSON.stringify(e.candidate) })
-                }).catch(() => { });
+                }).catch((e) => { console.error("VoiceCall API Error:", e); });
             }
         };
 
@@ -114,7 +114,7 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json', 'x-auth-token': getToken() },
                         body: JSON.stringify({ status: 'ongoing' })
-                    }).catch(() => { });
+                    }).catch((e) => { console.error("VoiceCall API Error:", e); });
                 }
 
                 // Send Offer to ALL members
@@ -128,7 +128,7 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json', 'x-auth-token': getToken() },
                                 body: JSON.stringify({ toUserId: member.id, type: 'offer', payload: JSON.stringify(offer) })
-                            }).catch(() => { });
+                            }).catch((e) => { console.error("VoiceCall API Error:", e); });
                         }
                     }
                 }
@@ -155,7 +155,7 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
                         setCallData(json.data);
                         setCallState('RINGING');
                     }
-                } catch (e) { }
+                } catch (e) { console.error("VoiceCall Block Error:", e); }
             } else if (callState === 'RINGING' && callData?.id) {
                 try {
                     const res = await fetch(`${API_BASE}/calls/${callData.id}`, { headers: { 'x-auth-token': getToken() } });
@@ -164,7 +164,7 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
                         cleanupCall();
                         addToast('Cuộc gọi kết thúc.', 'info');
                     }
-                } catch (e) { }
+                } catch (e) { console.error("VoiceCall Block Error:", e); }
             }
         }, 3000);
         return () => clearInterval(interval);
@@ -183,7 +183,7 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
             method: 'PUT',
             headers: { 'Content-Type': 'application/json', 'x-auth-token': getToken() },
             body: JSON.stringify({ answer: 'meshJoined' })
-        }).catch(() => { });
+        }).catch((e) => { console.error("VoiceCall API Error:", e); });
     };
 
     const rejectCall = async () => {
@@ -192,7 +192,7 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json', 'x-auth-token': getToken() },
                 body: JSON.stringify({ status: 'rejected' })
-            }).catch(() => { });
+            }).catch((e) => { console.error("VoiceCall API Error:", e); });
         }
         cleanupCall();
     };
@@ -205,12 +205,12 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json', 'x-auth-token': getToken() },
                     body: JSON.stringify({ status: 'ended' })
-                }).catch(() => { });
+                }).catch((e) => { console.error("VoiceCall API Error:", e); });
                 await fetch(`${API_BASE}/chats/${callData.room_id}/messages`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'x-auth-token': getToken() },
                     body: JSON.stringify({ content: `📞 Cuộc gọi đã kết thúc (${formatDuration(duration)}).` })
-                }).catch(() => { });
+                }).catch((e) => { console.error("VoiceCall API Error:", e); });
             }
         }
         cleanupCall();
@@ -221,7 +221,7 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
         pollIntervalRef.current = setInterval(async () => {
             try {
                 // Poll for signals and candidates targeting me
-                const res = await fetch(`${API_BASE} / calls / ${callId} / signals`, { headers: { 'x-auth-token': getToken() } });
+                const res = await fetch(`${API_BASE}/calls/${callId}/signals`, { headers: { 'x-auth-token': getToken() } });
                 const json = await res.json();
                 if (json.success && json.data) {
 
@@ -242,11 +242,11 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
                             await pc.setLocalDescription(answer);
 
                             // Send Answer back
-                            await fetch(`${API_BASE} / calls / ${callId} / signals`, {
+                            await fetch(`${API_BASE}/calls/${callId}/signals`, {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json', 'x-auth-token': getToken() },
                                 body: JSON.stringify({ toUserId: targetUserId, type: 'answer', payload: JSON.stringify(answer) })
-                            }).catch(() => { });
+                            }).catch((e) => { console.error("VoiceCall API Error:", e); });
 
                         } else if (sig.type === 'answer') {
                             await pc.setRemoteDescription(new RTCSessionDescription(JSON.parse(sig.payload)));
@@ -261,7 +261,7 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
                         const targetUserId = c.sender_id;
                         const pc = pcsRef.current[targetUserId];
                         if (pc) {
-                            await pc.addIceCandidate(new RTCIceCandidate(JSON.parse(c.candidate))).catch(() => { });
+                            await pc.addIceCandidate(new RTCIceCandidate(JSON.parse(c.candidate))).catch((e) => { console.error("VoiceCall API Error:", e); });
                         }
                     }
                     
@@ -273,7 +273,7 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
                 }
 
                 // Poll check if call was force ended by creator
-                const statusRes = await fetch(`${API_BASE} / calls / ${callId}`, { headers: { 'x-auth-token': getToken() } });
+                const statusRes = await fetch(`${API_BASE}/calls/${callId}`, { headers: { 'x-auth-token': getToken() } });
                 const statusJson = await statusRes.json();
                 if (statusJson.success && statusJson.data && ['ended'].includes(statusJson.data.status)) {
                     cleanupCall();

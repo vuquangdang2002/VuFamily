@@ -128,7 +128,7 @@ function getEventsForDate(members, year, month, day) {
                     if (annSolar.getMonth() === month && annSolar.getDay() === day) {
                         events.push({ type: 'anniversary', member: m });
                     }
-                } catch (e) { }
+                } catch (e) { console.error("CalendarPage Error:", e); }
             }
         }
     });
@@ -205,7 +205,7 @@ export default function CalendarPage({ members }) {
                                         const s = Solar.fromYmd(viewYear, viewMonth, d);
                                         const l = s.getLunar();
                                         lunarLabel = lunarDayLabel(l.getDay(), l.getMonth());
-                                    } catch (e) { }
+                                    } catch (e) { console.error("CalendarPage Error:", e); }
 
                                     return (
                                         <div key={`d-${d}`}

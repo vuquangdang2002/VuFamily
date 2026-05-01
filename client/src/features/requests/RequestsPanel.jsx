@@ -31,10 +31,10 @@ function timeAgo(dateStr) {
 function ChangesView({ before, changes }) {
     let finalChanges = changes;
     if (typeof finalChanges === 'string') {
-        try { finalChanges = JSON.parse(finalChanges); } catch (e) { }
+        try { finalChanges = JSON.parse(finalChanges); } catch (e) { console.warn("RequestsPanel JSON Parse Fallback:", e.message); }
     }
     if (typeof finalChanges === 'string') {
-        try { finalChanges = JSON.parse(finalChanges); } catch (e) { }
+        try { finalChanges = JSON.parse(finalChanges); } catch (e) { console.warn("RequestsPanel JSON Parse Fallback:", e.message); }
     }
     if (!finalChanges || typeof finalChanges !== 'object') return null;
 

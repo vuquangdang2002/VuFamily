@@ -199,14 +199,14 @@ export default function App() {
         fetch(`${API_BASE}/users/ping`, {
             method: 'POST',
             headers: { 'x-auth-token': user.token }
-        }).catch(() => { });
+        }).catch((e) => { console.error("App.jsx Promise Error:", e); });
 
         // Then ping every 60 seconds
         const intervalId = setInterval(() => {
             fetch(`${API_BASE}/users/ping`, {
                 method: 'POST',
                 headers: { 'x-auth-token': user.token }
-            }).catch(() => { });
+            }).catch((e) => { console.error("App.jsx Promise Error:", e); });
         }, 60000);
 
         return () => clearInterval(intervalId);
@@ -272,7 +272,7 @@ export default function App() {
         }
         localStorage.removeItem(AUTH_KEY);
         // Clear chat cache on logout
-        clearChatCache().catch(() => {});
+        clearChatCache().catch((e) => { console.error("App.jsx Logout Cache Clear Error:", e); });
         setUser(null);
         setSelected(null);
         setDetailOpen(false);

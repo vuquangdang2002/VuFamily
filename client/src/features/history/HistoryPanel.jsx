@@ -32,10 +32,10 @@ function timeAgo(dateStr) {
 function DiffView({ before, after }) {
     let finalAfter = after;
     if (typeof finalAfter === 'string') {
-        try { finalAfter = JSON.parse(finalAfter); } catch (e) { }
+        try { finalAfter = JSON.parse(finalAfter); } catch (e) { console.warn("HistoryPanel JSON Parse Fallback:", e.message); }
     }
     if (typeof finalAfter === 'string') {
-        try { finalAfter = JSON.parse(finalAfter); } catch (e) { }
+        try { finalAfter = JSON.parse(finalAfter); } catch (e) { console.warn("HistoryPanel JSON Parse Fallback:", e.message); }
     }
 
     if (!before && !finalAfter) return null;
