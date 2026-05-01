@@ -426,6 +426,7 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
 
                 <audio ref={localAudioRef} autoPlay muted style={{ display: 'none' }} />
 
+                <style>{`
                     .vc-ui {
                         position: fixed; z-index: 99999; display: flex; flex-direction: column;
                         background: linear-gradient(to bottom, #1E293B, #0F172A); color: white;
