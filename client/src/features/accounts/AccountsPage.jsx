@@ -156,44 +156,49 @@ export default function AccountsPage({ addToast }) {
 
                 {/* Create form */}
                 {showCreate && (
-                    <div className="nf-create-post" style={{ marginBottom: 20 }}>
-                        <h3 style={{ margin: '0 0 12px', fontSize: 16 }}>Tạo tài khoản mới</h3>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                    <div className="nf-create-post" style={{ marginBottom: 24, padding: 24, borderRadius: 'var(--radius-lg)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+                            <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700 }}>Tạo tài khoản mới</h3>
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20 }}>
                             <div>
-                                <label style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 4, display: 'block' }}>Tên đăng nhập *</label>
-                                <input className="form-input" placeholder="username"
-                                    value={newUser.username} onChange={e => setNewUser({ ...newUser, username: e.target.value })} />
+                                <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 8, display: 'block' }}>Tên đăng nhập <span style={{color: 'var(--accent-error)'}}>*</span></label>
+                                <input className="form-input" placeholder="Nhập tên đăng nhập..."
+                                    value={newUser.username} onChange={e => setNewUser({ ...newUser, username: e.target.value })} 
+                                    style={{ width: '100%', padding: '10px 14px', borderRadius: 'var(--radius-md)' }} />
                             </div>
                             <div>
-                                <label style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 4, display: 'block' }}>Mật khẩu *</label>
+                                <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 8, display: 'block' }}>Mật khẩu <span style={{color: 'var(--accent-error)'}}>*</span></label>
                                 <div style={{ position: 'relative' }}>
-                                    <input className="form-input" type={showCreatePw ? 'text' : 'password'} placeholder="password"
+                                    <input className="form-input" type={showCreatePw ? 'text' : 'password'} placeholder="Nhập mật khẩu..."
                                         value={newUser.password} onChange={e => setNewUser({ ...newUser, password: e.target.value })}
-                                        style={{ paddingRight: 40 }} />
+                                        style={{ width: '100%', padding: '10px 14px', paddingRight: 40, borderRadius: 'var(--radius-md)' }} />
                                     <button type="button" onClick={() => setShowCreatePw(!showCreatePw)}
-                                        style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, opacity: 0.6, padding: 4 }}
+                                        style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, opacity: 0.6, padding: 4 }}
                                         title={showCreatePw ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}>
                                         {showCreatePw ? '🙈' : '👁️'}
                                     </button>
                                 </div>
                             </div>
                             <div>
-                                <label style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 4, display: 'block' }}>Tên hiển thị</label>
-                                <input className="form-input" placeholder="Nguyễn Văn A"
-                                    value={newUser.displayName} onChange={e => setNewUser({ ...newUser, displayName: e.target.value })} />
+                                <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 8, display: 'block' }}>Tên hiển thị</label>
+                                <input className="form-input" placeholder="VD: Nguyễn Văn A"
+                                    value={newUser.displayName} onChange={e => setNewUser({ ...newUser, displayName: e.target.value })} 
+                                    style={{ width: '100%', padding: '10px 14px', borderRadius: 'var(--radius-md)' }} />
                             </div>
                             <div>
-                                <label style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 4, display: 'block' }}>Quyền</label>
-                                <select className="form-input" value={newUser.role} onChange={e => setNewUser({ ...newUser, role: e.target.value })}>
-                                    <option value="viewer">Thành viên (viewer)</option>
-                                    <option value="editor">Biên tập viên (editor)</option>
-                                    <option value="admin">Quản trị viên (admin)</option>
+                                <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 8, display: 'block' }}>Phân quyền</label>
+                                <select className="form-input" value={newUser.role} onChange={e => setNewUser({ ...newUser, role: e.target.value })}
+                                    style={{ width: '100%', padding: '10px 14px', borderRadius: 'var(--radius-md)' }}>
+                                    <option value="viewer">Thành viên (Viewer)</option>
+                                    <option value="editor">Biên tập viên (Editor)</option>
+                                    <option value="admin">Quản trị viên (Admin)</option>
                                 </select>
                             </div>
                         </div>
-                        <div style={{ marginTop: 12, textAlign: 'right' }}>
-                            <button className="btn" style={{ marginRight: 8 }} onClick={() => setShowCreate(false)}>Hủy</button>
-                            <button className="btn btn-primary" onClick={handleCreate}>✅ Tạo tài khoản</button>
+                        <div style={{ marginTop: 24, paddingTop: 20, borderTop: '1px solid var(--border-subtle)', display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
+                            <button className="btn" style={{ padding: '8px 20px', borderRadius: 'var(--radius-md)' }} onClick={() => setShowCreate(false)}>Hủy</button>
+                            <button className="btn btn-primary" style={{ padding: '8px 20px', borderRadius: 'var(--radius-md)', fontWeight: 600 }} onClick={handleCreate}>✅ Khởi tạo tài khoản</button>
                         </div>
                     </div>
                 )}
