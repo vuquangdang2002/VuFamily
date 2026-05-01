@@ -2,12 +2,19 @@ const PostModel = require('../models/Post');
 const CommentModel = require('../models/Comment');
 const ReactionModel = require('../models/Reaction');
 const { supabase } = require('../config/supabase');
+const cache = require('../utils/apiCache');
 
 class PostController {
     static async getAllPosts(req, res) {
         try {
+            const cached = cache.get('posts_all');
+            if (cached) return res.json({ success: true, data: cached, cached: true });
+
             const posts = await PostModel.getAll();
-            if (!posts.length) return res.json({ success: true, data: [] });
+            if (!posts.length) {
+                cache.set('posts_all', []);
+                return res.json({ success: true, data: [] });
+            }
 
             const postIds = posts.map(p => p.id);
 
@@ -42,6 +49,7 @@ class PostController {
                 return { ...post, reactions: reactionSummary, comment_count: commentCountByPost[post.id] || 0 };
             });
 
+            cache.set('posts_all', enriched);
             res.json({ success: true, data: enriched });
         } catch (e) { 
             console.error('[PostController - getAllPosts] Error:', e.message); 
@@ -59,6 +67,7 @@ class PostController {
                 req.user.role,
                 req.user.id
             );
+            cache.clear();
             res.status(201).json({ success: true, data: post });
         } catch (e) { 
             console.error('[PostController - createPost] Error:', e.message); 
@@ -69,6 +78,7 @@ class PostController {
     static async deletePost(req, res) {
         try {
             await PostModel.delete(req.params.id);
+            cache.clear();
             res.json({ success: true, message: 'Đã xóa bài đăng' });
         } catch (e) { 
             console.error('[PostController - deletePost] Error:', e.message); 
@@ -98,6 +108,7 @@ class PostController {
                 req.user.id,
                 req.user.avatar
             );
+            cache.clear();
             res.status(201).json({ success: true, data: comment });
         } catch (e) { 
             console.error('[PostController - createComment] Error:', e.message); 
@@ -108,6 +119,7 @@ class PostController {
     static async deleteComment(req, res) {
         try {
             await CommentModel.delete(parseInt(req.params.id));
+            cache.clear();
             res.json({ success: true });
         } catch (e) { 
             console.error('[PostController - deleteComment] Error:', e.message); 
@@ -132,6 +144,7 @@ class PostController {
                 reactionSummary[r.emoji].users.push(r.user_id);
             });
             
+            cache.clear();
             res.json({ success: true, data: reactionSummary });
         } catch (e) { 
             console.error('[PostController - toggleReaction] Error:', e.message); 

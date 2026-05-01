@@ -22,14 +22,16 @@ class MemberModel {
         return data || null;
     }
 
-    static async search(query) {
+    static async search(query, limit = 50) {
+        if (!query || !query.trim()) return [];
         const q = `%${query}%`;
         const { data, error } = await supabase
             .from('members')
-            .select('*')
+            .select('id, name, gender, birth_date, birth_place, occupation, phone, photo, generation, parent_id, spouse_id')
             .or(`name.ilike.${q},birth_place.ilike.${q},note.ilike.${q},occupation.ilike.${q}`)
             .order('generation')
-            .order('birth_date');
+            .order('birth_date')
+            .limit(limit);
         if (error) throw new Error(error.message);
         return data || [];
     }

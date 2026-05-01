@@ -1,22 +1,43 @@
 // Members controller
 const MemberModel = require('../models/Member');
+const cache = require('../utils/apiCache');
 
 class MemberController {
     static async getAll(req, res) {
-        try { res.json({ success: true, data: await MemberModel.getAll() }); }
-        catch (e) { console.error('[MemberController - getAll] Error:', e.message); res.status(500).json({ success: false, error: e.message || 'Lỗi server' }); }
+        try {
+            const cached = cache.get('members_all');
+            if (cached) return res.json({ success: true, data: cached, cached: true });
+
+            const data = await MemberModel.getAll();
+            cache.set('members_all', data);
+            res.json({ success: true, data });
+        } catch (e) { console.error('[MemberController - getAll] Error:', e.message); res.status(500).json({ success: false, error: e.message || 'Lỗi server' }); }
     }
 
     static async getById(req, res) {
         try {
+            const cached = cache.get(`member_${req.params.id}`);
+            if (cached) return res.json({ success: true, data: cached, cached: true });
+
             const member = await MemberModel.getById(req.params.id);
             if (!member) return res.status(404).json({ success: false, error: 'Không tìm thấy' });
+            
+            cache.set(`member_${req.params.id}`, member);
             res.json({ success: true, data: member });
         } catch (e) { console.error(`[MemberController - getById] Error:`, e.message); res.status(500).json({ success: false, error: e.message || 'Lỗi server' }); }
     }
 
     static async search(req, res) {
-        try { res.json({ success: true, data: await MemberModel.search(req.query.q || '') }); }
+        try { 
+            const q = req.query.q || '';
+            const cacheKey = `search_${q.toLowerCase()}`;
+            const cached = cache.get(cacheKey);
+            if (cached) return res.json({ success: true, data: cached, cached: true });
+
+            const data = await MemberModel.search(q);
+            cache.set(cacheKey, data); // Cache searches
+            res.json({ success: true, data }); 
+        }
         catch (e) { console.error('[MemberController - search] Error:', e.message); res.status(500).json({ success: false, error: e.message || 'Lỗi server' }); }
     }
 
@@ -28,7 +49,9 @@ class MemberController {
     static async create(req, res) {
         try {
             if (!req.body.name) return res.status(400).json({ success: false, error: 'Tên là bắt buộc' });
-            res.status(201).json({ success: true, data: await MemberModel.create(req.body) });
+            const data = await MemberModel.create(req.body);
+            cache.clear(); // Invalidate cache
+            res.status(201).json({ success: true, data });
         } catch (e) { console.error('[MemberController - create] Error:', e.message); res.status(500).json({ success: false, error: e.message || 'Lỗi server' }); }
     }
 
@@ -36,6 +59,7 @@ class MemberController {
         try {
             const member = await MemberModel.update(req.params.id, req.body);
             if (!member) return res.status(404).json({ success: false, error: 'Không tìm thấy' });
+            cache.clear(); // Invalidate cache
             res.json({ success: true, data: member });
         } catch (e) { console.error(`[MemberController - update] Error:`, e.message); res.status(500).json({ success: false, error: e.message || 'Lỗi server' }); }
     }
@@ -44,13 +68,20 @@ class MemberController {
         try {
             const ok = await MemberModel.delete(req.params.id);
             if (!ok) return res.status(404).json({ success: false, error: 'Không tìm thấy' });
+            cache.clear(); // Invalidate cache
             res.json({ success: true, message: 'Đã xóa' });
         } catch (e) { console.error(`[MemberController - delete] Error:`, e.message); res.status(500).json({ success: false, error: e.message || 'Lỗi server' }); }
     }
 
     static async getStats(req, res) {
-        try { res.json({ success: true, data: await MemberModel.getStats() }); }
-        catch (e) { console.error('[MemberController - getStats] Error:', e.message); res.status(500).json({ success: false, error: e.message || 'Lỗi server' }); }
+        try {
+            const cached = cache.get('members_stats');
+            if (cached) return res.json({ success: true, data: cached, cached: true });
+
+            const data = await MemberModel.getStats();
+            cache.set('members_stats', data);
+            res.json({ success: true, data });
+        } catch (e) { console.error('[MemberController - getStats] Error:', e.message); res.status(500).json({ success: false, error: e.message || 'Lỗi server' }); }
     }
 
     // Achievements

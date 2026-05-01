@@ -17,19 +17,45 @@ if (!primaryUrl || !primaryKey) {
 let activeUrl = primaryUrl;
 let activeKey = primaryKey;
 
-// Cơ chế Failover (Chống sập)
-if (FEATURES.USE_BACKUP_DATABASE) {
-    if (backupUrl && backupKey) {
-        console.log('🔄 Đang kết nối tới Backup Database (Failover Active)...');
-        activeUrl = backupUrl;
-        activeKey = backupKey;
-    } else {
-        console.warn('⚠️  Tính năng Backup DB được bật nhưng chưa cấu hình SUPABASE_BACKUP_URL. Đang dùng Primary DB...');
-    }
+// Manual Failover Toggle (via Constants)
+if (FEATURES.USE_BACKUP_DATABASE && backupUrl && backupKey) {
+    console.log('🔄 Manual Failover: Đang kết nối tới Backup Database...');
+    activeUrl = backupUrl;
+    activeKey = backupKey;
 }
 
+// Auto-Failover Fetcher (Tự động chuyển sang DB phụ nếu DB chính sập)
+const autoFailoverFetch = async (url, options) => {
+    try {
+        const response = await fetch(url, options);
+        if (!response.ok && response.status >= 500) {
+            throw new Error(`Primary DB returned 5xx error: ${response.status}`);
+        }
+        return response;
+    } catch (err) {
+        if (backupUrl && backupKey && url.toString().includes(primaryUrl)) {
+            console.warn(`⚠️ Primary DB lỗi (${err.message}). Đang tự động Failover sang Backup DB...`);
+            
+            // Rewrite URL and API keys for Backup DB
+            const fallbackUrl = url.toString().replace(primaryUrl, backupUrl);
+            const fallbackOptions = { ...options };
+            
+            if (fallbackOptions.headers) {
+                const newHeaders = new Headers(fallbackOptions.headers);
+                if (newHeaders.has('apikey')) newHeaders.set('apikey', backupKey);
+                if (newHeaders.has('Authorization')) newHeaders.set('Authorization', `Bearer ${backupKey}`);
+                fallbackOptions.headers = newHeaders;
+            }
+            
+            return fetch(fallbackUrl, fallbackOptions);
+        }
+        throw err;
+    }
+};
+
 const supabase = createClient(activeUrl || '', activeKey || '', {
-    auth: { persistSession: false }
+    auth: { persistSession: false },
+    global: { fetch: autoFailoverFetch }
 });
 
 module.exports = { supabase };

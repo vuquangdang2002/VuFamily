@@ -4,6 +4,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
+const compression = require('compression');
 const path = require('path');
 const config = require('./config');
 const apiRoutes = require('./routes/api');
@@ -12,6 +13,7 @@ const { errorHandler, notFound } = require('./middleware/errorHandler');
 const app = express();
 
 // Middleware
+app.use(compression()); // Optimize API response size
 app.use(cors({ origin: config.corsOrigin }));
 app.use(morgan('dev'));
 app.use(express.json());
