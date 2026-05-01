@@ -271,7 +271,7 @@ export default function AccountsPage({ addToast }) {
                                                 {actuallyOnline ? '🟢 Đang Online' : (u.last_active ? `Lần cuối: ${new Date(u.last_active).toLocaleString('vi-VN')}` : 'Chưa từng')}
                                             </td>
                                             <td style={{ padding: '10px 12px', textAlign: 'center' }}>
-                                                <div className="relative flex justify-center" style={{ position: 'relative' }}>
+                                                <div className="action-menu-container relative flex justify-center" style={{ position: 'relative' }}>
                                                     <button
                                                         style={{ padding: '8px', borderRadius: '50%', border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--text-muted)' }}
                                                         onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-hover)'}
