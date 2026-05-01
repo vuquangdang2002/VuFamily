@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { API_BASE } from '../../shared/services/api';
+import { Analytics } from '../../shared/services/analytics';
 
 function getToken() {
     try { return JSON.parse(localStorage.getItem('vuFamilyAuth') || '{}').token || ''; }
@@ -67,6 +68,7 @@ export default function AccountsPage({ addToast }) {
             });
             const json = await res.json();
             if (json.success) {
+                Analytics.trackEvent('create_account', { target_role: newUser.role });
                 addToast('Đã tạo tài khoản thành công!');
                 setShowCreate(false);
                 setNewUser({ username: '', password: '', displayName: '', role: 'viewer' });
@@ -86,6 +88,7 @@ export default function AccountsPage({ addToast }) {
             });
             const json = await res.json();
             if (json.success) {
+                Analytics.trackEvent('ban_account', { target_user_id: id });
                 addToast('Đã xóa tài khoản');
                 fetchUsers();
             } else {

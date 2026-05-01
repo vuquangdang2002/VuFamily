@@ -21,7 +21,7 @@ import { useTheme } from './shared/components/ThemeToggle';
 import { api, localApi, API_BASE } from './shared/services/api';
 import { clearAllCache as clearChatCache } from './shared/services/chatCache';
 import { LocalNotifications } from '@capacitor/local-notifications';
-
+import { Analytics } from './shared/services/analytics';
 const AUTH_KEY = 'vuFamilyAuth';
 
 function getStoredAuth() {
@@ -58,6 +58,17 @@ export default function App() {
     const [confirmNewPwd, setConfirmNewPwd] = useState('');
     const [showNewPwd, setShowNewPwd] = useState(false);
     const [showConfirmPwd, setShowConfirmPwd] = useState(false);
+
+    // ── Analytics ──
+    useEffect(() => {
+        Analytics.trackEvent('app_open', { platform: window.navigator.userAgent.toLowerCase().includes('android') ? 'android' : 'web' });
+    }, []);
+
+    useEffect(() => {
+        if (user) {
+            Analytics.identifyUser(user.id || user.username, { role: user.role, name: user.displayName });
+        }
+    }, [user?.id, user?.username]);
     const [forceChangeError, setForceChangeError] = useState('');
 
     // Toast notifications
@@ -233,6 +244,7 @@ export default function App() {
                 const authData = { ...data.data, source: 'api' };
                 localStorage.setItem(AUTH_KEY, JSON.stringify(authData));
                 setUser(authData);
+                Analytics.trackEvent('login_success', { method: 'token', role: authData.role });
                 if (isAutoReset) {
                     setTempPwd(password);
                     setForceChangePwd(true);
@@ -255,6 +267,7 @@ export default function App() {
                     const authData = { username: u.username, displayName: u.displayName, role: u.role, source: 'local' };
                     localStorage.setItem(AUTH_KEY, JSON.stringify(authData));
                     setUser(authData);
+                    Analytics.trackEvent('login_success', { method: 'local', role: authData.role });
                     addToast(`Chào mừng ${u.displayName}! (Chế độ offline)`);
                     return;
                 }
@@ -276,6 +289,7 @@ export default function App() {
         setUser(null);
         setSelected(null);
         setDetailOpen(false);
+        Analytics.trackEvent('logout');
         addToast('Đã đăng xuất thành công');
 
         // Let's reset URL in case of auto-login

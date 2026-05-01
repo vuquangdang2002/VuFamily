@@ -1,7 +1,8 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
-import { getMessaging } from "firebase/messaging"; // Also add messaging just in case
+import { getMessaging } from "firebase/messaging";
+import { getRemoteConfig } from "firebase/remote-config";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -18,5 +19,14 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
 const messaging = getMessaging(app);
+const remoteConfig = getRemoteConfig(app);
 
-export { app, analytics, messaging };
+// Default configurations
+remoteConfig.settings.minimumFetchIntervalMillis = 3600000; // 1 hour
+remoteConfig.defaultConfig = {
+  "api_base_url": "https://api.dangvq.online",
+  "enable_new_call_ui": true,
+  "maintenance_mode": false
+};
+
+export { app, analytics, messaging, remoteConfig };
