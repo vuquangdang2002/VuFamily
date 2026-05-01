@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import loginHero from '../../assets/login-hero.png';
-import './Login.css';
 
 export default function LoginPage({ onLogin, verifyMsg }) {
     const [username, setUsername] = useState('');
@@ -92,157 +91,188 @@ export default function LoginPage({ onLogin, verifyMsg }) {
     };
 
     return (
-        <div className="lp-root">
-            {/* LEFT: Form */}
-            <div className="lp-left">
-                <div className="lp-logo">
-                    <div className="lp-logo-icon">族</div>
+        <div className="flex w-screen h-screen bg-white dark:bg-black font-body overflow-hidden">
+            {/* Left side: Form */}
+            <div className="w-full lg:w-[500px] flex flex-col p-8 sm:p-12 z-10 bg-white dark:bg-black shadow-2xl relative overflow-y-auto custom-scrollbar">
+                
+                <div className="flex items-center gap-4 mb-12">
+                    <div className="w-12 h-12 rounded-xl bg-black dark:bg-black flex items-center justify-center text-white text-2xl font-bold shadow-lg shadow-black/20 dark:shadow-black/20">
+                        🏛️
+                    </div>
                     <div>
-                        <div className="lp-logo-text">{isRegisterMode ? 'Tạo tài khoản' : 'Gia Phả'}</div>
-                        <div className="lp-logo-sub">{isRegisterMode ? 'Đăng ký thành viên' : 'Dòng Họ Vũ'}</div>
+                        <h1 className="font-heading text-2xl font-bold text-black dark:text-white leading-tight">Gia Phả</h1>
+                        <p className="text-sm font-semibold tracking-widest text-slate-500 dark:text-slate-400 uppercase">Dòng Họ Vũ</p>
                     </div>
                 </div>
 
-                {/* Banners */}
-                {verifyMsg && (
-                    <div style={{
-                        borderRadius: 8, padding: '10px 14px', marginBottom: 16,
-                        background: verifyMsg.success ? '#ECFDF5' : '#FEF2F2',
-                        border: `1px solid ${verifyMsg.success ? '#A7F3D0' : '#FECACA'}`,
-                        color: verifyMsg.success ? '#065F46' : '#DC2626', fontSize: 13
-                    }}>
-                        {verifyMsg.success ? '✅ ' : '❌ '}{verifyMsg.text}
+                <div className="flex-1 flex flex-col justify-center max-w-sm mx-auto w-full">
+                    {/* Header */}
+                    <div className="mb-8 text-center sm:text-left">
+                        <h2 className="font-heading text-3xl font-bold text-black dark:text-white mb-2">
+                            {isRegisterMode ? 'Đăng ký tài khoản' : 'Đăng nhập'}
+                        </h2>
+                        <p className="text-slate-500 dark:text-slate-400">
+                            {isRegisterMode ? 'Điền thông tin để tham gia gia phả' : 'Chào mừng trở lại! Vui lòng nhập thông tin'}
+                        </p>
                     </div>
-                )}
-                {registerSuccess && (
-                    <div style={{
-                        borderRadius: 8, padding: '12px 14px', marginBottom: 16,
-                        background: '#ECFDF5', border: '1px solid #A7F3D0', color: '#065F46', fontSize: 13
-                    }} dangerouslySetInnerHTML={{ __html: '📧 ' + registerSuccess }} />
-                )}
-                {error && <div className="lp-error" style={{ marginBottom: 16 }}>{error}</div>}
 
-                {showForgot && (
-                    <div className="lp-forgot-panel" style={{ marginBottom: 16 }}>
-                        <p>Nhập tên đăng nhập để quản trị viên gửi mật khẩu mới qua email.</p>
-                        <input className="lp-input" type="text" placeholder="Tên đăng nhập..." value={forgotUser} onChange={e => setForgotUser(e.target.value)} autoFocus />
-                        {forgotMsg && <div className="lp-forgot-msg">{forgotMsg}</div>}
-                        <div style={{ display: 'flex', gap: 8 }}>
-                            <button className="lp-btn-primary" style={{ flex: 1 }} onClick={handleForgotPassword} disabled={forgotLoading}>
-                                {forgotLoading ? 'Đang gửi...' : '📧 Gửi yêu cầu'}
-                            </button>
-                            <button className="lp-btn-outline" style={{ flex: 1 }} onClick={() => setShowForgot(false)}>Hủy</button>
+                    {/* Messages */}
+                    {verifyMsg && (
+                        <div className={`p-4 mb-6 rounded-xl text-sm font-medium border ${verifyMsg.success ? 'bg-emerald-50 text-emerald-600 border-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20' : 'bg-rose-50 text-rose-600 border-rose-100 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/20'}`}>
+                            {verifyMsg.text}
                         </div>
-                    </div>
-                )}
-
-                <form className="lp-form" onSubmit={handleSubmit}>
-                    {isRegisterMode && (
-                        <div className="lp-field">
-                            <label className="lp-label">Họ tên</label>
-                            <input className="lp-input" type="text" value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder="Nguyễn Văn A" />
+                    )}
+                    {registerSuccess && (
+                        <div className="p-4 mb-6 rounded-xl text-sm font-medium bg-emerald-50 text-emerald-600 border border-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20">
+                            {registerSuccess}
+                        </div>
+                    )}
+                    {error && (
+                        <div className="p-4 mb-6 rounded-xl text-sm font-medium bg-rose-50 text-rose-600 border border-rose-100 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/20">
+                            {error}
                         </div>
                     )}
 
-                    <div className="lp-field">
-                        <label className="lp-label"><span className="req">*</span>Tên đăng nhập</label>
-                        <div className="lp-input-wrap">
-                            <span className="lp-input-icon">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
-                            </span>
-                            <input
-                                className="lp-input has-icon"
-                                type="text"
-                                value={username}
-                                onChange={e => setUsername(e.target.value)}
-                                placeholder="Tên đăng nhập"
-                                autoFocus
+                    {/* Form */}
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                        <div className="space-y-1.5">
+                            <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">Tên đăng nhập</label>
+                            <input 
+                                className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-black focus:ring-2 focus:ring-black/20 focus:border-black transition-all text-black dark:text-white placeholder-slate-400 outline-none"
+                                value={username} onChange={e => setUsername(e.target.value)}
+                                placeholder="Nhập tên đăng nhập" required 
                             />
                         </div>
-                    </div>
 
-                    {isRegisterMode && (
-                        <>
-                            <div className="lp-field">
-                                <label className="lp-label"><span className="req">*</span>Email</label>
-                                <input className="lp-input" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="email@example.com" />
-                                <p className="lp-input-hint">Link xác nhận sẽ được gửi đến email này.</p>
-                            </div>
-                            <div className="lp-field">
-                                <label className="lp-label">Số điện thoại <span style={{ color: '#9CA3AF', fontWeight: 'normal' }}>(Tùy chọn)</span></label>
-                                <input className="lp-input" type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="0912345678" />
-                            </div>
-                            <div className="lp-field">
-                                <label className="lp-label">Link Facebook <span style={{ color: '#9CA3AF', fontWeight: 'normal' }}>(Tùy chọn)</span></label>
-                                <input className="lp-input" type="url" value={facebook} onChange={e => setFacebook(e.target.value)} placeholder="https://facebook.com/..." />
-                            </div>
-                        </>
-                    )}
+                        {isRegisterMode && (
+                            <>
+                                <div className="space-y-1.5">
+                                    <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">Họ và tên <span className="text-rose-500">*</span></label>
+                                    <input 
+                                        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-black focus:ring-2 focus:ring-black/20 focus:border-black transition-all text-black dark:text-white placeholder-slate-400 outline-none"
+                                        value={displayName} onChange={e => setDisplayName(e.target.value)}
+                                        placeholder="Ví dụ: Vũ Quang Đăng" required 
+                                    />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">Số điện thoại</label>
+                                    <input 
+                                        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-black focus:ring-2 focus:ring-black/20 focus:border-black transition-all text-black dark:text-white placeholder-slate-400 outline-none"
+                                        value={phone} onChange={e => setPhone(e.target.value)}
+                                        placeholder="Để liên hệ xác minh (Tùy chọn)" type="tel" 
+                                    />
+                                </div>
+                            </>
+                        )}
 
-                    <div className="lp-field">
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <label className="lp-label"><span className="req">*</span>Mật khẩu</label>
+                        <div className="space-y-1.5 relative">
+                            <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">Mật khẩu</label>
+                            <div className="relative">
+                                <input 
+                                    type={showPass ? 'text' : 'password'}
+                                    className="w-full px-4 py-3 pr-12 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white dark:focus:bg-black focus:ring-2 focus:ring-black/20 focus:border-black transition-all text-black dark:text-white placeholder-slate-400 outline-none"
+                                    value={password} onChange={e => setPassword(e.target.value)}
+                                    placeholder="••••••••" required 
+                                />
+                                <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
+                                    {showPass ? '👁️' : '🙈'}
+                                </button>
+                            </div>
                         </div>
-                        <div className="lp-input-wrap">
-                            <span className="lp-input-icon">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
-                            </span>
-                            <input
-                                className="lp-input has-icon"
-                                type={showPass ? 'text' : 'password'}
-                                value={password}
-                                onChange={e => setPassword(e.target.value)}
-                                placeholder="Mật khẩu"
-                                style={{ paddingRight: 42 }}
-                            />
-                            <button type="button" className="lp-eye" onClick={() => setShowPass(!showPass)} tabIndex={-1}>
-                                {showPass
-                                    ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" /><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" /><line x1="1" y1="1" x2="23" y2="23" /></svg>
-                                    : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
-                                }
-                            </button>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px' }}>
-                            {isRegisterMode ? (
-                                <p className="lp-input-hint" style={{ margin: 0 }}>Tối thiểu 8 ký tự, gồm chữ hoa, thường, số và ký tự đặc biệt.</p>
-                            ) : (
-                                <div style={{ flex: 1 }} /> // Spacer
-                            )}
-                            {!isRegisterMode && (
-                                <button type="button" className="lp-forgot-link" onClick={() => { setShowForgot(!showForgot); setForgotMsg(''); }}>
+
+                        {!isRegisterMode && (
+                            <div className="flex justify-end pt-1">
+                                <button type="button" onClick={() => setShowForgot(true)} className="text-sm font-medium text-black dark:text-white hover:text-gray-900 dark:hover:text-indigo-300 transition-colors">
                                     Quên mật khẩu?
                                 </button>
-                            )}
+                            </div>
+                        )}
+
+                        <button 
+                            type="submit" disabled={loading}
+                            className="w-full py-3.5 mt-4 bg-black hover:bg-slate-800 dark:bg-black dark:hover:bg-gray-900 text-white rounded-xl font-semibold text-sm transition-all shadow-lg shadow-black/10 dark:shadow-black/20 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        >
+                            {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : null}
+                            {isRegisterMode ? 'Đăng ký ngay' : 'Đăng nhập'}
+                        </button>
+                    </form>
+
+                    <div className="mt-8 text-center border-t border-slate-100 dark:border-slate-800 pt-6">
+                        <p className="text-sm text-slate-500 dark:text-slate-400">
+                            {isRegisterMode ? 'Đã có tài khoản?' : 'Chưa có tài khoản?'}
+                            <button 
+                                type="button" 
+                                onClick={() => { setIsRegisterMode(!isRegisterMode); setError(''); setRegisterSuccess(''); }} 
+                                className="ml-2 font-semibold text-black dark:text-white hover:text-gray-900 dark:hover:text-indigo-300 transition-colors"
+                            >
+                                {isRegisterMode ? 'Đăng nhập' : 'Tạo tài khoản mới'}
+                            </button>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            {/* Right side: Graphic Hero */}
+            <div className="hidden lg:flex flex-1 relative bg-slate-100 dark:bg-black items-center justify-center overflow-hidden">
+                <div className="absolute inset-0 opacity-20 dark:opacity-10" style={{ backgroundImage: `url(${loginHero})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'blur(2px)' }}></div>
+                <div className="absolute inset-0 bg-gradient-to-tr from-black/80 to-transparent dark:from-black dark:to-black/80"></div>
+                
+                <div className="relative z-10 p-16 max-w-2xl text-white">
+                    <div className="inline-block px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-sm font-semibold mb-6">
+                        Phiên bản 2.0
+                    </div>
+                    <h2 className="font-heading text-5xl font-bold leading-tight mb-6">
+                        Gắn kết gia đình,<br/>lưu giữ cội nguồn.
+                    </h2>
+                    <p className="text-lg text-slate-300 leading-relaxed max-w-lg mb-12">
+                        Ứng dụng Gia Phả được thiết kế thông minh, bảo mật và cực kỳ hiện đại. 
+                        Truy cập cây gia phả, kết nối tin nhắn và chia sẻ sự kiện với gia đình chỉ trong một cú nhấp.
+                    </p>
+                    
+                    <div className="flex items-center gap-8">
+                        <div className="flex -space-x-4">
+                            <div className="w-12 h-12 rounded-full bg-blue-500 border-2 border-black flex items-center justify-center text-sm shadow-xl">👨</div>
+                            <div className="w-12 h-12 rounded-full bg-pink-500 border-2 border-black flex items-center justify-center text-sm shadow-xl">👩</div>
+                            <div className="w-12 h-12 rounded-full bg-black border-2 border-black flex items-center justify-center text-sm shadow-xl text-white font-bold">+1k</div>
+                        </div>
+                        <p className="text-sm font-medium text-slate-300">Được tin dùng bởi<br/><span className="text-white font-bold">hàng ngàn thành viên</span></p>
+                    </div>
+                </div>
+            </div>
+
+            {/* Forgot Password Modal */}
+            {showForgot && (
+                <div className="fixed inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+                    <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-md p-6 animate-in zoom-in-95 duration-200">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="font-heading text-xl font-bold text-black dark:text-white">Khôi phục mật khẩu</h3>
+                            <button onClick={() => setShowForgot(false)} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 transition-colors">✕</button>
+                        </div>
+                        
+                        {forgotMsg && (
+                            <div className={`p-4 mb-6 rounded-xl text-sm font-medium ${forgotMsg.includes('Lỗi') ? 'bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400' : 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400'}`}>
+                                {forgotMsg}
+                            </div>
+                        )}
+
+                        <div className="space-y-1.5 mb-6">
+                            <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">Tên đăng nhập</label>
+                            <input 
+                                className="w-full px-4 py-3 bg-slate-50 dark:bg-black border border-slate-200 dark:border-slate-700 rounded-xl focus:bg-white focus:ring-2 focus:ring-black/20 focus:border-black transition-all text-black dark:text-white outline-none"
+                                value={forgotUser} onChange={e => setForgotUser(e.target.value)}
+                                placeholder="Nhập tên tài khoản của bạn"
+                            />
+                        </div>
+
+                        <div className="flex justify-end gap-3">
+                            <button onClick={() => setShowForgot(false)} className="px-5 py-2.5 rounded-xl text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">Hủy</button>
+                            <button onClick={handleForgotPassword} disabled={forgotLoading} className="px-5 py-2.5 bg-black hover:bg-slate-800 dark:bg-black dark:hover:bg-gray-900 text-white rounded-xl text-sm font-semibold transition-all shadow-lg flex items-center gap-2">
+                                {forgotLoading ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : 'Gửi yêu cầu'}
+                            </button>
                         </div>
                     </div>
-
-                    <button className="lp-btn-primary" type="submit" disabled={loading}>
-                        {loading
-                            ? <><div className="spinner spinner-sm" style={{ borderTopColor: '#fff', borderColor: 'rgba(255,255,255,0.3)' }}></div> {isRegisterMode ? 'Đang đăng ký...' : 'Đang đăng nhập...'}</>
-                            : (isRegisterMode ? 'Đăng ký' : 'Đăng nhập')
-                        }
-                    </button>
-                </form>
-
-                <div className="lp-or">HOẶC</div>
-
-                <button type="button" className="lp-btn-outline" onClick={() => { setIsRegisterMode(!isRegisterMode); setError(''); setShowForgot(false); }}>
-                    {isRegisterMode ? 'Đăng nhập' : 'Tạo tài khoản mới'}
-                </button>
-
-                <div className="lp-footer">
-                    <a href="#">Về chúng tôi</a>
-                    <a href="#">Liên hệ</a>
-                    <a href="#">Hướng dẫn</a>
                 </div>
-                <p className="lp-copyright">Copyright © 2026 by DangVQ</p>
-            </div>
-
-            {/* RIGHT: Hero image */}
-            <div className="lp-right">
-                <img src={loginHero} alt="Gia phả dòng họ" />
-                <div className="lp-right-overlay" />
-            </div>
+            )}
         </div>
     );
 }
