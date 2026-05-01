@@ -156,7 +156,7 @@ export default function AccountsPage({ addToast }) {
 
                 {/* Create form */}
                 {showCreate && (
-                    <div className="nf-create-post" style={{ marginBottom: 24, padding: 24, borderRadius: 'var(--radius-lg)' }}>
+                    <div style={{ marginBottom: 24, padding: 24, background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-sm)', border: '1px solid var(--border-subtle)' }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
                             <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700 }}>Tạo tài khoản mới</h3>
                         </div>
@@ -207,8 +207,13 @@ export default function AccountsPage({ addToast }) {
                 {loading ? (
                     <div className="empty-state"><p>Đang tải...</p></div>
                 ) : (
-                    <div style={{ overflowX: 'auto' }}>
-                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
+                    <div style={{ background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-sm)', border: '1px solid var(--border-subtle)', overflow: 'hidden' }}>
+                        <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-subtle)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)' }}>
+                            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: 'var(--text-primary)' }}>Danh sách người dùng</h3>
+                            <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-muted)', background: 'var(--bg-hover)', padding: '4px 10px', borderRadius: '20px' }}>Tổng: {users.length}</span>
+                        </div>
+                        <div style={{ overflowX: 'auto' }}>
+                            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
                             <thead>
                                 <tr style={{ borderBottom: '2px solid var(--border-subtle)', textAlign: 'left' }}>
                                     <th style={{ padding: '10px 12px', color: 'var(--text-muted)', fontWeight: 600 }}>ID</th>
@@ -266,9 +271,11 @@ export default function AccountsPage({ addToast }) {
                                                 {actuallyOnline ? '🟢 Đang Online' : (u.last_active ? `Lần cuối: ${new Date(u.last_active).toLocaleString('vi-VN')}` : 'Chưa từng')}
                                             </td>
                                             <td style={{ padding: '10px 12px', textAlign: 'center' }}>
-                                                <div className="action-menu-container">
+                                                <div className="relative flex justify-center" style={{ position: 'relative' }}>
                                                     <button
-                                                        className="action-menu-btn"
+                                                        style={{ padding: '8px', borderRadius: '50%', border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--text-muted)' }}
+                                                        onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-hover)'}
+                                                        onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                                                         onClick={() => setActionMenuId(actionMenuId === u.id ? null : u.id)}
                                                         title="Thao tác"
                                                     >
@@ -279,15 +286,31 @@ export default function AccountsPage({ addToast }) {
                                                         </svg>
                                                     </button>
                                                     {actionMenuId === u.id && (
-                                                        <div className="action-menu-dropdown">
-                                                            <button className="action-menu-item" onClick={() => { setEditModal(u); setEditUser({ displayName: u.display_name, role: u.role, status: u.status || 'active' }); setActionMenuId(null); }}>
-                                                                ✏️ Sửa
+                                                        <div style={{ position: 'absolute', right: '50%', top: '100%', transform: 'translateX(50%)', marginTop: 4, width: 180, background: 'var(--bg-card)', borderRadius: 'var(--radius-md)', boxShadow: 'var(--shadow-lg)', border: '1px solid var(--border-subtle)', overflow: 'hidden', zIndex: 50, display: 'flex', flexDirection: 'column', padding: '4px 0' }}>
+                                                            <button 
+                                                                style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', padding: '10px 16px', fontSize: 14, fontWeight: 500, color: 'var(--text-primary)', background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' }}
+                                                                onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-hover)'; e.currentTarget.style.color = 'var(--primary)'; }}
+                                                                onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-primary)'; }}
+                                                                onClick={() => { setEditModal(u); setEditUser({ displayName: u.display_name, role: u.role, status: u.status || 'active' }); setActionMenuId(null); }}
+                                                            >
+                                                                <span>✏️</span> Sửa thông tin
                                                             </button>
-                                                            <button className="action-menu-item" onClick={() => { setResetModal(u); setResetPw(''); setActionMenuId(null); }}>
-                                                                🔑 Reset mật khẩu
+                                                            <button 
+                                                                style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', padding: '10px 16px', fontSize: 14, fontWeight: 500, color: 'var(--text-primary)', background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' }}
+                                                                onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-hover)'; e.currentTarget.style.color = '#F59E0B'; }}
+                                                                onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-primary)'; }}
+                                                                onClick={() => { setResetModal(u); setResetPw(''); setActionMenuId(null); }}
+                                                            >
+                                                                <span>🔑</span> Đổi mật khẩu
                                                             </button>
-                                                            <button className="action-menu-item danger" onClick={() => { handleDelete(u.id, u.username); setActionMenuId(null); }}>
-                                                                🗑️ Xóa
+                                                            <div style={{ height: 1, background: 'var(--border-subtle)', margin: '4px 12px' }}></div>
+                                                            <button 
+                                                                style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', padding: '10px 16px', fontSize: 14, fontWeight: 500, color: 'var(--accent-error)', background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' }}
+                                                                onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'; }}
+                                                                onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+                                                                onClick={() => { handleDelete(u.id, u.username); setActionMenuId(null); }}
+                                                            >
+                                                                <span>🗑️</span> Xóa tài khoản
                                                             </button>
                                                         </div>
                                                     )}
@@ -299,6 +322,7 @@ export default function AccountsPage({ addToast }) {
                             </tbody>
                         </table>
                     </div>
+                </div>
                 )}
             </div>
 
