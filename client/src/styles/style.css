@@ -24,128 +24,140 @@
 
 
 :root {
-    /* ── Layout backgrounds ── */
-    --bg-primary: #F9FAFB;
-    --bg-secondary: #ffffff;
-    --bg-card: #ffffff;
+    --bg-primary: #F8FAFC;
+    --bg-secondary: #FFFFFF;
+    --bg-card: #FFFFFF;
     --bg-glass: rgba(255, 255, 255, 0.85);
-    --bg-hover: rgba(0, 0, 0, 0.05);
+    --bg-hover: #F1F5F9;
 
-    /* ── Gold (Gia Phả decorative) ── */
     --gold: #D4AF37;
     --gold-light: #F0D060;
     --gold-dark: #A08520;
     --gold-glow: rgba(212, 175, 55, 0.1);
 
-    /* ── Primary (Uizard amber accent) ── */
-    --primary: #F59E0B;
-    --primary-light: #FBBF24;
-    --primary-dark: #D97706;
-    --primary-glow: rgba(245, 158, 11, 0.12);
+    --primary: #4F46E5;
+    --primary-light: #6366F1;
+    --primary-dark: #4338CA;
+    --primary-glow: rgba(79, 70, 229, 0.15);
 
-    /* ── Sidebar (Uizard dark charcoal) ── */
-    --sidebar-bg: #101828;
-    --sidebar-active-bg: #FFD053;
-    --sidebar-active-text: #101828;
-    --sidebar-hover-bg: rgba(255, 255, 255, 0.07);
-    --sidebar-text: rgba(255, 255, 255, 0.65);
-    --sidebar-text-active: #101828;
+    --sidebar-bg: #FFFFFF;
+    --sidebar-active-bg: #EEF2FF;
+    --sidebar-active-text: #4F46E5;
+    --sidebar-hover-bg: #F8FAFC;
+    --sidebar-text: #64748B;
+    --sidebar-text-active: #1E293B;
 
-    /* ── Text ── */
-    --text-primary: #111827;
-    --text-secondary: #4B5563;
-    --text-muted: #9CA3AF;
+    --text-primary: #0F172A;
+    --text-secondary: #475569;
+    --text-muted: #94A3B8;
 
-    /* ── Semantic accents ── */
-    --accent-male: #3B6FCF;
-    --accent-female: #D16B8A;
+    --accent-male: #3B82F6;
+    --accent-female: #EC4899;
     --accent-success: #10B981;
     --accent-error: #EF4444;
     --accent-info: #3B82F6;
 
-    /* ── Borders & Shadows ── */
-    --border-subtle: #E5E7EB;
-    --border-glow: rgba(245, 158, 11, 0.25);
-    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
-    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
-    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
-    --shadow-glow: 0 0 20px rgba(245, 158, 11, 0.12);
+    --border-subtle: #E2E8F0;
+    --border-glow: rgba(79, 70, 229, 0.2);
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1);
+    --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1);
+    --shadow-glow: 0 0 15px rgba(79, 70, 229, 0.1);
 
-    /* ── Radii ── */
     --radius-sm: 8px;
     --radius-md: 12px;
     --radius-lg: 16px;
 
-    /* ── Typography ── */
     --font-heading: 'Outfit', sans-serif;
     --font-body: 'Inter', -apple-system, sans-serif;
 
-    /* ── Layout ── */
-    --header-height: 60px;
-    --toolbar-height: 44px;
+    --header-height: 64px;
+    --toolbar-height: 48px;
 
-    /* ── Inputs ── */
-    --input-bg: #ffffff;
-    --input-color: #111827;
-    --input-border: #D1D5DB;
-    --input-placeholder: #9CA3AF;
-    --input-focus-border: #F59E0B;
-    --input-focus-shadow: rgba(245, 158, 11, 0.15);
+    --input-bg: #FFFFFF;
+    --input-color: #0F172A;
+    --input-border: #CBD5E1;
+    --input-placeholder: #94A3B8;
+    --input-focus-border: #4F46E5;
+    --input-focus-shadow: rgba(79, 70, 229, 0.15);
 
-    /* ── Tree Canvas ── */
-    --tree-bg: #F3F4F6;
-    --tree-grid: rgba(156, 163, 175, 0.12);
-    --tree-node-bg: #ffffff;
-    --tree-node-border: #E5E7EB;
-    --tree-node-border-active: #F59E0B;
-    --tree-node-shadow: rgba(0, 0, 0, 0.08);
-    --tree-node-shadow-active: rgba(245, 158, 11, 0.35);
-    --tree-line-parent: rgba(156, 163, 175, 0.5);
-    --tree-line-spouse: rgba(209, 107, 138, 0.5);
-    --tree-badge-bg: rgba(245, 158, 11, 0.08);
-    --tree-badge-border: rgba(245, 158, 11, 0.2);
-    --tree-badge-text: #D97706;
+    --tree-bg: #F8FAFC;
+    --tree-grid: rgba(15, 23, 42, 0.05);
+    --tree-node-bg: #FFFFFF;
+    --tree-node-border: #E2E8F0;
+    --tree-node-border-active: #4F46E5;
+    --tree-node-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+    --tree-node-shadow-active: 0 0 0 3px rgba(79, 70, 229, 0.2);
+    --tree-line-parent: rgba(71, 85, 105, 0.4);
+    --tree-line-spouse: rgba(236, 72, 153, 0.4);
+    --tree-badge-bg: rgba(79, 70, 229, 0.1);
+    --tree-badge-border: rgba(79, 70, 229, 0.2);
+    --tree-badge-text: #4F46E5;
 }
 
 html.dark {
-    --bg-primary: #0d1117;
-    --bg-secondary: #161b22;
-    --bg-card: #1c2128;
-    --bg-glass: rgba(22, 27, 34, 0.9);
-    --bg-hover: rgba(255, 255, 255, 0.06);
-    --text-primary: #e6edf3;
-    --text-secondary: #8d96a0;
-    --text-muted: #6e7681;
-    --border-subtle: rgba(240, 246, 252, 0.1);
-    --border-glow: rgba(245, 158, 11, 0.25);
-    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
-    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
-    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.6);
-    --shadow-glow: 0 0 20px rgba(245, 158, 11, 0.1);
-    --sidebar-bg: #0d1117;
-    --sidebar-active-bg: #F59E0B;
-    --sidebar-active-text: #0d1117;
-    --sidebar-hover-bg: rgba(255, 255, 255, 0.06);
-    --input-bg: rgba(255, 255, 255, 0.05);
-    --input-color: #e6edf3;
-    --input-border: rgba(240, 246, 252, 0.15);
-    --input-placeholder: rgba(255, 255, 255, 0.3);
-    --input-focus-border: #F59E0B;
-    --input-focus-shadow: rgba(245, 158, 11, 0.12);
+    color-scheme: dark;
+    --bg-primary: #0F172A;
+    --bg-secondary: #1E293B;
+    --bg-card: #1E293B;
+    --bg-glass: rgba(30, 41, 59, 0.85);
+    --bg-hover: rgba(255, 255, 255, 0.05);
 
-    /* ── Tree Canvas ── */
-    --tree-bg: #0d1117;
-    --tree-grid: rgba(255, 255, 255, 0.04);
-    --tree-node-bg: #1c2128;
-    --tree-node-border: rgba(240, 246, 252, 0.1);
-    --tree-node-border-active: #F59E0B;
-    --tree-node-shadow: rgba(0, 0, 0, 0.4);
-    --tree-node-shadow-active: rgba(245, 158, 11, 0.3);
-    --tree-line-parent: rgba(139, 148, 158, 0.4);
-    --tree-line-spouse: rgba(209, 107, 138, 0.45);
-    --tree-badge-bg: rgba(245, 158, 11, 0.12);
-    --tree-badge-border: rgba(245, 158, 11, 0.25);
-    --tree-badge-text: #FBBF24;
+    --primary: #6366F1;
+    --primary-light: #818CF8;
+    --primary-dark: #4F46E5;
+    --primary-glow: rgba(99, 102, 241, 0.25);
+
+    --sidebar-bg: #0F172A;
+    --sidebar-active-bg: rgba(99, 102, 241, 0.15);
+    --sidebar-active-text: #818CF8;
+    --sidebar-hover-bg: rgba(255, 255, 255, 0.05);
+    --sidebar-text: #94A3B8;
+    --sidebar-text-active: #F8FAFC;
+
+    --text-primary: #F8FAFC;
+    --text-secondary: #94A3B8;
+    --text-muted: #64748B;
+
+    --border-subtle: #334155;
+    --border-glow: rgba(99, 102, 241, 0.2);
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.5);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.6);
+    --shadow-lg: 0 8px 24px rgba(0,0,0,0.7);
+    --shadow-glow: 0 0 20px rgba(99, 102, 241, 0.15);
+
+    --input-bg: #0F172A;
+    --input-color: #F8FAFC;
+    --input-border: #334155;
+    --input-placeholder: #64748B;
+    --input-focus-border: #818CF8;
+    --input-focus-shadow: rgba(99, 102, 241, 0.2);
+
+    --tree-bg: #0F172A;
+    --tree-grid: rgba(255, 255, 255, 0.03);
+    --tree-node-bg: #1E293B;
+    --tree-node-border: #334155;
+    --tree-node-border-active: #818CF8;
+    --tree-node-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    --tree-node-shadow-active: 0 0 0 3px rgba(99, 102, 241, 0.3);
+    --tree-line-parent: rgba(148, 163, 184, 0.3);
+    --tree-line-spouse: rgba(236, 72, 153, 0.35);
+    --tree-badge-bg: rgba(99, 102, 241, 0.15);
+    --tree-badge-border: rgba(99, 102, 241, 0.3);
+    --tree-badge-text: #818CF8;
+}
+
+input, select, textarea {
+    background-color: var(--input-bg);
+    color: var(--input-color);
+    border: 1px solid var(--input-border);
+    border-radius: var(--radius-sm);
+    padding: 8px 12px;
+}
+input:focus, select:focus, textarea:focus {
+    border-color: var(--input-focus-border);
+    outline: none;
+    box-shadow: 0 0 0 3px var(--input-focus-shadow);
 }
 
 *,
