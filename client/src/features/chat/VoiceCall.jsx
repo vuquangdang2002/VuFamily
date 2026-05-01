@@ -8,7 +8,7 @@ function getToken() {
 }
 
 export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom, addToast }) {
-    const [callState, setCallState] = useState('IDLE'); // IDLE, RINGING, CONNECTED
+    const [callState, setCallState] = useState('IDLE'); // IDLE, RINGING, CALLING, CONNECTED
     const [callData, setCallData] = useState(null); // { id, caller, room }
     const [localStream, setLocalStream] = useState(null);
     const [remoteStreams, setRemoteStreams] = useState({}); // { [userId]: stream }
@@ -93,7 +93,7 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
         const stream = await getMedia();
         if (!stream) { onClearActiveCallRoom(); return; }
 
-        setCallState('CONNECTED'); // Go straight to connected mentally
+        setCallState('CALLING'); // Wait for someone to join before CONNECTED
         setCallData({ room_id: room.id, caller: { display_name: room.display_name || 'Nhóm' }, isInitiator: true });
 
         try {
@@ -230,6 +230,9 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
                         if (processedSignalsRef.current.has(sig.id)) continue;
                         processedSignalsRef.current.add(sig.id);
 
+                        // If we get a signal, someone is here!
+                        setCallState(prev => (prev === 'CALLING' ? 'CONNECTED' : prev));
+
                         const targetUserId = sig.from_user_id;
                         const pc = createPeer(targetUserId, callId, stream);
 
@@ -260,6 +263,11 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
                         if (pc) {
                             await pc.addIceCandidate(new RTCIceCandidate(JSON.parse(c.candidate))).catch(() => { });
                         }
+                    }
+                    
+                    // If candidates received but no signal, still means someone is here
+                    if (json.data.candidates.length > 0) {
+                        setCallState(prev => (prev === 'CALLING' ? 'CONNECTED' : prev));
                     }
 
                 }
@@ -333,7 +341,7 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
                         </div>
                     </div>
 
-                    {/* MESH GRID AREA */}
+                    {/* MESH GRID AREA (Only when fully connected) */}
                     {callState === 'CONNECTED' ? (
                         <div className="vc-grid-area" style={{ flex: 1, padding: 16 }}>
                             <div className={`vc-grid grid-${Math.min(totalParticipants, 4)}`} style={{
@@ -345,15 +353,17 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
                             }}>
                                 {/* Local User */}
                                 <div className="vc-grid-cell">
-                                    <img src={user?.avatar || `https://ui-avatars.com/api/?name=ME`} />
+                                    <div className="blur-bg" style={{ backgroundImage: `url(${user?.avatar || 'https://ui-avatars.com/api/?name=ME'})` }}></div>
+                                    <img src={user?.avatar || `https://ui-avatars.com/api/?name=ME`} className="avatar-circle" />
                                     <div className="vc-cell-name">Bạn {isMuted ? '🔇' : ''}</div>
                                 </div>
 
                                 {/* Remote Users */}
                                 {activeRemoteKeys.map(uid => (
                                     <div key={uid} className="vc-grid-cell">
-                                        <div className="pulse-anim-small" style={{ width: '100%', height: '100%', borderRadius: 16, border: '2px solid rgba(255,255,255,0.2)' }}>
-                                            <img src={`https://ui-avatars.com/api/?name=USER`} />
+                                        <div className="blur-bg" style={{ backgroundImage: `url(https://ui-avatars.com/api/?name=USER)` }}></div>
+                                        <div className="pulse-anim-small avatar-circle-wrap">
+                                            <img src={`https://ui-avatars.com/api/?name=USER`} className="avatar-circle" />
                                         </div>
                                         <div className="vc-cell-name">Thành viên</div>
                                         <audio
@@ -373,6 +383,7 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
                             <h2 className="vc-title">{callerName}</h2>
                             <div className="vc-status">
                                 {callState === 'RINGING' && 'Đang gọi cho bạn...'}
+                                {callState === 'CALLING' && 'Đang đổ chuông...'}
                             </div>
                         </div>
                     )}
@@ -415,39 +426,42 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
 
                 <audio ref={localAudioRef} autoPlay muted style={{ display: 'none' }} />
 
-                <style>{`
                     .vc-ui {
                         position: fixed; z-index: 99999; display: flex; flex-direction: column;
-                        background: linear-gradient(to bottom, #1f2937, #111827); color: white;
+                        background: linear-gradient(to bottom, #1E293B, #0F172A); color: white;
                         animation: vcPopIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
                     }
-                    .vc-header { padding: 20px 20px 10px; text-align: center; font-weight: 500; font-size: 15px; }
+                    .vc-header { padding: 24px 20px 10px; text-align: center; font-weight: 600; font-size: 16px; }
                     
                     /* Grid Mode */
                     .vc-grid-cell {
-                        position: relative; background: #374151; border-radius: 16px; display: flex; align-items: center; justify-content: center; overflow: hidden;
+                        position: relative; background: #0F172A; border-radius: 20px; display: flex; align-items: center; justify-content: center; overflow: hidden;
+                        box-shadow: inset 0 0 0 1px rgba(255,255,255,0.1);
                     }
-                    .vc-grid-cell img { width: 100%; height: 100%; object-fit: cover; opacity: 0.8; }
+                    .blur-bg { position: absolute; inset: -20px; background-size: cover; background-position: center; filter: blur(20px) brightness(0.4); z-index: 0; }
+                    .avatar-circle { position: relative; z-index: 1; width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 3px solid rgba(255,255,255,0.2); box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
+                    .avatar-circle-wrap { position: relative; z-index: 1; display: flex; align-items: center; justify-content: center; }
                     .vc-cell-name {
-                        position: absolute; bottom: 8px; left: 8px; background: rgba(0,0,0,0.6); padding: 4px 10px; border-radius: 12px; font-size: 13px; font-weight: 500;
+                        position: absolute; bottom: 12px; left: 12px; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(8px); padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: 500; z-index: 2; border: 1px solid rgba(255,255,255,0.1);
                     }
 
                     .vc-avatar-area { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-                    .vc-avatar-wrapper { position: relative; width: 140px; height: 140px; margin-bottom: 24px; }
-                    .vc-avatar-wrapper > img { width: 100%; height: 100%; border-radius: 50%; border: 4px solid #374151; }
-                    .vc-title { font-size: 26px; font-weight: 600; margin-bottom: 8px; }
-                    .vc-status { opacity: 0.8; }
-                    .vc-controls { padding: 20px 20px 40px; display: flex; justify-content: center; gap: 30px; background: rgba(0,0,0,0.2); border-radius: 30px 30px 0 0; }
-                    .vc-control-item { display: flex; flex-direction: column; align-items: center; gap: 8px; font-size: 13px; opacity: 0.8; }
-                    .vc-btn { border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-                    .vc-btn.reject { width: 72px; height: 72px; background: #ef4444; color: white; font-size: 32px; }
-                    .vc-btn.accept { width: 72px; height: 72px; background: #10b981; color: white; font-size: 32px; }
-                    .vc-btn.small { width: 60px; height: 60px; background: rgba(255,255,255,0.15); color: white; font-size: 24px; }
-                    .vc-btn.small.muted { background: white; color: #111; }
+                    .vc-avatar-wrapper { position: relative; width: 120px; height: 120px; margin-bottom: 24px; }
+                    .vc-avatar-wrapper > img { width: 100%; height: 100%; border-radius: 50%; border: 4px solid #1E293B; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+                    .vc-title { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
+                    .vc-status { font-size: 15px; color: #94A3B8; }
+                    
+                    .vc-controls { padding: 24px 20px 32px; display: flex; justify-content: center; gap: 32px; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(12px); border-top: 1px solid rgba(255,255,255,0.05); }
+                    .vc-control-item { display: flex; flex-direction: column; align-items: center; gap: 10px; font-size: 13px; font-weight: 500; color: #94A3B8; }
+                    .vc-btn { border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+                    .vc-btn:hover { transform: scale(1.05); }
+                    .vc-btn.reject { width: 64px; height: 64px; background: #E11D48; color: white; font-size: 28px; box-shadow: 0 8px 20px rgba(225, 29, 72, 0.4); }
+                    .vc-btn.accept { width: 64px; height: 64px; background: #10B981; color: white; font-size: 28px; box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4); }
+                    .vc-btn.small { width: 56px; height: 56px; background: rgba(255,255,255,0.1); color: white; font-size: 22px; backdrop-filter: blur(4px); border: 1px solid rgba(255,255,255,0.1); }
+                    .vc-btn.small.muted { background: white; color: #0F172A; }
                     
                     @media (min-width: 601px) {
-                        .vc-ui { bottom: 30px; right: 30px; width: 380px; height: 600px; border-radius: 32px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); }
-                        .voice-call-wrapper.RINGING .vc-ui { top: 50%; left: 50%; transform: translate(-50%, -50%); bottom: auto; right: auto; }
+                        .vc-ui { top: 50%; left: 50%; transform: translate(-50%, -50%); width: 360px; height: 580px; border-radius: 24px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.1); }
                     }
                     @media (max-width: 600px) {
                         .voice-call-wrapper::before { content: ""; position: fixed; inset: 0; background: #1f2937; z-index: 99998; }
