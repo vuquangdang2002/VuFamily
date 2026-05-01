@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Solar, Lunar } from '../../shared/utils/lunar.js';
 import { ganZhiToViet, lunarDayLabel } from '../../shared/utils/vietLunar.js';
-
+import './Calendar.css';
 const WEEKDAYS = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
 const MONTH_NAMES = [
     'Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6',
@@ -121,14 +121,14 @@ function getEventsForDate(members, year, month, day) {
                 try {
                     const deathSolar = Solar.fromYmd(md.year, md.month, md.day);
                     const deathLunar = deathSolar.getLunar();
-                    
+
                     const currentLunarYear = Lunar.fromYmd(year, deathLunar.getMonth(), deathLunar.getDay());
                     const annSolar = currentLunarYear.getSolar();
-                    
+
                     if (annSolar.getMonth() === month && annSolar.getDay() === day) {
                         events.push({ type: 'anniversary', member: m });
                     }
-                } catch(e) {}
+                } catch (e) { }
             }
         }
     });
@@ -198,15 +198,15 @@ export default function CalendarPage({ members }) {
                                     const events = getEventsForDate(members, viewYear, viewMonth, d);
                                     const hasBD = events.some(e => e.type === 'birthday');
                                     const hasAN = events.some(e => e.type === 'anniversary');
-                                    
+
                                     // Lunar date for this day
                                     let lunarLabel = '';
                                     try {
                                         const s = Solar.fromYmd(viewYear, viewMonth, d);
                                         const l = s.getLunar();
                                         lunarLabel = lunarDayLabel(l.getDay(), l.getMonth());
-                                    } catch(e) {}
-                                    
+                                    } catch (e) { }
+
                                     return (
                                         <div key={`d-${d}`}
                                             className={'cal-day' + (isToday(d) ? ' cal-day-today' : '') + (d === selectedDay ? ' cal-day-selected' : '') + (di === 0 ? ' cal-day-sun' : '') + (events.length > 0 ? ' cal-day-event' : '')}

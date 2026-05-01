@@ -4,7 +4,7 @@ module.exports = {
     FEATURES: {
         ENABLE_CALL_SYSTEM: true,
         ENABLE_CHAT_HISTORY_ARCHIVE: true,
-        ENABLE_ADVANCED_LOGGING: false,
+        ENABLE_ADVANCED_LOGGING: true,
         USE_BACKUP_DATABASE: false // Set to true to switch to Backup DB
     },
 
@@ -14,7 +14,7 @@ module.exports = {
         EDITOR: 'editor',
         VIEWER: 'viewer'
     },
-    
+
     // Auth configuration
     AUTH: {
         TOKEN_EXPIRATION: '24h',

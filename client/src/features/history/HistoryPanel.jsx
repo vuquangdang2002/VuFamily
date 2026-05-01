@@ -1,4 +1,6 @@
+import '../../shared/components/SidePanels.css';
 import { useState, useEffect } from 'react';
+import '../../shared/components/SidePanels.css';
 import { api, localApi, formatDate } from '../../shared/services/api';
 
 const ACTION_LABELS = {
@@ -30,10 +32,10 @@ function timeAgo(dateStr) {
 function DiffView({ before, after }) {
     let finalAfter = after;
     if (typeof finalAfter === 'string') {
-        try { finalAfter = JSON.parse(finalAfter); } catch(e) {}
+        try { finalAfter = JSON.parse(finalAfter); } catch (e) { }
     }
     if (typeof finalAfter === 'string') {
-        try { finalAfter = JSON.parse(finalAfter); } catch(e) {}
+        try { finalAfter = JSON.parse(finalAfter); } catch (e) { }
     }
 
     if (!before && !finalAfter) return null;
@@ -91,7 +93,7 @@ export default function HistoryPage({ isAdmin, user, onRefresh, addToast, member
                 const filtered = isAdmin ? approved : approved.filter(r => r.requestedBy === user?.username);
                 setHistory(filtered);
             }
-        } catch(e) {
+        } catch (e) {
             addToast('Lỗi tải lịch sử chỉnh sửa', 'error');
         } finally {
             setIsLoading(false);
@@ -113,51 +115,51 @@ export default function HistoryPage({ isAdmin, user, onRefresh, addToast, member
                 <p className="page-subtitle">Theo dõi các thay đổi dữ liệu gia phả</p>
             </div>
             <div className="page-body flex-1 overflow-y-auto p-4 md:p-6 pb-24 relative min-h-[200px]">
-                    {isLoading ? (
-                        <div className="flex flex-col items-center justify-center p-12 text-gray-500">
-                            <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-                            Vui lòng chờ...
-                        </div>
-                    ) : history.length === 0 ? (
-                        <div className="empty-state">
-                            <span style={{ fontSize: 40 }}>📭</span>
-                            <p>Chưa có lịch sử chỉnh sửa nào.</p>
-                        </div>
-                    ) : (
-                        <div className="history-timeline">
-                            {history.map(entry => {
-                                const action = ACTION_LABELS.update;
-                                const isExpanded = expandedId === entry.id;
-                                return (
-                                    <div key={entry.id} className="history-entry update">
-                                        <div className="history-entry-header" onClick={() => setExpandedId(isExpanded ? null : entry.id)}>
-                                            <div className="history-entry-icon" style={{ color: action.color }}>{action.icon}</div>
-                                            <div className="history-entry-info">
-                                                <div className="history-entry-title">
-                                                    <strong>{action.text}</strong> — {entry.memberName}
-                                                </div>
-                                                <div className="history-entry-meta">
-                                                    👤 {entry.requestedByName} · Duyệt bởi {entry.reviewedBy} lúc {timeAgo(entry.reviewedAt)}
-                                                </div>
+                {isLoading ? (
+                    <div className="flex flex-col items-center justify-center p-12 text-gray-500">
+                        <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+                        Vui lòng chờ...
+                    </div>
+                ) : history.length === 0 ? (
+                    <div className="empty-state">
+                        <span style={{ fontSize: 40 }}>📭</span>
+                        <p>Chưa có lịch sử chỉnh sửa nào.</p>
+                    </div>
+                ) : (
+                    <div className="history-timeline">
+                        {history.map(entry => {
+                            const action = ACTION_LABELS.update;
+                            const isExpanded = expandedId === entry.id;
+                            return (
+                                <div key={entry.id} className="history-entry update">
+                                    <div className="history-entry-header" onClick={() => setExpandedId(isExpanded ? null : entry.id)}>
+                                        <div className="history-entry-icon" style={{ color: action.color }}>{action.icon}</div>
+                                        <div className="history-entry-info">
+                                            <div className="history-entry-title">
+                                                <strong>{action.text}</strong> — {entry.memberName}
                                             </div>
-                                            <span className="history-entry-expand">{isExpanded ? '▲' : '▼'}</span>
+                                            <div className="history-entry-meta">
+                                                👤 {entry.requestedByName} · Duyệt bởi {entry.reviewedBy} lúc {timeAgo(entry.reviewedAt)}
+                                            </div>
                                         </div>
-                                        {isExpanded && (
-                                            <div className="history-entry-details">
-                                                <DiffView before={members.find(m => String(m.id) === String(entry.memberId))} after={entry.changes} />
-                                                {isAdmin && (
-                                                    <button className="btn btn-sm" style={{ marginTop: 8 }}
-                                                        onClick={() => handleRevert(entry)}>
-                                                        ↩️ Hoàn tác
-                                                    </button>
-                                                )}
-                                            </div>
-                                        )}
+                                        <span className="history-entry-expand">{isExpanded ? '▲' : '▼'}</span>
                                     </div>
-                                );
-                            })}
-                        </div>
-                    )}
+                                    {isExpanded && (
+                                        <div className="history-entry-details">
+                                            <DiffView before={members.find(m => String(m.id) === String(entry.memberId))} after={entry.changes} />
+                                            {isAdmin && (
+                                                <button className="btn btn-sm" style={{ marginTop: 8 }}
+                                                    onClick={() => handleRevert(entry)}>
+                                                    ↩️ Hoàn tác
+                                                </button>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
             </div>
         </div>
     );

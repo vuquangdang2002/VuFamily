@@ -4,6 +4,7 @@ import {
     cacheRooms, getCachedRooms,
     cacheMessages, getCachedMessages, getLatestMessageTime, cacheSingleMessage
 } from '../../shared/services/chatCache';
+import './Chat.css';
 
 function getToken() {
     try { return JSON.parse(localStorage.getItem('vuFamilyAuth') || '{}').token || ''; }

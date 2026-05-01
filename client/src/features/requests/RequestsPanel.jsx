@@ -1,4 +1,6 @@
+import '../../shared/components/SidePanels.css';
 import { useState, useEffect } from 'react';
+import '../../shared/components/SidePanels.css';
 import { api, localApi, formatDate } from '../../shared/services/api';
 
 const FIELD_LABELS = {
@@ -29,10 +31,10 @@ function timeAgo(dateStr) {
 function ChangesView({ before, changes }) {
     let finalChanges = changes;
     if (typeof finalChanges === 'string') {
-        try { finalChanges = JSON.parse(finalChanges); } catch(e) {}
+        try { finalChanges = JSON.parse(finalChanges); } catch (e) { }
     }
     if (typeof finalChanges === 'string') {
-        try { finalChanges = JSON.parse(finalChanges); } catch(e) {}
+        try { finalChanges = JSON.parse(finalChanges); } catch (e) { }
     }
     if (!finalChanges || typeof finalChanges !== 'object') return null;
 
@@ -98,7 +100,7 @@ export default function RequestsPage({ user, onRefresh, addToast, members = [] }
             addToast('Đã duyệt yêu cầu thành công', 'success');
             await fetchRequests();
             if (onRefresh) onRefresh();
-        } catch(e) {
+        } catch (e) {
             addToast(e.message || 'Lỗi khi duyệt', 'error');
         }
     };
@@ -110,7 +112,7 @@ export default function RequestsPage({ user, onRefresh, addToast, members = [] }
             const result = await api.rejectRequest(req.id, reason);
             addToast('Đã từ chối yêu cầu', 'success');
             await fetchRequests();
-        } catch(e) {
+        } catch (e) {
             addToast(e.message || 'Lỗi khi từ chối', 'error');
         }
     };

@@ -1,4 +1,6 @@
+import './Tree.css';
 import { useRef, useEffect, useCallback } from 'react';
+import './Tree.css';
 import { buildHierarchy, calculateLayout } from '../../shared/utils/treeLayout';
 
 // ─── Read canvas colors from CSS custom properties (cached) ───
@@ -9,22 +11,22 @@ function getThemeColors() {
     const s = getComputedStyle(document.documentElement);
     const v = (name) => s.getPropertyValue(name).trim();
     _cachedColors = {
-        bg:                  v('--tree-bg'),
-        grid:                v('--tree-grid'),
-        nodeFill:            v('--tree-node-bg'),
-        nodeBorder:          v('--tree-node-border'),
-        nodeBorderSelected:  v('--tree-node-border-active'),
-        nodeBorderSearch:    v('--tree-node-border-active'),
-        nodeShadow:          v('--tree-node-shadow'),
-        nodeShadowSelected:  v('--tree-node-shadow-active'),
-        textPrimary:         v('--text-primary'),
-        textDead:            v('--text-muted'),
-        textMuted:           v('--text-muted'),
-        genBadgeBg:          v('--tree-badge-bg'),
-        genBadgeBorder:      v('--tree-badge-border'),
-        genBadgeText:        v('--tree-badge-text'),
-        spouseLine:          v('--tree-line-spouse'),
-        childLine:           v('--tree-line-parent'),
+        bg: v('--tree-bg'),
+        grid: v('--tree-grid'),
+        nodeFill: v('--tree-node-bg'),
+        nodeBorder: v('--tree-node-border'),
+        nodeBorderSelected: v('--tree-node-border-active'),
+        nodeBorderSearch: v('--tree-node-border-active'),
+        nodeShadow: v('--tree-node-shadow'),
+        nodeShadowSelected: v('--tree-node-shadow-active'),
+        textPrimary: v('--text-primary'),
+        textDead: v('--text-muted'),
+        textMuted: v('--text-muted'),
+        genBadgeBg: v('--tree-badge-bg'),
+        genBadgeBorder: v('--tree-badge-border'),
+        genBadgeText: v('--tree-badge-text'),
+        spouseLine: v('--tree-line-spouse'),
+        childLine: v('--tree-line-parent'),
     };
     return _cachedColors;
 }

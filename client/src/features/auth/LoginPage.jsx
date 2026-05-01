@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import loginHero from '../../assets/login-hero.png';
+import './Login.css';
 
 export default function LoginPage({ onLogin, verifyMsg }) {
     const [username, setUsername] = useState('');
@@ -92,176 +93,6 @@ export default function LoginPage({ onLogin, verifyMsg }) {
 
     return (
         <div className="lp-root">
-            <style>{`
-                .lp-root {
-                    min-height: 100vh;
-                    display: flex;
-                    background: #fff;
-                }
-
-                /* ── Left panel (form) ── */
-                .lp-left {
-                    width: 45%;
-                    max-width: 480px;
-                    min-width: 320px;
-                    display: flex;
-                    flex-direction: column;
-                    justify-content: center;
-                    padding: 40px;
-                    background: #fff;
-                    position: relative;
-                    z-index: 2;
-                }
-
-                /* ── Right panel (hero image) ── */
-                .lp-right {
-                    flex: 1;
-                    position: relative;
-                    overflow: hidden;
-                    display: flex;
-                }
-                .lp-right img {
-                    width: 100%;
-                    height: 100%;
-                    object-fit: cover;
-                    display: block;
-                }
-                .lp-right-overlay {
-                    position: absolute;
-                    inset: 0;
-                    background: linear-gradient(135deg, rgba(212,175,55,0.15), rgba(0,0,0,0.1));
-                }
-
-                /* ── Logo ── */
-                .lp-logo {
-                    display: flex;
-                    align-items: center;
-                    gap: 12px;
-                    margin-bottom: 40px;
-                }
-                .lp-logo-icon {
-                    width: 48px; height: 48px;
-                    background: linear-gradient(135deg, #D4AF37, #A08520);
-                    border-radius: 12px;
-                    display: flex; align-items: center; justify-content: center;
-                    color: #fff; font-size: 22px; font-weight: 800;
-                    font-family: 'Playfair Display', serif;
-                    box-shadow: 0 4px 16px rgba(212,175,55,0.3);
-                }
-                .lp-logo-text {
-                    font-family: 'Playfair Display', serif;
-                    font-size: 22px; font-weight: 700;
-                    color: #111827;
-                    line-height: 1.2;
-                }
-                .lp-logo-sub {
-                    font-family: 'Inter', sans-serif;
-                    font-size: 12px; color: #9CA3AF;
-                    font-weight: 400;
-                }
-
-                /* ── Form ── */
-                .lp-form { display: flex; flex-direction: column; gap: 20px; }
-                .lp-field { display: flex; flex-direction: column; gap: 6px; }
-                .lp-label {
-                    font-size: 13px; font-weight: 500; color: #6B7280;
-                }
-                .lp-label .req { color: #EF4444; margin-right: 4px; }
-                .lp-input-wrap { position: relative; }
-                .lp-input {
-                    width: 100%; padding: 12px 16px;
-                    border: 1.5px solid #E5E7EB; border-radius: 8px;
-                    font-size: 14px; color: #111827; background: #fff; outline: none;
-                    transition: border-color 0.2s, box-shadow 0.2s;
-                    font-family: 'Inter', sans-serif;
-                }
-                .lp-input::placeholder { color: #C0C4CC; }
-                .lp-input:focus { border-color: #D4AF37; box-shadow: 0 0 0 3px rgba(212,175,55,0.08); }
-                .lp-input-icon {
-                    position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
-                    color: #B0B4BC; display: flex; pointer-events: none;
-                }
-                .lp-input.has-icon { padding-left: 42px; }
-                .lp-eye {
-                    position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
-                    background: none; border: none; cursor: pointer; color: #B0B4BC; padding: 4px; display: flex;
-                    transition: color 0.15s;
-                }
-                .lp-eye:hover { color: #6B7280; }
-                .lp-input-hint { font-size: 11px; color: #9CA3AF; margin-top: 4px; }
-
-                /* ── Primary button (gradient) ── */
-                .lp-btn-primary {
-                    width: 100%; padding: 14px; border: none; border-radius: 8px;
-                    font-size: 15px; font-weight: 600; cursor: pointer;
-                    font-family: 'Inter', sans-serif;
-                    display: flex; align-items: center; justify-content: center; gap: 8px;
-                    background: linear-gradient(135deg, #D4AF37, #C4981E);
-                    color: #fff;
-                    transition: all 0.2s; margin-top: 4px;
-                    box-shadow: 0 4px 16px rgba(212,175,55,0.25);
-                }
-                .lp-btn-primary:hover { 
-                    box-shadow: 0 6px 24px rgba(212,175,55,0.35);
-                    transform: translateY(-1px);
-                }
-                .lp-btn-primary:active { transform: scale(0.98) translateY(0); }
-                .lp-btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; }
-
-                .lp-forgot-link {
-                    background: none; border: none; color: #D4AF37; cursor: pointer;
-                    font-size: 13px; font-weight: 500; padding: 0; font-family: 'Inter', sans-serif;
-                    transition: color 0.15s;
-                }
-                .lp-forgot-link:hover { color: #A08520; }
-
-                .lp-or {
-                    display: flex; align-items: center; gap: 12px;
-                    color: #C0C4CC; font-size: 12px; font-weight: 500; letter-spacing: 0.05em;
-                    margin: 4px 0; width: 100%;
-                }
-                .lp-or::before, .lp-or::after { content: ''; flex: 1; height: 1px; background: #E5E7EB; }
-
-                .lp-btn-outline {
-                    width: 100%; padding: 13px; background: transparent; color: #374151;
-                    border: 1.5px solid #E5E7EB; border-radius: 8px; font-size: 14px; font-weight: 500;
-                    cursor: pointer; font-family: 'Inter', sans-serif;
-                    display: flex; align-items: center; justify-content: center; gap: 8px;
-                    transition: all 0.15s;
-                }
-                .lp-btn-outline:hover { background: #F9FAFB; border-color: #D1D5DB; }
-
-                .lp-footer {
-                    display: flex; gap: 24px; justify-content: center;
-                    font-size: 12px; color: #9CA3AF; margin-top: 28px;
-                    flex-wrap: wrap;
-                }
-                .lp-footer a { color: #6B7280; text-decoration: none; transition: color 0.15s; }
-                .lp-footer a:hover { color: #D4AF37; }
-                .lp-copyright { font-size: 11px; color: #C0C4CC; text-align: center; margin-top: 12px; }
-
-                .lp-error {
-                    width: 100%; background: #FEF2F2; border: 1px solid #FECACA;
-                    border-radius: 8px; padding: 10px 14px; color: #DC2626;
-                    font-size: 13px;
-                }
-                .lp-forgot-panel {
-                    width: 100%; background: #F9FAFB; border: 1px solid #E5E7EB;
-                    border-radius: 8px; padding: 16px;
-                    display: flex; flex-direction: column; gap: 10px;
-                }
-                .lp-forgot-panel p { font-size: 13px; color: #6B7280; margin: 0; }
-                .lp-forgot-msg { font-size: 13px; color: #059669; background: #ECFDF5; border-radius: 8px; padding: 8px 12px; }
-
-                /* ── Responsive ── */
-                @media (max-width: 900px) {
-                    .lp-right { display: none; }
-                    .lp-left { width: 100%; max-width: 100%; padding: 32px 24px; min-width: auto; }
-                    .lp-root { justify-content: center; align-items: center; background: #F9FAFB; }
-                    .lp-left { max-width: 460px; border-radius: 16px; box-shadow: 0 4px 32px rgba(0,0,0,0.08); }
-                }
-            `}</style>
-
             {/* LEFT: Form */}
             <div className="lp-left">
                 <div className="lp-logo">
@@ -317,7 +148,7 @@ export default function LoginPage({ onLogin, verifyMsg }) {
                         <label className="lp-label"><span className="req">*</span>Tên đăng nhập</label>
                         <div className="lp-input-wrap">
                             <span className="lp-input-icon">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
                             </span>
                             <input
                                 className="lp-input has-icon"
@@ -354,7 +185,7 @@ export default function LoginPage({ onLogin, verifyMsg }) {
                         </div>
                         <div className="lp-input-wrap">
                             <span className="lp-input-icon">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
                             </span>
                             <input
                                 className="lp-input has-icon"
