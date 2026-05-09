@@ -2,6 +2,6 @@
 <resources>
     <string name="app_name">VuFamily</string>
     <string name="title_activity_main">VuFamily</string>
-    <string name="package_name">com.vudang.vufamily</string>
-    <string name="custom_url_scheme">com.vudang.vufamily</string>
+    <string name="package_name">com.dangvq.vu_family</string>
+    <string name="custom_url_scheme">com.dangvq.vu_family</string>
 </resources>

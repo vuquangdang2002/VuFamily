@@ -21,6 +21,7 @@ import { useTheme } from './shared/components/ThemeToggle';
 import { api, localApi, API_BASE } from './shared/services/api';
 import { clearAllCache as clearChatCache } from './shared/services/chatCache';
 import { LocalNotifications } from '@capacitor/local-notifications';
+import { SplashScreen } from '@capacitor/splash-screen';
 import { Analytics } from './shared/services/analytics';
 const AUTH_KEY = 'vuFamilyAuth';
 
@@ -31,6 +32,8 @@ function getStoredAuth() {
 export default function App() {
     const [user, setUser] = useState(null);
     const [authChecked, setAuthChecked] = useState(false);
+    const [loadingProgress, setLoadingProgress] = useState(0);
+    const [loadingStatus, setLoadingStatus] = useState('Đang khởi tạo ứng dụng...');
     const [members, setMembers] = useState([]);
     const [isLoadingMembers, setIsLoadingMembers] = useState(true);
     const [selected, setSelected] = useState(null);
@@ -136,17 +139,32 @@ export default function App() {
     useEffect(() => {
         const urlParams = new URLSearchParams(window.location.search);
 
+        const finishLoading = () => {
+            setLoadingProgress(100);
+            setLoadingStatus('Hoàn tất!');
+            setTimeout(() => {
+                setAuthChecked(true);
+                // Hide native splash screen
+                if (window.Capacitor) {
+                    SplashScreen.hide().catch(() => {});
+                }
+            }, 600);
+        };
+
         // Handle email verification link
         const verifyToken = urlParams.get('verifyToken');
         if (verifyToken) {
+            setLoadingStatus('Đang xác nhận tài khoản...');
+            setLoadingProgress(30);
             window.history.replaceState({}, document.title, window.location.pathname);
             fetch(`${API_BASE}/auth/verify-email?token=${encodeURIComponent(verifyToken)}`)
                 .then(r => r.json())
                 .then(data => {
+                    setLoadingProgress(70);
                     setVerifyMsg({ success: data.success, text: data.message || data.error || 'Đã xử lý xác nhận' });
                 })
                 .catch(() => setVerifyMsg({ success: false, text: 'Lỗi kết nối khi xác nhận email' }))
-                .finally(() => setAuthChecked(true));
+                .finally(() => finishLoading());
             return;
         }
 
@@ -154,44 +172,50 @@ export default function App() {
         const autoPw = urlParams.get('resetPw');
 
         if (autoUser && autoPw) {
+            setLoadingStatus('Đang đăng nhập tự động...');
+            setLoadingProgress(30);
             handleLogin(autoUser, autoPw, true)
                 .then(() => {
+                    setLoadingProgress(70);
                     window.history.replaceState({}, document.title, window.location.pathname);
                 })
                 .catch(() => {
-                    // if it fails, clear the URL as well so they are not stuck
                     window.history.replaceState({}, document.title, window.location.pathname);
                 })
-                .finally(() => setAuthChecked(true));
+                .finally(() => finishLoading());
             return;
         }
 
+        setLoadingStatus('Kiểm tra phiên đăng nhập...');
+        setLoadingProgress(20);
         const stored = getStoredAuth();
         if (!stored || !stored.token) {
-            // No stored session or offline session → show login
+            setLoadingProgress(100);
             setUser(null);
-            setAuthChecked(true);
+            finishLoading();
             return;
         }
+
+        setLoadingStatus('Xác thực với máy chủ...');
+        setLoadingProgress(50);
         // Verify token with server
         fetch(`${API_BASE}/auth/me`, {
             headers: { 'x-auth-token': stored.token }
         })
             .then(res => res.json())
             .then(data => {
+                setLoadingProgress(80);
                 if (data.success && data.data) {
-                    // Token valid → merge server data with local token and update state
+                    setLoadingStatus('Đang nạp hồ sơ người dùng...');
                     const freshUser = { ...stored, ...data.data };
                     localStorage.setItem(AUTH_KEY, JSON.stringify(freshUser));
                     setUser(freshUser);
                 } else {
-                    // Token expired/invalid → clear and show login
                     localStorage.removeItem(AUTH_KEY);
                     setUser(null);
                 }
             })
             .catch(() => {
-                // Server unreachable → allow offline access if stored
                 if (stored.source === 'local') {
                     setUser(stored);
                 } else {
@@ -199,7 +223,7 @@ export default function App() {
                     setUser(null);
                 }
             })
-            .finally(() => setAuthChecked(true));
+            .finally(() => finishLoading());
     }, []);
 
     // ─── Set up User Online Ping ───
@@ -516,16 +540,98 @@ export default function App() {
         setActivePage(page);
     };
 
-    // ─── Loading: verifying auth ───
+    // ─── Loading: Premium Splash Loading Screen ───
     if (!authChecked) return (
-        <div style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            height: '100vh', background: 'var(--bg-primary, #0f172a)',
-            color: 'var(--text-primary, #e2e8f0)', flexDirection: 'column', gap: 16
-        }}>
-            <div style={{ fontSize: 48, animation: 'spin 1s linear infinite' }}>🏛️</div>
-            <p style={{ fontSize: 14, opacity: 0.7 }}>Đang xác thực...</p>
-            <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+        <div className="splash-loading-container">
+            <div className="splash-content">
+                <div className="splash-logo">🏛️</div>
+                <h1 className="splash-title">VuFamily</h1>
+                
+                <div className="progress-wrapper">
+                    <div className="progress-bar-container">
+                        <div 
+                            className="progress-bar-fill" 
+                            style={{ width: `${loadingProgress}%` }}
+                        ></div>
+                    </div>
+                    <div className="progress-info">
+                        <span className="status-text">{loadingStatus}</span>
+                        <span className="percentage">{Math.round(loadingProgress)}%</span>
+                    </div>
+                </div>
+            </div>
+
+            <style>{`
+                .splash-loading-container {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    height: 100vh;
+                    width: 100vw;
+                    background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+                    color: white;
+                    overflow: hidden;
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    z-index: 9999;
+                }
+                .splash-content {
+                    text-align: center;
+                    width: 80%;
+                    max-width: 400px;
+                    animation: fadeIn 0.8s ease-out;
+                }
+                .splash-logo {
+                    font-size: 64px;
+                    margin-bottom: 16px;
+                    animation: pulse 2s infinite ease-in-out;
+                    filter: drop-shadow(0 0 20px rgba(59, 130, 246, 0.5));
+                }
+                .splash-title {
+                    font-size: 28px;
+                    font-weight: 700;
+                    letter-spacing: 2px;
+                    margin-bottom: 40px;
+                    background: linear-gradient(to right, #60a5fa, #3b82f6);
+                    -webkit-background-clip: text;
+                    -webkit-text-fill-color: transparent;
+                }
+                .progress-wrapper {
+                    width: 100%;
+                }
+                .progress-bar-container {
+                    height: 6px;
+                    width: 100%;
+                    background: rgba(255, 255, 255, 0.1);
+                    border-radius: 10px;
+                    overflow: hidden;
+                    margin-bottom: 12px;
+                    box-shadow: inset 0 1px 2px rgba(0,0,0,0.2);
+                }
+                .progress-bar-fill {
+                    height: 100%;
+                    background: linear-gradient(90deg, #3b82f6, #60a5fa);
+                    border-radius: 10px;
+                    transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+                    box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+                }
+                .progress-info {
+                    display: flex;
+                    justify-content: space-between;
+                    font-size: 13px;
+                    color: #94a3b8;
+                    font-weight: 500;
+                }
+                @keyframes fadeIn {
+                    from { opacity: 0; transform: translateY(10px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+                @keyframes pulse {
+                    0%, 100% { transform: scale(1); opacity: 1; }
+                    50% { transform: scale(1.1); opacity: 0.8; }
+                }
+            `}</style>
         </div>
     );
 
