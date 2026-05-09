@@ -5,14 +5,15 @@ import { getMessaging } from "firebase/messaging";
 import { getRemoteConfig } from "firebase/remote-config";
 
 // Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "AIzaSyDuFE7c3FGNmG-0j0lwLr-JXy4dachfK4o",
-  authDomain: "vufamily-723d4.firebaseapp.com",
-  projectId: "vufamily-723d4",
-  storageBucket: "vufamily-723d4.firebasestorage.app",
-  messagingSenderId: "852388108645",
-  appId: "1:852388108645:web:2118b225057094e217a98c",
-  measurementId: "G-ZC3QCNZ0Q4"
+  apiKey: "AIzaSyB3hA-rtZY4KzTbi_lx-xe00aSwHWnLrVg",
+  authDomain: "vu-family.firebaseapp.com",
+  projectId: "vu-family",
+  storageBucket: "vu-family.firebasestorage.app",
+  messagingSenderId: "115612405410",
+  appId: "1:115612405410:web:89a7aac3ed180bed2251fb",
+  measurementId: "G-FB73XS6WN2"
 };
 
 // Initialize Firebase
