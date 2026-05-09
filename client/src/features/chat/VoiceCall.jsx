@@ -92,6 +92,20 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
             }
         };
 
+        pc.oniceconnectionstatechange = () => {
+            if (pc.iceConnectionState === 'disconnected' || pc.iceConnectionState === 'failed' || pc.iceConnectionState === 'closed') {
+                setRemoteStreams(prev => {
+                    const newStreams = { ...prev };
+                    delete newStreams[targetUserId];
+                    return newStreams;
+                });
+                if (pcsRef.current[targetUserId]) {
+                    pcsRef.current[targetUserId].close();
+                    delete pcsRef.current[targetUserId];
+                }
+            }
+        };
+
         pc.onicecandidate = async (e) => {
             if (e.candidate) {
                 await fetch(`${API_BASE}/calls/${callId}/candidates`, {
@@ -254,6 +268,11 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
                         body: JSON.stringify({ content: `📞 Cuộc gọi đã kết thúc (${formatDuration(duration)}).` })
                     }).catch((e) => { console.error("VoiceCall API Error:", e); });
                 }
+            }
+        }
+        cleanupCall();
+    };
+
     // --- Multi-peer Signal & Candidate Poller ---
     const startMeshPolling = (callId, stream) => {
         const poll = async () => {
@@ -291,7 +310,7 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json', 'x-auth-token': getToken() },
                                 body: JSON.stringify({ toUserId: targetUserId, type: 'answer', payload: JSON.stringify(finalAnswer) })
-                            }).catch((e) => { console.error("VoiceCall API Error:", e); });            }).catch((e) => { console.error("VoiceCall API Error:", e); });
+                            }).catch((e) => { console.error("VoiceCall API Error:", e); });
 
                         } else if (sig.type === 'answer') {
                             await pc.setRemoteDescription(new RTCSessionDescription(JSON.parse(sig.payload)));
