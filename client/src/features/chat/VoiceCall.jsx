@@ -14,7 +14,12 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
     const [remoteStreams, setRemoteStreams] = useState({}); // { [userId]: stream }
     const [duration, setDuration] = useState(0);
     const [isMuted, setIsMuted] = useState(false);
+    const [isCameraOff, setIsCameraOff] = useState(false);
     const [isSpeakerOff, setIsSpeakerOff] = useState(false);
+    const [callType, setCallType] = useState('voice'); // voice, video
+    const [networkStatus, setNetworkStatus] = useState({}); // { [userId]: 'good' | 'weak' }
+
+
 
     const pcsRef = useRef({}); // { [userId]: RTCPeerConnection }
     const localAudioRef = useRef(null);
@@ -23,16 +28,36 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
     const candidatePollRef = useRef(null);
     const processedSignalsRef = useRef(new Set());
     const processedCandidatesRef = useRef(new Set());
+    const candidateQueueRef = useRef({}); // { [userId]: [candidates] }
+
 
     // --- Media Setup ---
-    const getMedia = async () => {
+    const getMedia = async (type = 'voice') => {
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+            // Cấu hình chất lượng cực cao (HD) và xử lý âm thanh chuyên sâu
+            const constraints = { 
+                audio: {
+                    echoCancellation: { ideal: true },
+                    noiseSuppression: { ideal: true },
+                    autoGainControl: { ideal: true },
+                    channelCount: { ideal: 2 }, // Stereo if possible
+                    sampleRate: { ideal: 48000 },
+                    sampleSize: { ideal: 16 }
+                }, 
+                video: type === 'video' ? {
+                    width: { ideal: 1280, max: 1920 },
+                    height: { ideal: 720, max: 1080 },
+                    frameRate: { ideal: 30, max: 60 },
+                    facingMode: "user"
+                } : false 
+            };
+            const stream = await navigator.mediaDevices.getUserMedia(constraints);
             setLocalStream(stream);
-            if (localAudioRef.current) localAudioRef.current.srcObject = stream;
+            setCallType(type);
+            setIsCameraOff(type === 'voice');
             return stream;
         } catch (e) {
-            addToast('Không thể truy cập Microphone: ' + e.message, 'error');
+            addToast('Không thể truy cập Media: ' + e.message, 'error');
             return null;
         }
     };
@@ -90,7 +115,9 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
     }, [activeCallRoom]);
 
     const startCall = async (room) => {
-        const stream = await getMedia();
+        // Mặc định gọi thoại, nếu cần video thì truyền type vào
+        const type = room.requestVideo ? 'video' : 'voice';
+        const stream = await getMedia(type);
         if (!stream) { onClearActiveCallRoom(); return; }
 
         setCallState('CALLING'); // Wait for someone to join before CONNECTED
@@ -123,11 +150,14 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
                         if (member.id !== user.id) {
                             const pc = createPeer(member.id, json.data.id, stream);
                             const offer = await pc.createOffer();
-                            await pc.setLocalDescription(offer);
+                            // Ép băng thông cao trong SDP
+                            const highQualityOffer = setHighBitrate(offer.sdp);
+                            const finalOffer = { type: 'offer', sdp: highQualityOffer };
+                            await pc.setLocalDescription(finalOffer);
                             await fetch(`${API_BASE}/calls/${json.data.id}/signals`, {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json', 'x-auth-token': getToken() },
-                                body: JSON.stringify({ toUserId: member.id, type: 'offer', payload: JSON.stringify(offer) })
+                                body: JSON.stringify({ toUserId: member.id, type: 'offer', payload: JSON.stringify(finalOffer) })
                             }).catch((e) => { console.error("VoiceCall API Error:", e); });
                         }
                     }
@@ -146,7 +176,8 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
     // --- Poller for Incoming Calls ---
     useEffect(() => {
         if (!user) return;
-        const interval = setInterval(async () => {
+        let timer;
+        const poll = async () => {
             if (callState === 'IDLE') {
                 try {
                     const res = await fetch(`${API_BASE}/calls/incoming`, { headers: { 'x-auth-token': getToken() } });
@@ -155,7 +186,7 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
                         setCallData(json.data);
                         setCallState('RINGING');
                     }
-                } catch (e) { console.error("VoiceCall Block Error:", e); }
+                } catch (e) { console.error("VoiceCall Polling Error:", e); }
             } else if (callState === 'RINGING' && callData?.id) {
                 try {
                     const res = await fetch(`${API_BASE}/calls/${callData.id}`, { headers: { 'x-auth-token': getToken() } });
@@ -164,15 +195,19 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
                         cleanupCall();
                         addToast('Cuộc gọi kết thúc.', 'info');
                     }
-                } catch (e) { console.error("VoiceCall Block Error:", e); }
+                } catch (e) { console.error("VoiceCall Polling Error:", e); }
             }
-        }, 3000);
-        return () => clearInterval(interval);
+            // Poll faster when ringing, slower when idle
+            timer = setTimeout(poll, callState === 'IDLE' ? 1500 : 500);
+        };
+        poll();
+        return () => clearTimeout(timer);
     }, [user, callState, callData]);
 
     const acceptCall = async () => {
         if (!callData) return;
-        const stream = await getMedia();
+        const type = callData.type || 'voice';
+        const stream = await getMedia(type);
         if (!stream) return;
 
         setCallState('CONNECTED');
@@ -199,57 +234,73 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
 
     const endCall = async () => {
         if (callData && callData.id) {
-            // Only the original caller ends the whole call room technically, but lets allow anyone to drop status
-            if (callData.caller?.id === user.id || callData.caller_id === user.id) {
+            const isGroup = callData.room?.type === 'group';
+            const participantCount = Object.keys(remoteStreams).length;
+
+            // Nếu là cuộc gọi đôi, hoặc là cuộc gọi nhóm nhưng mình là người cuối cùng
+            const shouldEndGlobally = !isGroup || (isGroup && participantCount === 0);
+
+            if (shouldEndGlobally) {
                 await fetch(`${API_BASE}/calls/${callData.id}/status`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json', 'x-auth-token': getToken() },
                     body: JSON.stringify({ status: 'ended' })
                 }).catch((e) => { console.error("VoiceCall API Error:", e); });
-                await fetch(`${API_BASE}/chats/${callData.room_id}/messages`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'x-auth-token': getToken() },
-                    body: JSON.stringify({ content: `📞 Cuộc gọi đã kết thúc (${formatDuration(duration)}).` })
-                }).catch((e) => { console.error("VoiceCall API Error:", e); });
-            }
-        }
-        cleanupCall();
-    };
 
+                if (duration > 0) {
+                    await fetch(`${API_BASE}/chats/${callData.room_id}/messages`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'x-auth-token': getToken() },
+                        body: JSON.stringify({ content: `📞 Cuộc gọi đã kết thúc (${formatDuration(duration)}).` })
+                    }).catch((e) => { console.error("VoiceCall API Error:", e); });
+                }
     // --- Multi-peer Signal & Candidate Poller ---
     const startMeshPolling = (callId, stream) => {
-        pollIntervalRef.current = setInterval(async () => {
+        const poll = async () => {
+            if (callState === 'IDLE') return; // Stop polling if call ended
+
             try {
                 // Poll for signals and candidates targeting me
                 const res = await fetch(`${API_BASE}/calls/${callId}/signals`, { headers: { 'x-auth-token': getToken() } });
                 const json = await res.json();
                 if (json.success && json.data) {
-
                     // Process Signals (Offers / Answers)
                     for (let sig of json.data.signals) {
                         if (processedSignalsRef.current.has(sig.id)) continue;
                         processedSignalsRef.current.add(sig.id);
 
-                        // If we get a signal, someone is here!
                         setCallState(prev => (prev === 'CALLING' ? 'CONNECTED' : prev));
 
                         const targetUserId = sig.from_user_id;
-                        const pc = createPeer(targetUserId, callId, stream);
-
-                        if (sig.type === 'offer') {
+                              if (sig.type === 'offer') {
                             await pc.setRemoteDescription(new RTCSessionDescription(JSON.parse(sig.payload)));
                             const answer = await pc.createAnswer();
-                            await pc.setLocalDescription(answer);
+                            // Ép băng thông cao cho Answer
+                            const highQualityAnswer = setHighBitrate(answer.sdp);
+                            const finalAnswer = { type: 'answer', sdp: highQualityAnswer };
+                            await pc.setLocalDescription(finalAnswer);
 
-                            // Send Answer back
+                            if (candidateQueueRef.current[targetUserId]) {
+                                for (const cand of candidateQueueRef.current[targetUserId]) {
+                                    await pc.addIceCandidate(new RTCIceCandidate(cand)).catch(e => console.warn("AddQueuedIce Error:", e));
+                                }
+                                delete candidateQueueRef.current[targetUserId];
+                            }
+
                             await fetch(`${API_BASE}/calls/${callId}/signals`, {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json', 'x-auth-token': getToken() },
-                                body: JSON.stringify({ toUserId: targetUserId, type: 'answer', payload: JSON.stringify(answer) })
-                            }).catch((e) => { console.error("VoiceCall API Error:", e); });
+                                body: JSON.stringify({ toUserId: targetUserId, type: 'answer', payload: JSON.stringify(finalAnswer) })
+                            }).catch((e) => { console.error("VoiceCall API Error:", e); });            }).catch((e) => { console.error("VoiceCall API Error:", e); });
 
                         } else if (sig.type === 'answer') {
                             await pc.setRemoteDescription(new RTCSessionDescription(JSON.parse(sig.payload)));
+                            if (candidateQueueRef.current[targetUserId]) {
+                                for (const cand of candidateQueueRef.current[targetUserId]) {
+                                    await pc.addIceCandidate(new RTCIceCandidate(cand)).catch(e => console.warn("AddQueuedIce Error:", e));
+                                }
+                                delete candidateQueueRef.current[targetUserId];
+                            }
                         }
                     }
 
@@ -259,17 +310,20 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
                         processedCandidatesRef.current.add(c.id);
 
                         const targetUserId = c.sender_id;
+                        const candidateData = JSON.parse(c.candidate);
                         const pc = pcsRef.current[targetUserId];
-                        if (pc) {
-                            await pc.addIceCandidate(new RTCIceCandidate(JSON.parse(c.candidate))).catch((e) => { console.error("VoiceCall API Error:", e); });
+
+                        if (pc && pc.remoteDescription) {
+                            await pc.addIceCandidate(new RTCIceCandidate(candidateData)).catch(e => console.warn("AddIce Error:", e));
+                        } else {
+                            if (!candidateQueueRef.current[targetUserId]) candidateQueueRef.current[targetUserId] = [];
+                            candidateQueueRef.current[targetUserId].push(candidateData);
                         }
                     }
                     
-                    // If candidates received but no signal, still means someone is here
                     if (json.data.candidates.length > 0) {
                         setCallState(prev => (prev === 'CALLING' ? 'CONNECTED' : prev));
                     }
-
                 }
 
                 // Poll check if call was force ended by creator
@@ -278,10 +332,17 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
                 if (statusJson.success && statusJson.data && ['ended'].includes(statusJson.data.status)) {
                     cleanupCall();
                     addToast('Cuộc gọi kết thúc.', 'info');
+                    return; // Stop recursion
                 }
 
             } catch (e) { console.warn(e); }
-        }, 2000);
+
+            // Thao tác tiếp theo cực nhanh (200ms) để xử lý tín hiệu WebRTC gần như tức thì
+            // Khi đã CONNECTED thì giãn ra 1000ms để tiết kiệm tài nguyên
+            const nextInterval = (callState === 'CONNECTED') ? 1000 : 200;
+            pollIntervalRef.current = setTimeout(poll, nextInterval);
+        };
+        poll();
     };
 
     const toggleMute = () => {
@@ -297,12 +358,13 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
         stopMedia();
         Object.values(pcsRef.current).forEach(pc => pc.close());
         pcsRef.current = {};
-        if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+        if (pollIntervalRef.current) clearTimeout(pollIntervalRef.current);
         if (durationIntervalRef.current) clearInterval(durationIntervalRef.current);
         processedSignalsRef.current.clear();
-        processedCandidatesRef.current.clear();
+        candidateQueueRef.current = {};
         setDuration(0);
         setIsMuted(false);
+        setIsCameraOff(false);
         setIsSpeakerOff(false);
         onClearActiveCallRoom();
     };
@@ -315,6 +377,74 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
             if (durationIntervalRef.current) clearInterval(durationIntervalRef.current);
         }
     }, [callState]);
+
+    // --- Network Monitoring & Auto Quality ---
+    useEffect(() => {
+        if (callState !== 'CONNECTED') return;
+
+        const monitor = setInterval(async () => {
+            const newStatus = { ...networkStatus };
+            let changed = false;
+
+            for (const [uid, pc] of Object.entries(pcsRef.current)) {
+                try {
+                    const stats = await pc.getStats();
+                    stats.forEach(report => {
+                        if (report.type === 'inbound-rtp' && (report.kind === 'video' || report.kind === 'audio')) {
+                            // Check packet loss and jitter
+                            const packetsLost = report.packetsLost || 0;
+                            const packetsReceived = report.packetsReceived || 0;
+                            const totalPackets = packetsLost + packetsReceived;
+                            
+                            const packetLoss = totalPackets > 0 ? packetsLost / totalPackets : 0;
+                            const jitter = report.jitter || 0;
+                            
+                            const isWeak = (packetLoss > 0.08) || (jitter > 0.15); // 8% loss or 150ms jitter
+                            const current = newStatus[uid] || 'good';
+                            
+                            if (isWeak && current === 'good') {
+                                newStatus[uid] = 'weak';
+                                changed = true;
+                                addToast(`Kết nối với thành viên ${uid} đang yếu.`, 'warning');
+                                adjustQuality(pc, 'low');
+                            } else if (!isWeak && current === 'weak') {
+                                newStatus[uid] = 'good';
+                                changed = true;
+                                adjustQuality(pc, 'high');
+                            }
+                        }
+                    });
+                } catch (e) { console.warn("Stats error:", e); }
+            }
+
+            if (changed) setNetworkStatus(newStatus);
+        }, 3000);
+
+        return () => clearInterval(monitor);
+    }, [callState, networkStatus]);
+
+    const adjustQuality = async (pc, quality) => {
+        const senders = pc.getSenders();
+        const videoSender = senders.find(s => s.track && s.track.kind === 'video');
+        if (videoSender) {
+            const params = videoSender.getParameters();
+            if (params.encodings && params.encodings.length > 0) {
+                // Giảm bitrate xuống 150kbps khi mạng yếu, hoặc trả về 2.5Mbps khi mạng tốt
+                params.encodings[0].maxBitrate = (quality === 'low') ? 150000 : 2500000;
+                await videoSender.setParameters(params).catch(e => console.warn("Quality adjustment failed:", e));
+            }
+        }
+    };
+
+
+    const toggleCamera = () => {
+        if (localStream && callType === 'video') {
+            localStream.getVideoTracks().forEach(t => t.enabled = !t.enabled);
+            setIsCameraOff(!localStream.getVideoTracks()[0]?.enabled);
+        } else if (callType === 'voice') {
+            addToast('Cuộc gọi thoại không dùng camera.', 'info');
+        }
+    };
 
     const formatDuration = (d) => {
         const m = Math.floor(d / 60);
@@ -362,15 +492,10 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
                                 {activeRemoteKeys.map(uid => (
                                     <div key={uid} className="vc-grid-cell">
                                         <div className="blur-bg" style={{ backgroundImage: `url(https://ui-avatars.com/api/?name=USER)` }}></div>
-                                        <div className="pulse-anim-small avatar-circle-wrap">
-                                            <img src={`https://ui-avatars.com/api/?name=USER`} className="avatar-circle" />
+                                        <RemoteVideo stream={remoteStreams[uid]} isMuted={isSpeakerOff} />
+                                        <div className="vc-cell-name">
+                                            Thành viên {networkStatus[uid] === 'weak' && <span className="weak-net-tag">⚠️ Mạng yếu</span>}
                                         </div>
-                                        <div className="vc-cell-name">Thành viên</div>
-                                        <audio
-                                            ref={el => { if (el && remoteStreams[uid]) el.srcObject = remoteStreams[uid]; }}
-                                            autoPlay
-                                            muted={isSpeakerOff}
-                                        />
                                     </div>
                                 ))}
                             </div>
@@ -382,9 +507,22 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
                             </div>
                             <h2 className="vc-title">{callerName}</h2>
                             <div className="vc-status">
-                                {callState === 'RINGING' && 'Đang gọi cho bạn...'}
+                                {callState === 'RINGING' && `Đang gọi ${callData?.type === 'video' ? 'video' : 'thoại'} cho bạn...`}
                                 {callState === 'CALLING' && 'Đang đổ chuông...'}
                             </div>
+                        </div>
+                    )}
+
+                    {/* Local Camera Preview (Floating if connected) */}
+                    {callState === 'CONNECTED' && callType === 'video' && (
+                        <div className={`local-preview ${isCameraOff ? 'camera-off' : ''}`}>
+                            <video 
+                                ref={el => { if (el) el.srcObject = localStream; }} 
+                                autoPlay 
+                                muted 
+                                playsInline 
+                            />
+                            {isCameraOff && <div className="preview-placeholder">Camera tắt</div>}
                         </div>
                     )}
 
@@ -407,6 +545,14 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
                                     </button>
                                     <span>Micro</span>
                                 </div>
+                                {callType === 'video' && (
+                                    <div className="vc-control-item">
+                                        <button onClick={toggleCamera} className={`vc-btn small ${isCameraOff ? 'muted' : ''}`}>
+                                            {isCameraOff ? '❌' : '📹'}
+                                        </button>
+                                        <span>Camera</span>
+                                    </div>
+                                )}
                                 <div className="vc-control-item">
                                     <button onClick={endCall} className="vc-btn reject drop-down">
                                         <i style={{ transform: 'rotate(135deg)', fontStyle: 'normal' }}>📞</i>
@@ -472,8 +618,90 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
                     @keyframes pulseRing { 0% { box-shadow: 0 0 0 0 rgba(255,255,255,0.3); } 70% { box-shadow: 0 0 0 30px rgba(255,255,255,0); } 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0); } }
                     .pulse-anim { animation: pulseRing 1.5s infinite; }
                     .pulse-anim-small { animation: pulseRing 1s infinite alternate; }
+
+                    /* Video Call Specific Styles */
+                    .local-preview {
+                        position: absolute; top: 80px; right: 20px; width: 100px; height: 150px; 
+                        border-radius: 12px; overflow: hidden; background: #000; border: 2px solid rgba(255,255,255,0.2); 
+                        box-shadow: 0 10px 25px rgba(0,0,0,0.5); z-index: 10;
+                    }
+                    .local-preview video { width: 100%; height: 100%; object-fit: cover; }
+                    .camera-off video { display: none; }
+                    .preview-placeholder { height: 100%; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #94a3b8; text-align: center; }
+                    
+                    .vc-grid-cell video { width: 100%; height: 100%; object-fit: cover; position: relative; z-index: 1; }
+                    .remote-video-placeholder { 
+                        position: absolute; inset: 0; z-index: 2; display: flex; flex-direction: column; 
+                        align-items: center; justify-content: center; background: rgba(15, 23, 42, 0.8);
+                    }
+                    .weak-net-tag { 
+                        display: inline-block; margin-left: 6px; padding: 2px 6px; background: #B45309; 
+                        color: white; border-radius: 4px; font-size: 10px; font-weight: 700;
+                    }
                 `}</style>
             </div>
         </React.Fragment>
     );
+}
+
+/** 
+ * Sub-component to handle remote media playback more reliably.
+ */
+function RemoteVideo({ stream, isMuted }) {
+    const videoRef = useRef(null);
+    const [hasVideo, setHasVideo] = useState(false);
+
+    useEffect(() => {
+        if (videoRef.current && stream) {
+            videoRef.current.srcObject = stream;
+            videoRef.current.play().catch(e => console.warn("Video play failed:", e));
+            
+            const checkVideo = () => {
+                setHasVideo(stream.getVideoTracks().length > 0 && stream.getVideoTracks()[0].enabled);
+            };
+            checkVideo();
+            stream.onactive = checkVideo;
+            stream.onaddtrack = checkVideo;
+            stream.onremovetrack = checkVideo;
+        }
+    }, [stream]);
+
+    return (
+        <div style={{ width: '100%', height: '100%', position: 'relative' }}>
+            <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                muted={isMuted}
+                style={{ width: '100%', height: '100%', objectFit: 'cover', display: hasVideo ? 'block' : 'none' }}
+            />
+            {!hasVideo && (
+                <div className="remote-video-placeholder">
+                    <img src="https://ui-avatars.com/api/?name=User&background=random" style={{ width: 80, height: 80, borderRadius: '50%', marginBottom: 12 }} />
+                    <span style={{ fontSize: 14, color: '#94a3b8' }}>Chỉ nghe tiếng</span>
+                    <span style={{ fontSize: 10, color: '#475569', marginTop: 4 }}>HD Audio & Noise Filtering Active</span>
+                </div>
+            )}
+        </div>
+    );
+}
+
+/**
+ * Utility to modify SDP to request higher bitrate for audio/video.
+ */
+function setHighBitrate(sdp) {
+    let lines = sdp.split('\r\n');
+    lines.forEach((line, index) => {
+        if (line.indexOf('a=fmtp:111') === 0) {
+            lines[index] = line + ';maxaveragebitrate=128000;stereo=1;useinbandfec=1';
+        }
+    });
+    
+    // Add b=AS (Application Specific) for video bitrate (e.g., 2.5 Mbps)
+    const videoIndex = lines.findIndex(l => l.indexOf('m=video') === 0);
+    if (videoIndex !== -1) {
+        lines.splice(videoIndex + 1, 0, 'b=AS:2500');
+    }
+    
+    return lines.join('\r\n');
 }
