@@ -206,7 +206,10 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
 
     const socketRef = useRef(null);
     const pcsRef = useRef({});               // { userId: RTCPeerConnection }
-    const localRef = useRef(null);           // MediaStream ref (avoids stale closure)
+    const rawStreamRef = useRef(null);       // MediaStream gốc từ mic
+    const localRef = useRef(null);           // MediaStream đã qua xử lý lọc ồn
+    const audioCtxRef = useRef(null);        // Web Audio Context
+    const filterNodeRef = useRef(null);      // BiquadFilter (lọc tiếng gió, ồn xe)
     const phaseRef = useRef('IDLE');
     const metaRef = useRef(null);
     const processedRef = useRef(new Set());
@@ -216,8 +219,18 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
     const cleanupRef = useRef(null);         // Giữ ref tới hàm cleanup để gọi từ bên trong event handler
     const incomingSignalsRef = useRef([]);   // Hàng đợi tín hiệu chờ khi đang RINGING
 
+    const [noiseLevel, setNoiseLevel] = useState(0); // 0 -> 100
+
     useEffect(() => { phaseRef.current = phase; }, [phase]);
     useEffect(() => { metaRef.current = callMeta; }, [callMeta]);
+
+    // Khi người dùng kéo thanh trượt, điều chỉnh dải tần số bị cắt bỏ (Highpass)
+    // 0% = Cắt 0Hz (Không lọc). 100% = Cắt 1000Hz (Lọc cực mạnh, giọng mỏng đi nhưng sạch tiếng gió)
+    useEffect(() => {
+        if (filterNodeRef.current) {
+            filterNodeRef.current.frequency.value = noiseLevel * 10;
+        }
+    }, [noiseLevel]);
 
     // ── Socket.io connection ─────────────────────────────────────────────────
     useEffect(() => {
@@ -288,22 +301,61 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
                 audio: AUDIO_CONSTRAINTS,
                 video: type === 'video' ? VIDEO_CONSTRAINTS : false,
             });
-            localRef.current = stream;
-            setLocalStream(stream);
+
+            // --- LỌC TẠP ÂM ĐỘNG BẰNG WEB AUDIO API (DSP) ---
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            audioCtxRef.current = audioCtx;
+            const source = audioCtx.createMediaStreamSource(stream);
+            
+            // 1. Highpass Filter: Cắt dải âm trầm (tiếng xe cộ, tiếng gió ù ù)
+            const highpassFilter = audioCtx.createBiquadFilter();
+            highpassFilter.type = 'highpass';
+            highpassFilter.frequency.value = noiseLevel * 10; 
+            filterNodeRef.current = highpassFilter;
+
+            // 2. Dynamics Compressor: Cân bằng giọng nói (Giảm hú, chống chói tai khi nói to)
+            const compressor = audioCtx.createDynamicsCompressor();
+            compressor.threshold.value = -40;
+            compressor.knee.value = 30;
+            compressor.ratio.value = 10;
+            compressor.attack.value = 0.005;
+            compressor.release.value = 0.25;
+
+            const destination = audioCtx.createMediaStreamDestination();
+            
+            source.connect(highpassFilter);
+            highpassFilter.connect(compressor);
+            compressor.connect(destination);
+
+            // 3. Ghép Audio sạch với Video gốc
+            const processedStream = new MediaStream([
+                ...destination.stream.getAudioTracks(),
+                ...stream.getVideoTracks()
+            ]);
+            
+            rawStreamRef.current = stream; // Giữ lại luồng gốc để tắt phần cứng sau này
+            
+            localRef.current = processedStream;
+            setLocalStream(processedStream);
             setCallType(type);
             setCamOff(type === 'voice');
-            return stream;
+            return processedStream;
         } catch (e) {
             addToast('Không truy cập được micro/camera: ' + e.message, 'error');
             return null;
         }
-    }, [addToast]);
+    }, [addToast, noiseLevel]);
 
     const stopMedia = useCallback(() => {
+        rawStreamRef.current?.getTracks().forEach(t => t.stop());
         localRef.current?.getTracks().forEach(t => t.stop());
+        rawStreamRef.current = null;
         localRef.current = null;
         setLocalStream(null);
         setRemoteStreams({});
+        if (audioCtxRef.current && audioCtxRef.current.state !== 'closed') {
+            audioCtxRef.current.close().catch(() => {});
+        }
     }, []);
 
     // ── WebRTC Peer ───────────────────────────────────────────────────────────
@@ -584,12 +636,21 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
                             <Btn icon="📞" label="Nghe" cls="accept pulse-btn" onClick={acceptCall} />
                         </>
                     ) : (
-                        <>
-                            <Btn icon={muted ? '🔇' : '🎤'} label={muted ? 'Bật micro' : 'Tắt micro'} active={muted} onClick={toggleMute} />
-                            {callType === 'video' && <Btn icon={camOff ? '📷' : '📹'} label={camOff ? 'Bật cam' : 'Tắt cam'} active={camOff} onClick={toggleCam} />}
-                            <Btn icon="📞" label="Kết thúc" cls="reject rot135" onClick={endCall} />
-                            <Btn icon={speakerMode === 'speaker' ? '🔊' : '🔉'} label={speakerMode === 'speaker' ? 'Loa ngoài' : 'Loa trong'} active={speakerMode === 'speaker'} onClick={toggleSpeaker} />
-                        </>
+                        <div style={{ display: 'flex', flexDirection: 'column', width: '100%', gap: 16 }}>
+                            <div style={{ display: 'flex', justifyContent: 'center', gap: 16 }}>
+                                <Btn icon={muted ? '🔇' : '🎤'} label={muted ? 'Bật micro' : 'Tắt micro'} active={muted} onClick={toggleMute} />
+                                {callType === 'video' && <Btn icon={camOff ? '📷' : '📹'} label={camOff ? 'Bật cam' : 'Tắt cam'} active={camOff} onClick={toggleCam} />}
+                                <Btn icon="📞" label="Kết thúc" cls="reject rot135" onClick={endCall} />
+                                <Btn icon={speakerMode === 'speaker' ? '🔊' : '🔉'} label={speakerMode === 'speaker' ? 'Loa ngoài' : 'Loa trong'} active={speakerMode === 'speaker'} onClick={toggleSpeaker} />
+                            </div>
+                            
+                            {/* Thanh trượt lọc tiếng ồn DSP */}
+                            <div style={{ display: 'flex', alignItems: 'center', background: 'rgba(0,0,0,0.5)', padding: '8px 16px', borderRadius: 20, margin: '0 auto', gap: 12 }}>
+                                <span style={{ fontSize: 12, color: '#fff', whiteSpace: 'nowrap' }}>Lọc ồn: {noiseLevel}%</span>
+                                <input type="range" min="0" max="100" value={noiseLevel} onChange={e => setNoiseLevel(Number(e.target.value))} style={{ width: 120, accentColor: '#10b981' }} />
+                                <span style={{ fontSize: 16 }}>{noiseLevel > 50 ? '🏍️' : '🛋️'}</span>
+                            </div>
+                        </div>
                     )}
                 </div>
                 <HubDebug phase={phase} callMeta={callMeta} isConnected={hubConnected} />
