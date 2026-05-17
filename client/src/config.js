@@ -1,7 +1,6 @@
-// Application Configuration
-import sharedConfig from '../../shared-config.json';
+// Application Configuration (Tự động đọc từ file .env ở thư mục gốc)
 
-// Tên miền chính của hệ thống (sửa tại shared-config.json ở thư mục gốc)
-export const APP_DOMAIN = sharedConfig.APP_DOMAIN;
+// Tên miền chính của hệ thống
+export const APP_DOMAIN = import.meta.env.VITE_APP_DOMAIN || 'family.dangvq.online';
 
-export const API_BASE_URL = `https://${APP_DOMAIN}/api`;
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || `https://${APP_DOMAIN}/api`;
