@@ -88,7 +88,7 @@ function initRealtimeHub(httpServer) {
 
         // Broadcast online status
         io.emit('presence:update', { userId, online: true });
-        console.log(`[Hub] ✅ ${user.display_name} (${socket.id})`);
+        console.log(`[Hub] ✅ Kết nối thành công - User ID: ${userId} (${user.display_name}) - Socket: ${socket.id}`);
 
         // ── Join chat room channels ───────────────────────────────────────────
         socket.on('chat:join', async ({ roomId }) => {
@@ -260,7 +260,7 @@ function initRealtimeHub(httpServer) {
                 supabase.from('users').update({ is_online: false, last_active: new Date().toISOString() })
                     .eq('id', user.id).then(() => {}).catch(() => {});
             }
-            console.log(`[Hub] ❌ ${user.display_name} disconnected`);
+            console.log(`[Hub] ❌ Ngắt kết nối - User ID: ${userId} (${user.display_name})`);
         });
     });
 
