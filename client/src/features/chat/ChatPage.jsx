@@ -348,7 +348,7 @@ export default function ChatPage({ user, addToast, onStartCall }) {
                                     display: 'flex', alignItems: 'center', gap: 12
                                 }}
                             >
-                                <div style={{ position: 'relative', width: 40, height: 40 }}>
+                                <div style={{ position: 'relative', width: 40, height: 40, minWidth: 40, minHeight: 40, flexShrink: 0 }}>
                                     {room.avatar ? (
                                         <img src={room.avatar} alt="avatar" style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover' }} />
                                     ) : (
@@ -357,7 +357,7 @@ export default function ChatPage({ user, addToast, onStartCall }) {
                                         </div>
                                     )}
                                     {room.type === 'direct' && room.is_online && (
-                                        <span style={{ position: 'absolute', bottom: 0, right: 0, width: 12, height: 12, borderRadius: '50%', background: '#10b981', border: '2px solid var(--bg-secondary)' }}></span>
+                                        <span style={{ position: 'absolute', bottom: 1, right: 1, width: 14, height: 14, borderRadius: '50%', background: '#10b981', border: '2.5px solid var(--bg-secondary)', zIndex: 1 }}></span>
                                     )}
                                 </div>
                                 <div>
@@ -380,7 +380,7 @@ export default function ChatPage({ user, addToast, onStartCall }) {
                                 <button className="btn" style={{ padding: '4px 8px', borderRadius: '50%', border: 'none', background: 'transparent', fontSize: '20px' }} onClick={() => setActiveRoomId(null)}>
                                     ‹
                                 </button>
-                                <div style={{ width: 36, height: 36, borderRadius: '50%', background: activeRoom?.type === 'group' ? 'linear-gradient(135deg, #10b981, #047857)' : 'linear-gradient(135deg, var(--gold), var(--gold-dark))', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 'bold' }}>
+                                <div style={{ width: 36, height: 36, minWidth: 36, minHeight: 36, flexShrink: 0, borderRadius: '50%', background: activeRoom?.type === 'group' ? 'linear-gradient(135deg, #10b981, #047857)' : 'linear-gradient(135deg, var(--gold), var(--gold-dark))', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 'bold' }}>
                                     {activeRoom?.avatar ? <img src={activeRoom.avatar} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} /> : (activeRoom?.type === 'group' ? '👥' : activeRoom?.display_name?.substring(0, 2).toUpperCase())}
                                 </div>
                                 <div>
@@ -493,7 +493,7 @@ export default function ChatPage({ user, addToast, onStartCall }) {
                                         <div style={{ width: 18, height: 18, borderRadius: '50%', border: '2px solid', borderColor: selectedUserIds.includes(u.id) ? 'var(--primary)' : '#cbd5e1', background: selectedUserIds.includes(u.id) ? 'var(--primary)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                             {selectedUserIds.includes(u.id) && <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#fff' }}></span>}
                                         </div>
-                                        <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--gold)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12 }}>
+                                        <div style={{ width: 32, height: 32, minWidth: 32, minHeight: 32, flexShrink: 0, borderRadius: '50%', background: 'var(--gold)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12 }}>
                                             {u.avatar ? <img src={u.avatar} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} /> : u.display_name?.substring(0, 2).toUpperCase()}
                                         </div>
                                         <div style={{ flex: 1 }}>
