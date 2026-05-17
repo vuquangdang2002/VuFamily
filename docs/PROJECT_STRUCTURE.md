@@ -123,11 +123,10 @@ VuFamily/
 │   ├── supabase-schema.sql          #   PostgreSQL schema + seed (chạy trên Supabase)
 │   ├── README.md                    #   Hướng dẫn sử dụng
 │   └── PROJECT_STRUCTURE.md         #   File này
-```
-
 ---
 
 ## 🔌 API Endpoints
+*(Xem chi tiết tại: [docs/api.md](docs/api.md))* 
 
 ### Authentication
 | Method | Path | Auth | Mô tả |
