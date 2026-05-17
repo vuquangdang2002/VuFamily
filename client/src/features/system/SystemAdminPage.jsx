@@ -8,7 +8,7 @@ function getToken() {
     catch { return ''; }
 }
 
-export default function AccountsPage({ addToast }) {
+export default function SystemAdminPage({ addToast }) {
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(false);
     const [showCreate, setShowCreate] = useState(false);
@@ -25,6 +25,9 @@ export default function AccountsPage({ addToast }) {
     const [importEncrypted, setImportEncrypted] = useState(false);
     const [isProcessingDb, setIsProcessingDb] = useState(false);
     
+    // Tabs
+    const [activeTab, setActiveTab] = useState('data');
+
     const allTables = ['members', 'achievements', 'users', 'posts', 'comments', 'reactions', 'chat_rooms', 'chat_room_members', 'messages', 'edit_history', 'pending_requests', 'funds_audit_logs', 'funds_transactions'];
     const [selectedTables, setSelectedTables] = useState(allTables);
     const [showTableModal, setShowTableModal] = useState(false);
@@ -55,7 +58,7 @@ export default function AccountsPage({ addToast }) {
             });
             const json = await res.json();
             if (json.success) setUsers(json.data || []);
-        } catch (e) { myError('ACCOUNTS', e); }
+        } catch (e) { myError('SYSTEM_ADMIN', e); }
         setLoading(false);
     };
 
@@ -219,17 +222,34 @@ export default function AccountsPage({ addToast }) {
     return (
         <div className="page-container">
             <div className="page-header">
-                <h2>👥 Quản lý tài khoản</h2>
-                <p className="page-subtitle">Thêm, xóa, đặt lại mật khẩu cho người dùng</p>
+                <h2>⚙️ Hệ thống quản trị</h2>
+                <p className="page-subtitle">Quản lý cơ sở dữ liệu và người dùng hệ thống</p>
+            </div>
+
+            {/* Tabs */}
+            <div style={{ display: 'flex', gap: 24, borderBottom: '1px solid var(--border-subtle)', marginBottom: 24, padding: '0 20px' }}>
+                <button 
+                    className={`btn ${activeTab === 'data' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('data')}
+                    style={{ background: 'transparent', border: 'none', padding: '12px 0', borderBottom: activeTab === 'data' ? '2px solid var(--primary)' : '2px solid transparent', color: activeTab === 'data' ? 'var(--primary)' : 'var(--text-muted)', fontWeight: activeTab === 'data' ? 600 : 500, borderRadius: 0 }}
+                >
+                    🗄️ Dữ liệu
+                </button>
+                <button 
+                    className={`btn ${activeTab === 'accounts' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('accounts')}
+                    style={{ background: 'transparent', border: 'none', padding: '12px 0', borderBottom: activeTab === 'accounts' ? '2px solid var(--primary)' : '2px solid transparent', color: activeTab === 'accounts' ? 'var(--primary)' : 'var(--text-muted)', fontWeight: activeTab === 'accounts' ? 600 : 500, borderRadius: 0 }}
+                >
+                    👥 Tài khoản
+                </button>
             </div>
 
             <div className="page-body">
-                {/* Create button & DB tools */}
-                <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
-                    
-                    {/* Database section */}
-                    <div style={{ padding: 16, background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-sm)', border: '1px solid var(--border-subtle)', flex: 1, minWidth: 320 }}>
-                        <h3 style={{ margin: '0 0 16px 0', fontSize: 16, fontWeight: 600 }}>🗄️ Quản lý Cơ sở dữ liệu</h3>
+                {activeTab === 'data' && (
+                    <div style={{ marginBottom: 24 }}>
+                        {/* Database section */}
+                        <div style={{ padding: 16, background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-sm)', border: '1px solid var(--border-subtle)', flex: 1 }}>
+                            <h3 style={{ margin: '0 0 16px 0', fontSize: 16, fontWeight: 600 }}>Quản lý Cơ sở dữ liệu</h3>
                         
                         {/* Bảng dữ liệu được chọn */}
                         <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)', padding: '8px 12px', borderRadius: 'var(--radius-md)' }}>
@@ -275,16 +295,19 @@ export default function AccountsPage({ addToast }) {
                             </div>
                         </div>
                     </div>
+                </div>
+                )}
 
-                    <div style={{ alignSelf: 'flex-start' }}>
+                {activeTab === 'accounts' && (
+                <div>
+                    <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'flex-end' }}>
                         <button className="btn btn-primary" onClick={() => setShowCreate(!showCreate)}>
                             {showCreate ? '✕ Đóng' : '➕ Tạo tài khoản mới'}
                         </button>
                     </div>
-                </div>
 
-                {/* Create form */}
-                {showCreate && (
+                    {/* Create form */}
+                    {showCreate && (
                     <div style={{ marginBottom: 24, padding: 24, background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-sm)', border: '1px solid var(--border-subtle)' }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
                             <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700 }}>Tạo tài khoản mới</h3>
@@ -451,6 +474,8 @@ export default function AccountsPage({ addToast }) {
                             </tbody>
                         </table>
                     </div>
+                </div>
+                )}
                 </div>
                 )}
             </div>

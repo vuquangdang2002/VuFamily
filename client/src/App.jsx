@@ -7,7 +7,7 @@ import DetailPanel from './features/tree/DetailPanel';
 import MemberModal from './features/tree/MemberModal';
 import NewsfeedPage from './features/newsfeed/NewsfeedPage';
 import CalendarPage from './features/calendar/CalendarPage';
-import AccountsPage from './features/accounts/AccountsPage';
+import SystemAdminPage from './features/system/SystemAdminPage';
 import ProfileModal from './features/auth/ProfileModal';
 import HistoryPage from './features/history/HistoryPanel';
 import RequestsPage from './features/requests/RequestsPanel';
@@ -696,8 +696,8 @@ export default function App() {
                 return <ChatPage user={user} addToast={addToast} onStartCall={setActiveCallRoom} />;
             case 'requests':
                 return <RequestsPage user={user} members={members} onRefresh={refresh} addToast={addToast} />;
-            case 'accounts':
-                return <AccountsPage addToast={addToast} />;
+            case 'system':
+                return <SystemAdminPage addToast={addToast} />;
             case 'guide':
                 return <GuidePage user={user} onNavigate={handleNavigate} />;
             default:

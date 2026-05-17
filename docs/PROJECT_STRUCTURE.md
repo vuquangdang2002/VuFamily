@@ -85,7 +85,7 @@ VuFamily/
 │       │   ├── CalendarPage.jsx     #     📅 Lịch sinh nhật & giỗ
 │       │   ├── HistoryPanel.jsx     #     📜 Lịch sử thao tác
 │       │   ├── RequestsPanel.jsx    #     📋 Yêu cầu chỉnh sửa (admin review)
-│       │   ├── AccountsPage.jsx     #     👥 Quản lý tài khoản (admin only)
+│       │   ├── SystemAdminPage.jsx  #     ⚙️ Hệ thống quản trị (Dữ liệu & Tài khoản)
 │       │   │
 │       │   ├── ThemeToggle.jsx      #     🌙 Chuyển đổi sáng/tối
 │       │   └── Toast.jsx            #     Thông báo pop-up

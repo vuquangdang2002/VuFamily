@@ -1,14 +1,20 @@
-# Feature: Accounts Management (Quản lý tài khoản)
+# Feature: System Administration (Hệ thống quản trị)
 
 ## Tổng quan
-Dành riêng cho Quản trị viên (Admin) để cấp phát, chỉnh sửa và quản lý tài khoản cho các thành viên trong dòng họ, giúp kiểm soát người có quyền xem hoặc chỉnh sửa Gia Phả.
+Dành riêng cho Quản trị viên (Admin) để quản lý cơ sở dữ liệu (Database) và quản lý tài khoản (Accounts) cho các thành viên trong dòng họ, giúp kiểm soát hệ thống một cách toàn diện.
 
 ## Cấu trúc thư mục
-- **Client**: `client/src/features/accounts/`
-- **Server Endpoints**: `/api/users/*`
+- **Client**: `client/src/features/system/`
+- **Server Endpoints**: `/api/users/*`, `/api/database/*`
 
 ## Các tính năng chính (Chỉ dành cho Admin)
-1. **Thêm tài khoản mới**:
+
+### 1. Quản lý Cơ sở dữ liệu (Tab Dữ liệu)
+- **Backup (Export)**: Xuất toàn bộ dữ liệu ra định dạng `.zip` chứa các file `JSON` hoặc `CSV` tương ứng với mỗi bảng. Có tùy chọn xuất chọn lọc bảng và mã hóa dữ liệu.
+- **Restore (Import)**: Tải lên file `.zip` để khôi phục hoặc import đè dữ liệu. Hỗ trợ giải mã tự động nếu file được mã hóa.
+
+### 2. Quản lý Tài khoản (Tab Tài khoản)
+- **Thêm tài khoản mới**:
    - Admin có thể tạo tài khoản, chỉ định Username, Password, Hiển thị Tên và Role (Viewer hoặc Admin).
 2. **Cập nhật / Đặt lại mật khẩu (`/api/users/:id/reset-password`)**:
    - Nếu Viewer quên mật khẩu và không sử dụng Email, Admin có thể tự tay gán lại một mật khẩu mới cho họ.

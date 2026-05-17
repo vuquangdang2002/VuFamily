@@ -81,14 +81,16 @@ Quản lý thời gian, công việc chung của dòng họ.
 
 ---
 
-## 7. 👥 Quản lý Tài khoản (Dành cho Admin)
-*(Xem chi tiết tại: [docs/features/ACCOUNTS.md](features/ACCOUNTS.md))*
-Trang dành riêng cho Quản trị viên để quản trị con người.
+## 7. ⚙️ Hệ thống quản trị (Dành cho Admin)
+*(Xem chi tiết tại: [docs/features/SYSTEM_ADMIN.md](features/SYSTEM_ADMIN.md))*
+Trang dành riêng cho Quản trị viên để kiểm soát dữ liệu và con người.
 
-- Thêm mới tài khoản cho các thành viên trong gia đình.
-- Phân quyền (Set Role).
-- Đặt lại mật khẩu (Reset Password) trong trường hợp thành viên quên.
-- Quản lý danh sách thành viên hợp lệ tham gia vào ứng dụng.
+- **Quản lý Dữ liệu:** Export/Import Database ra file zip an toàn (có hỗ trợ mã hoá nội dung).
+- **Quản lý Tài khoản:**
+  - Thêm mới tài khoản cho các thành viên trong gia đình.
+  - Phân quyền (Set Role).
+  - Đặt lại mật khẩu (Reset Password) trong trường hợp thành viên quên.
+  - Quản lý danh sách thành viên hợp lệ tham gia vào ứng dụng.
 
 ---
 

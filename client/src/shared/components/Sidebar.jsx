@@ -13,7 +13,7 @@ const EDITOR_ITEMS = [
 
 // Items visible to admins ONLY
 const ADMIN_ITEMS = [
-    { id: 'accounts', icon: '👥', label: 'Quản lý tài khoản' },
+    { id: 'system', icon: '⚙️', label: 'Hệ thống quản trị' },
 ];
 
 const COMMON_ITEMS = [
