@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { localApi } from '../../shared/services/api';
 import PhotoCropper from './PhotoCropper';
 
 const CATEGORIES = [
@@ -76,7 +77,11 @@ export default function MemberModal({ isOpen, onClose, onSubmit, editMember, par
                 photo: '',
             });
         }
-        setAchievements([]);
+        if (editMember) {
+            setAchievements(localApi.getAchievements(editMember.id) || []);
+        } else {
+            setAchievements([]);
+        }
         setShowAchForm(false);
     }, [editMember, parentId, spouseOfId, members, isOpen]);
 
@@ -102,7 +107,17 @@ export default function MemberModal({ isOpen, onClose, onSubmit, editMember, par
     };
 
     const removeAchievement = (idx) => {
-        setAchievements(achievements.filter((_, i) => i !== idx));
+        const ach = achievements[idx];
+        if (ach.id && editMember) {
+            // Delete existing achievement via localApi
+            if (confirm('Xóa thành tích này?')) {
+                localApi.deleteAchievement(ach.id);
+                setAchievements(achievements.filter((_, i) => i !== idx));
+            }
+        } else {
+            // Remove newly added un-saved achievement
+            setAchievements(achievements.filter((_, i) => i !== idx));
+        }
     };
 
     const title = editMember
@@ -261,17 +276,15 @@ export default function MemberModal({ isOpen, onClose, onSubmit, editMember, par
                             <textarea className="form-textarea" value={form.note} onChange={e => setForm({ ...form, note: e.target.value })} placeholder="Ghi chú thêm..." />
                         </div>
 
-                        {/* Thành tích (chỉ khi thêm mới) */}
-                        {!editMember && (
-                            <>
-                                <div className="form-section-title" style={{ marginTop: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                    <span>Thành tích & Hoạt động</span>
-                                    <button type="button" className="btn" style={{ padding: '4px 10px', fontSize: 11 }} onClick={() => setShowAchForm(!showAchForm)}>
-                                        {showAchForm ? '✕ Đóng' : '＋ Thêm'}
-                                    </button>
-                                </div>
+                        {/* Thành tích (áp dụng cả khi thêm mới và sửa) */}
+                        <div className="form-section-title" style={{ marginTop: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <span>Thành tích & Hoạt động</span>
+                            <button type="button" className="btn" style={{ padding: '4px 10px', fontSize: 11 }} onClick={() => setShowAchForm(!showAchForm)}>
+                                {showAchForm ? '✕ Đóng' : '＋ Thêm'}
+                            </button>
+                        </div>
 
-                                {showAchForm && (
+                        {showAchForm && (
                                     <div style={{ background: 'rgba(212,175,55,0.05)', padding: 12, borderRadius: 8, marginBottom: 12, border: '1px solid var(--border-subtle)' }}>
                                         <div className="form-row">
                                             <div className="form-group">
@@ -319,8 +332,6 @@ export default function MemberModal({ isOpen, onClose, onSubmit, editMember, par
                                         ))}
                                     </div>
                                 )}
-                            </>
-                        )}
                     </div>
 
                     <div className="modal-footer">

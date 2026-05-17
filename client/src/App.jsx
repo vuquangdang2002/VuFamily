@@ -407,6 +407,10 @@ export default function App() {
                     }
                 }
 
+                if (data.newAchievements && data.newAchievements.length > 0) {
+                    hasChanges = true;
+                }
+
                 if (!hasChanges) {
                     addToast('Không có thông tin nào được thay đổi.', 'error');
                     closeModal();
@@ -414,9 +418,16 @@ export default function App() {
                 }
 
                 if (isAdmin || canEdit) {
+                    if (Object.keys(actualChanges).length > 0) {
                     const result = await api.submitRequest(data.id, actualChanges, 'Cập nhật trực tiếp bởi ' + (isAdmin ? 'Admin' : 'Editor'));
                     await api.approveRequest(result.data.id);
                     addToast(`Đã cập nhật thông tin "${data.name}" thành công!`);
+                    }
+                    if (data.newAchievements?.length > 0) {
+                        for (const a of data.newAchievements) {
+                            await api.addAchievement({ ...a, memberId: data.id });
+                        }
+                    }
                 } else {
                     const result = await api.submitRequest(data.id, actualChanges, 'Chỉnh sửa thành viên');
                     addToast(result.message || 'Đã gửi yêu cầu', result.success ? 'success' : 'error');

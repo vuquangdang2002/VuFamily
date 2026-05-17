@@ -18,6 +18,17 @@ export default function AccountsPage({ addToast }) {
     const [resetPw, setResetPw] = useState('');
     const [showResetPw, setShowResetPw] = useState(false);
 
+    // Database tools
+    const [exportFormat, setExportFormat] = useState('json');
+    const [exportEncrypted, setExportEncrypted] = useState(false);
+    const [importFile, setImportFile] = useState(null);
+    const [importEncrypted, setImportEncrypted] = useState(false);
+    const [isProcessingDb, setIsProcessingDb] = useState(false);
+    
+    const allTables = ['members', 'achievements', 'users', 'posts', 'comments', 'reactions', 'chat_rooms', 'chat_room_members', 'messages', 'edit_history', 'pending_requests', 'funds_audit_logs', 'funds_transactions'];
+    const [selectedTables, setSelectedTables] = useState(allTables);
+    const [showTableModal, setShowTableModal] = useState(false);
+
     // Edit modal
     const [editModal, setEditModal] = useState(null);
     const [editUser, setEditUser] = useState({ displayName: '', role: 'viewer', status: 'active' });
@@ -143,6 +154,68 @@ export default function AccountsPage({ addToast }) {
         }
     };
 
+    const handleExportDb = async () => {
+        try {
+            setIsProcessingDb(true);
+            const res = await fetch(`${API_BASE}/database/export?format=${exportFormat}&isEncrypted=${exportEncrypted}&tables=${selectedTables.join(',')}`, {
+                headers: { 'x-auth-token': getToken() }
+            });
+            if (!res.ok) {
+                const text = await res.text();
+                addToast('Lỗi khi xuất dữ liệu: ' + text, 'error');
+                setIsProcessingDb(false);
+                return;
+            }
+            const blob = await res.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `vufamily_backup_${new Date().toISOString().split('T')[0]}.${exportFormat}${exportEncrypted ? '_encrypted' : ''}.zip`;
+            a.click();
+            window.URL.revokeObjectURL(url);
+            addToast('Đã xuất dữ liệu thành công!');
+        } catch (e) {
+            addToast('Lỗi kết nối server', 'error');
+        } finally {
+            setIsProcessingDb(false);
+        }
+    };
+
+    const handleImportDb = async () => {
+        if (!importFile) {
+            addToast('Vui lòng chọn file zip', 'error');
+            return;
+        }
+        if (!confirm('CẢNH BÁO: Quá trình này sẽ khôi phục/thêm mới dữ liệu vào Database. Bạn có chắc chắn?')) return;
+        
+        try {
+            setIsProcessingDb(true);
+            const formData = new FormData();
+            formData.append('file', importFile);
+            formData.append('isEncrypted', importEncrypted);
+            formData.append('tables', selectedTables.join(','));
+
+            const res = await fetch(`${API_BASE}/database/import`, {
+                method: 'POST',
+                headers: { 'x-auth-token': getToken() },
+                body: formData
+            });
+            const json = await res.json();
+            if (json.success) {
+                addToast(json.message || 'Nhập dữ liệu thành công!', 'success');
+                setImportFile(null);
+                fetchUsers();
+            } else {
+                addToast(json.error || 'Lỗi nhập dữ liệu', 'error');
+            }
+        } catch (e) {
+            addToast('Lỗi kết nối server', 'error');
+        } finally {
+            setIsProcessingDb(false);
+            document.getElementById('import-file-input').value = '';
+        }
+    };
+
     return (
         <div className="page-container">
             <div className="page-header">
@@ -151,11 +224,63 @@ export default function AccountsPage({ addToast }) {
             </div>
 
             <div className="page-body">
-                {/* Create button */}
-                <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'flex-end' }}>
-                    <button className="btn btn-primary" onClick={() => setShowCreate(!showCreate)}>
-                        {showCreate ? '✕ Đóng' : '➕ Tạo tài khoản mới'}
-                    </button>
+                {/* Create button & DB tools */}
+                <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
+                    
+                    {/* Database section */}
+                    <div style={{ padding: 16, background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-sm)', border: '1px solid var(--border-subtle)', flex: 1, minWidth: 320 }}>
+                        <h3 style={{ margin: '0 0 16px 0', fontSize: 16, fontWeight: 600 }}>🗄️ Quản lý Cơ sở dữ liệu</h3>
+                        
+                        {/* Bảng dữ liệu được chọn */}
+                        <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)', padding: '8px 12px', borderRadius: 'var(--radius-md)' }}>
+                            <div>
+                                <span style={{ fontSize: 13, fontWeight: 600 }}>Đã chọn:</span>
+                                <span style={{ fontSize: 13, color: 'var(--primary)', marginLeft: 8 }}>{selectedTables.length === allTables.length ? 'Tất cả các bảng' : `${selectedTables.length} bảng`}</span>
+                            </div>
+                            <button className="btn" style={{ padding: '4px 12px', fontSize: 12 }} onClick={() => setShowTableModal(true)}>⚙️ Cấu hình bảng</button>
+                        </div>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                            {/* Export */}
+                            <div style={{ padding: 12, background: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)' }}>
+                                <p style={{ margin: '0 0 8px 0', fontSize: 14, fontWeight: 600 }}>Xuất dữ liệu (Backup)</p>
+                                <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+                                    <select className="form-input" value={exportFormat} onChange={e => setExportFormat(e.target.value)} style={{ padding: '6px 10px', fontSize: 13, width: 90 }}>
+                                        <option value="json">JSON</option>
+                                        <option value="csv">CSV</option>
+                                    </select>
+                                    <label style={{ fontSize: 13, display: 'flex', alignItems: 'center', gap: 4 }}>
+                                        <input type="checkbox" checked={exportEncrypted} onChange={e => setExportEncrypted(e.target.checked)} />
+                                        Mã hóa nội dung
+                                    </label>
+                                </div>
+                                <button className="btn btn-primary" onClick={handleExportDb} disabled={isProcessingDb} style={{ width: '100%', padding: '6px 0', fontSize: 13 }}>
+                                    {isProcessingDb ? '⏳ Đang xử lý...' : '⬇️ Xuất ra file .zip'}
+                                </button>
+                            </div>
+
+                            {/* Import */}
+                            <div style={{ padding: 12, background: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)' }}>
+                                <p style={{ margin: '0 0 8px 0', fontSize: 14, fontWeight: 600 }}>Nhập dữ liệu (Restore)</p>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 8 }}>
+                                    <input id="import-file-input" type="file" accept=".zip" onChange={e => setImportFile(e.target.files[0])} style={{ fontSize: 12, width: '100%' }} />
+                                    <label style={{ fontSize: 13, display: 'flex', alignItems: 'center', gap: 4 }}>
+                                        <input type="checkbox" checked={importEncrypted} onChange={e => setImportEncrypted(e.target.checked)} />
+                                        Giải mã (nếu file mã hóa)
+                                    </label>
+                                </div>
+                                <button className="btn" onClick={handleImportDb} disabled={isProcessingDb || !importFile} style={{ width: '100%', padding: '6px 0', fontSize: 13, background: 'var(--accent-error)', color: '#fff', border: 'none' }}>
+                                    {isProcessingDb ? '⏳ Đang xử lý...' : '⬆️ Phục hồi từ file .zip'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style={{ alignSelf: 'flex-start' }}>
+                        <button className="btn btn-primary" onClick={() => setShowCreate(!showCreate)}>
+                            {showCreate ? '✕ Đóng' : '➕ Tạo tài khoản mới'}
+                        </button>
+                    </div>
                 </div>
 
                 {/* Create form */}
@@ -409,6 +534,47 @@ export default function AccountsPage({ addToast }) {
                             <div style={{ marginTop: 16, display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
                                 <button className="btn" onClick={() => setEditModal(null)}>Hủy</button>
                                 <button className="btn btn-primary" onClick={handleEditUser}>Lưu thay đổi</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* DB Table Config Modal */}
+            {showTableModal && (
+                <div className="modal-overlay open" onClick={e => e.target === e.currentTarget && setShowTableModal(false)}>
+                    <div className="modal" style={{ width: 500, maxHeight: '80vh', display: 'flex', flexDirection: 'column' }}>
+                        <div className="modal-header">
+                            <h2>⚙️ Chọn bảng dữ liệu</h2>
+                            <button className="detail-close" onClick={() => setShowTableModal(false)}>✕</button>
+                        </div>
+                        <div className="modal-body" style={{ overflowY: 'auto' }}>
+                            <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 16 }}>
+                                Chọn các bảng bạn muốn sao lưu (Export) hoặc phục hồi đè lên (Import).
+                            </p>
+                            
+                            <div style={{ marginBottom: 16, display: 'flex', gap: 12 }}>
+                                <button className="btn" style={{ fontSize: 12, padding: '4px 12px' }} onClick={() => setSelectedTables(allTables)}>Chọn tất cả</button>
+                                <button className="btn" style={{ fontSize: 12, padding: '4px 12px' }} onClick={() => setSelectedTables([])}>Bỏ chọn tất cả</button>
+                            </div>
+
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 16px' }}>
+                                {allTables.map(t => (
+                                    <label key={t} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, cursor: 'pointer', padding: '6px 8px', borderRadius: 4, background: selectedTables.includes(t) ? 'var(--bg-hover)' : 'transparent' }}>
+                                        <input 
+                                            type="checkbox" 
+                                            checked={selectedTables.includes(t)}
+                                            onChange={(e) => {
+                                                if (e.target.checked) setSelectedTables([...selectedTables, t]);
+                                                else setSelectedTables(selectedTables.filter(x => x !== t));
+                                            }}
+                                        />
+                                        {t}
+                                    </label>
+                                ))}
+                            </div>
+
+                            <div style={{ marginTop: 24, display: 'flex', justifyContent: 'flex-end' }}>
+                                <button className="btn btn-primary" onClick={() => setShowTableModal(false)}>Xong</button>
                             </div>
                         </div>
                     </div>

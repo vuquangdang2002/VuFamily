@@ -130,4 +130,12 @@ router.post('/calls/:id/signals', authenticate, CallController.addSignal);
 router.post('/calls/:id/candidates', authenticate, CallController.addCandidate);
 router.get('/calls/:id/candidates', authenticate, CallController.getCandidates);
 
+// ─── Database Operations (Backup / Restore) ───
+const DbController = require('../controllers/dbController');
+const multer = require('multer');
+const upload = multer({ storage: multer.memoryStorage() });
+
+router.get('/database/export', authenticate, requireAdmin, DbController.exportData);
+router.post('/database/import', authenticate, requireAdmin, upload.single('file'), DbController.importData);
+
 module.exports = router;
