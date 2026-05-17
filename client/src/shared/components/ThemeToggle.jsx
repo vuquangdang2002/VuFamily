@@ -45,21 +45,12 @@ export function useTheme() {
 
         // Animate a circular clip-path expanding from click point
         transition.ready.then(() => {
-            const isDark = nextTheme === 'dark'
-                || (nextTheme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-
-            const clipExpand = [
-                `circle(0px at ${x}px ${y}px)`,
-                `circle(${radius}px at ${x}px ${y}px)`,
-            ];
-            const clipCollapse = [
-                `circle(${radius}px at ${x}px ${y}px)`,
-                `circle(0px at ${x}px ${y}px)`,
-            ];
-
-            // Animate the NEW snapshot (expanding from click)
+            // Keyframes phải là [{clipPath:...}], không phải strings thuần
             document.documentElement.animate(
-                isDark ? clipExpand : clipExpand,
+                [
+                    { clipPath: `circle(0px at ${x}px ${y}px)` },
+                    { clipPath: `circle(${radius}px at ${x}px ${y}px)` },
+                ],
                 {
                     duration: 450,
                     easing: 'cubic-bezier(0.4, 0, 0.2, 1)',

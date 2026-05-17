@@ -10,7 +10,7 @@ const path = require('path');
 const config = require('./config');
 const apiRoutes = require('./routes/api');
 const { errorHandler, notFound } = require('./middleware/errorHandler');
-const { initCallSignaling } = require('./utils/callSignaling');
+const { initRealtimeHub } = require('./utils/realtimeHub');
 
 const app = express();
 
@@ -39,8 +39,8 @@ app.use(errorHandler);
 // Wrap Express in native http.Server so Socket.io can share the same port
 const httpServer = http.createServer(app);
 
-// Attach Socket.io WebRTC Signaling (path: /call-signal)
-initCallSignaling(httpServer);
+// Attach Socket.io Realtime Hub (Chat + Call signaling) — path: /hub
+initRealtimeHub(httpServer);
 
 // Start server only if running directly
 if (require.main === module) {
@@ -50,7 +50,7 @@ if (require.main === module) {
         console.log('    GIA PHẢ - Family Genealogy Server');
         console.log('    ═══════════════════════════════════════');
         console.log(`    🌐 http://localhost:${config.port}`);
-        console.log(`    📞 WebRTC Signaling: ws://localhost:${config.port}/call-signal`);
+        console.log(`    ⚡ Realtime Hub (Chat+Call): ws://localhost:${config.port}/hub`);
         console.log(`    📁 Database: ${config.dbPath || 'Supabase PostgreSQL'}`);
         console.log(`    🔧 Environment: ${config.env}`);
         console.log('    ═══════════════════════════════════════');

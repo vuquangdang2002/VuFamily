@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { io } from 'socket.io-client';
 import { APP_URL } from '../../config';
+import './VoiceCall.css';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const getToken = () => { try { return JSON.parse(localStorage.getItem('vuFamilyAuth') || '{}').token || ''; } catch { return ''; } };
@@ -18,11 +19,79 @@ const VIDEO_CONSTRAINTS = {
     frameRate: { ideal: 30 }, facingMode: 'user',
 };
 
-/** Tăng bitrate trong SDP để chất lượng cao hơn */
+/** Tăng bitrate trong SDP */
 function applyHighBitrate(sdp) {
     return sdp
         .replace(/a=fmtp:111 /g, 'a=fmtp:111 maxaveragebitrate=128000;stereo=1;useinbandfec=1;')
         .replace(/(m=video.*\r\n)/g, '$1b=AS:4000\r\n');
+}
+
+// ─── Network Quality ──────────────────────────────────────────────────────────
+// { level: 'good'|'medium'|'poor'|'unknown', rtt: number, loss: number }
+function classifyQuality(rttMs, lossPercent) {
+    if (rttMs === null) return { level: 'unknown', rtt: null, loss: null };
+    if (rttMs <= 100 && lossPercent <= 2)  return { level: 'good',    rtt: rttMs, loss: lossPercent };
+    if (rttMs <= 250 && lossPercent <= 8)  return { level: 'medium',  rtt: rttMs, loss: lossPercent };
+    return                                        { level: 'poor',    rtt: rttMs, loss: lossPercent };
+}
+
+/** Đo RTT + packet loss từ RTCPeerConnection.getStats() */
+async function measurePeerQuality(pc) {
+    if (!pc || pc.connectionState === 'closed') return { level: 'unknown', rtt: null, loss: null };
+    try {
+        const stats = await pc.getStats();
+        let rtt = null;
+        let sent = 0, lost = 0;
+        stats.forEach(s => {
+            // candidatePair cho RTT
+            if (s.type === 'candidate-pair' && s.state === 'succeeded' && s.currentRoundTripTime != null) {
+                rtt = Math.round(s.currentRoundTripTime * 1000); // seconds → ms
+            }
+            // outbound-rtp cho packet loss
+            if (s.type === 'outbound-rtp') {
+                sent += s.packetsSent || 0;
+            }
+            if (s.type === 'remote-inbound-rtp') {
+                lost += s.packetsLost || 0;
+                if (s.roundTripTime != null && rtt === null) {
+                    rtt = Math.round(s.roundTripTime * 1000);
+                }
+            }
+        });
+        const lossPercent = sent > 0 ? Math.round((lost / (sent + lost)) * 100) : 0;
+        return classifyQuality(rtt, lossPercent);
+    } catch {
+        return { level: 'unknown', rtt: null, loss: null };
+    }
+}
+
+// ─── SignalBars component ─────────────────────────────────────────────────────
+const QUALITY_META = {
+    good:    { bars: 3, color: '#10b981', label: 'Tốt' },
+    medium:  { bars: 2, color: '#f59e0b', label: 'TB' },
+    poor:    { bars: 1, color: '#ef4444', label: 'Yếu' },
+    unknown: { bars: 0, color: '#64748b', label: '?' },
+};
+
+function SignalBars({ quality }) {
+    const meta = QUALITY_META[quality?.level || 'unknown'];
+    return (
+        <div title={quality?.rtt != null ? `RTT: ${quality.rtt}ms · Loss: ${quality.loss}%` : 'Đang đo...'}
+             style={{ display: 'flex', alignItems: 'flex-end', gap: 2, cursor: 'default' }}>
+            {[1, 2, 3].map(i => (
+                <div key={i} style={{
+                    width: 4,
+                    height: 4 + i * 4,
+                    borderRadius: 2,
+                    background: i <= meta.bars ? meta.color : 'rgba(255,255,255,0.2)',
+                    transition: 'background 0.4s',
+                }} />
+            ))}
+            <span style={{ fontSize: 10, color: meta.color, marginLeft: 3, lineHeight: 1 }}>
+                {quality?.rtt != null ? `${quality.rtt}ms` : meta.label}
+            </span>
+        </div>
+    );
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -46,7 +115,10 @@ function VideoCell({ stream, muted = false, label, isLocal = false, noVideo = fa
                 ? <video ref={ref} autoPlay playsInline muted={isLocal || muted} className="vc-video" />
                 : <div className="vc-no-video"><div style={{fontSize:40}}>{isLocal ? '🎤' : '👤'}</div><small>{isLocal ? 'Audio only' : 'Chỉ nghe tiếng'}</small></div>
             }
-            <span className="vc-cell-label">{label}</span>
+            <div className="vc-cell-footer">
+                <span className="vc-cell-label" style={{position:'static',background:'none',padding:0}}>{label}</span>
+                {quality && <SignalBars quality={quality} />}
+            </div>
         </div>
     );
 }
@@ -71,6 +143,8 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
     const [muted, setMuted] = useState(false);
     const [camOff, setCamOff] = useState(false);
     const [spkOff, setSpkOff] = useState(false);
+    // { [userId]: { level, rtt, loss } }
+    const [netQuality, setNetQuality] = useState({});
 
     const socketRef = useRef(null);
     const pcsRef = useRef({});               // { userId: RTCPeerConnection }
@@ -80,6 +154,7 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
     const processedRef = useRef(new Set());
     const queueRef = useRef({});             // ICE candidate queue before remote desc
     const timerRef = useRef(null);
+    const qualityTimerRef = useRef(null);    // Network quality polling
 
     useEffect(() => { phaseRef.current = phase; }, [phase]);
     useEffect(() => { metaRef.current = callMeta; }, [callMeta]);
@@ -88,7 +163,7 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
     useEffect(() => {
         if (!user?.token) return;
         const socket = io(APP_URL, {
-            path: '/call-signal',
+            path: '/hub',          // ✔️ Unified realtime hub (Chat + Call)
             auth: { token: getToken() },
             transports: ['websocket', 'polling'],
             reconnectionDelay: 1000,
@@ -219,6 +294,25 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
         return () => clearInterval(timerRef.current);
     }, [phase]);
 
+    // ── Network quality polling (every 3s when CONNECTED) ────────────────
+    useEffect(() => {
+        if (phase !== 'CONNECTED') {
+            clearInterval(qualityTimerRef.current);
+            return;
+        }
+        const poll = async () => {
+            const entries = Object.entries(pcsRef.current);
+            if (entries.length === 0) return;
+            const results = await Promise.all(
+                entries.map(async ([uid, pc]) => [uid, await measurePeerQuality(pc)])
+            );
+            setNetQuality(Object.fromEntries(results));
+        };
+        poll(); // immediate first measure
+        qualityTimerRef.current = setInterval(poll, 3000);
+        return () => clearInterval(qualityTimerRef.current);
+    }, [phase]);
+
     // ── Cleanup ───────────────────────────────────────────────────────────────
     const cleanup = useCallback(() => {
         setPhase('IDLE'); setCallMeta(null);
@@ -228,7 +322,9 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
         processedRef.current.clear();
         queueRef.current = {};
         clearInterval(timerRef.current);
+        clearInterval(qualityTimerRef.current);
         setDuration(0); setMuted(false); setCamOff(false); setSpkOff(false);
+        setNetQuality({});
         onClearActiveCallRoom?.();
     }, [stopMedia, onClearActiveCallRoom]);
 
@@ -316,7 +412,8 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
                     <div className="vc-grid" style={{ gridTemplateColumns: remoteIds.length === 0 ? '1fr' : '1fr 1fr' }}>
                         <VideoCell stream={localStream} muted label={`Bạn${muted ? ' 🔇' : ''}`} isLocal noVideo={callType === 'voice' || camOff} />
                         {remoteIds.map(uid => (
-                            <VideoCell key={uid} stream={remoteStreams[uid]} muted={spkOff} label="Thành viên" />
+                            <VideoCell key={uid} stream={remoteStreams[uid]} muted={spkOff}
+                                label="Thành viên" quality={netQuality[uid]} />
                         ))}
                     </div>
                 ) : (
@@ -348,40 +445,8 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
                     )}
                 </div>
             </div>
-            <style>{CSS}</style>
         </div>
     );
 }
 
-const CSS = `
-.vc-overlay{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.65);backdrop-filter:blur(6px);animation:vcFade .2s ease}
-.vc-card{width:380px;max-width:96vw;background:linear-gradient(160deg,#1e293b,#0f172a);border-radius:24px;overflow:hidden;box-shadow:0 32px 64px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.06);display:flex;flex-direction:column;animation:vcSlide .3s cubic-bezier(.34,1.56,.64,1)}
-.vc-head{padding:18px 20px 10px;display:flex;justify-content:space-between;align-items:center;font-size:14px;font-weight:600;color:#94a3b8}
-.vc-timer{color:#34d399;font-size:18px;font-variant-numeric:tabular-nums}
-.vc-grid{display:grid;gap:8px;padding:8px;min-height:240px}
-.vc-cell{position:relative;min-height:180px;background:#0f172a;border-radius:16px;overflow:hidden;display:flex;align-items:center;justify-content:center}
-.vc-video{width:100%;height:100%;object-fit:cover}
-.vc-no-video{display:flex;flex-direction:column;align-items:center;gap:8px;color:#94a3b8}
-.vc-cell-label{position:absolute;bottom:10px;left:10px;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);padding:3px 10px;border-radius:12px;font-size:12px;color:#fff;z-index:2}
-.vc-avatar-area{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px}
-.vc-ring{width:120px;height:120px;border-radius:50%;border:3px solid #334155;margin-bottom:20px;overflow:hidden}
-.vc-ring img{width:100%;height:100%;object-fit:cover}
-.vc-ring.pulse{animation:ring 1.4s infinite}
-.vc-name{font-size:22px;font-weight:700;color:#fff;margin:0 0 8px}
-.vc-status{font-size:14px;color:#64748b;margin:0}
-.vc-controls{padding:20px 16px 28px;display:flex;justify-content:center;gap:28px;background:rgba(15,23,42,.7);border-top:1px solid rgba(255,255,255,.05)}
-.vc-ctrl-item{display:flex;flex-direction:column;align-items:center;gap:8px}
-.vc-ctrl-item span{font-size:11px;color:#64748b}
-.vc-btn{width:56px;height:56px;border-radius:50%;border:none;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.08);color:#fff;transition:transform .15s,background .15s}
-.vc-btn:hover{transform:scale(1.08)}
-.vc-btn.active{background:#fff;color:#0f172a}
-.vc-btn.accept{background:#10b981;box-shadow:0 6px 20px rgba(16,185,129,.4)}
-.vc-btn.reject{background:#e11d48;box-shadow:0 6px 20px rgba(225,29,72,.4)}
-.vc-btn.rot135{transform:rotate(135deg)}
-.vc-btn.rot135:hover{transform:rotate(135deg) scale(1.08)}
-.vc-btn.pulse-btn{animation:ring 1.2s infinite}
-@keyframes vcFade{from{opacity:0}to{opacity:1}}
-@keyframes vcSlide{from{opacity:0;transform:translateY(20px) scale(.96)}to{opacity:1;transform:none}}
-@keyframes ring{0%,100%{box-shadow:0 0 0 0 rgba(16,185,129,.6)}50%{box-shadow:0 0 0 14px rgba(16,185,129,0)}}
-@media(max-width:480px){.vc-card{width:100vw;height:100dvh;border-radius:0}}
-`;
+
