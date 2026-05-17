@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { myLog, myError } from '../../shared/utils/logger';
 import { API_BASE } from '../../shared/services/api';
 import {
     cacheRooms, getCachedRooms,
     cacheMessages, getCachedMessages, getLatestMessageTime, cacheSingleMessage
 } from '../../shared/services/chatCache';
+import { myLog, myError } from '../../shared/utils/logger';
 import './Chat.css';
 
 function getToken() {
@@ -36,7 +38,7 @@ export default function ChatPage({ user, addToast, onStartCall }) {
      * Cập nhật IndexedDB để dùng cho lần mở app tiếp theo.
      */
     const fetchRooms = async () => {
-        console.log('[ChatPage - fetchRooms] Bắt đầu đồng bộ danh sách phòng chat từ Server...');
+        myLog('CHAT', '[ChatPage - fetchRooms] Bắt đầu đồng bộ danh sách phòng chat từ Server...');
         try {
             const res = await fetch(`${API_BASE}/chats`, { headers: { 'x-auth-token': getToken() } });
             const json = await res.json();
@@ -44,11 +46,11 @@ export default function ChatPage({ user, addToast, onStartCall }) {
                 const serverRooms = json.data || [];
                 setRooms(serverRooms);
                 // Lưu vào IndexedDB cache (chạy ngầm)
-                cacheRooms(serverRooms).catch((e) => { console.error("[ChatPage] Lỗi lưu Cache Phòng Chat:", e); });
-                console.log(`[ChatPage - fetchRooms] Đã đồng bộ thành công ${serverRooms.length} phòng chat.`);
+                cacheRooms(serverRooms).catch((e) => { myError('CACHE', "[ChatPage] Lỗi lưu Cache Phòng Chat:", e); });
+                myLog('CHAT', `[ChatPage - fetchRooms] Đã đồng bộ thành công ${serverRooms.length} phòng chat.`);
             }
         } catch (e) {
-            console.warn('[ChatPage - fetchRooms] Đang Offline hoặc Mạng yếu, sử dụng danh sách phòng từ Cache.', e);
+            myLog('CHAT', '[ChatPage - fetchRooms] Đang Offline hoặc Mạng yếu, sử dụng danh sách phòng từ Cache.', e);
             // Offline: keep using cached rooms
         } finally {
             setLoadingRooms(false);
@@ -69,7 +71,7 @@ export default function ChatPage({ user, addToast, onStartCall }) {
      * Tải toàn bộ tin nhắn của một phòng (Dùng khi mới chuyển phòng).
      */
     const fetchMessagesFull = async (roomId) => {
-        console.log(`[ChatPage - fetchMessagesFull] Đang tải toàn bộ lịch sử tin nhắn cho Phòng ID: ${roomId}`);
+        myLog('CHAT', `[ChatPage - fetchMessagesFull] Đang tải toàn bộ lịch sử tin nhắn cho Phòng ID: ${roomId}`);
         try {
             const res = await fetch(`${API_BASE}/chats/${roomId}/messages`, { headers: { 'x-auth-token': getToken() } });
             const json = await res.json();
@@ -78,8 +80,8 @@ export default function ChatPage({ user, addToast, onStartCall }) {
                 setMessages(serverMsgs);
 
                 // Cập nhật Cache cục bộ
-                cacheMessages(roomId, serverMsgs).catch((e) => { console.error("[ChatPage] Lỗi lưu Cache Tin Nhắn:", e); });
-                console.log(`[ChatPage - fetchMessagesFull] Tải thành công ${serverMsgs.length} tin nhắn.`);
+                cacheMessages(roomId, serverMsgs).catch((e) => { myError('CACHE', "[ChatPage] Lỗi lưu Cache Tin Nhắn:", e); });
+                myLog('CHAT', `[ChatPage - fetchMessagesFull] Tải thành công ${serverMsgs.length} tin nhắn.`);
 
                 // Ghi nhớ mốc thời gian của tin nhắn cuối cùng để phục vụ cho Incremental Polling
                 if (serverMsgs.length > 0) {
@@ -91,7 +93,7 @@ export default function ChatPage({ user, addToast, onStartCall }) {
                 }
             }
         } catch (e) {
-            console.error(e);
+            myError('CHAT', '[fetchMessagesFull]', e);
             // Offline: keep cached messages
         }
     };
@@ -112,7 +114,7 @@ export default function ChatPage({ user, addToast, onStartCall }) {
             const json = await res.json();
             if (json.success && json.data && json.data.length > 0) {
                 const newMsgs = json.data;
-                console.log(`[ChatPage - fetchMessagesIncremental] Tìm thấy ${newMsgs.length} tin nhắn mới.`);
+                myLog('CHAT', `[ChatPage - fetchMessagesIncremental] Tìm thấy ${newMsgs.length} tin nhắn mới.`);
                 setMessages(prev => {
                     // Loại bỏ trùng lặp (Deduplicate) dựa trên ID tin nhắn
                     const existingIds = new Set(prev.map(m => m.id));
@@ -121,7 +123,7 @@ export default function ChatPage({ user, addToast, onStartCall }) {
                     const merged = [...prev, ...unique];
 
                     // Lưu tin nhắn mới vào Cache
-                    cacheMessages(roomId, merged).catch((e) => { console.error("[ChatPage] Lỗi lưu Cache Tin Nhắn mới:", e); });
+                    cacheMessages(roomId, merged).catch((e) => { myError('CACHE', "[ChatPage] Lỗi lưu Cache Tin Nhắn mới:", e); });
                     return merged;
                 });
                 latestMsgTimeRef.current = newMsgs[newMsgs.length - 1].created_at;
@@ -141,7 +143,7 @@ export default function ChatPage({ user, addToast, onStartCall }) {
                 setLoadingRooms(false);
                 setIsCacheLoaded(true);
             }
-        }).catch((e) => { console.error("ChatPage Background Sync Error:", e); });
+        }).catch((e) => { myError('CACHE', "ChatPage Background Sync Error:", e); });
 
         // Step 2: Background sync from server
         fetchRooms();
@@ -170,7 +172,7 @@ export default function ChatPage({ user, addToast, onStartCall }) {
                 scrollToBottom();
                 isFirstLoadRef.current = false;
             }
-        }).catch((e) => { console.error("ChatPage Background Sync Error:", e); });
+        }).catch((e) => { myError('CHAT', "ChatPage Background Sync Error:", e); });
 
         // Step 2: Full fetch from server (to get latest)
         fetchMessagesFull(activeRoomId);
@@ -206,7 +208,7 @@ export default function ChatPage({ user, addToast, onStartCall }) {
             if (json.success) {
                 // Immediately append + cache
                 setMessages(prev => [...prev, json.data]);
-                cacheSingleMessage(activeRoomId, json.data).catch((e) => { console.error("ChatPage Background Sync Error:", e); });
+                cacheSingleMessage(activeRoomId, json.data).catch((e) => { myError('CACHE', "ChatPage Background Sync Error:", e); });
                 latestMsgTimeRef.current = json.data.created_at;
                 scrollToBottom();
                 fetchRooms(); // to update read/last msg time
@@ -323,107 +325,7 @@ export default function ChatPage({ user, addToast, onStartCall }) {
             <div className={`chat-layout ${activeRoomId ? 'room-active' : ''}`}>
                 {/* INBOX PANEL */}
                 <div className="chat-inbox-panel">
-                    <div style={{ padding: '16px', borderBottom: '1px solid var(--border-subtle)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <h2 style={{ fontSize: 18, margin: 0 }}>💬 Tin nhắn</h2>
-                        <button className="btn btn-primary" style={{ padding: '6px 12px', fontSize: 13 }} onClick={() => setShowNewChat(true)}>
-                            + Chat mới
-                        </button>
-                    </div>
-
-                    <div style={{ flex: 1, overflowY: 'auto' }}>
-                        {loadingRooms ? <div style={{ padding: 16, textAlign: 'center', color: 'var(--text-muted)' }}>Đang tải...</div> : null}
-                        {!loadingRooms && rooms.length === 0 && (
-                            <div style={{ padding: 32, textAlign: 'center', color: 'var(--text-muted)' }}>
-                                Chưa có cuộc trò chuyện nào.<br /><br />
-                                <button className="btn" onClick={() => setShowNewChat(true)}>Bắt đầu nhắn tin</button>
-                            </div>
-                        )}
-                        {rooms.map(room => (
-                            <div
-                                key={room.id}
-                                onClick={() => setActiveRoomId(room.id)}
-                                style={{
-                                    padding: '12px 16px', borderBottom: '1px solid var(--border-subtle)', cursor: 'pointer',
-                                    background: activeRoomId === room.id ? 'var(--bg-hover)' : 'transparent',
-                                    display: 'flex', alignItems: 'center', gap: 12
-                                }}
-                            >
-                                <div style={{ position: 'relative', width: 40, height: 40, minWidth: 40, minHeight: 40, flexShrink: 0 }}>
-                                    {room.avatar ? (
-                                        <img src={room.avatar} alt="avatar" style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover' }} />
-                                    ) : (
-                                        <div style={{ width: 40, height: 40, borderRadius: '50%', background: room.type === 'group' ? 'linear-gradient(135deg, #10b981, #047857)' : 'linear-gradient(135deg, var(--gold), var(--gold-dark))', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 'bold' }}>
-                                            {room.type === 'group' ? '👥' : (room.display_name?.substring(0, 2).toUpperCase() || 'U')}
-                                        </div>
-                                    )}
-                                    {room.type === 'direct' && room.is_online && (
-                                        <span style={{ position: 'absolute', bottom: 1, right: 1, width: 14, height: 14, borderRadius: '50%', background: '#10b981', border: '2.5px solid var(--bg-secondary)', zIndex: 1 }}></span>
-                                    )}
-                                </div>
-                                <div>
-                                    <div style={{ fontWeight: 600, fontSize: 14 }}>{room.display_name || (room.type === 'group' ? 'Nhóm không tên' : 'Người dùng')}</div>
-                                    <div style={{ fontSize: 12, color: 'var(--text-muted)', display: 'flex', gap: 4 }}>
-                                        {room.type === 'group' ? `${room.members?.length || 0} thành viên` : (room.is_online ? 'Hoạt động' : 'Ngoại tuyến')}
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-
-                {/* MESSAGES PANEL */}
-                <div className="chat-messages-panel">
-                    {activeRoomId ? (
-                        <>
-                            {/* Chat header */}
-                            <div style={{ padding: '16px 24px', borderBottom: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', gap: 12, background: 'var(--bg-secondary)' }}>
-                                <button className="btn" style={{ padding: '4px 8px', borderRadius: '50%', border: 'none', background: 'transparent', fontSize: '20px' }} onClick={() => setActiveRoomId(null)}>
-                                    ‹
-                                </button>
-                                <div style={{ width: 36, height: 36, minWidth: 36, minHeight: 36, flexShrink: 0, borderRadius: '50%', background: activeRoom?.type === 'group' ? 'linear-gradient(135deg, #10b981, #047857)' : 'linear-gradient(135deg, var(--gold), var(--gold-dark))', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 'bold' }}>
-                                    {activeRoom?.avatar ? <img src={activeRoom.avatar} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} /> : (activeRoom?.type === 'group' ? '👥' : activeRoom?.display_name?.substring(0, 2).toUpperCase())}
-                                </div>
-                                <div>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                                        <h3 style={{ margin: 0, fontSize: 16 }}>{activeRoom?.display_name || 'Nhóm'}</h3>
-                                        {activeRoom?.type === 'group' && (
-                                            <button className="btn" title="Đổi tên nhóm" style={{ padding: '2px 6px', fontSize: 12, background: 'transparent', border: '1px solid var(--border-subtle)', borderRadius: 4 }} onClick={handleRenameGroup}>✏️</button>
-                                        )}
-                                    </div>
-                                    {activeRoom?.type === 'direct' && (
-                                        <span style={{ fontSize: 12, color: activeRoom.is_online ? '#10b981' : 'var(--text-muted)' }}>
-                                            {activeRoom.is_online ? '🟢 Đang trực tuyến' : '⚪ Ngoại tuyến'}
-                                        </span>
-                                    )}
-                                </div>
-                                <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
-                                    <button className="btn" title="Gọi thoại" style={{ padding: '6px 12px' }} onClick={() => onStartCall(activeRoom)}>📞 Gọi</button>
-                                    <button className="btn btn-icon" title="Chi tiết nhóm" style={{ fontSize: 18 }} onClick={() => setShowGroupInfo(true)}>ℹ️</button>
-                                </div>
-                            </div>
-
-                            {/* Messages Container */}
-                            <div style={{ flex: 1, overflowY: 'auto', padding: '24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
-                                {messages.length === 0 && (
-                                    <div style={{ margin: 'auto', color: 'var(--text-muted)' }}>Hãy là người nhắn tin đầu tiên!</div>
-                                )}
-                                {messages.map((msg, idx) => {
-                                    const isMe = msg.sender_id === user.id;
-                                    const sender = msg.users || {};
-                                    return (
-                                        <div key={msg.id} style={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start' }}>
-                                            {!isMe && activeRoom?.type === 'group' && (
-                                                <span style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4, marginLeft: 44 }}>
-                                                    {sender.display_name || sender.username}
-                                                </span>
-                                            )}
-                                            <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end', flexDirection: isMe ? 'row-reverse' : 'row' }}>
-                                                {!isMe && (
-                                                    <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--gold)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12 }}>
-                                                        {sender.avatar ? <img src={sender.avatar} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} /> : sender.display_name?.substring(0, 2).toUpperCase()}
-                                                    </div>
-                                                )}
-                                                <div style={{
+                    <div style={{
                                                     background: isMe ? 'var(--primary)' : 'var(--bg-secondary)',
                                                     color: isMe ? '#fff' : 'var(--text-primary)',
                                                     padding: '10px 14px', borderRadius: 16,

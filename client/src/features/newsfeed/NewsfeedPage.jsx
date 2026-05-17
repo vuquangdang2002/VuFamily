@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { myLog, myError } from '../../shared/utils/logger';
 import { localApi } from '../../shared/services/api';
 
 // Import brand icons
@@ -83,7 +84,7 @@ export default function NewsfeedPage({ user, isAdmin, addToast, members = [], on
             const res = await fetch('/api/posts');
             const json = await res.json();
             if (json.success) setPosts(json.data || []);
-        } catch (e) { console.error('Error fetching posts:', e); }
+        } catch (e) { myError('NEWSFEED', 'Error fetching posts:', e); }
         setLoading(false);
     };
 
@@ -168,7 +169,7 @@ export default function NewsfeedPage({ user, isAdmin, addToast, members = [], on
                 headers: { 'Content-Type': 'application/json', 'x-auth-token': getToken() },
                 body: JSON.stringify({ emoji })
             });
-        } catch (e) { console.error(e); }
+        } catch (e) { myError('NEWSFEED', e); }
     };
 
     // ─── Comments ───
@@ -184,7 +185,7 @@ export default function NewsfeedPage({ user, isAdmin, addToast, members = [], on
                 const res = await fetch(`/api/posts/${postId}/comments`);
                 const json = await res.json();
                 if (json.success) setComments(prev => ({ ...prev, [postId]: json.data || [] }));
-            } catch (e) { console.error(e); }
+            } catch (e) { myError('NEWSFEED', e); }
         }
     };
 

@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { myLog, myError } from '../../shared/utils/logger';
 import { Solar, Lunar } from '../../shared/utils/lunar.js';
 import { ganZhiToViet, lunarDayLabel } from '../../shared/utils/vietLunar.js';
 import './Calendar.css';
@@ -102,7 +103,7 @@ function getUpcomingAnniversaries(members, daysAhead = 30) {
                 });
             }
         } catch (e) {
-            console.error(e);
+            myError('CALENDAR', e);
         }
     });
     results.sort((a, b) => a.daysUntil - b.daysUntil);
@@ -128,7 +129,7 @@ function getEventsForDate(members, year, month, day) {
                     if (annSolar.getMonth() === month && annSolar.getDay() === day) {
                         events.push({ type: 'anniversary', member: m });
                     }
-                } catch (e) { console.error("CalendarPage Error:", e); }
+                } catch (e) { myError('CALENDAR', "CalendarPage Error:", e); }
             }
         }
     });
@@ -205,7 +206,7 @@ export default function CalendarPage({ members }) {
                                         const s = Solar.fromYmd(viewYear, viewMonth, d);
                                         const l = s.getLunar();
                                         lunarLabel = lunarDayLabel(l.getDay(), l.getMonth());
-                                    } catch (e) { console.error("CalendarPage Error:", e); }
+                                    } catch (e) { myError('CALENDAR', "CalendarPage Error:", e); }
 
                                     return (
                                         <div key={`d-${d}`}

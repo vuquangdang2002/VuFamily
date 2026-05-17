@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { myLog, myError } from '../../shared/utils/logger';
 import { io } from 'socket.io-client';
 import { HUB_URL } from '../../config';
 import './VoiceCall.css';
@@ -120,7 +121,7 @@ function useAudioLevel(stream) {
             };
             checkLevel();
         } catch (e) {
-            console.error('Lỗi đo âm lượng (AudioContext):', e);
+            myError('CALL', 'Lỗi đo âm lượng (AudioContext):', e);
         }
         return () => {
             if (rafId) cancelAnimationFrame(rafId);
@@ -264,25 +265,25 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
 
         socket.on('connect', () => {
             setHubConnected(true);
-            console.log(`[VoiceCall] ✅ Hub connected (${socket.io.engine.transport.name})`);
+            myLog('CALL', `[VoiceCall] ✅ Hub connected (${socket.io.engine.transport.name})`);
         });
 
         socket.on('disconnect', () => setHubConnected(false));
 
         socket.on('connect_error', (err) => {
-            console.warn('[VoiceCall] Hub connect error:', err.message);
+            myError('CALL', '[VoiceCall] Hub connect error:', err.message);
         });
 
         socket.on('reconnect_failed', () => {
             // Im lặng sau khi thử hết — không spam thêm
-            console.warn('[VoiceCall] Hub offline. Tính năng gọi điện sẽ không hoạt động.');
+            myError('CALL', '[VoiceCall] Hub offline. Tính năng gọi điện sẽ không hoạt động.');
             addToast?.('⚠️ Không kết nối được Hub — tính năng gọi điện tạm thời không khả dụng', 'warning');
         });
 
         socket.on('call:incoming', (data) => {
-            console.log('[VoiceCall] RECEIVED call:incoming', data, 'Current phase:', phaseRef.current);
+            myLog('CALL', '[VoiceCall] RECEIVED call:incoming', data, 'Current phase:', phaseRef.current);
             if (phaseRef.current !== 'IDLE') {
-                console.log('[VoiceCall] Ignored call:incoming because phase is not IDLE');
+                myLog('CALL', '[VoiceCall] Ignored call:incoming because phase is not IDLE');
                 return;
             }
             setCallMeta(data);
@@ -443,7 +444,7 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
         pc.onconnectionstatechange = () => {
             if (pc.connectionState === 'connected') setPhase(p => p !== 'CONNECTED' ? 'CONNECTED' : p);
             if (['disconnected', 'failed', 'closed'].includes(pc.connectionState)) {
-                console.log(`[VoiceCall] Peer ${targetId} ngắt kết nối: ${pc.connectionState}`);
+                myLog('CALL', `[VoiceCall] Peer ${targetId} ngắt kết nối: ${pc.connectionState}`);
                 setRemoteStreams(p => { const n = { ...p }; delete n[targetId]; return n; });
                 pc.close();
                 delete pcsRef.current[targetId];
@@ -490,7 +491,7 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
                 if (pc.remoteDescription) await pc.addIceCandidate(cand).catch(() => {});
                 else { if (!queueRef.current[fromId]) queueRef.current[fromId] = []; queueRef.current[fromId].push(cand); }
             }
-        } catch (e) { console.warn('[VoiceCall] handleSignal', signal.type, e.message); }
+        } catch (e) { myError('CALL', '[VoiceCall] handleSignal', signal.type, e.message); }
     }, [createPeer]);
 
     // ── Duration timer ────────────────────────────────────────────────────────
@@ -523,7 +524,7 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
 
     // ── Cleanup ───────────────────────────────────────────────────────────────
     const cleanup = useCallback(() => {
-        console.log('[VoiceCall] Thực hiện dọn dẹp (cleanup) và kết thúc cuộc gọi.');
+        myLog('CALL', '[VoiceCall] Thực hiện dọn dẹp (cleanup) và kết thúc cuộc gọi.');
         setPhase('IDLE'); setCallMeta(null);
         stopMedia();
         Object.values(pcsRef.current).forEach(pc => pc.close());

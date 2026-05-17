@@ -1,3 +1,5 @@
+import { myLog, myError } from '../utils/logger';
+
 /**
  * ChatCache — Messenger-style IndexedDB cache for chat history
  * 
@@ -90,7 +92,7 @@ export async function cacheRooms(rooms) {
 
         db.close();
     } catch (e) {
-        console.warn('[ChatCache] cacheRooms error:', e);
+        myError('CACHE', '[ChatCache] cacheRooms error:', e);
     }
 }
 
@@ -115,7 +117,7 @@ export async function getCachedRooms() {
         rooms.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
         return rooms;
     } catch (e) {
-        console.warn('[ChatCache] getCachedRooms error:', e);
+        myError('CACHE', '[ChatCache] getCachedRooms error:', e);
         return [];
     }
 }
@@ -168,7 +170,7 @@ export async function cacheMessages(roomId, messages) {
 
         db.close();
     } catch (e) {
-        console.warn('[ChatCache] cacheMessages error:', e);
+        myError('CACHE', '[ChatCache] cacheMessages error:', e);
     }
 }
 
@@ -194,7 +196,7 @@ export async function getCachedMessages(roomId) {
         messages.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
         return messages;
     } catch (e) {
-        console.warn('[ChatCache] getCachedMessages error:', e);
+        myError('CACHE', '[ChatCache] getCachedMessages error:', e);
         return [];
     }
 }
@@ -238,7 +240,7 @@ export async function cacheSingleMessage(roomId, message) {
 
         db.close();
     } catch (e) {
-        console.warn('[ChatCache] cacheSingleMessage error:', e);
+        myError('CACHE', '[ChatCache] cacheSingleMessage error:', e);
     }
 }
 
@@ -259,7 +261,7 @@ export async function setLastRoomsSync(timestamp) {
         });
         db.close();
     } catch (e) {
-        console.warn('[ChatCache] setLastRoomsSync error:', e);
+        myError('CACHE', '[ChatCache] setLastRoomsSync error:', e);
     }
 }
 
@@ -306,7 +308,7 @@ async function clearMessagesForRoom(db, roomId) {
             tx.onerror = () => reject(tx.error);
         });
     } catch (e) {
-        console.warn('[ChatCache] clearMessagesForRoom error:', e);
+        myError('CACHE', '[ChatCache] clearMessagesForRoom error:', e);
     }
 }
 
@@ -326,6 +328,6 @@ export async function clearAllCache() {
         });
         db.close();
     } catch (e) {
-        console.warn('[ChatCache] clearAllCache error:', e);
+        myError('CACHE', '[ChatCache] clearAllCache error:', e);
     }
 }

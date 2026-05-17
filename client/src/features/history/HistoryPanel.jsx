@@ -1,4 +1,5 @@
 import '../../shared/components/SidePanels.css';
+import { myLog, myError } from '../../shared/utils/logger';
 import { useState, useEffect } from 'react';
 import '../../shared/components/SidePanels.css';
 import { api, localApi, formatDate } from '../../shared/services/api';
@@ -32,10 +33,10 @@ function timeAgo(dateStr) {
 function DiffView({ before, after }) {
     let finalAfter = after;
     if (typeof finalAfter === 'string') {
-        try { finalAfter = JSON.parse(finalAfter); } catch (e) { console.warn("HistoryPanel JSON Parse Fallback:", e.message); }
+        try { finalAfter = JSON.parse(finalAfter); } catch (e) { myError('HISTORY', "HistoryPanel JSON Parse Fallback:", e.message); }
     }
     if (typeof finalAfter === 'string') {
-        try { finalAfter = JSON.parse(finalAfter); } catch (e) { console.warn("HistoryPanel JSON Parse Fallback:", e.message); }
+        try { finalAfter = JSON.parse(finalAfter); } catch (e) { myError('HISTORY', "HistoryPanel JSON Parse Fallback:", e.message); }
     }
 
     if (!before && !finalAfter) return null;

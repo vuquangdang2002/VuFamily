@@ -1,4 +1,5 @@
 import { analytics as firebaseAnalytics } from '../../firebase';
+import { myLog, myError } from '../utils/logger';
 import { logEvent, setUserId, setUserProperties } from 'firebase/analytics';
 
 /**
@@ -19,10 +20,10 @@ class AnalyticsService {
             name: 'ConsoleLogger',
             track: (eventName, params) => {
                 // Thường chỉ log ra console nếu ở môi trường dev
-                console.log(`📊 [Analytics Track] Event: '${eventName}'`, params);
+                myLog('ANALYTICS', `📊 [Analytics Track] Event: '${eventName}'`, params);
             },
             identify: (userId, props) => {
-                console.log(`👤 [Analytics Identify] User: ${userId}`, props);
+                myLog('ANALYTICS', `👤 [Analytics Identify] User: ${userId}`, props);
             }
         });
 
@@ -34,7 +35,7 @@ class AnalyticsService {
                     try { 
                         logEvent(firebaseAnalytics, eventName, params); 
                     } catch(e) { 
-                        console.error("Firebase Track Error:", e); 
+                        myError('ANALYTICS', "Firebase Track Error:", e); 
                     }
                 },
                 identify: (userId, props) => {
@@ -42,7 +43,7 @@ class AnalyticsService {
                         if (userId) setUserId(firebaseAnalytics, String(userId));
                         if (props) setUserProperties(firebaseAnalytics, props);
                     } catch(e) { 
-                        console.error("Firebase Identify Error:", e); 
+                        myError('ANALYTICS', "Firebase Identify Error:", e); 
                     }
                 }
             });
@@ -71,7 +72,7 @@ class AnalyticsService {
             try {
                 provider.track(eventName, enrichedParams);
             } catch (e) {
-                console.error(`[Analytics] Provider ${provider.name} failed to track ${eventName}`, e);
+                myError('ANALYTICS', `[Analytics] Provider ${provider.name} failed to track ${eventName}`, e);
             }
         });
     }
@@ -87,7 +88,7 @@ class AnalyticsService {
                 try {
                     provider.identify(userId, props);
                 } catch (e) {
-                    console.error(`[Analytics] Provider ${provider.name} failed to identify user`, e);
+                    myError('ANALYTICS', `[Analytics] Provider ${provider.name} failed to identify user`, e);
                 }
             }
         });

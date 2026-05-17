@@ -1,0 +1,12 @@
+# VuFamily Project Rules
+
+## 1. Logging Standard
+- **Do NOT** use `console.log`, `console.warn`, or `console.error` directly in the frontend codebase.
+- **ALWAYS** use `myLog`, `myWarning`, and `myError` from `client/src/shared/utils/logger.js`.
+- Always pass a feature symbol/flag as the first argument (e.g., `myLog('CHAT', 'message')`, `myWarning('CALL', 'warn')`, `myError('CALL', err)`).
+- If you are working on a new feature, add its flag to `LOG_FLAGS` in `logger.js`.
+- The global flag `ENABLE_MYLOG` is used to toggle all logs on/off. Do not override this unless explicitly requested.
+
+## 2. General Rules
+- Keep UI components clean and use existing CSS variables (e.g., `var(--primary)`, `var(--bg-secondary)`).
+- For data syncing, prefer the established Messenger-like cache pattern (load from IndexedDB first, then sync).

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { myLog, myError } from '../../shared/utils/logger';
 import { API_BASE } from '../../shared/services/api';
 import { Analytics } from '../../shared/services/analytics';
 
@@ -43,7 +44,7 @@ export default function AccountsPage({ addToast }) {
             });
             const json = await res.json();
             if (json.success) setUsers(json.data || []);
-        } catch (e) { console.error(e); }
+        } catch (e) { myError('ACCOUNTS', e); }
         setLoading(false);
     };
 

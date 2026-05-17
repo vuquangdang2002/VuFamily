@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
+import { myLog, myError } from './shared/utils/logger';
 // ── Features ──
 import LoginPage from './features/auth/LoginPage';
 import TreeCanvas from './features/tree/TreeCanvas';
@@ -93,7 +94,7 @@ export default function App() {
                     await Notification.requestPermission();
                 }
             } catch (e) {
-                console.warn('Không thể xin quyền thông báo:', e);
+                myError('APP', 'Không thể xin quyền thông báo:', e);
             }
 
             // Tính năng đồng bộ: Xin quyền Microphone ngay để Native chặn popup một lần duy nhất lúc mở App
@@ -102,7 +103,7 @@ export default function App() {
                     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                     stream.getTracks().forEach(t => t.stop()); // Tắt mic đi luôn, chỉ lấy quyền
                 } catch (e) {
-                    console.warn('Chưa có quyền Micro:', e);
+                    myError('APP', 'Chưa có quyền Micro:', e);
                 }
             }
         }
@@ -235,14 +236,14 @@ export default function App() {
         fetch(`${API_BASE}/users/ping`, {
             method: 'POST',
             headers: { 'x-auth-token': user.token }
-        }).catch((e) => { console.error("App.jsx Promise Error:", e); });
+        }).catch((e) => { myError('APP', "App.jsx Promise Error:", e); });
 
         // Then ping every 60 seconds
         const intervalId = setInterval(() => {
             fetch(`${API_BASE}/users/ping`, {
                 method: 'POST',
                 headers: { 'x-auth-token': user.token }
-            }).catch((e) => { console.error("App.jsx Promise Error:", e); });
+            }).catch((e) => { myError('APP', "App.jsx Promise Error:", e); });
         }, 60000);
 
         return () => clearInterval(intervalId);
@@ -310,7 +311,7 @@ export default function App() {
         }
         localStorage.removeItem(AUTH_KEY);
         // Clear chat cache on logout
-        clearChatCache().catch((e) => { console.error("App.jsx Logout Cache Clear Error:", e); });
+        clearChatCache().catch((e) => { myError('APP', "App.jsx Logout Cache Clear Error:", e); });
         setUser(null);
         setSelected(null);
         setDetailOpen(false);

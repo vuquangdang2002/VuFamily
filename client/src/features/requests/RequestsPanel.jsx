@@ -1,4 +1,5 @@
 import '../../shared/components/SidePanels.css';
+import { myLog, myError } from '../../shared/utils/logger';
 import { useState, useEffect } from 'react';
 import '../../shared/components/SidePanels.css';
 import { api, localApi, formatDate } from '../../shared/services/api';
@@ -31,10 +32,10 @@ function timeAgo(dateStr) {
 function ChangesView({ before, changes }) {
     let finalChanges = changes;
     if (typeof finalChanges === 'string') {
-        try { finalChanges = JSON.parse(finalChanges); } catch (e) { console.warn("RequestsPanel JSON Parse Fallback:", e.message); }
+        try { finalChanges = JSON.parse(finalChanges); } catch (e) { myError('REQUEST', "RequestsPanel JSON Parse Fallback:", e.message); }
     }
     if (typeof finalChanges === 'string') {
-        try { finalChanges = JSON.parse(finalChanges); } catch (e) { console.warn("RequestsPanel JSON Parse Fallback:", e.message); }
+        try { finalChanges = JSON.parse(finalChanges); } catch (e) { myError('REQUEST', "RequestsPanel JSON Parse Fallback:", e.message); }
     }
     if (!finalChanges || typeof finalChanges !== 'object') return null;
 
