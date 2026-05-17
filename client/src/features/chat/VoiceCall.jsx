@@ -95,7 +95,7 @@ function SignalBars({ quality }) {
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
-function VideoCell({ stream, muted = false, label, isLocal = false, noVideo = false }) {
+function VideoCell({ stream, muted = false, label, isLocal = false, noVideo = false, quality }) {
     const ref = useRef(null);
     const [hasVideo, setHasVideo] = useState(false);
     useEffect(() => {
