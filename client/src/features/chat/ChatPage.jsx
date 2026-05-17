@@ -76,11 +76,11 @@ export default function ChatPage({ user, addToast, onStartCall }) {
             if (json.success) {
                 const serverMsgs = json.data || [];
                 setMessages(serverMsgs);
-                
+
                 // Cập nhật Cache cục bộ
                 cacheMessages(roomId, serverMsgs).catch((e) => { console.error("[ChatPage] Lỗi lưu Cache Tin Nhắn:", e); });
                 console.log(`[ChatPage - fetchMessagesFull] Tải thành công ${serverMsgs.length} tin nhắn.`);
-                
+
                 // Ghi nhớ mốc thời gian của tin nhắn cuối cùng để phục vụ cho Incremental Polling
                 if (serverMsgs.length > 0) {
                     latestMsgTimeRef.current = serverMsgs[serverMsgs.length - 1].created_at;
@@ -119,7 +119,7 @@ export default function ChatPage({ user, addToast, onStartCall }) {
                     const unique = newMsgs.filter(m => !existingIds.has(m.id));
                     if (unique.length === 0) return prev;
                     const merged = [...prev, ...unique];
-                    
+
                     // Lưu tin nhắn mới vào Cache
                     cacheMessages(roomId, merged).catch((e) => { console.error("[ChatPage] Lỗi lưu Cache Tin Nhắn mới:", e); });
                     return merged;
@@ -499,7 +499,7 @@ export default function ChatPage({ user, addToast, onStartCall }) {
                                         <div style={{ flex: 1 }}>
                                             <div style={{ fontWeight: 500 }}>{u.display_name || u.username}</div>
                                             <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                                                {u.is_online ? '🟢 Đang Online' : '⚪ Ngoại tuyến'}
+                                                {u.is_online ? '🟢 Online' : '⚪ Offline'}
                                             </div>
                                         </div>
                                     </div>
