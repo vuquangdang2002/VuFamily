@@ -28,7 +28,7 @@ npm run install:all
 ### 3. Cấu hình .env
 
 ```bash
-cp .env.example .env
+2. Copy file mẫu .env (nếu có) hoặc tạo file `.env` với các biến tương tự trong hệ thống.
 ```
 
 Sửa file `.env`:

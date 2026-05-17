@@ -117,7 +117,6 @@ VuFamily/
 │   ├── .gitignore                   #   Ignore rules
 │   ├── .vercelignore                #   Vercel ignore rules
 │   ├── .env                         #   Biến môi trường (KHÔNG commit, local only)
-│   ├── .env.example                 #   Mẫu biến môi trường
 │   ├── vercel.json                  #   Vercel deployment config
 │   ├── package.json                 #   Root dependencies (backend)
 │   ├── package-lock.json            #   Lock file
