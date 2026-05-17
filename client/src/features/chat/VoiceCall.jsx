@@ -213,6 +213,7 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
     const gainNodeRef = useRef(null);        // Căn chỉnh độ nhạy mic
     const gateNodeRef = useRef(null);        // Đóng/mở âm thanh (Noise Gate)
     const gateRafRef = useRef(null);         // Request Animation Frame cho Gate
+    const vuMeterRef = useRef(null);         // Ref trực tiếp đến thanh đo âm lượng (Discord style)
     const phaseRef = useRef('IDLE');
     const metaRef = useRef(null);
     const processedRef = useRef(new Set());
@@ -222,6 +223,7 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
     const cleanupRef = useRef(null);         // Giữ ref tới hàm cleanup để gọi từ bên trong event handler
     const incomingSignalsRef = useRef([]);   // Hàng đợi tín hiệu chờ khi đang RINGING
 
+    const [showSettings, setShowSettings] = useState(false); // Bật tắt bảng Cài đặt Âm thanh
     const [noiseLevel, setNoiseLevel] = useState(0); // 0 -> 100 (Lọc gió/ồn trầm)
     const [micSensitivity, setMicSensitivity] = useState(100); // 10 -> 200 (Độ nhạy Mic)
     const [noiseGate, setNoiseGate] = useState(10); // 0 -> 100 (Chặn tiếng vọng/ngưỡng mở Mic)
@@ -342,6 +344,14 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
                 const avg = sum / dataArray.length;
                 
                 const threshold = noiseGateRef.current;
+                
+                // --- DISCORD VU METER ---
+                // Cập nhật DOM trực tiếp 60fps siêu mượt, không làm lag React
+                if (vuMeterRef.current) {
+                    const percent = Math.min(100, (avg / 128) * 100);
+                    vuMeterRef.current.style.width = `${percent}%`;
+                    vuMeterRef.current.style.backgroundColor = avg >= threshold ? '#10b981' : '#f59e0b'; // Xanh lá nếu Mic mở, Cam nếu Mic đóng
+                }
                 
                 // Nếu âm thanh quá nhỏ (dưới ngưỡng) -> Bóp âm lượng về 0 (Mute) để chặn tiếng vọng từ loa
                 if (avg < threshold) {
@@ -687,32 +697,45 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
                             <Btn icon="📞" label="Nghe" cls="accept pulse-btn" onClick={acceptCall} />
                         </>
                     ) : (
-                        <div style={{ display: 'flex', flexDirection: 'column', width: '100%', gap: 16 }}>
-                            <div style={{ display: 'flex', justifyContent: 'center', gap: 16 }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+                            <div style={{ display: 'flex', justifyContent: 'center', gap: 16, padding: '16px 0' }}>
                                 <Btn icon={muted ? '🔇' : '🎤'} label={muted ? 'Bật micro' : 'Tắt micro'} active={muted} onClick={toggleMute} />
                                 {callType === 'video' && <Btn icon={camOff ? '📷' : '📹'} label={camOff ? 'Bật cam' : 'Tắt cam'} active={camOff} onClick={toggleCam} />}
                                 <Btn icon="📞" label="Kết thúc" cls="reject rot135" onClick={endCall} />
                                 <Btn icon={speakerMode === 'speaker' ? '🔊' : '🔉'} label={speakerMode === 'speaker' ? 'Loa ngoài' : 'Loa trong'} active={speakerMode === 'speaker'} onClick={toggleSpeaker} />
+                                <Btn icon="⚙️" label="Âm thanh" active={showSettings} onClick={() => setShowSettings(!showSettings)} />
                             </div>
                             
-                            {/* Bảng điều khiển Âm thanh nâng cao (DSP) */}
-                            <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', background: 'rgba(0,0,0,0.5)', padding: '12px 16px', borderRadius: 20, margin: '0 auto', gap: '16px 24px', maxWidth: '100%' }}>
-                                {/* Độ nhạy Mic */}
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: '1 1 auto', minWidth: 150 }}>
-                                    <span style={{ fontSize: 12, color: '#fff', whiteSpace: 'nowrap' }}>Độ nhạy: {micSensitivity}%</span>
-                                    <input type="range" min="10" max="200" value={micSensitivity} onChange={e => setMicSensitivity(Number(e.target.value))} style={{ width: '100%', accentColor: '#3b82f6' }} title="Tăng để mic hút âm thanh tốt hơn" />
+                            {/* Bảng Cài đặt Âm thanh (Discord Style) */}
+                            {showSettings && (
+                                <div className="vc-dsp-panel">
+                                    <div className="dsp-title">Cài đặt Âm thanh & Giọng nói</div>
+
+                                    {/* Chặn tiếng vọng (Noise Gate) */}
+                                    <div className="dsp-group">
+                                        <label>Ngưỡng thu âm thanh (Noise Gate)</label>
+                                        <div className="dsp-desc">Thanh màu nhảy vượt qua mốc trắng thì Mic mới mở. Hãy kéo mốc trắng lên cao hơn dải màu vàng lúc bạn ĐANG KHÔNG NÓI để chặn sạch tiếng ồn nền/tiếng vọng.</div>
+                                        <div className="vu-meter-container">
+                                            <div ref={vuMeterRef} className="vu-meter-fill" />
+                                            <input type="range" min="0" max="100" value={noiseGate} onChange={e => setNoiseGate(Number(e.target.value))} className="dsp-slider gate-slider" />
+                                        </div>
+                                    </div>
+
+                                    {/* Độ nhạy Mic */}
+                                    <div className="dsp-group">
+                                        <label>Khuếch đại Mic (Gain): {micSensitivity}%</label>
+                                        <div className="dsp-desc">Tăng nếu bạn nói nhỏ hoặc điện thoại ở xa. Giảm nếu tiếng quá chói.</div>
+                                        <input type="range" min="10" max="200" value={micSensitivity} onChange={e => setMicSensitivity(Number(e.target.value))} className="dsp-slider blue" />
+                                    </div>
+
+                                    {/* Lọc tiếng gió (Highpass) */}
+                                    <div className="dsp-group">
+                                        <label>Khử tiếng ù ù (Wind/Rumble): {noiseLevel}%</label>
+                                        <div className="dsp-desc">Cắt bỏ âm thanh trầm của gió tạt hoặc động cơ xe máy ngoài đường.</div>
+                                        <input type="range" min="0" max="100" value={noiseLevel} onChange={e => setNoiseLevel(Number(e.target.value))} className="dsp-slider green" />
+                                    </div>
                                 </div>
-                                {/* Chặn tiếng vọng (Noise Gate) */}
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: '1 1 auto', minWidth: 150 }}>
-                                    <span style={{ fontSize: 12, color: '#fff', whiteSpace: 'nowrap' }}>Chặn vọng: {noiseGate}%</span>
-                                    <input type="range" min="0" max="100" value={noiseGate} onChange={e => setNoiseGate(Number(e.target.value))} style={{ width: '100%', accentColor: '#ef4444' }} title="Tăng để mic không thu tiếng của loa" />
-                                </div>
-                                {/* Lọc tiếng gió (Highpass) */}
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: '1 1 auto', minWidth: 150 }}>
-                                    <span style={{ fontSize: 12, color: '#fff', whiteSpace: 'nowrap' }}>Lọc ồn trầm: {noiseLevel}%</span>
-                                    <input type="range" min="0" max="100" value={noiseLevel} onChange={e => setNoiseLevel(Number(e.target.value))} style={{ width: '100%', accentColor: '#10b981' }} title="Cắt tiếng gió xe, tiếng quạt" />
-                                </div>
-                            </div>
+                            )}
                         </div>
                     )}
                 </div>

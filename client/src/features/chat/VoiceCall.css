@@ -237,6 +237,96 @@
     50%       { box-shadow: 0 0 0 14px rgba(16, 185, 129, 0); }
 }
 
+/* ── DSP Settings Panel (Discord Style) ── */
+.vc-dsp-panel {
+    background: #0f172a;
+    border-top: 1px solid #1e293b;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    animation: vcFade 0.2s ease;
+}
+.dsp-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #f8fafc;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+.dsp-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.dsp-group label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #cbd5e1;
+}
+.dsp-desc {
+    font-size: 11px;
+    color: #64748b;
+    line-height: 1.4;
+}
+.vu-meter-container {
+    position: relative;
+    height: 24px;
+    background: #1e293b;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+    margin-top: 4px;
+}
+.vu-meter-fill {
+    height: 100%;
+    width: 0%;
+    background: #f59e0b;
+    transition: width 0.05s linear, background-color 0.1s;
+}
+/* Discord Style Slider Reset */
+.dsp-slider {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 4px;
+    background: #334155;
+    border-radius: 2px;
+    outline: none;
+    margin: 10px 0;
+}
+.dsp-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #fff;
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.5);
+}
+.dsp-slider.blue::-webkit-slider-thumb { border: 3px solid #3b82f6; }
+.dsp-slider.green::-webkit-slider-thumb { border: 3px solid #10b981; }
+
+/* Gate Slider on top of VU Meter */
+.gate-slider {
+    position: absolute !important;
+    top: 0;
+    left: 0;
+    margin: 0 !important;
+    height: 100% !important;
+    background: transparent !important;
+    appearance: none;
+}
+.gate-slider::-webkit-slider-thumb {
+    width: 8px;
+    height: 28px;
+    border-radius: 4px;
+    background: #fff;
+    border: none;
+    box-shadow: 0 0 4px rgba(0,0,0,0.8);
+    cursor: grab;
+}
+
 /* ── Mobile fullscreen ── */
 @media (max-width: 480px) {
     .vc-card {
