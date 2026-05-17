@@ -145,6 +145,7 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
     const [spkOff, setSpkOff] = useState(false);
     // { [userId]: { level, rtt, loss } }
     const [netQuality, setNetQuality] = useState({});
+    const [hubConnected, setHubConnected] = useState(false);
 
     const socketRef = useRef(null);
     const pcsRef = useRef({});               // { userId: RTCPeerConnection }
@@ -175,8 +176,11 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
         socketRef.current = socket;
 
         socket.on('connect', () => {
+            setHubConnected(true);
             console.log(`[VoiceCall] ✅ Hub connected (${socket.io.engine.transport.name})`);
         });
+
+        socket.on('disconnect', () => setHubConnected(false));
 
         socket.on('connect_error', (err) => {
             console.warn('[VoiceCall] Hub connect error:', err.message);
@@ -465,9 +469,17 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
                         </>
                     )}
                 </div>
+                <HubDebug phase={phase} callMeta={callMeta} isConnected={hubConnected} />
             </div>
         </div>
     );
 }
 
-
+function HubDebug({ phase, callMeta, isConnected }) {
+    if (!window.location.hostname.includes('dangvq')) return null;
+    return (
+        <div style={{ position: 'fixed', bottom: 10, left: 10, zIndex: 99999, background: 'rgba(0,0,0,0.8)', color: isConnected ? '#0f0' : '#f00', padding: '4px 8px', borderRadius: 4, fontSize: 10, pointerEvents: 'none' }}>
+            Hub: {isConnected ? 'ON' : 'OFF'} | Phase: {phase} | Room: {callMeta?.roomId || 'none'}
+        </div>
+    );
+}
