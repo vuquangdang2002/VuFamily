@@ -29,20 +29,26 @@ export default function ChatPage({ user, addToast, onStartCall }) {
     const isFirstLoadRef = useRef(true);
     const latestMsgTimeRef = useRef(null);
 
-    // ── Messenger-style: Load from cache first, then sync with server ──
+    // ── Giao thức Messenger: Tải từ Cache nội bộ trước, sau đó đồng bộ (Sync) với Server ──
 
+    /**
+     * Tải danh sách phòng chat từ Server.
+     * Cập nhật IndexedDB để dùng cho lần mở app tiếp theo.
+     */
     const fetchRooms = async () => {
+        console.log('[ChatPage - fetchRooms] Bắt đầu đồng bộ danh sách phòng chat từ Server...');
         try {
             const res = await fetch(`${API_BASE}/chats`, { headers: { 'x-auth-token': getToken() } });
             const json = await res.json();
             if (json.success) {
                 const serverRooms = json.data || [];
                 setRooms(serverRooms);
-                // Save to IndexedDB cache (keeps last 10)
-                cacheRooms(serverRooms).catch((e) => { console.error("ChatPage Background Sync Error:", e); });
+                // Lưu vào IndexedDB cache (chạy ngầm)
+                cacheRooms(serverRooms).catch((e) => { console.error("[ChatPage] Lỗi lưu Cache Phòng Chat:", e); });
+                console.log(`[ChatPage - fetchRooms] Đã đồng bộ thành công ${serverRooms.length} phòng chat.`);
             }
         } catch (e) {
-            console.error(e);
+            console.warn('[ChatPage - fetchRooms] Đang Offline hoặc Mạng yếu, sử dụng danh sách phòng từ Cache.', e);
             // Offline: keep using cached rooms
         } finally {
             setLoadingRooms(false);
@@ -59,17 +65,23 @@ export default function ChatPage({ user, addToast, onStartCall }) {
         } catch (e) { }
     };
 
-    // Full fetch (first load or room switch)
+    /**
+     * Tải toàn bộ tin nhắn của một phòng (Dùng khi mới chuyển phòng).
+     */
     const fetchMessagesFull = async (roomId) => {
+        console.log(`[ChatPage - fetchMessagesFull] Đang tải toàn bộ lịch sử tin nhắn cho Phòng ID: ${roomId}`);
         try {
             const res = await fetch(`${API_BASE}/chats/${roomId}/messages`, { headers: { 'x-auth-token': getToken() } });
             const json = await res.json();
             if (json.success) {
                 const serverMsgs = json.data || [];
                 setMessages(serverMsgs);
-                // Update cache
-                cacheMessages(roomId, serverMsgs).catch((e) => { console.error("ChatPage Background Sync Error:", e); });
-                // Track latest for incremental polling
+                
+                // Cập nhật Cache cục bộ
+                cacheMessages(roomId, serverMsgs).catch((e) => { console.error("[ChatPage] Lỗi lưu Cache Tin Nhắn:", e); });
+                console.log(`[ChatPage - fetchMessagesFull] Tải thành công ${serverMsgs.length} tin nhắn.`);
+                
+                // Ghi nhớ mốc thời gian của tin nhắn cuối cùng để phục vụ cho Incremental Polling
                 if (serverMsgs.length > 0) {
                     latestMsgTimeRef.current = serverMsgs[serverMsgs.length - 1].created_at;
                 }
@@ -84,7 +96,10 @@ export default function ChatPage({ user, addToast, onStartCall }) {
         }
     };
 
-    // Incremental fetch (polling — only new messages since last known)
+    /**
+     * Tải tin nhắn gia tăng (Incremental Fetch): Chỉ lấy những tin nhắn MỚI NHẤT
+     * từ mốc thời gian đã biết cuối cùng để tiết kiệm dữ liệu mạng.
+     */
     const fetchMessagesIncremental = async (roomId) => {
         if (!latestMsgTimeRef.current) {
             return fetchMessagesFull(roomId);
@@ -97,14 +112,16 @@ export default function ChatPage({ user, addToast, onStartCall }) {
             const json = await res.json();
             if (json.success && json.data && json.data.length > 0) {
                 const newMsgs = json.data;
+                console.log(`[ChatPage - fetchMessagesIncremental] Tìm thấy ${newMsgs.length} tin nhắn mới.`);
                 setMessages(prev => {
-                    // Deduplicate by id
+                    // Loại bỏ trùng lặp (Deduplicate) dựa trên ID tin nhắn
                     const existingIds = new Set(prev.map(m => m.id));
                     const unique = newMsgs.filter(m => !existingIds.has(m.id));
                     if (unique.length === 0) return prev;
                     const merged = [...prev, ...unique];
-                    // Cache the new messages
-                    cacheMessages(roomId, merged).catch((e) => { console.error("ChatPage Background Sync Error:", e); });
+                    
+                    // Lưu tin nhắn mới vào Cache
+                    cacheMessages(roomId, merged).catch((e) => { console.error("[ChatPage] Lỗi lưu Cache Tin Nhắn mới:", e); });
                     return merged;
                 });
                 latestMsgTimeRef.current = newMsgs[newMsgs.length - 1].created_at;

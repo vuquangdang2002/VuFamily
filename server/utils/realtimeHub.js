@@ -107,10 +107,18 @@ function initRealtimeHub(httpServer) {
         });
 
         // ── Send message (real-time, zero-latency) ────────────────────────────
+        /**
+         * [SỰ KIỆN] Nhận tin nhắn chat từ Client qua Socket
+         * Tốc độ cao hơn so với gọi HTTP API thông thường.
+         */
         socket.on('chat:send', async ({ roomId, content }, ack) => {
-            if (!content?.trim()) return ack?.({ error: 'Tin nhắn rỗng' });
+            console.log(`[Hub] Nhận sự kiện 'chat:send' từ User ID: ${user.id} cho Phòng ID: ${roomId}`);
+            if (!content?.trim()) {
+                console.warn('[Hub] Từ chối gửi tin nhắn do nội dung rỗng.');
+                return ack?.({ error: 'Tin nhắn rỗng' });
+            }
             try {
-                // Verify membership
+                // Bước 1: Kiểm tra quyền truy cập phòng chat (Security check)
                 const { data: membership } = await supabase
                     .from('chat_members')
                     .select('user_id')
@@ -131,12 +139,17 @@ function initRealtimeHub(httpServer) {
                     .select('*, users:sender_id(id, display_name, username, avatar)')
                     .single();
 
-                if (error) throw error;
+                if (error) {
+                    console.error('[Hub] Lỗi ghi tin nhắn vào Database:', error.message);
+                    throw error;
+                }
 
-                // Update room timestamp
+                // Cập nhật timestamp để đưa phòng chat lên đầu danh sách (Sort by recency)
                 await supabase.from('chat_rooms').update({ updated_at: new Date().toISOString() }).eq('id', roomId);
 
-                // PUSH to all room members instantly (no polling needed)
+                console.log(`[Hub] Đã lưu tin nhắn thành công. Phát (Broadcast) tin nhắn ID ${msg.id} cho toàn bộ thành viên trong phòng ${roomId}`);
+                
+                // Bước 3: Phát tín hiệu tin nhắn mới (Broadcast) tới toàn bộ thành viên đang online trong phòng
                 io.to(`room:${roomId}`).emit('chat:message', msg);
 
                 ack?.({ success: true, data: msg });
