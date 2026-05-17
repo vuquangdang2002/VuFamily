@@ -210,6 +210,9 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
     const localRef = useRef(null);           // MediaStream đã qua xử lý lọc ồn
     const audioCtxRef = useRef(null);        // Web Audio Context
     const filterNodeRef = useRef(null);      // BiquadFilter (lọc tiếng gió, ồn xe)
+    const gainNodeRef = useRef(null);        // Căn chỉnh độ nhạy mic
+    const gateNodeRef = useRef(null);        // Đóng/mở âm thanh (Noise Gate)
+    const gateRafRef = useRef(null);         // Request Animation Frame cho Gate
     const phaseRef = useRef('IDLE');
     const metaRef = useRef(null);
     const processedRef = useRef(new Set());
@@ -219,18 +222,28 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
     const cleanupRef = useRef(null);         // Giữ ref tới hàm cleanup để gọi từ bên trong event handler
     const incomingSignalsRef = useRef([]);   // Hàng đợi tín hiệu chờ khi đang RINGING
 
-    const [noiseLevel, setNoiseLevel] = useState(0); // 0 -> 100
+    const [noiseLevel, setNoiseLevel] = useState(0); // 0 -> 100 (Lọc gió/ồn trầm)
+    const [micSensitivity, setMicSensitivity] = useState(100); // 10 -> 200 (Độ nhạy Mic)
+    const [noiseGate, setNoiseGate] = useState(10); // 0 -> 100 (Chặn tiếng vọng/ngưỡng mở Mic)
+    const noiseGateRef = useRef(noiseGate);
 
     useEffect(() => { phaseRef.current = phase; }, [phase]);
     useEffect(() => { metaRef.current = callMeta; }, [callMeta]);
+    useEffect(() => { noiseGateRef.current = noiseGate; }, [noiseGate]);
 
-    // Khi người dùng kéo thanh trượt, điều chỉnh dải tần số bị cắt bỏ (Highpass)
-    // 0% = Cắt 0Hz (Không lọc). 100% = Cắt 1000Hz (Lọc cực mạnh, giọng mỏng đi nhưng sạch tiếng gió)
+    // Điều chỉnh Bộ lọc tiếng gió (Highpass)
     useEffect(() => {
         if (filterNodeRef.current) {
             filterNodeRef.current.frequency.value = noiseLevel * 10;
         }
     }, [noiseLevel]);
+
+    // Điều chỉnh Độ nhạy (Gain)
+    useEffect(() => {
+        if (gainNodeRef.current && audioCtxRef.current) {
+            gainNodeRef.current.gain.setTargetAtTime(micSensitivity / 100, audioCtxRef.current.currentTime, 0.1);
+        }
+    }, [micSensitivity]);
 
     // ── Socket.io connection ─────────────────────────────────────────────────
     useEffect(() => {
@@ -306,14 +319,47 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
             const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             audioCtxRef.current = audioCtx;
             const source = audioCtx.createMediaStreamSource(stream);
+
+            // 0. Độ nhạy Mic (GainNode)
+            const gainNode = audioCtx.createGain();
+            gainNode.gain.value = micSensitivity / 100;
+            gainNodeRef.current = gainNode;
             
-            // 1. Highpass Filter: Cắt dải âm trầm (tiếng xe cộ, tiếng gió ù ù)
+            // 1. Noise Gate (Chặn tiếng vọng/ngưỡng mở Mic)
+            const gateNode = audioCtx.createGain();
+            gateNode.gain.value = 1;
+            gateNodeRef.current = gateNode;
+
+            const analyser = audioCtx.createAnalyser();
+            analyser.fftSize = 256;
+            const dataArray = new Uint8Array(analyser.frequencyBinCount);
+            
+            const gateLoop = () => {
+                if (!audioCtxRef.current) return;
+                analyser.getByteFrequencyData(dataArray);
+                let sum = 0;
+                for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
+                const avg = sum / dataArray.length;
+                
+                const threshold = noiseGateRef.current;
+                
+                // Nếu âm thanh quá nhỏ (dưới ngưỡng) -> Bóp âm lượng về 0 (Mute) để chặn tiếng vọng từ loa
+                if (avg < threshold) {
+                    gateNode.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1); // Fade out mềm
+                } else {
+                    gateNode.gain.setTargetAtTime(1, audioCtx.currentTime, 0.05); // Fade in nhanh để bắt kịp giọng nói
+                }
+                gateRafRef.current = requestAnimationFrame(gateLoop);
+            };
+            gateLoop();
+            
+            // 2. Highpass Filter: Cắt dải âm trầm (tiếng xe cộ, tiếng gió ù ù)
             const highpassFilter = audioCtx.createBiquadFilter();
             highpassFilter.type = 'highpass';
             highpassFilter.frequency.value = noiseLevel * 10; 
             filterNodeRef.current = highpassFilter;
 
-            // 2. Dynamics Compressor: Cân bằng giọng nói (Giảm hú, chống chói tai khi nói to)
+            // 3. Dynamics Compressor: Cân bằng giọng nói (Giảm hú, chống chói tai khi nói to)
             const compressor = audioCtx.createDynamicsCompressor();
             compressor.threshold.value = -40;
             compressor.knee.value = 30;
@@ -323,7 +369,11 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
 
             const destination = audioCtx.createMediaStreamDestination();
             
-            source.connect(highpassFilter);
+            // Kết nối chuỗi DSP: Mic -> Gain -> [Analyser & Gate] -> Highpass -> Compressor -> Output
+            source.connect(gainNode);
+            gainNode.connect(analyser); // Analyser đọc âm thanh trước khi qua Gate để biết khi nào mở Gate
+            gainNode.connect(gateNode);
+            gateNode.connect(highpassFilter);
             highpassFilter.connect(compressor);
             compressor.connect(destination);
 
@@ -347,6 +397,7 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
     }, [addToast, noiseLevel]);
 
     const stopMedia = useCallback(() => {
+        if (gateRafRef.current) cancelAnimationFrame(gateRafRef.current);
         rawStreamRef.current?.getTracks().forEach(t => t.stop());
         localRef.current?.getTracks().forEach(t => t.stop());
         rawStreamRef.current = null;
@@ -644,11 +695,23 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
                                 <Btn icon={speakerMode === 'speaker' ? '🔊' : '🔉'} label={speakerMode === 'speaker' ? 'Loa ngoài' : 'Loa trong'} active={speakerMode === 'speaker'} onClick={toggleSpeaker} />
                             </div>
                             
-                            {/* Thanh trượt lọc tiếng ồn DSP */}
-                            <div style={{ display: 'flex', alignItems: 'center', background: 'rgba(0,0,0,0.5)', padding: '8px 16px', borderRadius: 20, margin: '0 auto', gap: 12 }}>
-                                <span style={{ fontSize: 12, color: '#fff', whiteSpace: 'nowrap' }}>Lọc ồn: {noiseLevel}%</span>
-                                <input type="range" min="0" max="100" value={noiseLevel} onChange={e => setNoiseLevel(Number(e.target.value))} style={{ width: 120, accentColor: '#10b981' }} />
-                                <span style={{ fontSize: 16 }}>{noiseLevel > 50 ? '🏍️' : '🛋️'}</span>
+                            {/* Bảng điều khiển Âm thanh nâng cao (DSP) */}
+                            <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', background: 'rgba(0,0,0,0.5)', padding: '12px 16px', borderRadius: 20, margin: '0 auto', gap: '16px 24px', maxWidth: '100%' }}>
+                                {/* Độ nhạy Mic */}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: '1 1 auto', minWidth: 150 }}>
+                                    <span style={{ fontSize: 12, color: '#fff', whiteSpace: 'nowrap' }}>Độ nhạy: {micSensitivity}%</span>
+                                    <input type="range" min="10" max="200" value={micSensitivity} onChange={e => setMicSensitivity(Number(e.target.value))} style={{ width: '100%', accentColor: '#3b82f6' }} title="Tăng để mic hút âm thanh tốt hơn" />
+                                </div>
+                                {/* Chặn tiếng vọng (Noise Gate) */}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: '1 1 auto', minWidth: 150 }}>
+                                    <span style={{ fontSize: 12, color: '#fff', whiteSpace: 'nowrap' }}>Chặn vọng: {noiseGate}%</span>
+                                    <input type="range" min="0" max="100" value={noiseGate} onChange={e => setNoiseGate(Number(e.target.value))} style={{ width: '100%', accentColor: '#ef4444' }} title="Tăng để mic không thu tiếng của loa" />
+                                </div>
+                                {/* Lọc tiếng gió (Highpass) */}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: '1 1 auto', minWidth: 150 }}>
+                                    <span style={{ fontSize: 12, color: '#fff', whiteSpace: 'nowrap' }}>Lọc ồn trầm: {noiseLevel}%</span>
+                                    <input type="range" min="0" max="100" value={noiseLevel} onChange={e => setNoiseLevel(Number(e.target.value))} style={{ width: '100%', accentColor: '#10b981' }} title="Cắt tiếng gió xe, tiếng quạt" />
+                                </div>
                             </div>
                         </div>
                     )}
