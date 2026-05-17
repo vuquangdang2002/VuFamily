@@ -156,6 +156,7 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
     const queueRef = useRef({});             // ICE candidate queue before remote desc
     const timerRef = useRef(null);
     const qualityTimerRef = useRef(null);    // Network quality polling
+    const cleanupRef = useRef(null);         // Giữ ref tới hàm cleanup để gọi từ bên trong event handler
 
     useEffect(() => { phaseRef.current = phase; }, [phase]);
     useEffect(() => { metaRef.current = callMeta; }, [callMeta]);
@@ -267,9 +268,16 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
         pc.onconnectionstatechange = () => {
             if (pc.connectionState === 'connected') setPhase(p => p !== 'CONNECTED' ? 'CONNECTED' : p);
             if (['disconnected', 'failed', 'closed'].includes(pc.connectionState)) {
+                console.log(`[VoiceCall] Peer ${targetId} ngắt kết nối: ${pc.connectionState}`);
                 setRemoteStreams(p => { const n = { ...p }; delete n[targetId]; return n; });
                 pc.close();
                 delete pcsRef.current[targetId];
+                
+                // Nếu không còn ai trong cuộc gọi (1-1), tự động kết thúc luôn
+                if (Object.keys(pcsRef.current).length === 0) {
+                    addToast('Người kia đã rời khỏi cuộc gọi.', 'info');
+                    cleanupRef.current?.();
+                }
             }
         };
 
@@ -340,6 +348,7 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
 
     // ── Cleanup ───────────────────────────────────────────────────────────────
     const cleanup = useCallback(() => {
+        console.log('[VoiceCall] Thực hiện dọn dẹp (cleanup) và kết thúc cuộc gọi.');
         setPhase('IDLE'); setCallMeta(null);
         stopMedia();
         Object.values(pcsRef.current).forEach(pc => pc.close());
@@ -352,6 +361,9 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
         setNetQuality({});
         onClearActiveCallRoom?.();
     }, [stopMedia, onClearActiveCallRoom]);
+
+    // Gán ref để các hàm bất đồng bộ có thể gọi
+    useEffect(() => { cleanupRef.current = cleanup; }, [cleanup]);
 
     // ── Outbound call (from ChatPage) ─────────────────────────────────────────
     useEffect(() => {
