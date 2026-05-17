@@ -163,15 +163,14 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
     useEffect(() => {
         if (!user?.token) return;
         const socket = io(HUB_URL, {
-            path: '/hub',                          // Unified realtime hub
+            path: '/hub',
             auth: { token: getToken() },
-            // WebSocket dư tiên, tự động fallback sang polling nếu thất bại (Vercel)
             transports: ['websocket', 'polling'],
             upgrade: true,
             rememberUpgrade: true,
-            reconnectionDelay: 1000,
-            reconnectionDelayMax: 8000,
-            reconnectionAttempts: 5,
+            reconnectionDelay: 2000,
+            reconnectionDelayMax: 10000,
+            reconnectionAttempts: 3,   // Chỉ thử 3 lần — sau đó dừng, không spam
         });
         socketRef.current = socket;
 
@@ -180,8 +179,13 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
         });
 
         socket.on('connect_error', (err) => {
-            // Thông báo rõ để debug — không crash app
             console.warn('[VoiceCall] Hub connect error:', err.message);
+        });
+
+        socket.on('reconnect_failed', () => {
+            // Im lặng sau khi thử hết — không spam thêm
+            console.warn('[VoiceCall] Hub offline. Tính năng gọi điện sẽ không hoạt động.');
+            addToast?.('⚠️ Không kết nối được Hub — tính năng gọi điện tạm thời không khả dụng', 'warning');
         });
 
         socket.on('call:incoming', (data) => {
@@ -201,7 +205,7 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
             await handleSignal(String(fromUserId), signal);
         });
 
-        socket.on('connect_error', (e) => console.warn('[VoiceCall] Socket error:', e.message));
+        // Đã xử lý connect_error ở trên, không duplicate
 
         return () => socket.disconnect();
     }, [user?.token]);
