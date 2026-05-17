@@ -303,7 +303,8 @@ async function register(req, res) {
 
         // Send verification email
         const RESEND_KEY = process.env.RESEND_API_KEY;
-        const APP_URL = process.env.APP_URL || 'https://vu-family.dangvq.online';
+        const sharedConfig = require('../../shared-config.json');
+        const APP_URL = process.env.APP_URL || `https://${sharedConfig.APP_DOMAIN}`;
         const verifyLink = `${APP_URL}?verifyToken=${verToken}`;
 
         if (RESEND_KEY) {
@@ -555,7 +556,8 @@ async function forgotPassword(req, res) {
         // Send email via Resend
         const RESEND_KEY = process.env.RESEND_API_KEY;
         const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'vuquangdang2002@gmail.com';
-        const APP_URL = process.env.APP_URL || 'https://vu-family.dangvq.online';
+        const sharedConfig = require('../../shared-config.json');
+        const APP_URL = process.env.APP_URL || `https://${sharedConfig.APP_DOMAIN}`;
 
         if (RESEND_KEY) {
             const { Resend } = require('resend');
