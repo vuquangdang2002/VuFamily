@@ -8,10 +8,9 @@ const getToken = () => { try { return JSON.parse(localStorage.getItem('vuFamilyA
 const fmt = (s) => `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
 
 const AUDIO_CONSTRAINTS = {
-    echoCancellation: { ideal: true },
-    noiseSuppression: { ideal: true },
-    autoGainControl: { ideal: true },
-    sampleRate: { ideal: 48000 },
+    echoCancellation: true,
+    noiseSuppression: true,
+    autoGainControl: true
 };
 
 const VIDEO_CONSTRAINTS = {
@@ -212,6 +211,7 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
     const timerRef = useRef(null);
     const qualityTimerRef = useRef(null);    // Network quality polling
     const cleanupRef = useRef(null);         // Giữ ref tới hàm cleanup để gọi từ bên trong event handler
+    const incomingSignalsRef = useRef([]);   // Hàng đợi tín hiệu chờ khi đang RINGING
 
     useEffect(() => { phaseRef.current = phase; }, [phase]);
     useEffect(() => { metaRef.current = callMeta; }, [callMeta]);
@@ -266,6 +266,10 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
         socket.on('call:ended', () => { if (phaseRef.current !== 'IDLE') { cleanup(); addToast('Cuộc gọi kết thúc.', 'info'); } });
 
         socket.on('call:signal', async ({ fromUserId, signal }) => {
+            if (phaseRef.current === 'RINGING') {
+                incomingSignalsRef.current.push({ fromUserId, signal });
+                return;
+            }
             await handleSignal(String(fromUserId), signal);
         });
 
@@ -412,6 +416,7 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
         queueRef.current = {};
         clearInterval(timerRef.current);
         clearInterval(qualityTimerRef.current);
+        incomingSignalsRef.current = [];
         setDuration(0); setMuted(false); setCamOff(false); setSpkOff(false);
         setNetQuality({});
         onClearActiveCallRoom?.();
@@ -457,11 +462,25 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
     const acceptCall = async () => {
         const meta = metaRef.current;
         const type = meta?.callType || 'voice';
+        
+        // Xin quyền mic/cam
         const stream = await getMedia(type);
-        if (!stream) return;
+        if (!stream) {
+            rejectCall();
+            return;
+        }
 
-        socketRef.current?.emit('call:accept', { callId: meta.callId }, (res) => {
-            if (res?.success) setPhase('CONNECTED');
+        socketRef.current?.emit('call:accept', { callId: meta.callId }, async (res) => {
+            if (res?.success) {
+                setPhase('CONNECTED');
+                
+                // Bây giờ mới xử lý các tín hiệu (Offer) bị kẹt lại trong lúc chuông reo
+                // Lúc này getMedia đã xong => localRef.current ĐÃ CÓ audio track => addTrack thành công!
+                for (const { fromUserId, signal } of incomingSignalsRef.current) {
+                    await handleSignal(String(fromUserId), signal);
+                }
+                incomingSignalsRef.current = [];
+            }
         });
     };
 
