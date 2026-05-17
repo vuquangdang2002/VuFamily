@@ -10,7 +10,10 @@ const fmt = (s) => `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).p
 const AUDIO_CONSTRAINTS = {
     echoCancellation: true,
     noiseSuppression: true,
-    autoGainControl: true
+    autoGainControl: true,
+    googEchoCancellation: true,
+    googNoiseSuppression: true,
+    googHighpassFilter: true
 };
 
 const VIDEO_CONSTRAINTS = {
@@ -196,7 +199,7 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
     const [duration, setDuration] = useState(0);
     const [muted, setMuted] = useState(false);
     const [camOff, setCamOff] = useState(false);
-    const [spkOff, setSpkOff] = useState(false);
+    const [speakerMode, setSpeakerMode] = useState('speaker'); // 'speaker' | 'earpiece'
     // { [userId]: { level, rtt, loss } }
     const [netQuality, setNetQuality] = useState({});
     const [hubConnected, setHubConnected] = useState(false);
@@ -417,7 +420,7 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
         clearInterval(timerRef.current);
         clearInterval(qualityTimerRef.current);
         incomingSignalsRef.current = [];
-        setDuration(0); setMuted(false); setCamOff(false); setSpkOff(false);
+        setDuration(0); setMuted(false); setCamOff(false); setSpeakerMode('speaker');
         setNetQuality({});
         onClearActiveCallRoom?.();
     }, [stopMedia, onClearActiveCallRoom]);
@@ -505,6 +508,40 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
         setCamOff(c => !c);
     };
 
+    const toggleSpeaker = async () => {
+        const nextMode = speakerMode === 'speaker' ? 'earpiece' : 'speaker';
+        
+        // 1. Logic dành cho App Android/iOS (Capacitor/Cordova) sau này
+        if (window.AudioToggle) {
+            window.AudioToggle.setAudioMode(nextMode === 'speaker' ? window.AudioToggle.SPEAKER : window.AudioToggle.EARPIECE);
+            setSpeakerMode(nextMode);
+            return;
+        }
+
+        // 2. Logic dành cho Web (Chrome)
+        if (!navigator.mediaDevices?.enumerateDevices) {
+            addToast('Trình duyệt không hỗ trợ chuyển loa.', 'info');
+            return;
+        }
+
+        try {
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            const audioOutputs = devices.filter(d => d.kind === 'audiooutput');
+            
+            if (audioOutputs.length <= 1) {
+                // Đa số trình duyệt Web (nhất là iOS Safari) không cho phép tự chọn loa đầu ra (API bị khóa)
+                addToast('Trình duyệt Web hiện tại chỉ hỗ trợ 1 đầu ra mặc định.', 'warning');
+                return;
+            }
+            
+            // Nếu có nhiều ngõ ra, cập nhật state (cần tích hợp logic setSinkId vào VideoCell nếu muốn chạy thật trên Web)
+            setSpeakerMode(nextMode);
+            addToast(`Đã chuyển sang ${nextMode === 'speaker' ? 'Loa ngoài' : 'Loa trong'}`, 'success');
+        } catch (e) {
+            addToast('Lỗi khi chuyển loa: ' + e.message, 'error');
+        }
+    };
+
     // ─── Render ────────────────────────────────────────────────────────────────
     if (phase === 'IDLE') return null;
 
@@ -523,7 +560,7 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
                     <div className="vc-grid" style={{ gridTemplateColumns: remoteIds.length === 0 ? '1fr' : '1fr 1fr' }}>
                         <VideoCell stream={localStream} muted label={`Bạn${muted ? ' 🔇' : ''}`} isLocal noVideo={callType === 'voice' || camOff} />
                         {remoteIds.map(uid => (
-                            <VideoCell key={uid} stream={remoteStreams[uid]} muted={spkOff}
+                            <VideoCell key={uid} stream={remoteStreams[uid]}
                                 label="Thành viên" quality={netQuality[uid]} />
                         ))}
                     </div>
@@ -551,7 +588,7 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
                             <Btn icon={muted ? '🔇' : '🎤'} label={muted ? 'Bật micro' : 'Tắt micro'} active={muted} onClick={toggleMute} />
                             {callType === 'video' && <Btn icon={camOff ? '📷' : '📹'} label={camOff ? 'Bật cam' : 'Tắt cam'} active={camOff} onClick={toggleCam} />}
                             <Btn icon="📞" label="Kết thúc" cls="reject rot135" onClick={endCall} />
-                            <Btn icon={spkOff ? '🔈' : '🔊'} label={spkOff ? 'Bật loa' : 'Tắt loa'} active={spkOff} onClick={() => setSpkOff(s => !s)} />
+                            <Btn icon={speakerMode === 'speaker' ? '🔊' : '🔉'} label={speakerMode === 'speaker' ? 'Loa ngoài' : 'Loa trong'} active={speakerMode === 'speaker'} onClick={toggleSpeaker} />
                         </>
                     )}
                 </div>
