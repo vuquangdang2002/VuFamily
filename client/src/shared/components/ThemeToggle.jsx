@@ -1,32 +1,79 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 const THEME_KEY = 'vuFamilyTheme';
 
+/** Apply theme class to <html> and store preference */
+function applyTheme(theme) {
+    const root = document.documentElement;
+    root.classList.remove('light', 'dark');
+    if (theme === 'system') {
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        root.classList.add(prefersDark ? 'dark' : 'light');
+    } else {
+        root.classList.add(theme);
+    }
+}
+
 export function useTheme() {
-    const [theme, setTheme] = useState(() => {
-        return localStorage.getItem(THEME_KEY) || 'system';
-    });
+    const [theme, setThemeState] = useState(() => localStorage.getItem(THEME_KEY) || 'dark');
 
-    useEffect(() => {
-        localStorage.setItem(THEME_KEY, theme);
+    /** setTheme with circular-wipe View Transition */
+    const setTheme = useCallback((nextTheme, event) => {
+        localStorage.setItem(THEME_KEY, nextTheme);
 
-        const root = document.documentElement;
-        root.classList.remove('light', 'dark');
+        // ── View Transitions API (Chrome 111+, Edge 111+) ────────────────────
+        const x = event?.clientX ?? window.innerWidth / 2;
+        const y = event?.clientY ?? window.innerHeight / 2;
 
-        if (theme === 'system') {
-            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            root.classList.add(prefersDark ? 'dark' : 'light');
-        } else {
-            root.classList.add(theme);
+        // Radius: hypotenuse to furthest corner
+        const radius = Math.hypot(
+            Math.max(x, window.innerWidth - x),
+            Math.max(y, window.innerHeight - y)
+        );
+
+        if (!document.startViewTransition) {
+            // Fallback: CSS transition only
+            applyTheme(nextTheme);
+            setThemeState(nextTheme);
+            return;
         }
 
+        const transition = document.startViewTransition(() => {
+            applyTheme(nextTheme);
+            setThemeState(nextTheme);
+        });
+
+        // Animate a circular clip-path expanding from click point
+        transition.ready.then(() => {
+            const isDark = nextTheme === 'dark'
+                || (nextTheme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+
+            const clipExpand = [
+                `circle(0px at ${x}px ${y}px)`,
+                `circle(${radius}px at ${x}px ${y}px)`,
+            ];
+            const clipCollapse = [
+                `circle(${radius}px at ${x}px ${y}px)`,
+                `circle(0px at ${x}px ${y}px)`,
+            ];
+
+            // Animate the NEW snapshot (expanding from click)
+            document.documentElement.animate(
+                isDark ? clipExpand : clipExpand,
+                {
+                    duration: 450,
+                    easing: 'cubic-bezier(0.4, 0, 0.2, 1)',
+                    pseudoElement: '::view-transition-new(root)',
+                }
+            );
+        });
+    }, []);
+
+    // Sync on mount + system change
+    useEffect(() => {
+        applyTheme(theme);
         const mq = window.matchMedia('(prefers-color-scheme: dark)');
-        const handler = (e) => {
-            if (theme === 'system') {
-                root.classList.remove('light', 'dark');
-                root.classList.add(e.matches ? 'dark' : 'light');
-            }
-        };
+        const handler = () => { if (theme === 'system') applyTheme('system'); };
         mq.addEventListener('change', handler);
         return () => mq.removeEventListener('change', handler);
     }, [theme]);
@@ -53,3 +100,4 @@ export default function ThemeToggle({ theme, setTheme }) {
         </div>
     );
 }
+

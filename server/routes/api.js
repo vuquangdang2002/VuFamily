@@ -109,16 +109,20 @@ router.put('/chats/:id/name', authenticate, updateRoomName);
 router.post('/chats/:id/leave', authenticate, leaveRoom);
 router.post('/chats/:id/kick/:userId', authenticate, kickMember);
 
-// ─── Voice Calls (WebRTC Signaling) ───
+// ─── Voice Calls (WebRTC Signaling via SSE + DB Fallback) ───
 const CallController = require('../controllers/callController');
+// SSE persistent connection — must be registered BEFORE :id routes
+router.get('/calls/stream', authenticate, CallController.streamEvents);
+router.get('/calls/incoming', authenticate, CallController.pollIncoming);    // HTTP fallback
 router.post('/calls', authenticate, CallController.initiateCall);
-router.get('/calls/incoming', authenticate, CallController.pollIncoming);
 router.get('/calls/:id', authenticate, CallController.getCall);
 router.put('/calls/:id/answer', authenticate, CallController.answerCall);
 router.put('/calls/:id/status', authenticate, CallController.updateStatus);
+router.post('/calls/:id/signal', authenticate, CallController.addSignal);    // unified signal
+router.get('/calls/:id/signals', authenticate, CallController.getSignals);   // DB fallback
+// Legacy routes kept for backward compat
+router.post('/calls/:id/signals', authenticate, CallController.addSignal);
 router.post('/calls/:id/candidates', authenticate, CallController.addCandidate);
 router.get('/calls/:id/candidates', authenticate, CallController.getCandidates);
-router.post('/calls/:id/signals', authenticate, CallController.addSignal);
-router.get('/calls/:id/signals', authenticate, CallController.getSignals);
 
 module.exports = router;

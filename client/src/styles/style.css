@@ -193,3 +193,31 @@ body {
     width: 100vw;
 }
 
+/* ─── Smooth CSS Variable Transitions (fallback — all browsers) ─── */
+body,
+.sidebar,
+.main-content,
+.nf-panel-card,
+.nf-post-card,
+.nf-stat-card,
+.modal,
+.detail-panel,
+.btn,
+input, select, textarea {
+    transition:
+        background-color 350ms ease,
+        border-color 350ms ease,
+        color 200ms ease,
+        box-shadow 350ms ease;
+}
+
+/* ─── View Transitions API — Circular Wipe ─── */
+/* Vô hiệu hóa cross-fade mặc định để dùng clip-path custom từ ThemeToggle.jsx */
+::view-transition-old(root),
+::view-transition-new(root) {
+    animation: none;
+    mix-blend-mode: normal;
+}
+
+::view-transition-old(root) { z-index: 1; }
+::view-transition-new(root) { z-index: 9999; }

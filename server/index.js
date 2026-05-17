@@ -1,6 +1,7 @@
 // Express server entry point
 require('dotenv').config();
 
+const http = require('http');
 const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
@@ -9,11 +10,12 @@ const path = require('path');
 const config = require('./config');
 const apiRoutes = require('./routes/api');
 const { errorHandler, notFound } = require('./middleware/errorHandler');
+const { initCallSignaling } = require('./utils/callSignaling');
 
 const app = express();
 
 // Middleware
-app.use(compression()); // Optimize API response size
+app.use(compression());
 app.use(cors({ origin: config.corsOrigin }));
 app.use(morgan('dev'));
 app.use(express.json());
@@ -34,27 +36,33 @@ app.get('*', (req, res) => {
 app.use(notFound);
 app.use(errorHandler);
 
+// Wrap Express in native http.Server so Socket.io can share the same port
+const httpServer = http.createServer(app);
+
+// Attach Socket.io WebRTC Signaling (path: /call-signal)
+initCallSignaling(httpServer);
+
 // Start server only if running directly
 if (require.main === module) {
-    app.listen(config.port, () => {
+    httpServer.listen(config.port, () => {
         console.log('');
         console.log('🏛️  ═══════════════════════════════════════');
         console.log('    GIA PHẢ - Family Genealogy Server');
         console.log('    ═══════════════════════════════════════');
         console.log(`    🌐 http://localhost:${config.port}`);
+        console.log(`    📞 WebRTC Signaling: ws://localhost:${config.port}/call-signal`);
         console.log(`    📁 Database: ${config.dbPath || 'Supabase PostgreSQL'}`);
         console.log(`    🔧 Environment: ${config.env}`);
         console.log('    ═══════════════════════════════════════');
         console.log('');
     });
 
-    // Graceful shutdown
     process.on('SIGTERM', () => {
         console.log('👋 Đang tắt server...');
-        process.exit(0);
+        httpServer.close(() => process.exit(0));
     });
 }
 
-// Export cho Vercel Serverless Function
+// Export cho Vercel (chỉ Express app, không có Socket.io — fallback SSE)
 module.exports = app;
 

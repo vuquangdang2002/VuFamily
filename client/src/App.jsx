@@ -713,10 +713,10 @@ export default function App() {
             {/* Theme toggle — always visible */}
             <button
                 className="theme-toggle-float"
-                onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+                onClick={(e) => setTheme(theme === 'light' ? 'dark' : 'light', e)}
                 title={theme === 'light' ? 'Chế độ tối' : 'Chế độ sáng'}
             >
-                {theme === 'light' ? '🌙' : '☀️'}
+                <span className="theme-toggle-icon">{theme === 'light' ? '🌙' : '☀️'}</span>
             </button>
 
             {/* Modals (always available) */}
