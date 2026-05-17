@@ -12,6 +12,7 @@ import HistoryPage from './features/history/HistoryPanel';
 import RequestsPage from './features/requests/RequestsPanel';
 import ChatPage from './features/chat/ChatPage';
 import VoiceCall from './features/chat/VoiceCall';
+import GuidePage from './features/guide/GuidePage';
 // ── Shared ──
 import Sidebar from './shared/components/Sidebar';
 import Header from './shared/components/Header';
@@ -674,7 +675,7 @@ export default function App() {
                     </div>
                 );
             case 'newsfeed':
-                return <NewsfeedPage user={user} isAdmin={isAdmin} addToast={addToast} />;
+                return <NewsfeedPage user={user} isAdmin={isAdmin} addToast={addToast} members={members} onNavigate={handleNavigate} />;
             case 'calendar':
                 return <CalendarPage members={members} />;
             case 'history':
@@ -685,6 +686,8 @@ export default function App() {
                 return <RequestsPage user={user} members={members} onRefresh={refresh} addToast={addToast} />;
             case 'accounts':
                 return <AccountsPage addToast={addToast} />;
+            case 'guide':
+                return <GuidePage user={user} onNavigate={handleNavigate} />;
             default:
                 return null;
         }

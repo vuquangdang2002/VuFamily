@@ -29,14 +29,24 @@ class MemberController {
 
     static async search(req, res) {
         try { 
-            const q = req.query.q || '';
-            const cacheKey = `search_${q.toLowerCase()}`;
-            const cached = cache.get(cacheKey);
-            if (cached) return res.json({ success: true, data: cached, cached: true });
+            const q = req.query.q ? req.query.q.toLowerCase().trim() : '';
+            if (!q) return res.json({ success: true, data: [] });
 
-            const data = await MemberModel.search(q);
-            cache.set(cacheKey, data); // Cache searches
-            res.json({ success: true, data }); 
+            // Blazing fast in-memory search instead of Postgres ILIKE full table scan
+            let allMembers = cache.get('members_all');
+            if (!allMembers) {
+                allMembers = await MemberModel.getAll();
+                cache.set('members_all', allMembers);
+            }
+
+            const results = allMembers.filter(m => 
+                (m.name && m.name.toLowerCase().includes(q)) ||
+                (m.birth_place && m.birth_place.toLowerCase().includes(q)) ||
+                (m.occupation && m.occupation.toLowerCase().includes(q)) ||
+                (m.note && m.note.toLowerCase().includes(q))
+            ).slice(0, 50);
+
+            res.json({ success: true, data: results, cached: true }); 
         }
         catch (e) { console.error('[MemberController - search] Error:', e.message); res.status(500).json({ success: false, error: e.message || 'Lỗi server' }); }
     }

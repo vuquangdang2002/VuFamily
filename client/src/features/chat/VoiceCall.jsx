@@ -291,7 +291,9 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
                         setCallState(prev => (prev === 'CALLING' ? 'CONNECTED' : prev));
 
                         const targetUserId = sig.from_user_id;
-                              if (sig.type === 'offer') {
+                        const pc = createPeer(targetUserId, callId, stream);
+
+                        if (sig.type === 'offer') {
                             await pc.setRemoteDescription(new RTCSessionDescription(JSON.parse(sig.payload)));
                             const answer = await pc.createAnswer();
                             // Ép băng thông cao cho Answer
