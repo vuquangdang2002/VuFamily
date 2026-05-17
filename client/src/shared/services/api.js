@@ -1,8 +1,9 @@
 // API service layer
 import { Solar, Lunar } from '../utils/lunar.js';
 import { ganZhiToViet } from '../utils/vietLunar.js';
+import { API_BASE_URL } from '../../config.js';
 
-export const API_BASE = (window.Capacitor || (window.location.hostname === 'localhost' && !window.location.port)) ? 'https://www.dangvq.online/api' : '/api';
+export const API_BASE = (window.Capacitor || (window.location.hostname === 'localhost' && !window.location.port)) ? API_BASE_URL : '/api';
 
 async function request(url, options = {}) {
     let headers = { 'Content-Type': 'application/json', ...options.headers };

@@ -22,10 +22,12 @@ const analytics = getAnalytics(app);
 const messaging = getMessaging(app);
 const remoteConfig = getRemoteConfig(app);
 
+import { API_BASE_URL } from './config.js';
+
 // Default configurations
 remoteConfig.settings.minimumFetchIntervalMillis = 3600000; // 1 hour
 remoteConfig.defaultConfig = {
-  "api_base_url": "https://api.dangvq.online",
+  "api_base_url": API_BASE_URL,
   "enable_new_call_ui": true,
   "maintenance_mode": false
 };
