@@ -53,9 +53,36 @@ const autoFailoverFetch = async (url, options) => {
     }
 };
 
-const supabase = createClient(activeUrl || '', activeKey || '', {
-    auth: { persistSession: false },
-    global: { fetch: autoFailoverFetch }
-});
+// Tạo Supabase client — graceful: không crash nếu thiếu env vars
+let supabase;
+
+try {
+    if (!activeUrl || !activeKey) {
+        throw new Error('Missing Supabase credentials');
+    }
+    supabase = createClient(activeUrl, activeKey, {
+        auth: { persistSession: false },
+        global: { fetch: autoFailoverFetch }
+    });
+    console.log('✅ Supabase connected');
+} catch (e) {
+    console.error('❌ Supabase init failed:', e.message);
+    console.error('   → Set SUPABASE_URL và SUPABASE_SERVICE_KEY trong environment variables');
+    // Tạo proxy object — trả error rõ ràng thay vì crash toàn bộ server
+    const handler = {
+        get: (_, prop) => {
+            if (prop === 'from') {
+                return () => ({
+                    select: () => ({ data: null, error: new Error('Supabase chưa được cấu hình') }),
+                    insert: () => ({ data: null, error: new Error('Supabase chưa được cấu hình') }),
+                    update: () => ({ data: null, error: new Error('Supabase chưa được cấu hình') }),
+                    delete: () => ({ data: null, error: new Error('Supabase chưa được cấu hình') }),
+                });
+            }
+            return () => {};
+        }
+    };
+    supabase = new Proxy({}, handler);
+}
 
 module.exports = { supabase };
