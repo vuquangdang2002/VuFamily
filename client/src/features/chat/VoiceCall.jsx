@@ -189,7 +189,11 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
         });
 
         socket.on('call:incoming', (data) => {
-            if (phaseRef.current !== 'IDLE') return;
+            console.log('[VoiceCall] RECEIVED call:incoming', data, 'Current phase:', phaseRef.current);
+            if (phaseRef.current !== 'IDLE') {
+                console.log('[VoiceCall] Ignored call:incoming because phase is not IDLE');
+                return;
+            }
             setCallMeta(data);
             setPhase('RINGING');
         });

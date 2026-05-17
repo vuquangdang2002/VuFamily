@@ -175,7 +175,9 @@ function initRealtimeHub(httpServer) {
                 };
 
                 // Push incoming event to each member
+                console.log(`[Hub] Broadcasting call:incoming to ${members?.length || 0} members in room ${roomId}`);
                 members?.forEach(m => {
+                    console.log(`[Hub] Emitting to user:${m.user_id}`);
                     io.to(`user:${m.user_id}`).emit('call:incoming', notification);
                 });
 
