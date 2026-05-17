@@ -1,0 +1,102 @@
+/* ============================================================
+   LIGHT THEME — VuFamily Design System
+   Áp dụng khi: html.light  (hoặc :root mặc định)
+   ============================================================ */
+
+/* ── Selector: mặc định + html.light ── */
+:root,
+html.light {
+    color-scheme: light;
+
+    /* ── Nền ── */
+    --bg-primary:   #EEF0F5;   /* Xám xanh nhạt — phân biệt rõ với card */
+    --bg-secondary: #F6F7FB;
+    --bg-card:      #FFFFFF;
+    --bg-glass:     rgba(255, 255, 255, 0.9);
+    --bg-hover:     #E4E7F0;
+
+    /* ── Brand Gold ── */
+    --gold:      #B8922A;
+    --gold-light: #D4AF37;
+    --gold-dark:  #8B6914;
+    --gold-glow:  rgba(184, 146, 42, 0.12);
+
+    /* ── Primary (Indigo đậm → contrast tốt trên nền trắng) ── */
+    --primary:       #4338CA;
+    --primary-light: #6366F1;
+    --primary-dark:  #312E81;
+    --primary-glow:  rgba(67, 56, 202, 0.12);
+
+    /* ── Sidebar ── */
+    --sidebar-bg:          #FFFFFF;
+    --sidebar-active-bg:   #EEF2FF;
+    --sidebar-active-text: #4338CA;
+    --sidebar-hover-bg:    #F1F4FD;
+    --sidebar-text:        #4B5563;
+    --sidebar-text-active: #1E1B4B;
+
+    /* ── Typography ── */
+    --text-primary:   #111827;
+    --text-secondary: #374151;
+    --text-muted:     #6B7280;
+
+    /* ── Accent ── */
+    --accent-male:    #2563EB;
+    --accent-female:  #DB2777;
+    --accent-success: #059669;
+    --accent-error:   #DC2626;
+    --accent-warning: #D97706;
+    --accent-info:    #2563EB;
+
+    /* ── Viền ── */
+    --border-subtle: #CBD5E1;
+    --border-glow:   rgba(67, 56, 202, 0.2);
+
+    /* ── Bóng đổ (rõ hơn để có chiều sâu) ── */
+    --shadow-sm:   0 1px 3px  rgba(0, 0, 0, 0.10);
+    --shadow-md:   0 4px 10px rgba(0, 0, 0, 0.12);
+    --shadow-lg:   0 10px 24px rgba(0, 0, 0, 0.14);
+    --shadow-glow: 0 0 16px rgba(67, 56, 202, 0.10);
+
+    /* ── Input ── */
+    --input-bg:           #FFFFFF;
+    --input-color:        #111827;
+    --input-border:       #9CA3AF;
+    --input-placeholder:  #9CA3AF;
+    --input-focus-border: #4338CA;
+    --input-focus-shadow: rgba(67, 56, 202, 0.15);
+
+    /* ── Family Tree ── */
+    --tree-bg:                 #E8EBF4;
+    --tree-grid:               rgba(15, 23, 42, 0.07);
+    --tree-node-bg:            #FFFFFF;
+    --tree-node-border:        #CBD5E1;
+    --tree-node-border-active: #4338CA;
+    --tree-node-shadow:        0 4px 10px rgba(0, 0, 0, 0.12);
+    --tree-node-shadow-active: 0 0 0 3px rgba(67, 56, 202, 0.2);
+    --tree-line-parent:        rgba(51, 65, 85, 0.45);
+    --tree-line-spouse:        rgba(219, 39, 119, 0.45);
+    --tree-badge-bg:           rgba(67, 56, 202, 0.08);
+    --tree-badge-border:       rgba(67, 56, 202, 0.2);
+    --tree-badge-text:         #4338CA;
+}
+
+/* ── Light-mode sidebar overrides (vì sidebar CSS hardcode màu trắng) ── */
+html.light .sidebar {
+    background: #FFFFFF;
+    box-shadow: 4px 0 16px rgba(0, 0, 0, 0.08);
+    border-right: 1px solid #CBD5E1;
+}
+html.light .sidebar-header      { border-bottom-color: #E5E7EB; }
+html.light .sidebar-logo-title  { color: #1E1B4B; }
+html.light .sidebar-logo-sub    { color: #6B7280; }
+html.light .sidebar-toggle      { background: #F3F4F6; border-color: #D1D5DB; color: #374151; }
+html.light .sidebar-toggle:hover{ background: #E5E7EB; color: #111827; }
+html.light .sidebar-divider     { background: #E5E7EB; }
+html.light .sidebar-item:hover  { background: #F1F4FD; color: #1E1B4B; }
+html.light .sidebar-footer      { border-top-color: #E5E7EB; }
+html.light .sidebar-user        { background: #F3F4F6; }
+html.light .sidebar-user-name   { color: #111827; }
+html.light .sidebar-user-role   { color: #6B7280; }
+html.light .sidebar-user-expand { color: #6B7280; }
+html.light .main-content        { background: #EEF0F5; box-shadow: none; }

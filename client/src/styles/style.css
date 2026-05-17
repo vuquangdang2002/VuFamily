@@ -1,5 +1,19 @@
-@import "tailwindcss";
+/* ============================================================
+   GIA PHẢ — VuFamily Design System
+   Entry point CSS — chỉ chứa import và global base styles
+   Theme tokens được tách vào:
+     styles/theme-light.css  ← Light mode (:root, html.light)
+     styles/theme-dark.css   ← Dark mode (html.dark)
+   ============================================================ */
 
+/* ── Google Fonts ── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap');
+
+/* ── Theme tokens (load trước tất cả) ── */
+@import "./theme-light.css";
+@import "./theme-dark.css";
+
+/* ── Component styles ── */
 @import "../shared/components/Sidebar.css";
 @import "../shared/components/Header.css";
 @import "../shared/components/Buttons.css";
@@ -11,154 +25,18 @@
 @import "../shared/components/Responsive.css";
 @import "../shared/components/Animations.css";
 
-/* ============================================
-   GIA PHẢ - FAMILY TREE DESIGN SYSTEM
-   ============================================ */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap');
+/* ── Tailwind (nếu dùng) ── */
+@import "tailwindcss";
 
 @theme {
-  --font-heading: 'Outfit', sans-serif;
-  --font-body: 'Inter', sans-serif;
-}
-
-
-
-:root {
-    --bg-primary: #F8FAFC;
-    --bg-secondary: #FFFFFF;
-    --bg-card: #FFFFFF;
-    --bg-glass: rgba(255, 255, 255, 0.85);
-    --bg-hover: #F1F5F9;
-
-    --gold: #D4AF37;
-    --gold-light: #F0D060;
-    --gold-dark: #A08520;
-    --gold-glow: rgba(212, 175, 55, 0.1);
-
-    --primary: #4F46E5;
-    --primary-light: #6366F1;
-    --primary-dark: #4338CA;
-    --primary-glow: rgba(79, 70, 229, 0.15);
-
-    --sidebar-bg: #FFFFFF;
-    --sidebar-active-bg: #EEF2FF;
-    --sidebar-active-text: #4F46E5;
-    --sidebar-hover-bg: #F8FAFC;
-    --sidebar-text: #64748B;
-    --sidebar-text-active: #1E293B;
-
-    --text-primary: #0F172A;
-    --text-secondary: #475569;
-    --text-muted: #94A3B8;
-
-    --accent-male: #3B82F6;
-    --accent-female: #EC4899;
-    --accent-success: #10B981;
-    --accent-error: #EF4444;
-    --accent-info: #3B82F6;
-
-    --border-subtle: #E2E8F0;
-    --border-glow: rgba(79, 70, 229, 0.2);
-    --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
-    --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1);
-    --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1);
-    --shadow-glow: 0 0 15px rgba(79, 70, 229, 0.1);
-
-    --radius-sm: 8px;
-    --radius-md: 12px;
-    --radius-lg: 16px;
-
     --font-heading: 'Outfit', sans-serif;
-    --font-body: 'Inter', -apple-system, sans-serif;
-
-    --header-height: 64px;
-    --toolbar-height: 48px;
-
-    --input-bg: #FFFFFF;
-    --input-color: #0F172A;
-    --input-border: #CBD5E1;
-    --input-placeholder: #94A3B8;
-    --input-focus-border: #4F46E5;
-    --input-focus-shadow: rgba(79, 70, 229, 0.15);
-
-    --tree-bg: #F8FAFC;
-    --tree-grid: rgba(15, 23, 42, 0.05);
-    --tree-node-bg: #FFFFFF;
-    --tree-node-border: #E2E8F0;
-    --tree-node-border-active: #4F46E5;
-    --tree-node-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
-    --tree-node-shadow-active: 0 0 0 3px rgba(79, 70, 229, 0.2);
-    --tree-line-parent: rgba(71, 85, 105, 0.4);
-    --tree-line-spouse: rgba(236, 72, 153, 0.4);
-    --tree-badge-bg: rgba(79, 70, 229, 0.1);
-    --tree-badge-border: rgba(79, 70, 229, 0.2);
-    --tree-badge-text: #4F46E5;
+    --font-body:    'Inter', sans-serif;
 }
 
-html.dark {
-    color-scheme: dark;
-    --bg-primary: #0F172A;
-    --bg-secondary: #1E293B;
-    --bg-card: #1E293B;
-    --bg-glass: rgba(30, 41, 59, 0.85);
-    --bg-hover: rgba(255, 255, 255, 0.05);
-
-    --primary: #6366F1;
-    --primary-light: #818CF8;
-    --primary-dark: #4F46E5;
-    --primary-glow: rgba(99, 102, 241, 0.25);
-
-    --sidebar-bg: #0F172A;
-    --sidebar-active-bg: rgba(99, 102, 241, 0.15);
-    --sidebar-active-text: #818CF8;
-    --sidebar-hover-bg: rgba(255, 255, 255, 0.05);
-    --sidebar-text: #94A3B8;
-    --sidebar-text-active: #F8FAFC;
-
-    --text-primary: #F8FAFC;
-    --text-secondary: #94A3B8;
-    --text-muted: #64748B;
-
-    --border-subtle: #334155;
-    --border-glow: rgba(99, 102, 241, 0.2);
-    --shadow-sm: 0 1px 3px rgba(0,0,0,0.5);
-    --shadow-md: 0 4px 12px rgba(0,0,0,0.6);
-    --shadow-lg: 0 8px 24px rgba(0,0,0,0.7);
-    --shadow-glow: 0 0 20px rgba(99, 102, 241, 0.15);
-
-    --input-bg: #0F172A;
-    --input-color: #F8FAFC;
-    --input-border: #334155;
-    --input-placeholder: #64748B;
-    --input-focus-border: #818CF8;
-    --input-focus-shadow: rgba(99, 102, 241, 0.2);
-
-    --tree-bg: #0F172A;
-    --tree-grid: rgba(255, 255, 255, 0.03);
-    --tree-node-bg: #1E293B;
-    --tree-node-border: #334155;
-    --tree-node-border-active: #818CF8;
-    --tree-node-shadow: 0 4px 12px rgba(0,0,0,0.5);
-    --tree-node-shadow-active: 0 0 0 3px rgba(99, 102, 241, 0.3);
-    --tree-line-parent: rgba(148, 163, 184, 0.3);
-    --tree-line-spouse: rgba(236, 72, 153, 0.35);
-    --tree-badge-bg: rgba(99, 102, 241, 0.15);
-    --tree-badge-border: rgba(99, 102, 241, 0.3);
-    --tree-badge-text: #818CF8;
-}
-
-input, select, textarea {
-    background-color: var(--input-bg);
-    color: var(--input-color);
-    border: 1px solid var(--input-border);
-    border-radius: var(--radius-sm);
-    padding: 8px 12px;
-}
-input:focus, select:focus, textarea:focus {
-    border-color: var(--input-focus-border);
-    outline: none;
-    box-shadow: 0 0 0 3px var(--input-focus-shadow);
-}
+/* ============================================================
+   GLOBAL BASE STYLES
+   (Không chứa màu sắc — màu nằm trong theme-*.css)
+   ============================================================ */
 
 *,
 *::before,
@@ -181,9 +59,22 @@ body {
     overflow: hidden;
 }
 
+input, select, textarea {
+    background-color: var(--input-bg);
+    color: var(--input-color);
+    border: 1px solid var(--input-border);
+    border-radius: var(--radius-sm);
+    padding: 8px 12px;
+}
+input:focus, select:focus, textarea:focus {
+    border-color: var(--input-focus-border);
+    outline: none;
+    box-shadow: 0 0 0 3px var(--input-focus-shadow);
+}
+
 ::selection {
-    background: rgba(59, 111, 207, 0.2);
-    color: #1a2138;
+    background: rgba(67, 56, 202, 0.15);
+    color: var(--text-primary);
 }
 
 .app {
@@ -193,7 +84,7 @@ body {
     width: 100vw;
 }
 
-/* ─── Smooth CSS Variable Transitions (fallback — all browsers) ─── */
+/* ── Smooth CSS Variable Transitions (fallback — mọi browser) ── */
 body,
 .sidebar,
 .main-content,
@@ -206,18 +97,17 @@ body,
 input, select, textarea {
     transition:
         background-color 350ms ease,
-        border-color 350ms ease,
-        color 200ms ease,
-        box-shadow 350ms ease;
+        border-color     350ms ease,
+        color            200ms ease,
+        box-shadow       350ms ease;
 }
 
-/* ─── View Transitions API — Circular Wipe ─── */
-/* Vô hiệu hóa cross-fade mặc định để dùng clip-path custom từ ThemeToggle.jsx */
+/* ── View Transitions API — Circular Wipe ── */
+/* Tắt cross-fade mặc định, dùng clip-path custom từ ThemeToggle.jsx */
 ::view-transition-old(root),
 ::view-transition-new(root) {
     animation: none;
     mix-blend-mode: normal;
 }
-
 ::view-transition-old(root) { z-index: 1; }
 ::view-transition-new(root) { z-index: 9999; }

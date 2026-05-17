@@ -1,0 +1,80 @@
+/* ============================================================
+   DARK THEME — VuFamily Design System
+   Áp dụng khi: html.dark
+   ============================================================ */
+
+html.dark {
+    color-scheme: dark;
+
+    /* ── Nền ── */
+    --bg-primary:   #0F172A;   /* Navy đậm */
+    --bg-secondary: #1E293B;
+    --bg-card:      #1E293B;
+    --bg-glass:     rgba(30, 41, 59, 0.85);
+    --bg-hover:     rgba(255, 255, 255, 0.05);
+
+    /* ── Brand Gold ── */
+    --gold:       #D4AF37;
+    --gold-light: #F0D060;
+    --gold-dark:  #A08520;
+    --gold-glow:  rgba(212, 175, 55, 0.12);
+
+    /* ── Primary (Indigo sáng hơn → đọc tốt trên nền tối) ── */
+    --primary:       #6366F1;
+    --primary-light: #818CF8;
+    --primary-dark:  #4F46E5;
+    --primary-glow:  rgba(99, 102, 241, 0.25);
+
+    /* ── Sidebar ── */
+    --sidebar-bg:          #0F172A;
+    --sidebar-active-bg:   rgba(99, 102, 241, 0.15);
+    --sidebar-active-text: #818CF8;
+    --sidebar-hover-bg:    rgba(255, 255, 255, 0.05);
+    --sidebar-text:        #94A3B8;
+    --sidebar-text-active: #F8FAFC;
+
+    /* ── Typography ── */
+    --text-primary:   #F8FAFC;
+    --text-secondary: #94A3B8;
+    --text-muted:     #64748B;
+
+    /* ── Accent ── */
+    --accent-male:    #3B82F6;
+    --accent-female:  #EC4899;
+    --accent-success: #10B981;
+    --accent-error:   #EF4444;
+    --accent-warning: #F59E0B;
+    --accent-info:    #3B82F6;
+
+    /* ── Viền ── */
+    --border-subtle: #334155;
+    --border-glow:   rgba(99, 102, 241, 0.2);
+
+    /* ── Bóng đổ (đậm hơn vì nền tối) ── */
+    --shadow-sm:   0 1px 3px  rgba(0, 0, 0, 0.5);
+    --shadow-md:   0 4px 12px rgba(0, 0, 0, 0.6);
+    --shadow-lg:   0 8px 24px rgba(0, 0, 0, 0.7);
+    --shadow-glow: 0 0 20px rgba(99, 102, 241, 0.15);
+
+    /* ── Input ── */
+    --input-bg:           #0F172A;
+    --input-color:        #F8FAFC;
+    --input-border:       #334155;
+    --input-placeholder:  #64748B;
+    --input-focus-border: #818CF8;
+    --input-focus-shadow: rgba(99, 102, 241, 0.2);
+
+    /* ── Family Tree ── */
+    --tree-bg:                 #0F172A;
+    --tree-grid:               rgba(255, 255, 255, 0.03);
+    --tree-node-bg:            #1E293B;
+    --tree-node-border:        #334155;
+    --tree-node-border-active: #818CF8;
+    --tree-node-shadow:        0 4px 12px rgba(0, 0, 0, 0.5);
+    --tree-node-shadow-active: 0 0 0 3px rgba(99, 102, 241, 0.3);
+    --tree-line-parent:        rgba(148, 163, 184, 0.3);
+    --tree-line-spouse:        rgba(236, 72, 153, 0.35);
+    --tree-badge-bg:           rgba(99, 102, 241, 0.15);
+    --tree-badge-border:       rgba(99, 102, 241, 0.3);
+    --tree-badge-text:         #818CF8;
+}
