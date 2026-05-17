@@ -6,6 +6,11 @@ const { authenticate, requireAdmin, requireEditorOrAdmin, getUsers, createUser, 
 const UpdateRequestModel = require('../models/UpdateRequest');
 const AuthController = require('../controllers/authController');
 
+// ─── Health check (Railway / uptime monitors) ───
+router.get('/health', (req, res) => {
+    res.json({ status: 'ok', service: 'vufamily-hub', ts: new Date().toISOString() });
+});
+
 // ─── Auth (public) ───
 router.post('/auth/login', AuthController.login);
 router.post('/auth/register', register);

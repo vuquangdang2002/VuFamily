@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { io } from 'socket.io-client';
-import { APP_URL } from '../../config';
+import { HUB_URL } from '../../config';
 import './VoiceCall.css';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -162,14 +162,27 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
     // ── Socket.io connection ─────────────────────────────────────────────────
     useEffect(() => {
         if (!user?.token) return;
-        const socket = io(APP_URL, {
-            path: '/hub',          // ✔️ Unified realtime hub (Chat + Call)
+        const socket = io(HUB_URL, {
+            path: '/hub',                          // Unified realtime hub
             auth: { token: getToken() },
+            // WebSocket dư tiên, tự động fallback sang polling nếu thất bại (Vercel)
             transports: ['websocket', 'polling'],
+            upgrade: true,
+            rememberUpgrade: true,
             reconnectionDelay: 1000,
-            reconnectionDelayMax: 5000,
+            reconnectionDelayMax: 8000,
+            reconnectionAttempts: 5,
         });
         socketRef.current = socket;
+
+        socket.on('connect', () => {
+            console.log(`[VoiceCall] ✅ Hub connected (${socket.io.engine.transport.name})`);
+        });
+
+        socket.on('connect_error', (err) => {
+            // Thông báo rõ để debug — không crash app
+            console.warn('[VoiceCall] Hub connect error:', err.message);
+        });
 
         socket.on('call:incoming', (data) => {
             if (phaseRef.current !== 'IDLE') return;
