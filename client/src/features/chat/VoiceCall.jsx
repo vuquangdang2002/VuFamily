@@ -95,6 +95,40 @@ function SignalBars({ quality }) {
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
+function useAudioLevel(stream) {
+    const [isTalking, setIsTalking] = useState(false);
+    useEffect(() => {
+        if (!stream || !stream.getAudioTracks().some(t => t.enabled)) return;
+        let audioCtx, analyser, source, rafId;
+        try {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            analyser = audioCtx.createAnalyser();
+            analyser.fftSize = 256;
+            source = audioCtx.createMediaStreamSource(stream);
+            source.connect(analyser);
+
+            const dataArray = new Uint8Array(analyser.frequencyBinCount);
+            const checkLevel = () => {
+                analyser.getByteFrequencyData(dataArray);
+                let sum = 0;
+                for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
+                const avg = sum / dataArray.length;
+                setIsTalking(avg > 10); // Ngưỡng âm lượng phát hiện giọng nói
+                rafId = requestAnimationFrame(checkLevel);
+            };
+            checkLevel();
+        } catch (e) {
+            console.error('Lỗi đo âm lượng (AudioContext):', e);
+        }
+        return () => {
+            if (rafId) cancelAnimationFrame(rafId);
+            if (source) source.disconnect();
+            if (audioCtx && audioCtx.state !== 'closed') audioCtx.close();
+        };
+    }, [stream]);
+    return isTalking;
+}
+
 function VideoCell({ stream, muted = false, label, isLocal = false, noVideo = false, quality }) {
     const ref = useRef(null);
     const [hasVideo, setHasVideo] = useState(false);
@@ -109,12 +143,26 @@ function VideoCell({ stream, muted = false, label, isLocal = false, noVideo = fa
         return () => { stream.removeEventListener('addtrack', check); stream.removeEventListener('removetrack', check); };
     }, [stream, isLocal]);
 
+    const isTalking = useAudioLevel(stream);
+    const showVideo = !noVideo && (isLocal ? true : hasVideo);
+
     return (
-        <div className="vc-cell">
-            {(!noVideo && (isLocal ? true : hasVideo))
-                ? <video ref={ref} autoPlay playsInline muted={isLocal || muted} className="vc-video" />
-                : <div className="vc-no-video"><div style={{fontSize:40}}>{isLocal ? '🎤' : '👤'}</div><small>{isLocal ? 'Audio only' : 'Chỉ nghe tiếng'}</small></div>
-            }
+        <div className="vc-cell" style={{ boxShadow: isTalking ? '0 0 0 3px #10b981' : 'none', transition: 'box-shadow 0.2s' }}>
+            {/* LUÔN RENDER thẻ video/audio để phát tiếng, chỉ ẩn UI nếu là Voice Call */}
+            <video ref={ref} autoPlay playsInline muted={isLocal || muted} className="vc-video" style={{ display: showVideo ? 'block' : 'none' }} />
+            
+            {!showVideo && (
+                <div className="vc-no-video">
+                    <div style={{
+                        fontSize: 40,
+                        transform: isTalking ? 'scale(1.2)' : 'scale(1)',
+                        transition: 'transform 0.1s ease-out'
+                    }}>
+                        {isLocal ? '🎤' : '🔊'}
+                    </div>
+                    <small>{isLocal ? 'Micro của bạn' : 'Đang nghe...'}</small>
+                </div>
+            )}
             <div className="vc-cell-footer">
                 <span className="vc-cell-label" style={{position:'static',background:'none',padding:0}}>{label}</span>
                 {quality && <SignalBars quality={quality} />}
