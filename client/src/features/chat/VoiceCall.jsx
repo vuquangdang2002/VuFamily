@@ -148,8 +148,15 @@ function VideoCell({ stream, muted = false, label, isLocal = false, noVideo = fa
 
     return (
         <div className="vc-cell" style={{ boxShadow: isTalking ? '0 0 0 3px #10b981' : 'none', transition: 'box-shadow 0.2s' }}>
-            {/* LUÔN RENDER thẻ video/audio để phát tiếng, chỉ ẩn UI nếu là Voice Call */}
-            <video ref={ref} autoPlay playsInline muted={isLocal || muted} className="vc-video" style={{ display: showVideo ? 'block' : 'none' }} />
+            {/* LUÔN RENDER thẻ video/audio để phát tiếng. Nếu ẩn UI, dùng opacity thay vì display:none để không bị trình duyệt tối ưu hóa ngắt tiếng */}
+            <video 
+                ref={ref} 
+                autoPlay 
+                playsInline 
+                muted={isLocal || muted} 
+                className="vc-video" 
+                style={showVideo ? {} : { opacity: 0, position: 'absolute', width: 1, height: 1, pointerEvents: 'none' }} 
+            />
             
             {!showVideo && (
                 <div className="vc-no-video">
