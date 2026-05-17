@@ -7,6 +7,11 @@
 - If you are working on a new feature, add its flag to `LOG_FLAGS` in `logger.js`.
 - The global flag `ENABLE_MYLOG` is used to toggle all logs on/off. Do not override this unless explicitly requested.
 
-## 2. General Rules
+## 2. UI/UX & Performance (Lazy Loading)
+- **Lazy Loading (BẮT BUỘC):** Đối với các màn hình chứa dữ liệu lớn (Danh sách dài, biểu đồ, thống kê chi tiết), giao diện ban đầu (mặc định) CHỈ ĐƯỢC LOAD các con số tóm tắt hoặc thông tin quan trọng nhất để đảm bảo tốc độ phản hồi nhanh.
+- Tránh việc fetch toàn bộ dữ liệu nặng ngay khi vào trang.
+- Các dữ liệu chi tiết nặng chỉ được fetch (gọi API) khi người dùng chủ động click vào nút "Xem chi tiết" hoặc "Tải biểu đồ", đồng thời phải có giao diện Loading rõ ràng.
+
+## 3. General Rules
 - Keep UI components clean and use existing CSS variables (e.g., `var(--primary)`, `var(--bg-secondary)`).
 - For data syncing, prefer the established Messenger-like cache pattern (load from IndexedDB first, then sync).

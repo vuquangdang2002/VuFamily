@@ -1,4 +1,5 @@
 const { supabase } = require('../config/supabase');
+const { encryptText, decryptText } = require('../utils/cryptoUtils');
 
 class ChatModel {
     static async getUserRooms(userId) {
@@ -60,7 +61,12 @@ class ChatModel {
             .limit(limit);
 
         if (error) throw error;
-        return messages;
+        
+        // Decrypt messages
+        return messages.map(m => ({
+            ...m,
+            content: decryptText(m.content)
+        }));
     }
 
     static async updateLastRead(roomId, userId) {
@@ -74,18 +80,24 @@ class ChatModel {
     }
 
     static async saveMessage(roomId, senderId, content) {
+        const encryptedContent = encryptText(content);
         const { data: message, error } = await supabase
             .from('chat_messages')
             .insert({
                 room_id: roomId,
                 sender_id: senderId,
-                content: content
+                content: encryptedContent
             })
             .select('*, users!chat_messages_sender_id_fkey(id, username, display_name, avatar)')
             .single();
 
         if (error) throw error;
-        return message;
+        
+        // Decrypt the content to send back to clients
+        return {
+            ...message,
+            content: decryptText(message.content)
+        };
     }
 
     static async updateRoomTimestamp(roomId) {
