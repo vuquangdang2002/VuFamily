@@ -45,13 +45,16 @@ initRealtimeHub(httpServer);
 // Start server only if running directly
 if (require.main === module) {
     httpServer.listen(config.port, () => {
+        const domain = process.env.RAILWAY_PUBLIC_DOMAIN ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` : `http://localhost:${config.port}`;
+        const wsDomain = process.env.RAILWAY_PUBLIC_DOMAIN ? `wss://${process.env.RAILWAY_PUBLIC_DOMAIN}/hub` : `ws://localhost:${config.port}/hub`;
+
         console.log('');
         console.log('🏛️  ═══════════════════════════════════════');
         console.log('    GIA PHẢ - Family Genealogy Server');
         console.log('    ═══════════════════════════════════════');
-        console.log(`    🌐 http://localhost:${config.port}`);
-        console.log(`    ⚡ Realtime Hub (Chat+Call): ws://localhost:${config.port}/hub`);
-        console.log(`    📁 Database: ${config.dbPath || 'Supabase PostgreSQL'}`);
+        console.log(`    🌐 ${domain}`);
+        console.log(`    ⚡ Realtime Hub (Chat+Call): ${wsDomain}`);
+        console.log(`    📁 Database: Supabase PostgreSQL (Cloud)`);
         console.log(`    🔧 Environment: ${config.env}`);
         console.log('    ═══════════════════════════════════════');
         console.log('');
