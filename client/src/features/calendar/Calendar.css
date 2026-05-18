@@ -525,3 +525,61 @@
         box-shadow: 0 3px 16px rgba(245, 158, 11, 0.22);
     }
 }
+
+/* =========================================
+   RESPONSIVE LAYOUT FOR CALENDAR
+   ========================================= */
+@media (max-width: 992px) {
+    .calendar-layout {
+        flex-direction: column;
+        height: auto;
+        overflow: visible;
+        gap: 24px;
+    }
+    
+    .calendar-main {
+        overflow: visible;
+    }
+    
+    .calendar-sidebar {
+        width: 100%;
+        min-width: 0;
+        padding-right: 0;
+    }
+}
+
+@media (max-width: 576px) {
+    .calendar-card {
+        padding: 16px 12px;
+    }
+
+    .calendar-grid {
+        min-width: 100%; /* Allows it to fit small screens instead of forcing scroll */
+    }
+
+    .cal-day {
+        min-height: 50px;
+        padding: 4px;
+    }
+
+    .cal-day-num {
+        font-size: 16px;
+    }
+
+    .cal-day-lunar {
+        font-size: 9px;
+        letter-spacing: -0.5px;
+        white-space: normal;
+        text-align: center;
+    }
+
+    .cal-nav-title {
+        font-size: 16px;
+        margin: 0 8px;
+    }
+    
+    .cal-weekday {
+        font-size: 9px;
+        padding: 8px 0;
+    }
+}
