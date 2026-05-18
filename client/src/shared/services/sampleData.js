@@ -34,9 +34,17 @@ export const SAMPLE_ACHIEVEMENTS = [
 ];
 
 export const SAMPLE_USERS = [
-    { id: 'u1', username: 'admin', password: 'password123', displayName: 'Vũ Quang Đáng', role: 'admin', email: 'admin@vufamily.vn', phone: '0901234567', avatar: '' },
-    { id: 'u2', username: 'editor1', password: 'password123', displayName: 'Vũ Đăng Khoa', role: 'editor', email: 'khoa@vufamily.vn', phone: '0987654321', avatar: '' },
-    { id: 'u3', username: 'member1', password: 'password123', displayName: 'Vũ Thị Ngọc', role: 'member', email: 'ngoc@vufamily.vn', phone: '0911223344', avatar: '' }
+    { id: 'u_root', username: 'dangvq', password: 'DangVQ@2002', displayName: 'Vũ Quang Đáng', role: 'admin', email: 'dangvq@vufamily.vn', phone: '0901234567', avatar: '' },
+    { id: 'u_admin1', username: 'admin1', password: 'Admin@1234', displayName: 'Quản trị 1', role: 'admin', email: 'admin1@vufamily.vn', phone: '', avatar: '' },
+    { id: 'u_admin2', username: 'admin2', password: 'Admin@1234', displayName: 'Quản trị 2', role: 'admin', email: 'admin2@vufamily.vn', phone: '', avatar: '' },
+    { id: 'u_admin3', username: 'admin3', password: 'Admin@1234', displayName: 'Quản trị 3', role: 'admin', email: 'admin3@vufamily.vn', phone: '', avatar: '' },
+    { id: 'u_admin4', username: 'admin4', password: 'Admin@1234', displayName: 'Quản trị 4', role: 'admin', email: 'admin4@vufamily.vn', phone: '', avatar: '' },
+    { id: 'u_admin5', username: 'admin5', password: 'Admin@1234', displayName: 'Quản trị 5', role: 'admin', email: 'admin5@vufamily.vn', phone: '', avatar: '' },
+    { id: 'u_test1', username: 'test1', password: 'Viewer@1234', displayName: 'Test 1', role: 'viewer', email: 'test1@vufamily.vn', phone: '', avatar: '' },
+    { id: 'u_test2', username: 'test2', password: 'Viewer@1234', displayName: 'Test 2', role: 'viewer', email: 'test2@vufamily.vn', phone: '', avatar: '' },
+    { id: 'u_test3', username: 'test3', password: 'Viewer@1234', displayName: 'Test 3', role: 'viewer', email: 'test3@vufamily.vn', phone: '', avatar: '' },
+    { id: 'u_test4', username: 'test4', password: 'Viewer@1234', displayName: 'Test 4', role: 'viewer', email: 'test4@vufamily.vn', phone: '', avatar: '' },
+    { id: 'u_test5', username: 'test5', password: 'Viewer@1234', displayName: 'Test 5', role: 'viewer', email: 'test5@vufamily.vn', phone: '', avatar: '' }
 ];
 
 export const SAMPLE_POSTS = [

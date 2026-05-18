@@ -640,6 +640,8 @@ export default function App() {
                     onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
                     pendingCount={pendingCount}
                     onOpenProfile={() => setProfileModalOpen(true)}
+                    theme={theme}
+                    setTheme={setTheme}
                 />
             )}
             <main className="main-content">
