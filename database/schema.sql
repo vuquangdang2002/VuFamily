@@ -98,9 +98,7 @@ CREATE TABLE IF NOT EXISTS update_requests (
 CREATE TABLE IF NOT EXISTS posts (
   id SERIAL PRIMARY KEY,
   content TEXT NOT NULL,
-  author_id INTEGER NOT NULL,
-  author_role TEXT DEFAULT 'viewer',
-  user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -109,9 +107,7 @@ CREATE TABLE IF NOT EXISTS comments (
   id SERIAL PRIMARY KEY,
   post_id INTEGER NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
   content TEXT NOT NULL,
-  author_id INTEGER NOT NULL,
-  author_role TEXT DEFAULT 'viewer',
-  user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 

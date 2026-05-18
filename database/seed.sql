@@ -88,9 +88,9 @@ INSERT INTO achievements (member_id, category, title, organization, start_year, 
 ON CONFLICT DO NOTHING;
 
 -- POSTS (Bảng tin)
-INSERT INTO posts (content, user_id, author_role) VALUES
-('Chào mừng tất cả thành viên dòng họ Vũ đã gia nhập hệ thống Gia Phả trực tuyến. Mọi người có thể vào phần Gia phả để xem sơ đồ dòng họ nhé!', 1, 'admin'),
-('Cuối tuần này dòng họ tổ chức họp mặt tại nhà thờ tổ. Kính mời các bác, các chú và anh chị em sắp xếp thời gian tham dự.', 2, 'admin')
+INSERT INTO posts (content, user_id) VALUES
+('Chào mừng tất cả thành viên dòng họ Vũ đã gia nhập hệ thống Gia Phả trực tuyến. Mọi người có thể vào phần Gia phả để xem sơ đồ dòng họ nhé!', 1),
+('Cuối tuần này dòng họ tổ chức họp mặt tại nhà thờ tổ. Kính mời các bác, các chú và anh chị em sắp xếp thời gian tham dự.', 2)
 ON CONFLICT DO NOTHING;
 
 -- EVENTS (Sự kiện)
@@ -106,9 +106,9 @@ INSERT INTO update_requests (user_id, member_id, changes, note, status) VALUES
 ON CONFLICT DO NOTHING;
 
 -- Cập nhật lại chuỗi Auto Increment (Tránh lỗi Duplicate Key sau khi INSERT thủ công)
-SELECT setval('users_id_seq', (SELECT MAX(id) FROM users));
-SELECT setval('members_id_seq', (SELECT MAX(id) FROM members));
-SELECT setval('achievements_id_seq', (SELECT MAX(id) FROM achievements));
-SELECT setval('posts_id_seq', (SELECT MAX(id) FROM posts));
-SELECT setval('events_id_seq', (SELECT MAX(id) FROM events));
-SELECT setval('update_requests_id_seq', (SELECT MAX(id) FROM update_requests));
+SELECT setval('users_id_seq', COALESCE((SELECT MAX(id) FROM users), 1));
+SELECT setval('members_id_seq', COALESCE((SELECT MAX(id) FROM members), 1));
+SELECT setval('achievements_id_seq', COALESCE((SELECT MAX(id) FROM achievements), 1));
+SELECT setval('posts_id_seq', COALESCE((SELECT MAX(id) FROM posts), 1));
+SELECT setval('events_id_seq', COALESCE((SELECT MAX(id) FROM events), 1));
+SELECT setval('update_requests_id_seq', COALESCE((SELECT MAX(id) FROM update_requests), 1));

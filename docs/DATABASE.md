@@ -147,8 +147,7 @@ members.spouse_id → members.id   (self-referencing, vợ/chồng)
 |--------|------|-------------|--------|
 | `id` | `SERIAL` PK | | |
 | `content` | `TEXT` | `NOT NULL` | Nội dung bài |
-| `author_id` | `INTEGER` | `NOT NULL` | ID tác giả |
-| `user_id` | `INTEGER` FK | → `users(id)` SET NULL | |
+| `user_id` | `INTEGER` FK | → `users(id)` CASCADE | Người đăng |
 | `created_at` | `BIGINT` | | Unix Timestamp (ms) |
 
 ---
@@ -160,8 +159,7 @@ members.spouse_id → members.id   (self-referencing, vợ/chồng)
 | `id` | `SERIAL` PK | | |
 | `post_id` | `INTEGER` FK | → `posts(id)` CASCADE | Bài đăng |
 | `content` | `TEXT` | `NOT NULL` | Nội dung |
-| `author_id` | `INTEGER` | `NOT NULL` | ID tác giả |
-| `user_id` | `INTEGER` FK | → `users(id)` SET NULL | |
+| `user_id` | `INTEGER` FK | → `users(id)` CASCADE | Người đăng |
 | `created_at` | `BIGINT` | | Unix Timestamp (ms) |
 
 ---
