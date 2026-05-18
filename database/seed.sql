@@ -36,18 +36,18 @@ ON CONFLICT DO NOTHING;
 -- dangvq (DangVQ@2002) : $2a$10$Wk9qgWNnap3v.nXvM8in6.LNLgzTGhejo7GdyUXbnnUVbI1z3Vpty
 -- admin1-5 (Admin@1234) : $2a$10$Su0NSYtZ2GLvzNyopSbLN.PP5Oc0wY.mqiaoXzquUE8GKffG28buq
 -- test1-5 (Viewer@1234) : $2a$10$PaIpm3CwdYtJYkPx1nNNA.FlZ75UQiiLbt3b4jtFZgp.jYEkUEVPi
-INSERT INTO users (username, password, display_name, role) VALUES
-('dangvq', '$2a$10$Wk9qgWNnap3v.nXvM8in6.LNLgzTGhejo7GdyUXbnnUVbI1z3Vpty', 'Vũ Quang Đáng', 'admin'),
-('admin1', '$2a$10$Su0NSYtZ2GLvzNyopSbLN.PP5Oc0wY.mqiaoXzquUE8GKffG28buq', 'Quản trị 1', 'admin'),
-('admin2', '$2a$10$Su0NSYtZ2GLvzNyopSbLN.PP5Oc0wY.mqiaoXzquUE8GKffG28buq', 'Quản trị 2', 'admin'),
-('admin3', '$2a$10$Su0NSYtZ2GLvzNyopSbLN.PP5Oc0wY.mqiaoXzquUE8GKffG28buq', 'Quản trị 3', 'admin'),
-('admin4', '$2a$10$Su0NSYtZ2GLvzNyopSbLN.PP5Oc0wY.mqiaoXzquUE8GKffG28buq', 'Quản trị 4', 'admin'),
-('admin5', '$2a$10$Su0NSYtZ2GLvzNyopSbLN.PP5Oc0wY.mqiaoXzquUE8GKffG28buq', 'Quản trị 5', 'admin'),
-('viewer1', '$2a$10$PaIpm3CwdYtJYkPx1nNNA.FlZ75UQiiLbt3b4jtFZgp.jYEkUEVPi', 'Viewer 1', 'viewer'),
-('viewer2', '$2a$10$PaIpm3CwdYtJYkPx1nNNA.FlZ75UQiiLbt3b4jtFZgp.jYEkUEVPi', 'Viewer 2', 'viewer'),
-('viewer3', '$2a$10$PaIpm3CwdYtJYkPx1nNNA.FlZ75UQiiLbt3b4jtFZgp.jYEkUEVPi', 'Viewer 3', 'viewer'),
-('viewer4', '$2a$10$PaIpm3CwdYtJYkPx1nNNA.FlZ75UQiiLbt3b4jtFZgp.jYEkUEVPi', 'Viewer 4', 'viewer'),
-('viewer5', '$2a$10$PaIpm3CwdYtJYkPx1nNNA.FlZ75UQiiLbt3b4jtFZgp.jYEkUEVPi', 'Viewer 5', 'viewer')
+INSERT INTO users (username, password, display_name, role, email_verified) VALUES
+('dangvq', '$2a$10$Wk9qgWNnap3v.nXvM8in6.LNLgzTGhejo7GdyUXbnnUVbI1z3Vpty', 'Vũ Quang Đáng', 'admin', true),
+('admin1', '$2a$10$Su0NSYtZ2GLvzNyopSbLN.PP5Oc0wY.mqiaoXzquUE8GKffG28buq', 'Quản trị 1', 'admin', true),
+('admin2', '$2a$10$Su0NSYtZ2GLvzNyopSbLN.PP5Oc0wY.mqiaoXzquUE8GKffG28buq', 'Quản trị 2', 'admin', true),
+('admin3', '$2a$10$Su0NSYtZ2GLvzNyopSbLN.PP5Oc0wY.mqiaoXzquUE8GKffG28buq', 'Quản trị 3', 'admin', true),
+('admin4', '$2a$10$Su0NSYtZ2GLvzNyopSbLN.PP5Oc0wY.mqiaoXzquUE8GKffG28buq', 'Quản trị 4', 'admin', true),
+('admin5', '$2a$10$Su0NSYtZ2GLvzNyopSbLN.PP5Oc0wY.mqiaoXzquUE8GKffG28buq', 'Quản trị 5', 'admin', true),
+('viewer1', '$2a$10$PaIpm3CwdYtJYkPx1nNNA.FlZ75UQiiLbt3b4jtFZgp.jYEkUEVPi', 'Viewer 1', 'viewer', true),
+('viewer2', '$2a$10$PaIpm3CwdYtJYkPx1nNNA.FlZ75UQiiLbt3b4jtFZgp.jYEkUEVPi', 'Viewer 2', 'viewer', true),
+('viewer3', '$2a$10$PaIpm3CwdYtJYkPx1nNNA.FlZ75UQiiLbt3b4jtFZgp.jYEkUEVPi', 'Viewer 3', 'viewer', true),
+('viewer4', '$2a$10$PaIpm3CwdYtJYkPx1nNNA.FlZ75UQiiLbt3b4jtFZgp.jYEkUEVPi', 'Viewer 4', 'viewer', true),
+('viewer5', '$2a$10$PaIpm3CwdYtJYkPx1nNNA.FlZ75UQiiLbt3b4jtFZgp.jYEkUEVPi', 'Viewer 5', 'viewer', true)
 ON CONFLICT (username) DO NOTHING;
 
 -- MEMBERS (Cây gia phả test)
@@ -87,7 +87,28 @@ INSERT INTO achievements (member_id, category, title, organization, start_year, 
 (14, 'social', 'Bí thư chi đoàn', 'Đoàn TNCS HCM', 2003, 2008, 'Đoàn viên ưu tú')
 ON CONFLICT DO NOTHING;
 
+-- POSTS (Bảng tin)
+INSERT INTO posts (content, author_id, author_role) VALUES
+('Chào mừng tất cả thành viên dòng họ Vũ đã gia nhập hệ thống Gia Phả trực tuyến. Mọi người có thể vào phần Gia phả để xem sơ đồ dòng họ nhé!', 1, 'admin'),
+('Cuối tuần này dòng họ tổ chức họp mặt tại nhà thờ tổ. Kính mời các bác, các chú và anh chị em sắp xếp thời gian tham dự.', 2, 'admin')
+ON CONFLICT DO NOTHING;
+
+-- EVENTS (Sự kiện)
+INSERT INTO events (title, event_date, event_type, description) VALUES
+('Giỗ Tổ Dòng Họ', '2026-03-10', 'other', 'Lễ giỗ tổ họ Vũ hằng năm. Địa điểm: Nhà Thờ Tổ'),
+('Họp Mặt Đầu Năm', '2026-02-15', 'other', 'Gặp gỡ, chúc tết đầu năm toàn thể dòng họ. Địa điểm: Hội trường xã')
+ON CONFLICT DO NOTHING;
+
+-- UPDATE REQUESTS (Yêu cầu chỉnh sửa)
+-- user_id = 7 (viewer1), member_id = 14 (Vũ Đăng Khoa)
+INSERT INTO update_requests (user_id, member_id, changes, note, status) VALUES
+(7, 14, '{"occupation": "Giám đốc Công nghệ (CTO)"}', 'Cập nhật lại chức vụ mới', 'pending')
+ON CONFLICT DO NOTHING;
+
 -- Cập nhật lại chuỗi Auto Increment (Tránh lỗi Duplicate Key sau khi INSERT thủ công)
 SELECT setval('users_id_seq', (SELECT MAX(id) FROM users));
 SELECT setval('members_id_seq', (SELECT MAX(id) FROM members));
 SELECT setval('achievements_id_seq', (SELECT MAX(id) FROM achievements));
+SELECT setval('posts_id_seq', (SELECT MAX(id) FROM posts));
+SELECT setval('events_id_seq', (SELECT MAX(id) FROM events));
+SELECT setval('update_requests_id_seq', (SELECT MAX(id) FROM update_requests));

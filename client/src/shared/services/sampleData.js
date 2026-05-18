@@ -48,8 +48,8 @@ export const SAMPLE_USERS = [
 ];
 
 export const SAMPLE_POSTS = [
-    { id: 'p_1', content: 'Chào mừng tất cả thành viên dòng họ Vũ đã gia nhập hệ thống Gia Phả trực tuyến. Mọi người có thể vào phần Gia phả để xem sơ đồ dòng họ nhé!', authorId: 'u1', authorRole: 'admin', createdAt: new Date(Date.now() - 86400000 * 2).toISOString() },
-    { id: 'p_2', content: 'Cuối tuần này dòng họ tổ chức họp mặt tại nhà thờ tổ. Kính mời các bác, các chú và anh chị em sắp xếp thời gian tham dự.', authorId: 'u2', authorRole: 'editor', createdAt: new Date(Date.now() - 86400000).toISOString() },
+    { id: 'p_1', content: 'Chào mừng tất cả thành viên dòng họ Vũ đã gia nhập hệ thống Gia Phả trực tuyến. Mọi người có thể vào phần Gia phả để xem sơ đồ dòng họ nhé!', authorId: 'u_root', authorRole: 'admin', createdAt: new Date(Date.now() - 86400000 * 2).toISOString() },
+    { id: 'p_2', content: 'Cuối tuần này dòng họ tổ chức họp mặt tại nhà thờ tổ. Kính mời các bác, các chú và anh chị em sắp xếp thời gian tham dự.', authorId: 'u_admin1', authorRole: 'admin', createdAt: new Date(Date.now() - 86400000).toISOString() },
 ];
 
 export const SAMPLE_EVENTS = [
@@ -58,9 +58,9 @@ export const SAMPLE_EVENTS = [
 ];
 
 export const SAMPLE_REQUESTS = [
-    { id: 'r_1', memberId: '14', memberName: 'Vũ Đăng Khoa', before: null, changes: { occupation: 'Giám đốc Công nghệ (CTO)' }, requestedById: 'u3', requestedByName: 'Vũ Thị Ngọc', requestedAt: new Date(Date.now() - 3600000).toISOString(), note: 'Cập nhật lại chức vụ mới', status: 'pending' }
+    { id: 'r_1', memberId: '14', memberName: 'Vũ Đăng Khoa', before: null, changes: { occupation: 'Giám đốc Công nghệ (CTO)' }, requestedById: 'u_viewer1', requestedByName: 'Viewer 1', requestedAt: new Date(Date.now() - 3600000).toISOString(), note: 'Cập nhật lại chức vụ mới', status: 'pending' }
 ];
 
 export const SAMPLE_HISTORY = [
-    { id: 'h_1', memberId: '19', memberName: 'Vũ Gia Bảo', action: 'create', before: null, after: { name: 'Vũ Gia Bảo', birthDate: '2015-06-01' }, editedById: 'u1', editedByName: 'Vũ Quang Đáng', editedAt: new Date(Date.now() - 86400000 * 5).toISOString() }
+    { id: 'h_1', memberId: '19', memberName: 'Vũ Gia Bảo', action: 'create', before: null, after: { name: 'Vũ Gia Bảo', birthDate: '2015-06-01' }, editedById: 'u_root', editedByName: 'Vũ Quang Đáng', editedAt: new Date(Date.now() - 86400000 * 5).toISOString() }
 ];
