@@ -228,19 +228,19 @@ async function init() {
   const bcrypt = require('bcryptjs');
   const userCount = accountsDb.exec('SELECT COUNT(*) as count FROM users');
   if (userCount[0].values[0][0] === 0) {
-    // Admin chính
-    const dangvqHash = bcrypt.hashSync('test123', 10);
-    accountsDb.run('INSERT INTO users (username, password, display_name, role) VALUES (?, ?, ?, ?)',
-      ['dangvq', dangvqHash, 'Vũ Quang Đáng', 'admin']);
-    // Admin phụ
-    const adminHash = bcrypt.hashSync('admin123', 10);
-    accountsDb.run('INSERT INTO users (username, password, display_name, role) VALUES (?, ?, ?, ?)',
-      ['admin', adminHash, 'Quản trị viên', 'admin']);
-    // Viewer
-    const viewerHash = bcrypt.hashSync('viewer123', 10);
-    accountsDb.run('INSERT INTO users (username, password, display_name, role) VALUES (?, ?, ?, ?)',
-      ['viewer', viewerHash, 'Khách xem', 'viewer']);
-    console.log('✅ Đã tạo tài khoản: dangvq/test123 (admin), admin/admin123, viewer/viewer123');
+    const dangvqHash = bcrypt.hashSync('DangVQ@2002', 10);
+    accountsDb.run('INSERT INTO users (username, password, display_name, role) VALUES (?, ?, ?, ?)', ['dangvq', dangvqHash, 'Vũ Quang Đáng', 'admin']);
+    
+    const adminHash = bcrypt.hashSync('Admin@1234', 10);
+    for(let i = 1; i <= 5; i++) {
+      accountsDb.run('INSERT INTO users (username, password, display_name, role) VALUES (?, ?, ?, ?)', [`admin${i}`, adminHash, `Quản trị ${i}`, 'admin']);
+    }
+    
+    const viewerHash = bcrypt.hashSync('Viewer@1234', 10);
+    for(let i = 1; i <= 5; i++) {
+      accountsDb.run('INSERT INTO users (username, password, display_name, role) VALUES (?, ?, ?, ?)', [`viewer${i}`, viewerHash, `Viewer ${i}`, 'viewer']);
+    }
+    console.log('✅ Đã tạo tài khoản: dangvq (DangVQ@2002), admin1-5 (Admin@1234), viewer1-5 (Viewer@1234)');
   }
 
   // Save accounts.db

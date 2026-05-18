@@ -43,11 +43,11 @@ INSERT INTO users (username, password, display_name, role) VALUES
 ('admin3', '$2a$10$Su0NSYtZ2GLvzNyopSbLN.PP5Oc0wY.mqiaoXzquUE8GKffG28buq', 'Quản trị 3', 'admin'),
 ('admin4', '$2a$10$Su0NSYtZ2GLvzNyopSbLN.PP5Oc0wY.mqiaoXzquUE8GKffG28buq', 'Quản trị 4', 'admin'),
 ('admin5', '$2a$10$Su0NSYtZ2GLvzNyopSbLN.PP5Oc0wY.mqiaoXzquUE8GKffG28buq', 'Quản trị 5', 'admin'),
-('test1', '$2a$10$PaIpm3CwdYtJYkPx1nNNA.FlZ75UQiiLbt3b4jtFZgp.jYEkUEVPi', 'Test 1', 'viewer'),
-('test2', '$2a$10$PaIpm3CwdYtJYkPx1nNNA.FlZ75UQiiLbt3b4jtFZgp.jYEkUEVPi', 'Test 2', 'viewer'),
-('test3', '$2a$10$PaIpm3CwdYtJYkPx1nNNA.FlZ75UQiiLbt3b4jtFZgp.jYEkUEVPi', 'Test 3', 'viewer'),
-('test4', '$2a$10$PaIpm3CwdYtJYkPx1nNNA.FlZ75UQiiLbt3b4jtFZgp.jYEkUEVPi', 'Test 4', 'viewer'),
-('test5', '$2a$10$PaIpm3CwdYtJYkPx1nNNA.FlZ75UQiiLbt3b4jtFZgp.jYEkUEVPi', 'Test 5', 'viewer')
+('viewer1', '$2a$10$PaIpm3CwdYtJYkPx1nNNA.FlZ75UQiiLbt3b4jtFZgp.jYEkUEVPi', 'Viewer 1', 'viewer'),
+('viewer2', '$2a$10$PaIpm3CwdYtJYkPx1nNNA.FlZ75UQiiLbt3b4jtFZgp.jYEkUEVPi', 'Viewer 2', 'viewer'),
+('viewer3', '$2a$10$PaIpm3CwdYtJYkPx1nNNA.FlZ75UQiiLbt3b4jtFZgp.jYEkUEVPi', 'Viewer 3', 'viewer'),
+('viewer4', '$2a$10$PaIpm3CwdYtJYkPx1nNNA.FlZ75UQiiLbt3b4jtFZgp.jYEkUEVPi', 'Viewer 4', 'viewer'),
+('viewer5', '$2a$10$PaIpm3CwdYtJYkPx1nNNA.FlZ75UQiiLbt3b4jtFZgp.jYEkUEVPi', 'Viewer 5', 'viewer')
 ON CONFLICT (username) DO NOTHING;
 
 -- MEMBERS (Cây gia phả test)
