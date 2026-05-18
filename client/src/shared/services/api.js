@@ -2,8 +2,17 @@
 import { Solar, Lunar } from '../utils/lunar.js';
 import { ganZhiToViet } from '../utils/vietLunar.js';
 import { API_BASE_URL } from '../../config.js';
+import { getRemoteConfigValue } from '../../firebase.js';
+import { SAMPLE_MEMBERS, SAMPLE_ACHIEVEMENTS, SAMPLE_POSTS, SAMPLE_REQUESTS, SAMPLE_HISTORY } from './sampleData.js';
 
-export const API_BASE = (window.Capacitor || (window.location.hostname === 'localhost' && !window.location.port)) ? API_BASE_URL : '/api';
+export function getApiBase() {
+    // If not Capacitor and on localhost, fallback to proxy
+    if (!window.Capacitor && window.location.hostname === 'localhost' && window.location.port) {
+        return '/api';
+    }
+    const remoteUrl = getRemoteConfigValue('api_base_url', 'string');
+    return remoteUrl || API_BASE_URL;
+}
 
 async function request(url, options = {}) {
     let headers = { 'Content-Type': 'application/json', ...options.headers };
@@ -12,7 +21,8 @@ async function request(url, options = {}) {
         if (auth && auth.token) headers['x-auth-token'] = auth.token;
     } catch (e) { console.error("Auth Token Fetch Error:", e); }
 
-    const res = await fetch(`${API_BASE}${url}`, {
+    const baseUrl = getApiBase();
+    const res = await fetch(`${baseUrl}${url}`, {
         ...options,
         headers,
     });
@@ -96,13 +106,23 @@ const HISTORY_KEY = 'vuFamilyEditHistory';
 const REQUESTS_KEY = 'vuFamilyPendingRequests';
 
 function getLocalHistory() {
-    try { return JSON.parse(localStorage.getItem(HISTORY_KEY)) || []; } catch { return []; }
+    try { 
+        const hist = JSON.parse(localStorage.getItem(HISTORY_KEY));
+        if (hist && hist.length > 0) return hist;
+    } catch (e) {}
+    if (!localStorage.getItem(HISTORY_KEY)) saveLocalHistory(SAMPLE_HISTORY);
+    return [...SAMPLE_HISTORY];
 }
 function saveLocalHistory(history) {
     localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
 }
 function getLocalRequests() {
-    try { return JSON.parse(localStorage.getItem(REQUESTS_KEY)) || []; } catch { return []; }
+    try { 
+        const reqs = JSON.parse(localStorage.getItem(REQUESTS_KEY));
+        if (reqs && reqs.length > 0) return reqs;
+    } catch (e) {}
+    if (!localStorage.getItem(REQUESTS_KEY)) saveLocalRequests(SAMPLE_REQUESTS);
+    return [...SAMPLE_REQUESTS];
 }
 function saveLocalRequests(requests) {
     localStorage.setItem(REQUESTS_KEY, JSON.stringify(requests));
@@ -152,40 +172,7 @@ export function getLunarDateString(solarDateStr) {
 }
 
 
-const SAMPLE_MEMBERS = [
-    { id: '1', name: 'Vũ Văn Tổ', gender: 1, birthDate: '1900-01-15', birthTime: null, deathDate: '1975-08-20', birthPlace: 'Hà Nam', deathPlace: 'Hà Nam', note: 'Cụ Tổ - Thế hệ thứ nhất', spouseId: '2', parentId: null, generation: 1, birthOrder: null, childType: 'biological', phone: '', email: '', address: '', occupation: 'Nông dân', photo: '' },
-    { id: '2', name: 'Nguyễn Thị Tổ', gender: 0, birthDate: '1905-03-10', birthTime: null, deathDate: '1980-12-05', birthPlace: 'Hà Nam', deathPlace: 'Hà Nam', note: 'Cụ Bà', spouseId: '1', parentId: null, generation: 1, birthOrder: null, childType: 'biological', phone: '', email: '', address: '', occupation: '', photo: '' },
-    { id: '3', name: 'Vũ Văn An', gender: 1, birthDate: '1930-05-20', birthTime: '06:30', deathDate: '2005-11-15', birthPlace: 'Hà Nam', deathPlace: 'Hà Nội', note: 'Con trưởng', spouseId: '4', parentId: '1', generation: 2, birthOrder: 1, childType: 'biological', phone: '', email: '', address: '', occupation: 'Giáo viên', photo: '' },
-    { id: '4', name: 'Trần Thị Bình', gender: 0, birthDate: '1934-09-08', birthTime: null, deathDate: '2010-03-22', birthPlace: 'Nam Định', deathPlace: 'Hà Nội', note: '', spouseId: '3', parentId: null, generation: 2, birthOrder: null, childType: 'biological', phone: '', email: '', address: '', occupation: '', photo: '' },
-    { id: '5', name: 'Vũ Văn Bảo', gender: 1, birthDate: '1935-07-12', birthTime: '08:00', deathDate: '2015-06-18', birthPlace: 'Hà Nam', deathPlace: 'Hà Nội', note: 'Con thứ hai', spouseId: '6', parentId: '1', generation: 2, birthOrder: 2, childType: 'biological', phone: '', email: '', address: '', occupation: 'Bộ đội', photo: '' },
-    { id: '6', name: 'Lê Thị Cúc', gender: 0, birthDate: '1938-11-25', birthTime: null, deathDate: null, birthPlace: 'Hà Nội', deathPlace: '', note: '', spouseId: '5', parentId: null, generation: 2, birthOrder: null, childType: 'biological', phone: '', email: '', address: 'Hà Nội', occupation: '', photo: '' },
-    { id: '7', name: 'Vũ Thị Chi', gender: 0, birthDate: '1940-04-03', birthTime: null, deathDate: null, birthPlace: 'Hà Nam', deathPlace: '', note: 'Con gái út', spouseId: null, parentId: '1', generation: 2, birthOrder: 3, childType: 'biological', phone: '', email: '', address: '', occupation: 'Y tá', photo: '' },
-    { id: '8', name: 'Vũ Đăng Dũng', gender: 1, birthDate: '1958-02-14', birthTime: '05:15', deathDate: null, birthPlace: 'Hà Nội', deathPlace: '', note: '', spouseId: '9', parentId: '3', generation: 3, birthOrder: 1, childType: 'biological', phone: '0912345678', email: '', address: 'Hà Nội', occupation: 'Kỹ sư', photo: '' },
-    { id: '9', name: 'Phạm Thị Hoa', gender: 0, birthDate: '1960-08-30', birthTime: null, deathDate: null, birthPlace: 'Hải Phòng', deathPlace: '', note: '', spouseId: '8', parentId: null, generation: 3, birthOrder: null, childType: 'biological', phone: '', email: '', address: 'Hà Nội', occupation: 'Kế toán', photo: '' },
-    { id: '10', name: 'Vũ Văn Em', gender: 1, birthDate: '1962-12-01', birthTime: '07:45', deathDate: null, birthPlace: 'Hà Nội', deathPlace: '', note: '', spouseId: '11', parentId: '3', generation: 3, birthOrder: 2, childType: 'biological', phone: '', email: '', address: 'Hà Nội', occupation: 'Bác sĩ', photo: '' },
-    { id: '11', name: 'Đỗ Thị Giang', gender: 0, birthDate: '1965-06-18', birthTime: null, deathDate: null, birthPlace: 'Hà Nội', deathPlace: '', note: '', spouseId: '10', parentId: null, generation: 3, birthOrder: null, childType: 'biological', phone: '', email: '', address: 'Hà Nội', occupation: 'Giáo viên', photo: '' },
-    { id: '12', name: 'Vũ Minh Hoàng', gender: 1, birthDate: '1960-10-05', birthTime: '14:30', deathDate: null, birthPlace: 'Hà Nội', deathPlace: '', note: '', spouseId: '13', parentId: '5', generation: 3, birthOrder: 1, childType: 'biological', phone: '', email: '', address: 'TP.HCM', occupation: 'Doanh nhân', photo: '' },
-    { id: '13', name: 'Ngô Thị Lan', gender: 0, birthDate: '1963-03-22', birthTime: null, deathDate: null, birthPlace: 'Bắc Ninh', deathPlace: '', note: '', spouseId: '12', parentId: null, generation: 3, birthOrder: null, childType: 'biological', phone: '', email: '', address: 'TP.HCM', occupation: '', photo: '' },
-    { id: '14', name: 'Vũ Đăng Khoa', gender: 1, birthDate: '1985-09-15', birthTime: '10:20', deathDate: null, birthPlace: 'Hà Nội', deathPlace: '', note: '', spouseId: '15', parentId: '8', generation: 4, birthOrder: 1, childType: 'biological', phone: '0987654321', email: 'khoa@email.com', address: 'Hà Nội', occupation: 'Lập trình viên', photo: '' },
-    { id: '15', name: 'Hoàng Thị Mai', gender: 0, birthDate: '1988-01-28', birthTime: null, deathDate: null, birthPlace: 'Hà Nội', deathPlace: '', note: '', spouseId: '14', parentId: null, generation: 4, birthOrder: null, childType: 'biological', phone: '', email: '', address: 'Hà Nội', occupation: 'Thiết kế', photo: '' },
-    { id: '16', name: 'Vũ Thị Ngọc', gender: 0, birthDate: '1988-07-07', birthTime: '16:00', deathDate: null, birthPlace: 'Hà Nội', deathPlace: '', note: '', spouseId: null, parentId: '8', generation: 4, birthOrder: 2, childType: 'biological', phone: '', email: '', address: 'Hà Nội', occupation: 'Dược sĩ', photo: '' },
-    { id: '17', name: 'Vũ Minh Phúc', gender: 1, birthDate: '1990-04-12', birthTime: null, deathDate: null, birthPlace: 'Hà Nội', deathPlace: '', note: '', spouseId: null, parentId: '10', generation: 4, birthOrder: 1, childType: 'biological', phone: '', email: '', address: 'Đà Nẵng', occupation: 'Kiến trúc sư', photo: '' },
-    { id: '18', name: 'Vũ Hoàng Quân', gender: 1, birthDate: '1988-11-20', birthTime: null, deathDate: null, birthPlace: 'Hà Nội', deathPlace: '', note: '', spouseId: null, parentId: '12', generation: 4, birthOrder: 1, childType: 'biological', phone: '', email: '', address: 'TP.HCM', occupation: 'Luật sư', photo: '' },
-    { id: '19', name: 'Vũ Gia Bảo', gender: 1, birthDate: '2015-06-01', birthTime: '09:30', deathDate: null, birthPlace: 'Hà Nội', deathPlace: '', note: '', spouseId: null, parentId: '14', generation: 5, birthOrder: 1, childType: 'biological', phone: '', email: '', address: 'Hà Nội', occupation: 'Học sinh', photo: '' },
-];
-
-const SAMPLE_ACHIEVEMENTS = [
-    { id: '1', memberId: '3', category: 'education', title: 'Tốt nghiệp Đại học Sư phạm', organization: 'Đại học Sư phạm Hà Nội', startYear: 1948, endYear: 1952, description: 'Bằng giỏi' },
-    { id: '2', memberId: '5', category: 'work', title: 'Phục vụ trong quân đội', organization: 'QĐND Việt Nam', startYear: 1955, endYear: 1975, description: 'Đại úy' },
-    { id: '3', memberId: '5', category: 'award', title: 'Huân chương chiến sĩ vẻ vang', organization: 'Nhà nước', startYear: 1975, endYear: null, description: 'Hạng Nhất' },
-    { id: '4', memberId: '8', category: 'education', title: 'Tốt nghiệp Kỹ sư Xây dựng', organization: 'ĐH Xây dựng HN', startYear: 1976, endYear: 1981, description: '' },
-    { id: '5', memberId: '8', category: 'work', title: 'Kỹ sư trưởng', organization: 'Công ty XD Số 1', startYear: 1981, endYear: 2018, description: '' },
-    { id: '6', memberId: '8', category: 'social', title: 'Bí thư chi bộ', organization: 'Đảng CSVN', startYear: 1990, endYear: 2010, description: '' },
-    { id: '7', memberId: '10', category: 'education', title: 'Tiến sĩ Y khoa', organization: 'ĐH Y Hà Nội', startYear: 1980, endYear: 1992, description: 'Chuyên khoa Ngoại' },
-    { id: '8', memberId: '14', category: 'education', title: 'Cử nhân CNTT', organization: 'ĐH Bách Khoa HN', startYear: 2003, endYear: 2008, description: 'Bằng giỏi' },
-    { id: '9', memberId: '14', category: 'work', title: 'Tech Lead', organization: 'Startup ABC', startYear: 2015, endYear: null, description: 'Đồng sáng lập' },
-    { id: '10', memberId: '14', category: 'social', title: 'Bí thư chi đoàn', organization: 'Đoàn TNCS HCM', startYear: 2003, endYear: 2008, description: 'Đoàn viên ưu tú' },
-];
+// (Sample Data moved to sampleData.js)
 
 let _nextId = 20;
 let _nextAchId = 11;
@@ -238,7 +225,7 @@ export const localApi = {
             this.addHistory({
                 memberId: id, memberName: member.name, action: 'create',
                 before: null, after: { ...member },
-                editedBy: user.username, editedByName: user.displayName || user.username,
+                editedById: user.id || null, editedByUsername: user.username, editedByName: user.displayName || user.username,
             });
         }
         return member;
@@ -264,7 +251,7 @@ export const localApi = {
             this.addHistory({
                 memberId: String(id), memberName: members[idx].name, action: 'update',
                 before: old, after: { ...members[idx] },
-                editedBy: user.username, editedByName: user.displayName || user.username,
+                editedById: user.id || null, editedByUsername: user.username, editedByName: user.displayName || user.username,
             });
         }
         return members[idx];
@@ -290,7 +277,7 @@ export const localApi = {
             this.addHistory({
                 memberId: String(id), memberName: snapshot.name, action: 'delete',
                 before: snapshot, after: null,
-                editedBy: user.username, editedByName: user.displayName || user.username,
+                editedById: user.id || null, editedByUsername: user.username, editedByName: user.displayName || user.username,
             });
         }
         return true;
@@ -357,7 +344,8 @@ export const localApi = {
             memberName: member.name,
             before: { ...member },
             changes,
-            requestedBy: user.username,
+            requestedById: user.id || null,
+            requestedByUsername: user.username,
             requestedByName: user.displayName || user.username,
             requestedAt: new Date().toISOString(),
             note,
@@ -384,10 +372,12 @@ export const localApi = {
 
         // Apply changes
         this.update(req.memberId, req.changes, {
-            username: req.requestedBy,
+            id: adminUser?.id || null,
+            username: req.requestedByUsername || req.requestedBy,
             displayName: `${req.requestedByName} (duyệt bởi ${adminUser?.displayName || adminUser?.username || 'Admin'})`,
         });
         req.status = 'approved';
+        req.reviewedById = adminUser?.id || null;
         req.reviewedBy = adminUser?.username || 'admin';
         req.reviewedAt = new Date().toISOString();
         saveLocalRequests(requests);
@@ -500,7 +490,12 @@ export const localApi = {
 
     // ════════════ NEWSFEED POSTS ════════════
     getPosts() {
-        try { return JSON.parse(localStorage.getItem('vuFamilyPosts')) || []; } catch { return []; }
+        try { 
+            const posts = JSON.parse(localStorage.getItem('vuFamilyPosts'));
+            if (posts && posts.length > 0) return posts;
+        } catch (e) {}
+        if (!localStorage.getItem('vuFamilyPosts')) this.savePosts(SAMPLE_POSTS);
+        return [...SAMPLE_POSTS];
     },
     savePosts(posts) {
         localStorage.setItem('vuFamilyPosts', JSON.stringify(posts));
@@ -510,7 +505,8 @@ export const localApi = {
         const post = {
             id: `p_${Date.now()}`,
             content: data.content,
-            author: user.displayName || user.username,
+            authorId: user.id || null,
+            authorName: user.displayName || user.username,
             authorRole: user.role,
             createdAt: new Date().toISOString(),
         };

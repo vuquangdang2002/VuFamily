@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { myLog, myError } from '../../shared/utils/logger';
-import { API_BASE } from '../../shared/services/api';
+import { getApiBase } from '../../shared/services/api';
 import { Analytics } from '../../shared/services/analytics';
 
 function getToken() {
@@ -53,7 +53,7 @@ export default function SystemAdminPage({ addToast }) {
     const fetchUsers = async () => {
         setLoading(true);
         try {
-            const res = await fetch(`${API_BASE}/users`, {
+            const res = await fetch(`${getApiBase()}/users`, {
                 headers: { 'x-auth-token': getToken() }
             });
             const json = await res.json();
@@ -76,7 +76,7 @@ export default function SystemAdminPage({ addToast }) {
             return;
         }
         try {
-            const res = await fetch(`${API_BASE}/users`, {
+            const res = await fetch(`${getApiBase()}/users`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'x-auth-token': getToken() },
                 body: JSON.stringify(newUser)
@@ -97,7 +97,7 @@ export default function SystemAdminPage({ addToast }) {
     const handleDelete = async (id, username) => {
         if (!confirm(`Xóa tài khoản "${username}"? Hành động này không thể hoàn tác.`)) return;
         try {
-            const res = await fetch(`${API_BASE}/users/${id}`, {
+            const res = await fetch(`${getApiBase()}/users/${id}`, {
                 method: 'DELETE',
                 headers: { 'x-auth-token': getToken() }
             });
@@ -121,7 +121,7 @@ export default function SystemAdminPage({ addToast }) {
             return;
         }
         try {
-            const res = await fetch(`${API_BASE}/users/${resetModal.id}/reset-password`, {
+            const res = await fetch(`${getApiBase()}/users/${resetModal.id}/reset-password`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'x-auth-token': getToken() },
                 body: JSON.stringify({ newPassword: resetPw })
@@ -139,7 +139,7 @@ export default function SystemAdminPage({ addToast }) {
 
     const handleEditUser = async () => {
         try {
-            const res = await fetch(`${API_BASE}/users/${editModal.id}`, {
+            const res = await fetch(`${getApiBase()}/users/${editModal.id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json', 'x-auth-token': getToken() },
                 body: JSON.stringify(editUser)
@@ -160,7 +160,7 @@ export default function SystemAdminPage({ addToast }) {
     const handleExportDb = async () => {
         try {
             setIsProcessingDb(true);
-            const res = await fetch(`${API_BASE}/database/export?format=${exportFormat}&isEncrypted=${exportEncrypted}&tables=${selectedTables.join(',')}`, {
+            const res = await fetch(`${getApiBase()}/database/export?format=${exportFormat}&isEncrypted=${exportEncrypted}&tables=${selectedTables.join(',')}`, {
                 headers: { 'x-auth-token': getToken() }
             });
             if (!res.ok) {
@@ -198,7 +198,7 @@ export default function SystemAdminPage({ addToast }) {
             formData.append('isEncrypted', importEncrypted);
             formData.append('tables', selectedTables.join(','));
 
-            const res = await fetch(`${API_BASE}/database/import`, {
+            const res = await fetch(`${getApiBase()}/database/import`, {
                 method: 'POST',
                 headers: { 'x-auth-token': getToken() },
                 body: formData

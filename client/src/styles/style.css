@@ -59,7 +59,61 @@ body {
     overflow: hidden;
 }
 
+/* ============================================================
+   PREMIUM TYPOGRAPHY & HIERARCHY SYSTEM
+   ============================================================ */
+h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.25;
+    letter-spacing: -0.02em;
+    margin: 0 0 0.5rem 0;
+}
+
+h1 {
+    font-size: 2.25rem; /* 36px - Main page headlines */
+}
+
+h2 {
+    font-size: 1.75rem; /* 28px - Primary page/section titles */
+}
+
+h3 {
+    font-size: 1.35rem; /* 21.6px - Secondary subsection headers */
+}
+
+h4 {
+    font-size: 1.15rem; /* 18.4px - Card / Component titles */
+}
+
+h5 {
+    font-size: 1.00rem; /* 16px - High-level details & metrics */
+}
+
+h6 {
+    font-size: 0.88rem; /* 14px - Inline emphasis */
+}
+
+p {
+    font-family: var(--font-body);
+    font-size: 0.95rem; /* 15.2px - Standard paragraphs */
+    line-height: 1.6;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+span, button, select, textarea {
+    font-family: var(--font-body);
+}
+
+small, .text-small {
+    font-size: 0.8rem; /* 12.8px */
+    color: var(--text-muted);
+}
+
 input, select, textarea {
+    font-family: var(--font-body);
     background-color: var(--input-bg);
     color: var(--input-color);
     border: 1px solid var(--input-border);

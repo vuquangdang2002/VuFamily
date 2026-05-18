@@ -27,7 +27,7 @@ function getRoleLabel(role) {
     return 'Thành viên';
 }
 
-export default function Sidebar({ activePage, onNavigate, isAdmin, user, onLogout, collapsed, onToggle, pendingCount, onOpenProfile }) {
+export default function Sidebar({ activePage, onNavigate, isAdmin, user, onLogout, collapsed, onToggle, pendingCount, onOpenProfile, theme, setTheme }) {
     const isEditorOrAdmin = user?.role === 'admin' || user?.role === 'editor';
     const [showUserMenu, setShowUserMenu] = useState(false);
     const menuRef = useRef(null);
@@ -76,7 +76,24 @@ export default function Sidebar({ activePage, onNavigate, isAdmin, user, onLogou
                     </button>
                 ))}
 
-                <div className="sidebar-divider" />
+                {COMMON_ITEMS.map(item => (
+                    <button
+                        key={item.id}
+                        className={`sidebar-item ${activePage === item.id ? 'active' : ''}`}
+                        onClick={() => onNavigate(item.id)}
+                        title={collapsed ? item.label : ''}
+                    >
+                        <span className="sidebar-item-icon">{item.icon}</span>
+                        {!collapsed && <span className="sidebar-item-label">{item.label}</span>}
+                    </button>
+                ))}
+
+                {(isEditorOrAdmin) && (
+                    <>
+                        <div className="sidebar-divider" style={{ marginTop: '16px' }} />
+                        {!collapsed && <div style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-muted)', textTransform: 'uppercase', padding: '12px 16px 4px', letterSpacing: '0.5px' }}>Khu vực Quản trị</div>}
+                    </>
+                )}
 
                 {isEditorOrAdmin && EDITOR_ITEMS.map(item => (
                     <button
@@ -93,18 +110,6 @@ export default function Sidebar({ activePage, onNavigate, isAdmin, user, onLogou
                     </button>
                 ))}
                 {isAdmin && ADMIN_ITEMS.map(item => (
-                    <button
-                        key={item.id}
-                        className={`sidebar-item ${activePage === item.id ? 'active' : ''}`}
-                        onClick={() => onNavigate(item.id)}
-                        title={collapsed ? item.label : ''}
-                    >
-                        <span className="sidebar-item-icon">{item.icon}</span>
-                        {!collapsed && <span className="sidebar-item-label">{item.label}</span>}
-                    </button>
-                ))}
-
-                {COMMON_ITEMS.map(item => (
                     <button
                         key={item.id}
                         className={`sidebar-item ${activePage === item.id ? 'active' : ''}`}
@@ -135,6 +140,24 @@ export default function Sidebar({ activePage, onNavigate, isAdmin, user, onLogou
                                 <div className="sidebar-user-menu-role">{getRoleLabel(user?.role)}</div>
                             </div>
                         </div>
+                        <div className="sidebar-user-menu-divider" />
+
+                        <div className="sidebar-user-menu-item" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'default' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <span>🌓</span> Giao diện
+                            </div>
+                            <div style={{ display: 'flex', gap: '4px', background: 'var(--bg-card)', borderRadius: '6px', padding: '2px' }}>
+                                <button 
+                                    onClick={(e) => { e.stopPropagation(); setTheme('light', e); }}
+                                    style={{ border: 'none', background: theme === 'light' ? 'var(--primary)' : 'transparent', color: theme === 'light' ? '#fff' : 'var(--text-muted)', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', transition: 'all 0.2s' }}
+                                >Sáng</button>
+                                <button 
+                                    onClick={(e) => { e.stopPropagation(); setTheme('dark', e); }}
+                                    style={{ border: 'none', background: theme === 'dark' ? 'var(--primary)' : 'transparent', color: theme === 'dark' ? '#fff' : 'var(--text-muted)', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', transition: 'all 0.2s' }}
+                                >Tối</button>
+                            </div>
+                        </div>
+
                         <div className="sidebar-user-menu-divider" />
 
                         <button className="sidebar-user-menu-item" onClick={() => { setShowUserMenu(false); onOpenProfile && onOpenProfile(); }}>

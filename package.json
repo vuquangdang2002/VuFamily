@@ -1,6 +1,6 @@
 {
   "name": "vu-family-genealogy",
-  "version": "1.0.1",
+  "version": "2.0.1",
   "description": "Gia Phả - Ứng dụng web Gia phả dòng họ Vũ",
   "main": "server/index.js",
   "scripts": {

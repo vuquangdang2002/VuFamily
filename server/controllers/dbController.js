@@ -1,6 +1,6 @@
 const { supabase } = require('../config/supabase');
 const AdmZip = require('adm-zip');
-const { encrypt, decrypt } = require('../utils/cryptoUtils');
+const { encryptText, decryptText } = require('../utils/cryptoUtils');
 
 class DbController {
     static async exportData(req, res) {
@@ -44,7 +44,7 @@ class DbController {
                     }
 
                     if (encryptData) {
-                        fileContent = encrypt(fileContent);
+                        fileContent = encryptText(fileContent);
                     }
 
                     zip.addFile(`${table}.${format}${encryptData ? '.enc' : ''}`, Buffer.from(fileContent, 'utf8'));
@@ -94,7 +94,7 @@ class DbController {
 
                 if (decryptData || filename.endsWith('.enc')) {
                     try {
-                        rawContent = decrypt(rawContent);
+                        rawContent = decryptText(rawContent);
                     } catch (e) {
                         return res.status(400).json({ success: false, error: `Sai khóa giải mã hoặc file ${filename} bị hỏng!` });
                     }

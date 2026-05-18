@@ -11,11 +11,32 @@
     min-width: 320px;
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    overflow-y: auto;
     padding: 40px;
     background: #fff;
     position: relative;
     z-index: 2;
+}
+
+/* Safe vertical centering without clipping top on short screens */
+.lp-left::before, .lp-left::after {
+    content: '';
+    margin: auto;
+}
+
+/* Custom scrollbar for left panel */
+.lp-left::-webkit-scrollbar {
+    width: 6px;
+}
+.lp-left::-webkit-scrollbar-track {
+    background: transparent;
+}
+.lp-left::-webkit-scrollbar-thumb {
+    background: rgba(156, 163, 175, 0.3);
+    border-radius: 10px;
+}
+.lp-left::-webkit-scrollbar-thumb:hover {
+    background: rgba(156, 163, 175, 0.5);
 }
 
 /* ── Right panel (hero image) ── */
@@ -444,6 +465,92 @@
 
     .login-features {
         grid-template-columns: 1fr;
+    }
+}
+
+/* ============================================================
+   DARK THEME OVERRIDES FOR LOGIN & REGISTRATION
+   ============================================================ */
+html.dark .lp-root {
+    background: var(--bg-primary);
+}
+
+html.dark .lp-left {
+    background: var(--bg-secondary);
+    border-right: 1px solid var(--border-subtle);
+}
+
+html.dark .lp-logo-text {
+    color: var(--text-primary);
+}
+
+html.dark .lp-label {
+    color: var(--text-secondary);
+}
+
+html.dark .lp-input {
+    background: rgba(255, 255, 255, 0.02) !important;
+    border-color: var(--border-subtle) !important;
+    color: var(--text-primary) !important;
+}
+
+html.dark .lp-input::placeholder {
+    color: var(--text-muted) !important;
+}
+
+html.dark .lp-input:focus {
+    border-color: var(--primary) !important;
+    box-shadow: 0 0 0 3px rgba(0, 240, 255, 0.15) !important;
+}
+
+html.dark .lp-btn-outline {
+    color: var(--text-primary);
+    border-color: var(--border-subtle);
+    background: transparent;
+}
+
+html.dark .lp-btn-outline:hover {
+    background: rgba(255, 255, 255, 0.03);
+    border-color: var(--text-muted);
+}
+
+html.dark .lp-or {
+    color: var(--text-muted);
+}
+
+html.dark .lp-or::before, html.dark .lp-or::after {
+    background: var(--border-subtle);
+}
+
+html.dark .lp-forgot-panel {
+    background: rgba(255, 255, 255, 0.02);
+    border-color: var(--border-subtle);
+}
+
+html.dark .lp-forgot-panel p {
+    color: var(--text-secondary);
+}
+
+html.dark .lp-footer a {
+    color: var(--text-secondary);
+}
+
+html.dark .lp-footer a:hover {
+    color: var(--primary);
+}
+
+html.dark .lp-copyright {
+    color: var(--text-muted);
+}
+
+@media (max-width: 900px) {
+    html.dark .lp-root {
+        background: var(--bg-primary);
+    }
+    html.dark .lp-left {
+        background: var(--bg-secondary);
+        box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        border: 1px solid var(--border-subtle);
     }
 }
 

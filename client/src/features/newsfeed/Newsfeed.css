@@ -212,46 +212,57 @@ html.dark .nf-reaction-picker-btn::after {
 }
 
 .nf-stat-card {
-    background: var(--bg-card);
-    border: 1px solid var(--border-subtle);
+    background: var(--bg-glass);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(0, 240, 255, 0.12);
     border-radius: var(--radius-md);
-    padding: 16px 18px;
+    padding: 16px 20px;
     display: flex;
     align-items: center;
     gap: 14px;
-    box-shadow: var(--shadow-sm);
-    transition: box-shadow 0.2s, transform 0.2s;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .nf-stat-card:hover {
-    box-shadow: var(--shadow-md);
-    transform: translateY(-1px);
+    border-color: rgba(0, 240, 255, 0.4);
+    box-shadow: 0 0 16px rgba(0, 240, 255, 0.2);
+    transform: translateY(-2px);
 }
 
 .nf-stat-icon {
-    width: 42px;
-    height: 42px;
-    border-radius: 10px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 20px;
+    font-size: 18px;
+    background: rgba(0, 240, 255, 0.08) !important;
+    border: 1px solid rgba(0, 240, 255, 0.2);
     flex-shrink: 0;
 }
 
-.nf-stat-body {}
+.nf-stat-body {
+    display: flex;
+    flex-direction: column;
+}
 
 .nf-stat-value {
-    font-size: 22px;
-    font-weight: 700;
-    color: var(--text-primary);
-    line-height: 1;
+    font-size: 26px;
+    font-weight: 800;
+    color: var(--primary);
+    line-height: 1.1;
+    font-family: var(--font-body);
 }
 
 .nf-stat-label {
-    font-size: 12px;
-    color: var(--text-muted);
-    margin-top: 2px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-top: 4px;
 }
 
 /* ── 2-column layout ── */
@@ -275,20 +286,36 @@ html.dark .nf-reaction-picker-btn::after {
 }
 
 .nf-panel-card {
-    background: var(--bg-card);
+    background: var(--bg-glass);
+    backdrop-filter: blur(12px);
     border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-md);
-    padding: 18px;
-    box-shadow: var(--shadow-sm);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    transition: all 0.2s ease;
+}
+
+.nf-panel-card:hover {
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+    border-color: var(--border-glow);
 }
 
 .nf-panel-title {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text-secondary);
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    margin: 0 0 14px;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+}
+
+.nf-panel-title::after {
+    content: "›";
+    font-size: 18px;
+    color: var(--text-muted);
+    font-weight: 400;
 }
 
 .nf-quick-actions {
@@ -429,18 +456,19 @@ html.dark .nf-reaction-picker-btn::after {
 
 /* ── Create Post ── */
 .nf-create-post {
-    background: var(--bg-secondary);
+    background: var(--bg-glass);
+    backdrop-filter: blur(10px);
     border: 1px solid var(--border-subtle);
-    border-radius: 0;
+    border-radius: var(--radius-lg);
     padding: 20px;
     margin-bottom: 24px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-    transition: box-shadow 200ms;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+    transition: all 0.25s ease;
 }
 
 .nf-create-post:focus-within {
-    box-shadow: 0 4px 16px rgba(59, 111, 207, 0.12);
-    border-color: rgba(59, 111, 207, 0.3);
+    box-shadow: 0 6px 20px rgba(0, 240, 255, 0.15);
+    border-color: rgba(0, 240, 255, 0.35);
 }
 
 .nf-create-header {
@@ -516,17 +544,19 @@ html.dark .nf-reaction-picker-btn::after {
 }
 
 .nf-post-card {
-    background: var(--bg-secondary);
+    background: var(--bg-glass);
+    backdrop-filter: blur(10px);
     border: 1px solid var(--border-subtle);
-    border-radius: 0;
+    border-radius: var(--radius-lg);
     padding: 20px;
-    transition: box-shadow 250ms, transform 250ms;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
 }
 
 .nf-post-card:hover {
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-    transform: translateY(-1px);
+    box-shadow: 0 8px 24px rgba(0, 240, 255, 0.15);
+    border-color: rgba(0, 240, 255, 0.25);
+    transform: translateY(-2px);
 }
 
 .nf-post-header {

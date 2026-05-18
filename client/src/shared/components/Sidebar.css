@@ -145,12 +145,12 @@
     color: #fff;
 }
 
-/* Uizard-style: yellow active pill with dark text */
+/* Premium glowing active state */
 .sidebar-item.active {
     background: var(--sidebar-active-bg);
     color: var(--sidebar-active-text);
     font-weight: 700;
-    box-shadow: 0 2px 8px rgba(255, 208, 83, 0.25);
+    box-shadow: 0 4px 12px var(--primary-glow);
 }
 
 .sidebar-item-icon {
@@ -414,3 +414,29 @@
 }
 
 /* ─── Light mode sidebar overrides đã chuyển sang styles/theme-light.css ─── */
+
+/* ─── Responsive Mobile Overlays ─── */
+@media (max-width: 768px) {
+    .sidebar {
+        display: none !important;
+    }
+    
+    .main-content {
+        margin-left: 0 !important;
+        width: 100vw !important;
+        flex: 1 !important;
+        padding-bottom: 84px !important;
+    }
+    
+    /* Move floating theme toggle above bottom navigation bar */
+    .theme-toggle-float {
+        bottom: 90px !important;
+        right: 16px !important;
+        width: 44px !important;
+        height: 44px !important;
+        font-size: 20px !important;
+        background: rgba(10, 16, 28, 0.85) !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4) !important;
+    }
+}

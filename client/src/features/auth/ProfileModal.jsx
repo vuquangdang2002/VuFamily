@@ -5,7 +5,7 @@ function getToken() {
     catch { return ''; }
 }
 
-export default function ProfileModal({ isOpen, onClose, user, onUpdateUser, onAddToast }) {
+export default function ProfileModal({ isOpen, onClose, user, onUpdateUser, onAddToast, theme, setTheme }) {
     const [activeTab, setActiveTab] = useState('info');
 
     // Info fields

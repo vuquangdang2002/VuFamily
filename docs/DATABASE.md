@@ -32,7 +32,7 @@
 | `family_name` | `TEXT` | `'Vũ'` | Tên dòng họ |
 | `description` | `TEXT` | `''` | Mô tả |
 | `origin_place` | `TEXT` | `''` | Quê quán gốc |
-| `created_at` | `TIMESTAMPTZ` | `NOW()` | |
+| `created_at` | `BIGINT` | | Unix Timestamp (ms) |
 
 ---
 
@@ -42,10 +42,9 @@
 |--------|------|-------------|--------|
 | `id` | `SERIAL` PK | | |
 | `name` | `TEXT` | `NOT NULL` | Họ tên |
-| `gender` | `INTEGER` | `CHECK(0,1)` | 0=Nữ, 1=Nam |
-| `birth_date` | `TEXT` | | Ngày sinh (ISO) |
-| `birth_time` | `TEXT` | | Giờ sinh |
-| `death_date` | `TEXT` | | Ngày mất |
+| `gender` | `SMALLINT` | `CHECK(0,1)` | 0=Nữ, 1=Nam |
+| `birth_timestamp` | `BIGINT` | | Ngày sinh (Unix ms) |
+| `death_timestamp` | `BIGINT` | | Ngày mất (Unix ms) |
 | `birth_place` | `TEXT` | | Nơi sinh |
 | `death_place` | `TEXT` | | Nơi mất |
 | `occupation` | `TEXT` | | Nghề nghiệp |
@@ -54,13 +53,13 @@
 | `address` | `TEXT` | | Địa chỉ |
 | `note` | `TEXT` | | Ghi chú |
 | `photo` | `TEXT` | | Ảnh (base64 hoặc URL) |
-| `birth_order` | `INTEGER` | | Thứ tự con |
-| `child_type` | `TEXT` | `CHECK('biological','adopted')` | Loại con |
+| `birth_order` | `SMALLINT` | | Thứ tự con |
+| `child_type` | `SMALLINT` | `CHECK(1,2)` | 1=Ruột, 2=Nuôi |
 | `parent_id` | `INTEGER` FK | → `members(id)` ON DELETE SET NULL | Cha/mẹ |
 | `spouse_id` | `INTEGER` FK | → `members(id)` ON DELETE SET NULL | Vợ/chồng |
-| `generation` | `INTEGER` | Default `1` | Đời thứ mấy |
-| `created_at` | `TIMESTAMPTZ` | `NOW()` | |
-| `updated_at` | `TIMESTAMPTZ` | `NOW()` | |
+| `generation` | `SMALLINT` | Default `1` | Đời thứ mấy |
+| `created_at` | `BIGINT` | | Unix Timestamp (ms) |
+| `updated_at` | `BIGINT` | | Unix Timestamp (ms) |
 
 **Indexes:** `parent_id`, `spouse_id`, `name`, `generation`
 
@@ -78,13 +77,13 @@ members.spouse_id → members.id   (self-referencing, vợ/chồng)
 |--------|------|-------------|--------|
 | `id` | `SERIAL` PK | | |
 | `member_id` | `INTEGER` FK | → `members(id)` CASCADE | |
-| `category` | `TEXT` | `CHECK('education','work','social','award','other')` | Loại |
+| `category_id` | `SMALLINT` | | 1=Học tập, 2=Công việc, 3=Xã hội, 4=Giải thưởng, 5=Khác |
 | `title` | `TEXT` | `NOT NULL` | Tiêu đề |
 | `organization` | `TEXT` | | Tổ chức |
-| `start_year` | `INTEGER` | | Năm bắt đầu |
-| `end_year` | `INTEGER` | | Năm kết thúc |
+| `start_year` | `SMALLINT` | | Năm bắt đầu |
+| `end_year` | `SMALLINT` | | Năm kết thúc |
 | `description` | `TEXT` | | Mô tả |
-| `created_at` | `TIMESTAMPTZ` | `NOW()` | |
+| `created_at` | `BIGINT` | | Unix Timestamp (ms) |
 
 ---
 
@@ -94,11 +93,11 @@ members.spouse_id → members.id   (self-referencing, vợ/chồng)
 |--------|------|-------------|--------|
 | `id` | `SERIAL` PK | | |
 | `member_id` | `INTEGER` FK | → `members(id)` SET NULL | |
-| `event_type` | `TEXT` | Default `'other'` | Loại sự kiện |
-| `event_date` | `TEXT` | | Ngày sự kiện |
+| `event_type_id` | `SMALLINT` | Default `0` | 0=Khác, 1=Giỗ, 2=Họp mặt, 3=Cưới |
+| `event_timestamp` | `BIGINT` | | Ngày diễn ra (Unix ms) |
 | `title` | `TEXT` | `NOT NULL` | Tiêu đề |
 | `description` | `TEXT` | | Mô tả |
-| `created_at` | `TIMESTAMPTZ` | `NOW()` | |
+| `created_at` | `BIGINT` | | Unix Timestamp (ms) |
 
 ---
 
@@ -110,17 +109,18 @@ members.spouse_id → members.id   (self-referencing, vợ/chồng)
 | `username` | `TEXT` | `UNIQUE NOT NULL` | Tên đăng nhập |
 | `password` | `TEXT` | `NOT NULL` | Hash bcrypt |
 | `display_name` | `TEXT` | | Tên hiển thị |
-| `role` | `TEXT` | `CHECK('admin','viewer')` | Quyền |
+| `role_id` | `SMALLINT` | `CHECK(1,2,3)` | 1=Admin, 2=Editor, 3=Viewer |
+| `status_id` | `SMALLINT` | `CHECK(1,2)` | 1=Active, 2=Banned |
 | `token` | `TEXT` | | Session token |
-| `created_at` | `TIMESTAMPTZ` | `NOW()` | |
-| `updated_at` | `TIMESTAMPTZ` | `NOW()` | |
+| `created_at` | `BIGINT` | | Unix Timestamp (ms) |
+| `updated_at` | `BIGINT` | | Unix Timestamp (ms) |
 
-**Default accounts:**
-| Username | Role | Mặc định |
-|----------|------|----------|
-| `dangvq` | admin | Quản trị chính |
-| `admin` | admin | Quản trị phụ |
-| `viewer` | viewer | Tài khoản xem |
+**Default accounts (Tài khoản test):**
+| Username | Role | Mặc định (Mật khẩu) |
+|----------|------|----------------------|
+| `dangvq` | admin | Quản trị chính (`DangVQ@2002`) |
+| `admin1` -> `admin5` | admin | Tài khoản Admin Test (`Admin@1234`) |
+| `test1` -> `test5` | viewer | Tài khoản Viewer Test (`Viewer@1234`) |
 
 ---
 
@@ -133,11 +133,11 @@ members.spouse_id → members.id   (self-referencing, vợ/chồng)
 | `member_id` | `INTEGER` | `NOT NULL` | Member cần sửa |
 | `changes` | `TEXT` | `NOT NULL` | JSON thay đổi |
 | `note` | `TEXT` | | Ghi chú |
-| `status` | `TEXT` | `CHECK('pending','approved','rejected')` | Trạng thái |
+| `status_id` | `SMALLINT` | Default `1` | 1=Pending, 2=Approved, 3=Rejected |
 | `reviewed_by` | `INTEGER` FK | → `users(id)` SET NULL | Admin duyệt |
-| `reviewed_at` | `TIMESTAMPTZ` | | Thời điểm duyệt |
+| `reviewed_at` | `BIGINT` | | Thời điểm duyệt (Unix ms) |
 | `reject_reason` | `TEXT` | | Lý do từ chối |
-| `created_at` | `TIMESTAMPTZ` | `NOW()` | |
+| `created_at` | `BIGINT` | | Unix Timestamp (ms) |
 
 ---
 
@@ -147,10 +147,9 @@ members.spouse_id → members.id   (self-referencing, vợ/chồng)
 |--------|------|-------------|--------|
 | `id` | `SERIAL` PK | | |
 | `content` | `TEXT` | `NOT NULL` | Nội dung bài |
-| `author` | `TEXT` | `NOT NULL` | Tên tác giả |
-| `author_role` | `TEXT` | Default `'viewer'` | Quyền tác giả |
+| `author_id` | `INTEGER` | `NOT NULL` | ID tác giả |
 | `user_id` | `INTEGER` FK | → `users(id)` SET NULL | |
-| `created_at` | `TIMESTAMPTZ` | `NOW()` | |
+| `created_at` | `BIGINT` | | Unix Timestamp (ms) |
 
 ---
 
@@ -161,10 +160,9 @@ members.spouse_id → members.id   (self-referencing, vợ/chồng)
 | `id` | `SERIAL` PK | | |
 | `post_id` | `INTEGER` FK | → `posts(id)` CASCADE | Bài đăng |
 | `content` | `TEXT` | `NOT NULL` | Nội dung |
-| `author` | `TEXT` | `NOT NULL` | Tên |
-| `author_role` | `TEXT` | Default `'viewer'` | Quyền |
+| `author_id` | `INTEGER` | `NOT NULL` | ID tác giả |
 | `user_id` | `INTEGER` FK | → `users(id)` SET NULL | |
-| `created_at` | `TIMESTAMPTZ` | `NOW()` | |
+| `created_at` | `BIGINT` | | Unix Timestamp (ms) |
 
 ---
 
@@ -175,10 +173,10 @@ members.spouse_id → members.id   (self-referencing, vợ/chồng)
 | `id` | `SERIAL` PK | | |
 | `post_id` | `INTEGER` FK | → `posts(id)` CASCADE | Bài đăng |
 | `user_id` | `INTEGER` FK | → `users(id)` CASCADE | Người react |
-| `emoji` | `TEXT` | `NOT NULL` | Emoji (❤️👍😂😮😢) |
-| `created_at` | `TIMESTAMPTZ` | `NOW()` | |
+| `reaction_id` | `SMALLINT` | `NOT NULL` | 1=❤️, 2=👍, 3=😂, 4=😮, 5=😢 |
+| `created_at` | `BIGINT` | | Unix Timestamp (ms) |
 
-**Constraint:** `UNIQUE(post_id, user_id, emoji)` — mỗi user chỉ react 1 lần/emoji/bài
+**Constraint:** `UNIQUE(post_id, user_id, reaction_id)` — mỗi user chỉ react 1 lần/emoji/bài
 
 ---
 
@@ -214,3 +212,14 @@ CREATE POLICY "Service role full access" ON <table>
 > **Lưu ý:** Supabase service key tự động bypass RLS. 
 > Policy này cho phép truy cập đầy đủ qua service role.
 > Sử dụng `anon` key thì cần thêm policy phù hợp.
+
+---
+
+## 🔐 Tiêu Chuẩn Bảo Mật & Mã Hoá Dữ Liệu
+
+Đảm bảo an toàn thông tin dòng họ là ưu tiên hàng đầu, do đó hệ thống được thiết kế theo các tiêu chuẩn bảo mật sau:
+
+1. **Định danh qua ID:** Toàn bộ hệ thống quản lý danh tính (Tác giả bài đăng, người duyệt yêu cầu, lịch sử chỉnh sửa) đều tham chiếu qua mã định danh (`ID`) thay vì lưu trữ dạng Text. Các trường phân loại (`emoji`, `status`, `role`) đều được ép kiểu `SMALLINT` để tối ưu băng thông mạng và truy vấn DB.
+2. **Lưu trữ Thời Gian Tối Ưu (BigInt):** Toàn bộ các mốc thời gian (`created_at`, `birth_timestamp`) lưu trữ dưới định dạng `BIGINT` Epoch Milliseconds.
+3. **Mã hoá Mật Khẩu:** Mật khẩu người dùng (`users.password`) **BẮT BUỘC** mã hoá một chiều sử dụng thuật toán `Bcrypt`.
+4. **Mã hoá Dữ Liệu & Sao Lưu:** Tính năng kết xuất dữ liệu (Backup Database) cho Admin hỗ trợ chuẩn mã hoá đối xứng `AES-256-GCM` siêu nhẹ. File nén dự phòng (`.enc.zip`) sẽ không thể giải nén nếu không có `CHAT_ENCRYPTION_KEY`.

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { API_BASE } from '../../shared/services/api';
+import { getApiBase } from '../../shared/services/api';
 import {
     cacheRooms, getCachedRooms,
     cacheMessages, getCachedMessages, getLatestMessageTime, cacheSingleMessage
@@ -39,7 +39,7 @@ export default function ChatPage({ user, addToast, onStartCall }) {
     const fetchRooms = async () => {
         myLog('CHAT', '[ChatPage - fetchRooms] Bắt đầu đồng bộ danh sách phòng chat từ Server...');
         try {
-            const res = await fetch(`${API_BASE}/chats`, { headers: { 'x-auth-token': getToken() } });
+            const res = await fetch(`${getApiBase()}/chats`, { headers: { 'x-auth-token': getToken() } });
             const json = await res.json();
             if (json.success) {
                 const serverRooms = json.data || [];
@@ -58,7 +58,7 @@ export default function ChatPage({ user, addToast, onStartCall }) {
 
     const fetchPublicUsers = async () => {
         try {
-            const res = await fetch(`${API_BASE}/users/public`, { headers: { 'x-auth-token': getToken() } });
+            const res = await fetch(`${getApiBase()}/users/public`, { headers: { 'x-auth-token': getToken() } });
             const json = await res.json();
             if (json.success) {
                 setAllUsers(json.data.filter(u => u.id !== user.id));
@@ -72,7 +72,7 @@ export default function ChatPage({ user, addToast, onStartCall }) {
     const fetchMessagesFull = async (roomId) => {
         myLog('CHAT', `[ChatPage - fetchMessagesFull] Đang tải toàn bộ lịch sử tin nhắn cho Phòng ID: ${roomId}`);
         try {
-            const res = await fetch(`${API_BASE}/chats/${roomId}/messages`, { headers: { 'x-auth-token': getToken() } });
+            const res = await fetch(`${getApiBase()}/chats/${roomId}/messages`, { headers: { 'x-auth-token': getToken() } });
             const json = await res.json();
             if (json.success) {
                 const serverMsgs = json.data || [];
@@ -107,7 +107,7 @@ export default function ChatPage({ user, addToast, onStartCall }) {
         }
         try {
             const since = encodeURIComponent(latestMsgTimeRef.current);
-            const res = await fetch(`${API_BASE}/chats/${roomId}/messages?since=${since}`, {
+            const res = await fetch(`${getApiBase()}/chats/${roomId}/messages?since=${since}`, {
                 headers: { 'x-auth-token': getToken() }
             });
             const json = await res.json();
@@ -198,7 +198,7 @@ export default function ChatPage({ user, addToast, onStartCall }) {
         setInputText(''); // optimistic clear
 
         try {
-            const res = await fetch(`${API_BASE}/chats/${activeRoomId}/messages`, {
+            const res = await fetch(`${getApiBase()}/chats/${activeRoomId}/messages`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'x-auth-token': getToken() },
                 body: JSON.stringify({ content })
@@ -223,7 +223,7 @@ export default function ChatPage({ user, addToast, onStartCall }) {
         if (selectedUserIds.length === 0) return;
 
         try {
-            const res = await fetch(`${API_BASE}/chats`, {
+            const res = await fetch(`${getApiBase()}/chats`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'x-auth-token': getToken() },
                 body: JSON.stringify({
@@ -257,7 +257,7 @@ export default function ChatPage({ user, addToast, onStartCall }) {
         if (!newName || newName.trim() === '' || newName.trim() === activeRoom.display_name) return;
 
         try {
-            const res = await fetch(`${API_BASE}/chats/${activeRoomId}/name`, {
+            const res = await fetch(`${getApiBase()}/chats/${activeRoomId}/name`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json', 'x-auth-token': getToken() },
                 body: JSON.stringify({ name: newName.trim() })
@@ -276,7 +276,7 @@ export default function ChatPage({ user, addToast, onStartCall }) {
     const handleLeaveGroup = async () => {
         if (!window.confirm("Bạn có chắc muốn rời khỏi nhóm này?")) return;
         try {
-            const res = await fetch(`${API_BASE}/chats/${activeRoomId}/leave`, {
+            const res = await fetch(`${getApiBase()}/chats/${activeRoomId}/leave`, {
                 method: 'POST',
                 headers: { 'x-auth-token': getToken() }
             });
@@ -297,7 +297,7 @@ export default function ChatPage({ user, addToast, onStartCall }) {
     const handleKickMember = async (userId, memberName) => {
         if (!window.confirm(`Bạn có chắc muốn đuổi ${memberName} khỏi nhóm?`)) return;
         try {
-            const res = await fetch(`${API_BASE}/chats/${activeRoomId}/kick/${userId}`, {
+            const res = await fetch(`${getApiBase()}/chats/${activeRoomId}/kick/${userId}`, {
                 method: 'POST',
                 headers: { 'x-auth-token': getToken() }
             });

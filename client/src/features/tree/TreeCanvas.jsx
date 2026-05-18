@@ -118,37 +118,73 @@ export default function TreeCanvas({ members, selectedId, searchResultIds, onSel
         const pp = posMap.get(node.member.id);
         if (!pp) return;
         let parentCX;
+
+        // Ancestors/Senior generation connection lines get a golden neon accent, others get cyan neon
+        const isGoldLine = node.member.generation === 1;
+        const lineColor = isGoldLine ? '#D4AF37' : '#00F0FF';
+        const lineGlow = isGoldLine ? 'rgba(212, 175, 55, 0.4)' : 'rgba(0, 240, 255, 0.4)';
+
         if (node.spouse) {
             const sp = posMap.get(node.spouse.id);
             if (sp) {
                 parentCX = (pp.x + sp.x + sp.width) / 2;
-                ctx.strokeStyle = colors.spouseLine;
-                ctx.lineWidth = 2; ctx.setLineDash([5, 5]);
+                ctx.save();
+                ctx.shadowColor = '#D4AF37';
+                ctx.shadowBlur = 6;
+                ctx.strokeStyle = '#D4AF37';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([5, 5]);
                 ctx.beginPath();
                 ctx.moveTo(pp.x + pp.width, pp.y + pp.height / 2);
                 ctx.lineTo(sp.x, sp.y + sp.height / 2);
-                ctx.stroke(); ctx.setLineDash([]);
+                ctx.stroke();
+                ctx.setLineDash([]);
+                ctx.restore();
             } else { parentCX = pp.x + pp.width / 2; }
         } else { parentCX = pp.x + pp.width / 2; }
 
         const botY = pp.y + pp.height;
         if (node.children.length > 0) {
             const midY = botY + 50;
-            ctx.strokeStyle = colors.childLine;
+
+            ctx.save();
+            ctx.shadowColor = lineGlow;
+            ctx.shadowBlur = 8;
+            ctx.strokeStyle = lineColor;
             ctx.lineWidth = 2.5;
-            ctx.beginPath(); ctx.moveTo(parentCX, botY); ctx.lineTo(parentCX, midY); ctx.stroke();
+
+            // Vertical line down from parent
+            ctx.beginPath();
+            ctx.moveTo(parentCX, botY);
+            ctx.lineTo(parentCX, midY);
+            ctx.stroke();
+
             const ccs = node.children.map(c => {
                 const cp = posMap.get(c.member.id);
                 if (!cp) return parentCX;
                 if (c.spouse) { const csp = posMap.get(c.spouse.id); if (csp) return (cp.x + csp.x + csp.width) / 2; }
                 return cp.x + cp.width / 2;
             });
-            if (ccs.length > 1) { ctx.beginPath(); ctx.moveTo(Math.min(...ccs), midY); ctx.lineTo(Math.max(...ccs), midY); ctx.stroke(); }
+
+            // Horizontal connection bar
+            if (ccs.length > 1) {
+                ctx.beginPath();
+                ctx.moveTo(Math.min(...ccs), midY);
+                ctx.lineTo(Math.max(...ccs), midY);
+                ctx.stroke();
+            }
+
+            // Vertical lines to each child
             node.children.forEach((child, i) => {
                 const cp = posMap.get(child.member.id);
                 if (!cp) return;
-                ctx.beginPath(); ctx.moveTo(ccs[i], midY); ctx.lineTo(ccs[i], cp.y); ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(ccs[i], midY);
+                ctx.lineTo(ccs[i], cp.y);
+                ctx.stroke();
             });
+
+            ctx.restore();
         }
         node.children.forEach(c => drawConRec(ctx, c, posMap, colors));
     }
@@ -165,85 +201,109 @@ export default function TreeCanvas({ members, selectedId, searchResultIds, onSel
         const isSearch = searchIds.includes(member.id);
         const isDead = !!member.deathDate;
         const isMale = member.gender === 1;
-        const r = 16;
+        const r = 20;
 
         const birthYear = getYearFromDate(member.birthDate);
         const deathYear = getYearFromDate(member.deathDate);
 
-        ctx.shadowColor = isSel ? colors.nodeShadowSelected : colors.nodeShadow;
-        ctx.shadowBlur = isSel ? 20 : 10; ctx.shadowOffsetY = 4;
+        // Glassmorphic Node Card Background
+        ctx.save();
+        ctx.shadowColor = isSel ? '#00F0FF' : 'rgba(0, 0, 0, 0.4)';
+        ctx.shadowBlur = isSel ? 16 : 8;
+        ctx.shadowOffsetY = 4;
 
         ctx.beginPath(); roundRect(ctx, x, y, w, h, r);
-        ctx.fillStyle = colors.nodeFill;
+        ctx.fillStyle = 'rgba(10, 15, 30, 0.75)'; // Dark glass
         ctx.fill();
+        ctx.restore();
 
-        ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
-        ctx.strokeStyle = isSel ? colors.nodeBorderSelected : isSearch ? colors.nodeBorderSearch : colors.nodeBorder;
-        ctx.lineWidth = isSel ? 3 : 1; ctx.stroke();
+        // Card fine border
+        ctx.beginPath(); roundRect(ctx, x, y, w, h, r);
+        ctx.strokeStyle = isSel ? '#00F0FF' : isSearch ? '#00F0FF' : 'rgba(255, 255, 255, 0.08)';
+        ctx.lineWidth = isSel ? 2 : 1;
+        ctx.stroke();
 
-        // Gender bar (thicker)
+        // Glowing Avatar Ring (mockup style)
+        // Ancestors, admins, and females get a gold glowing ring; young males get a cyan glowing ring.
+        const isGoldRing = member.generation === 1 || (member.role && member.role.toLowerCase() === 'admin') || !isMale;
+        const ringColor = isGoldRing ? '#D4AF37' : '#00F0FF';
+        const ringGlow = isGoldRing ? 'rgba(212, 175, 55, 0.5)' : 'rgba(0, 240, 255, 0.5)';
+
+        const ax = x + w / 2, ay = y + 46, ar = 30;
+
+        ctx.save();
+        ctx.shadowColor = ringGlow;
+        ctx.shadowBlur = 10;
         ctx.beginPath();
-        ctx.moveTo(x + r, y); ctx.lineTo(x + w - r, y);
-        ctx.arcTo(x + w, y, x + w, y + r, r); ctx.lineTo(x + w, y + 6);
-        ctx.lineTo(x, y + 6); ctx.lineTo(x, y + r); ctx.arcTo(x, y, x + r, y, r);
-        ctx.closePath();
-        ctx.fillStyle = isMale ? 'rgba(59,111,207,0.85)' : 'rgba(209,107,138,0.85)';
-        ctx.fill();
+        ctx.arc(ax, ay, ar + 3, 0, Math.PI * 2);
+        ctx.strokeStyle = ringColor;
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        ctx.restore();
 
-        // Avatar — bigger (24px radius)
-        const ax = x + w / 2, ay = y + 42, ar = 24;
+        // Avatar Clip
         const cachedImg = imgCache ? imgCache.get(member.id) : null;
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(ax, ay, ar, 0, Math.PI * 2);
+        ctx.clip();
 
         if (cachedImg && cachedImg instanceof Image && cachedImg.complete) {
-            ctx.save();
-            ctx.beginPath();
-            ctx.arc(ax, ay, ar, 0, Math.PI * 2);
-            ctx.clip();
             ctx.drawImage(cachedImg, ax - ar, ay - ar, ar * 2, ar * 2);
-            ctx.restore();
-            ctx.beginPath(); ctx.arc(ax, ay, ar, 0, Math.PI * 2);
-            ctx.strokeStyle = isMale ? 'rgba(59,111,207,0.9)' : 'rgba(209,107,138,0.9)';
-            ctx.lineWidth = 2.5; ctx.stroke();
         } else {
             ctx.beginPath(); ctx.arc(ax, ay, ar, 0, Math.PI * 2);
             const ag = ctx.createRadialGradient(ax, ay, 0, ax, ay, ar);
-            if (isMale) { ag.addColorStop(0, '#5b8def'); ag.addColorStop(1, '#3a6bc5'); }
-            else { ag.addColorStop(0, '#ef7b9a'); ag.addColorStop(1, '#c53a6b'); }
+            if (isMale) {
+                ag.addColorStop(0, '#102a45');
+                ag.addColorStop(1, '#051220');
+            } else {
+                ag.addColorStop(0, '#3a1a2b');
+                ag.addColorStop(1, '#1b0510');
+            }
             ctx.fillStyle = ag; ctx.fill();
             ctx.fillStyle = '#fff';
-            ctx.font = `${ar}px "Segoe UI Emoji", sans-serif`;
+            ctx.font = `bold 24px "Inter", sans-serif`;
             ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-            ctx.fillText('👤', ax, ay);
+            ctx.fillText(member.name ? member.name.charAt(0) : '👤', ax, ay);
         }
+        ctx.restore();
 
-        // Name — bigger, bolder
-        ctx.fillStyle = isDead ? colors.textDead : colors.textPrimary;
-        ctx.font = 'bold 16px "Inter", sans-serif';
+        // Name — premium bold white text
+        ctx.fillStyle = isDead ? '#64748B' : '#FFFFFF';
+        ctx.font = 'bold 15px "Inter", sans-serif';
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        let dn = member.name;
+        let dn = member.name || '';
         while (ctx.measureText(dn).width > w - 24 && dn.length > 3) dn = dn.slice(0, -1);
         if (dn !== member.name) dn += '…';
-        ctx.fillText(dn, x + w / 2, y + 82);
+        ctx.fillText(dn, x + w / 2, y + 98);
 
-        // Years — larger
+        // Sub-label (Role/Relationship in 100% Vietnamese)
+        ctx.fillStyle = isGoldRing ? '#D4AF37' : '#00F0FF';
+        ctx.font = '600 12px "Inter", sans-serif';
+        let roleLabel = '';
+        if (member.role && member.role.toLowerCase() === 'admin') {
+            roleLabel = 'Người Sáng Lập';
+        } else if (member.generation === 1) {
+            roleLabel = isMale ? 'Thủy Tổ Ông (Sáng lập)' : 'Thủy Tổ Bà';
+        } else {
+            roleLabel = isMale ? `Con Trai (Đời thứ ${member.generation})` : `Con Gái (Đời thứ ${member.generation})`;
+        }
+        ctx.fillText(roleLabel, x + w / 2, y + 118);
+
+        // Timeline Years
         const yt = deathYear ? `${birthYear || '?'} - ${deathYear}` : birthYear ? `${birthYear} - nay` : '';
-        if (yt) { ctx.fillStyle = colors.textMuted; ctx.font = '13px "Inter", sans-serif'; ctx.fillText(yt, x + w / 2, y + 105); }
-
-        // Gen badge — bigger
-        if (member.generation) {
-            const bt = `Đời ${member.generation}`;
-            ctx.font = '12px "Inter", sans-serif';
-            const bw = ctx.measureText(bt).width + 16;
-            const bx = x + w / 2 - bw / 2, by = y + 120;
-            ctx.beginPath(); roundRect(ctx, bx, by, bw, 22, 11);
-            ctx.fillStyle = colors.genBadgeBg; ctx.fill();
-            ctx.strokeStyle = colors.genBadgeBorder; ctx.lineWidth = 0.5; ctx.stroke();
-            ctx.fillStyle = colors.genBadgeText; ctx.fillText(bt, x + w / 2, by + 11);
+        if (yt) {
+            ctx.fillStyle = '#64748B';
+            ctx.font = '500 11px "Inter", sans-serif';
+            ctx.fillText(yt, x + w / 2, y + 138);
         }
 
+        // Dead Indicator
         if (isDead) {
-            ctx.fillStyle = colors.textMuted; ctx.font = '13px "Inter", sans-serif';
-            ctx.textAlign = 'center'; ctx.fillText('✝', x + w - 18, y + 18);
+            ctx.fillStyle = '#64748B';
+            ctx.font = '12px "Inter", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('✝', x + w - 16, y + 18);
         }
     }
 

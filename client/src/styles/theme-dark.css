@@ -1,35 +1,40 @@
 /* ============================================================
    DARK THEME — VuFamily Design System
    Áp dụng khi: html.dark
+   Thiết kế cao cấp: Sleek Space Navy + Neon Cyan & Luxury Gold
    ============================================================ */
 
 html.dark {
     color-scheme: dark;
 
-    /* ── Nền ── */
-    --bg-primary:   #0F172A;   /* Navy đậm */
-    --bg-secondary: #1E293B;
-    --bg-card:      #1E293B;
-    --bg-glass:     rgba(30, 41, 59, 0.85);
-    --bg-hover:     rgba(255, 255, 255, 0.05);
+    /* ── Typography Fonts ── */
+    --font-heading: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --font-body: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+    /* ── Nền (Deep Space Navy) ── */
+    --bg-primary:   #060a13;   /* Vũ trụ thẳm */
+    --bg-secondary: #0f1524;   /* Navy không gian */
+    --bg-card:      #121b2e;   /* Khung thẻ kính */
+    --bg-glass:     rgba(18, 27, 46, 0.85);
+    --bg-hover:     rgba(0, 240, 255, 0.06); /* Hover ánh neon xanh */
 
     /* ── Brand Gold ── */
     --gold:       #D4AF37;
     --gold-light: #F0D060;
     --gold-dark:  #A08520;
-    --gold-glow:  rgba(212, 175, 55, 0.12);
+    --gold-glow:  rgba(212, 175, 55, 0.15);
 
-    /* ── Primary (Indigo sáng hơn → đọc tốt trên nền tối) ── */
-    --primary:       #6366F1;
-    --primary-light: #818CF8;
-    --primary-dark:  #4F46E5;
-    --primary-glow:  rgba(99, 102, 241, 0.25);
+    /* ── Primary Neon Blue (Xanh Neon Cyberpunk tuyệt đẹp) ── */
+    --primary:       #00F0FF;
+    --primary-light: #38BDF8;
+    --primary-dark:  #0284C7;
+    --primary-glow:  rgba(0, 240, 255, 0.25);
 
     /* ── Sidebar ── */
-    --sidebar-bg:          #0F172A;
-    --sidebar-active-bg:   rgba(99, 102, 241, 0.15);
-    --sidebar-active-text: #818CF8;
-    --sidebar-hover-bg:    rgba(255, 255, 255, 0.05);
+    --sidebar-bg:          #060a13;
+    --sidebar-active-bg:   rgba(0, 240, 255, 0.12);
+    --sidebar-active-text: #00F0FF;
+    --sidebar-hover-bg:    rgba(255, 255, 255, 0.04);
     --sidebar-text:        #94A3B8;
     --sidebar-text-active: #F8FAFC;
 
@@ -39,42 +44,55 @@ html.dark {
     --text-muted:     #64748B;
 
     /* ── Accent ── */
-    --accent-male:    #3B82F6;
-    --accent-female:  #EC4899;
+    --accent-male:    #00F0FF; /* Nam là xanh neon */
+    --accent-female:  #F43F5E; /* Nữ là hồng neon */
     --accent-success: #10B981;
     --accent-error:   #EF4444;
     --accent-warning: #F59E0B;
-    --accent-info:    #3B82F6;
+    --accent-info:    #00F0FF;
 
     /* ── Viền ── */
-    --border-subtle: #334155;
-    --border-glow:   rgba(99, 102, 241, 0.2);
+    --border-subtle: rgba(255, 255, 255, 0.08);
+    --border-glow:   rgba(0, 240, 255, 0.25);
 
-    /* ── Bóng đổ (đậm hơn vì nền tối) ── */
-    --shadow-sm:   0 1px 3px  rgba(0, 0, 0, 0.5);
-    --shadow-md:   0 4px 12px rgba(0, 0, 0, 0.6);
-    --shadow-lg:   0 8px 24px rgba(0, 0, 0, 0.7);
-    --shadow-glow: 0 0 20px rgba(99, 102, 241, 0.15);
+    /* ── Bóng đổ ── */
+    --shadow-sm:   0 1px 3px  rgba(0, 0, 0, 0.6);
+    --shadow-md:   0 4px 16px rgba(0, 0, 0, 0.7);
+    --shadow-lg:   0 8px 32px rgba(0, 0, 0, 0.8);
+    --shadow-glow: 0 0 24px rgba(0, 240, 255, 0.2);
 
     /* ── Input ── */
-    --input-bg:           #0F172A;
+    --input-bg:           #060a13;
     --input-color:        #F8FAFC;
-    --input-border:       #334155;
+    --input-border:       rgba(255, 255, 255, 0.08);
     --input-placeholder:  #64748B;
-    --input-focus-border: #818CF8;
-    --input-focus-shadow: rgba(99, 102, 241, 0.2);
+    --input-focus-border: #00F0FF;
+    --input-focus-shadow: rgba(0, 240, 255, 0.25);
 
     /* ── Family Tree ── */
-    --tree-bg:                 #0F172A;
-    --tree-grid:               rgba(255, 255, 255, 0.03);
-    --tree-node-bg:            #1E293B;
-    --tree-node-border:        #334155;
-    --tree-node-border-active: #818CF8;
-    --tree-node-shadow:        0 4px 12px rgba(0, 0, 0, 0.5);
-    --tree-node-shadow-active: 0 0 0 3px rgba(99, 102, 241, 0.3);
-    --tree-line-parent:        rgba(148, 163, 184, 0.3);
-    --tree-line-spouse:        rgba(236, 72, 153, 0.35);
-    --tree-badge-bg:           rgba(99, 102, 241, 0.15);
-    --tree-badge-border:       rgba(99, 102, 241, 0.3);
-    --tree-badge-text:         #818CF8;
+    --tree-bg:                 #060a13;
+    --tree-grid:               rgba(0, 240, 255, 0.015);
+    --tree-node-bg:            #121b2e;
+    --tree-node-border:        rgba(255, 255, 255, 0.08);
+    --tree-node-border-active: #00F0FF;
+    --tree-node-shadow:        0 8px 24px rgba(0, 0, 0, 0.6);
+    --tree-node-shadow-active: 0 0 16px rgba(0, 240, 255, 0.4);
+    --tree-line-parent:        rgba(0, 240, 255, 0.2);
+    --tree-line-spouse:        rgba(244, 63, 94, 0.35);
+    --tree-badge-bg:           rgba(0, 240, 255, 0.12);
+    --tree-badge-border:       rgba(0, 240, 255, 0.25);
+    --tree-badge-text:         #00F0FF;
+
+    /* ── Chat custom ── */
+    --chat-msg-me-bg:          linear-gradient(135deg, #00F0FF, #00B4D8);
+    --chat-msg-me-color:       #060a13;
+    --chat-msg-them-bg:        rgba(255, 255, 255, 0.05);
+    --chat-msg-them-color:     #F8FAFC;
+    --chat-msg-them-border:    rgba(255, 255, 255, 0.08);
+
+    /* ── Radius tokens (Premium rounded corners) ── */
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 24px;
 }

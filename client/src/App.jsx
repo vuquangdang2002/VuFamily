@@ -20,7 +20,9 @@ import Header from './shared/components/Header';
 import Toolbar from './shared/components/Toolbar';
 import Toast from './shared/components/Toast';
 import { useTheme } from './shared/components/ThemeToggle';
-import { api, localApi, API_BASE } from './shared/services/api';
+import SplashLoading from './shared/components/SplashLoading';
+import ForceChangePasswordModal from './features/auth/ForceChangePasswordModal';
+import { api, localApi, getApiBase } from './shared/services/api';
 import { clearAllCache as clearChatCache } from './shared/services/chatCache';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { SplashScreen } from '@capacitor/splash-screen';
@@ -54,15 +56,23 @@ export default function App() {
 
     // Sidebar + page routing
     const [activePage, setActivePage] = useState('tree');
-    const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+    const [sidebarCollapsed, setSidebarCollapsed] = useState(() => window.innerWidth <= 768);
+    const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 768);
+    const [showMobileMenu, setShowMobileMenu] = useState(false);
+
+    useEffect(() => {
+        const handleResize = () => {
+            const mobile = window.innerWidth <= 768;
+            setIsMobile(mobile);
+            if (mobile) setSidebarCollapsed(true);
+        };
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     // Forced password change after auto-login
     const [forceChangePwd, setForceChangePwd] = useState(false);
     const [tempPwd, setTempPwd] = useState('');
-    const [newPwd, setNewPwd] = useState('');
-    const [confirmNewPwd, setConfirmNewPwd] = useState('');
-    const [showNewPwd, setShowNewPwd] = useState(false);
-    const [showConfirmPwd, setShowConfirmPwd] = useState(false);
 
     // ── Analytics ──
     useEffect(() => {
@@ -88,6 +98,10 @@ export default function App() {
     useEffect(() => {
         async function requestAppPermissions() {
             try {
+                // Initialize Remote Config for feature flags/dynamic settings
+                const { syncRemoteConfig } = await import('./firebase.js');
+                await syncRemoteConfig();
+
                 if (window.Capacitor) {
                     await LocalNotifications.requestPermissions();
                 } else if ('Notification' in window) {
@@ -159,7 +173,7 @@ export default function App() {
             setLoadingStatus('Đang xác nhận tài khoản...');
             setLoadingProgress(30);
             window.history.replaceState({}, document.title, window.location.pathname);
-            fetch(`${API_BASE}/auth/verify-email?token=${encodeURIComponent(verifyToken)}`)
+            fetch(`${getApiBase()}/auth/verify-email?token=${encodeURIComponent(verifyToken)}`)
                 .then(r => r.json())
                 .then(data => {
                     setLoadingProgress(70);
@@ -201,7 +215,7 @@ export default function App() {
         setLoadingStatus('Xác thực với máy chủ...');
         setLoadingProgress(50);
         // Verify token with server
-        fetch(`${API_BASE}/auth/me`, {
+        fetch(`${getApiBase()}/auth/me`, {
             headers: { 'x-auth-token': stored.token }
         })
             .then(res => res.json())
@@ -233,14 +247,14 @@ export default function App() {
         if (!user?.token) return;
 
         // Ping immediately on mount if user exists
-        fetch(`${API_BASE}/users/ping`, {
+        fetch(`${getApiBase()}/users/ping`, {
             method: 'POST',
             headers: { 'x-auth-token': user.token }
         }).catch((e) => { myError('APP', "App.jsx Promise Error:", e); });
 
         // Then ping every 60 seconds
         const intervalId = setInterval(() => {
-            fetch(`${API_BASE}/users/ping`, {
+            fetch(`${getApiBase()}/users/ping`, {
                 method: 'POST',
                 headers: { 'x-auth-token': user.token }
             }).catch((e) => { myError('APP', "App.jsx Promise Error:", e); });
@@ -258,7 +272,7 @@ export default function App() {
         ];
 
         try {
-            const res = await fetch(`${API_BASE}/auth/login`, {
+            const res = await fetch(`${getApiBase()}/auth/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, password }),
@@ -307,7 +321,7 @@ export default function App() {
 
     const handleLogout = async () => {
         if (user?.token) {
-            try { await fetch(`${API_BASE}/auth/logout`, { method: 'POST', headers: { 'x-auth-token': user.token } }); } catch { }
+            try { await fetch(`${getApiBase()}/auth/logout`, { method: 'POST', headers: { 'x-auth-token': user.token } }); } catch { }
         }
         localStorage.removeItem(AUTH_KEY);
         // Clear chat cache on logout
@@ -322,7 +336,7 @@ export default function App() {
         window.history.replaceState({}, document.title, window.location.pathname);
     };
 
-    const handleForceChangePassword = async () => {
+    const handleForceChangePassword = async (newPwd, confirmNewPwd) => {
         setForceChangeError('');
         if (!newPwd || !confirmNewPwd) { setForceChangeError('Vui lòng nhập đầy đủ mật khẩu mới'); return; }
 
@@ -335,7 +349,7 @@ export default function App() {
         if (newPwd !== confirmNewPwd) { setForceChangeError('Mật khẩu nhập lại không khớp'); return; }
 
         try {
-            const res = await fetch(`${API_BASE}/auth/change-password`, {
+            const res = await fetch(`${getApiBase()}/auth/change-password`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'x-auth-token': user.token },
                 body: JSON.stringify({ currentPassword: tempPwd, newPassword: newPwd })
@@ -344,8 +358,6 @@ export default function App() {
             if (json.success) {
                 addToast('Đã đổi mật khẩu bắt buộc thành công!');
                 setForceChangePwd(false);
-                setNewPwd('');
-                setConfirmNewPwd('');
                 setTempPwd('');
                 setForceChangeError('');
             } else {
@@ -555,97 +567,7 @@ export default function App() {
 
     // ─── Loading: Premium Splash Loading Screen ───
     if (!authChecked) return (
-        <div className="splash-loading-container">
-            <div className="splash-content">
-                <div className="splash-logo">🏛️</div>
-                <h1 className="splash-title">VuFamily</h1>
-                
-                <div className="progress-wrapper">
-                    <div className="progress-bar-container">
-                        <div 
-                            className="progress-bar-fill" 
-                            style={{ width: `${loadingProgress}%` }}
-                        ></div>
-                    </div>
-                    <div className="progress-info">
-                        <span className="status-text">{loadingStatus}</span>
-                        <span className="percentage">{Math.round(loadingProgress)}%</span>
-                    </div>
-                </div>
-            </div>
-
-            <style>{`
-                .splash-loading-container {
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    height: 100vh;
-                    width: 100vw;
-                    background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
-                    color: white;
-                    overflow: hidden;
-                    position: fixed;
-                    top: 0;
-                    left: 0;
-                    z-index: 9999;
-                }
-                .splash-content {
-                    text-align: center;
-                    width: 80%;
-                    max-width: 400px;
-                    animation: fadeIn 0.8s ease-out;
-                }
-                .splash-logo {
-                    font-size: 64px;
-                    margin-bottom: 16px;
-                    animation: pulse 2s infinite ease-in-out;
-                    filter: drop-shadow(0 0 20px rgba(59, 130, 246, 0.5));
-                }
-                .splash-title {
-                    font-size: 28px;
-                    font-weight: 700;
-                    letter-spacing: 2px;
-                    margin-bottom: 40px;
-                    background: linear-gradient(to right, #60a5fa, #3b82f6);
-                    -webkit-background-clip: text;
-                    -webkit-text-fill-color: transparent;
-                }
-                .progress-wrapper {
-                    width: 100%;
-                }
-                .progress-bar-container {
-                    height: 6px;
-                    width: 100%;
-                    background: rgba(255, 255, 255, 0.1);
-                    border-radius: 10px;
-                    overflow: hidden;
-                    margin-bottom: 12px;
-                    box-shadow: inset 0 1px 2px rgba(0,0,0,0.2);
-                }
-                .progress-bar-fill {
-                    height: 100%;
-                    background: linear-gradient(90deg, #3b82f6, #60a5fa);
-                    border-radius: 10px;
-                    transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-                    box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
-                }
-                .progress-info {
-                    display: flex;
-                    justify-content: space-between;
-                    font-size: 13px;
-                    color: #94a3b8;
-                    font-weight: 500;
-                }
-                @keyframes fadeIn {
-                    from { opacity: 0; transform: translateY(10px); }
-                    to { opacity: 1; transform: translateY(0); }
-                }
-                @keyframes pulse {
-                    0%, 100% { transform: scale(1); opacity: 1; }
-                    50% { transform: scale(1.1); opacity: 0.8; }
-                }
-            `}</style>
-        </div>
+        <SplashLoading loadingProgress={loadingProgress} loadingStatus={loadingStatus} />
     );
 
     // ─── Login screen ───
@@ -706,82 +628,129 @@ export default function App() {
     };
 
     return (
-        <div className={`app-layout ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
-            <Sidebar
-                activePage={activePage}
-                onNavigate={handleNavigate}
-                isAdmin={isAdmin}
-                user={user}
-                onLogout={handleLogout}
-                collapsed={sidebarCollapsed}
-                onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
-                pendingCount={pendingCount}
-                onOpenProfile={() => setProfileModalOpen(true)}
-            />
+        <div className={`app-layout ${sidebarCollapsed ? 'sidebar-collapsed' : ''} ${isMobile ? 'is-mobile' : ''}`}>
+            {!isMobile && (
+                <Sidebar
+                    activePage={activePage}
+                    onNavigate={handleNavigate}
+                    isAdmin={isAdmin}
+                    user={user}
+                    onLogout={handleLogout}
+                    collapsed={sidebarCollapsed}
+                    onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
+                    pendingCount={pendingCount}
+                    onOpenProfile={() => setProfileModalOpen(true)}
+                />
+            )}
             <main className="main-content">
                 {renderPage()}
             </main>
 
-            {/* Theme toggle — always visible */}
-            <button
-                className="theme-toggle-float"
-                onClick={(e) => setTheme(theme === 'light' ? 'dark' : 'light', e)}
-                title={theme === 'light' ? 'Chế độ tối' : 'Chế độ sáng'}
-            >
-                <span className="theme-toggle-icon">{theme === 'light' ? '🌙' : '☀️'}</span>
-            </button>
+            {/* Premium Glassmorphic Bottom Navigation (Mobile Only) */}
+            {isMobile && (
+                <div className="bottom-nav">
+                    <button 
+                        className={`bottom-nav-item ${activePage === 'tree' && !showMobileMenu ? 'active' : ''}`} 
+                        onClick={() => { setActivePage('tree'); setShowMobileMenu(false); }}
+                    >
+                        <span className="bottom-nav-item-icon">🌳</span>
+                        <span>Gia phả</span>
+                    </button>
+                    <button 
+                        className={`bottom-nav-item ${activePage === 'newsfeed' && !showMobileMenu ? 'active' : ''}`} 
+                        onClick={() => { setActivePage('newsfeed'); setShowMobileMenu(false); }}
+                    >
+                        <span className="bottom-nav-item-icon">📰</span>
+                        <span>Bảng tin</span>
+                    </button>
+                    <button 
+                        className={`bottom-nav-item ${activePage === 'chat' && !showMobileMenu ? 'active' : ''}`} 
+                        onClick={() => { setActivePage('chat'); setShowMobileMenu(false); }}
+                    >
+                        <span className="bottom-nav-item-icon">💬</span>
+                        <span>Trò chuyện</span>
+                    </button>
+                    <button 
+                        className={`bottom-nav-item ${activePage === 'calendar' && !showMobileMenu ? 'active' : ''}`} 
+                        onClick={() => { setActivePage('calendar'); setShowMobileMenu(false); }}
+                    >
+                        <span className="bottom-nav-item-icon">📅</span>
+                        <span>Lịch</span>
+                    </button>
+                    <button 
+                        className={`bottom-nav-item ${showMobileMenu ? 'active' : ''}`} 
+                        onClick={() => setShowMobileMenu(!showMobileMenu)}
+                    >
+                        <span className="bottom-nav-item-icon">⚙️</span>
+                        <span>Thêm</span>
+                        {pendingCount > 0 && <span className="bottom-nav-badge">{pendingCount}</span>}
+                    </button>
+                </div>
+            )}
+
+            {/* Premium Slide-Up Bottom Sheet Menu (Mobile Only) */}
+            {isMobile && showMobileMenu && (
+                <div className="bottom-sheet-overlay" onClick={() => setShowMobileMenu(false)}>
+                    <div className="bottom-sheet" onClick={(e) => e.stopPropagation()}>
+                        <div className="bottom-sheet-drag-handle" />
+                        <div className="bottom-sheet-title">DANH MỤC TIỆN ÍCH</div>
+                        
+                        <div className="bottom-sheet-grid">
+                            <div className="bottom-sheet-item" onClick={() => { setProfileModalOpen(true); setShowMobileMenu(false); }}>
+                                <span className="bottom-sheet-item-icon">👤</span>
+                                <span>Hồ sơ cá nhân</span>
+                            </div>
+
+                            {(user?.role === 'admin' || user?.role === 'editor') && (
+                                <div className="bottom-sheet-item" onClick={() => { setActivePage('requests'); setShowMobileMenu(false); }}>
+                                    <span className="bottom-sheet-item-icon">📋</span>
+                                    <span>Yêu cầu</span>
+                                    {pendingCount > 0 && <span className="bottom-nav-badge">{pendingCount}</span>}
+                                </div>
+                            )}
+
+                            {isAdmin && (
+                                <div className="bottom-sheet-item" onClick={() => { setActivePage('system'); setShowMobileMenu(false); }}>
+                                    <span className="bottom-sheet-item-icon">⚙️</span>
+                                    <span>Hệ trị hệ thống</span>
+                                </div>
+                            )}
+
+                            <div className="bottom-sheet-item" onClick={() => { setActivePage('history'); setShowMobileMenu(false); }}>
+                                <span className="bottom-sheet-item-icon">📜</span>
+                                <span>Lịch sử</span>
+                            </div>
+
+                            <div className="bottom-sheet-item" onClick={() => { setActivePage('guide'); setShowMobileMenu(false); }}>
+                                <span className="bottom-sheet-item-icon">❓</span>
+                                <span>Hướng dẫn</span>
+                            </div>
+                        </div>
+
+                        <button className="bottom-sheet-logout" onClick={() => { handleLogout(); setShowMobileMenu(false); }}>
+                            🚪 Đăng xuất tài khoản
+                        </button>
+                    </div>
+                </div>
+            )}
 
             {/* Modals (always available) */}
             <MemberModal isOpen={modalOpen} onClose={closeModal} onSubmit={handleFormSubmit}
                 editMember={editMember} parentId={modalParentId} spouseOfId={modalSpouseOfId} members={members} />
 
             <ProfileModal isOpen={profileModalOpen} onClose={() => setProfileModalOpen(false)} user={user} onAddToast={addToast}
+                theme={theme} setTheme={setTheme}
                 onUpdateUser={(newUserData) => {
                     const authData = { ...user, ...newUserData };
                     localStorage.setItem(AUTH_KEY, JSON.stringify(authData));
                     setUser(authData);
                 }} />
 
-            {/* Forced Change Password Modal */}
-            {forceChangePwd && (
-                <div className="modal-overlay open" style={{ zIndex: 9999 }}>
-                    <div className="modal" style={{ width: 400 }}>
-                        <div className="modal-header">
-                            <h2 style={{ fontSize: 18 }}>🔒 Đổi mật khẩu bắt buộc</h2>
-                        </div>
-                        <div className="modal-body">
-                            <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 16 }}>
-                                Đây là mật khẩu tạo tự động. Vì lý do bảo mật, bạn bắt buộc phải tạo mật khẩu riêng biệt trước khi tiếp tục.
-                                <br /><br />
-                                <span style={{ color: '#eab308' }}>⚠️ Yêu cầu: Ít nhất 8 ký tự, bao gồm chữ HOA, chữ thường, số và ký tự đặc biệt (!@#$...).</span>
-                            </p>
-
-                            {forceChangeError && <div className="login-error" style={{ marginBottom: 12 }}>⚠️ {forceChangeError}</div>}
-
-                            <div style={{ marginBottom: 12, position: 'relative' }}>
-                                <input className="form-input" type={showNewPwd ? "text" : "password"} placeholder="Mật khẩu mới..."
-                                    value={newPwd} onChange={e => setNewPwd(e.target.value)} autoFocus style={{ paddingRight: 40 }} />
-                                <button type="button" onClick={() => setShowNewPwd(!showNewPwd)}
-                                    style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, opacity: 0.6, padding: 4 }}>
-                                    {showNewPwd ? '🙈' : '👁️'}
-                                </button>
-                            </div>
-                            <div style={{ marginBottom: 16, position: 'relative' }}>
-                                <input className="form-input" type={showConfirmPwd ? "text" : "password"} placeholder="Nhập lại mật khẩu mới..."
-                                    value={confirmNewPwd} onChange={e => setConfirmNewPwd(e.target.value)}
-                                    onKeyDown={e => e.key === 'Enter' && handleForceChangePassword()} style={{ paddingRight: 40 }} />
-                                <button type="button" onClick={() => setShowConfirmPwd(!showConfirmPwd)}
-                                    style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, opacity: 0.6, padding: 4 }}>
-                                    {showConfirmPwd ? '🙈' : '👁️'}
-                                </button>
-                            </div>
-                            <button className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }} onClick={handleForceChangePassword}>
-                                Xác nhận đổi mật khẩu
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <ForceChangePasswordModal 
+                isOpen={forceChangePwd} 
+                error={forceChangeError} 
+                onSubmit={handleForceChangePassword} 
+            />
 
             <Toast toasts={toasts} />
             <VoiceCall user={user} activeCallRoom={activeCallRoom} onClearActiveCallRoom={() => setActiveCallRoom(null)} addToast={addToast} />
