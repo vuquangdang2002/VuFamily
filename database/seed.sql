@@ -88,7 +88,7 @@ INSERT INTO achievements (member_id, category, title, organization, start_year, 
 ON CONFLICT DO NOTHING;
 
 -- POSTS (Bảng tin)
-INSERT INTO posts (content, author_id, author_role) VALUES
+INSERT INTO posts (content, user_id, author_role) VALUES
 ('Chào mừng tất cả thành viên dòng họ Vũ đã gia nhập hệ thống Gia Phả trực tuyến. Mọi người có thể vào phần Gia phả để xem sơ đồ dòng họ nhé!', 1, 'admin'),
 ('Cuối tuần này dòng họ tổ chức họp mặt tại nhà thờ tổ. Kính mời các bác, các chú và anh chị em sắp xếp thời gian tham dự.', 2, 'admin')
 ON CONFLICT DO NOTHING;
