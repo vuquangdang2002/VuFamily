@@ -14,15 +14,18 @@
     background: rgba(0, 0, 0, 0.65);
     backdrop-filter: blur(6px);
     animation: vcFade 0.2s ease;
+    overflow-y: auto; /* Enable scroll if card is too tall */
+    padding: 20px 0;
 }
 
 /* ── Main card ── */
 .vc-card {
     width: 380px;
     max-width: 96vw;
+    max-height: 90vh; /* Prevent overflow on shorter screens */
     background: linear-gradient(160deg, #1e293b, #0f172a);
     border-radius: 24px;
-    overflow: hidden;
+    overflow-y: auto; /* Enable scroll inside card for long settings */
     box-shadow:
         0 32px 64px rgba(0, 0, 0, 0.6),
         0 0 0 1px rgba(255, 255, 255, 0.06);
@@ -332,6 +335,8 @@
     .vc-card {
         width: 100vw;
         height: 100dvh;
+        max-height: 100dvh;
         border-radius: 0;
+        overflow-y: auto;
     }
 }

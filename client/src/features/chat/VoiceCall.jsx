@@ -6,7 +6,7 @@ import './VoiceCall.css';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const getToken = () => { try { return JSON.parse(localStorage.getItem('vuFamilyAuth') || '{}').token || ''; } catch { return ''; } };
-const fmt = (s) => `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
+const fmt = (s) => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
 
 const AUDIO_CONSTRAINTS = {
     echoCancellation: true,
@@ -19,7 +19,7 @@ const AUDIO_CONSTRAINTS = {
 
 const VIDEO_CONSTRAINTS = {
     width: { ideal: 1280 }, height: { ideal: 720 },
-    frameRate: { ideal: 30 }, facingMode: 'user',
+    frameRate: { ideal: 60 }, facingMode: { ideal: 'user' },
 };
 
 /** Tăng bitrate trong SDP */
@@ -33,9 +33,9 @@ function applyHighBitrate(sdp) {
 // { level: 'good'|'medium'|'poor'|'unknown', rtt: number, loss: number }
 function classifyQuality(rttMs, lossPercent) {
     if (rttMs === null) return { level: 'unknown', rtt: null, loss: null };
-    if (rttMs <= 100 && lossPercent <= 2)  return { level: 'good',    rtt: rttMs, loss: lossPercent };
-    if (rttMs <= 250 && lossPercent <= 8)  return { level: 'medium',  rtt: rttMs, loss: lossPercent };
-    return                                        { level: 'poor',    rtt: rttMs, loss: lossPercent };
+    if (rttMs <= 100 && lossPercent <= 2) return { level: 'good', rtt: rttMs, loss: lossPercent };
+    if (rttMs <= 250 && lossPercent <= 8) return { level: 'medium', rtt: rttMs, loss: lossPercent };
+    return { level: 'poor', rtt: rttMs, loss: lossPercent };
 }
 
 /** Đo RTT + packet loss từ RTCPeerConnection.getStats() */
@@ -70,9 +70,9 @@ async function measurePeerQuality(pc) {
 
 // ─── SignalBars component ─────────────────────────────────────────────────────
 const QUALITY_META = {
-    good:    { bars: 3, color: '#10b981', label: 'Tốt' },
-    medium:  { bars: 2, color: '#f59e0b', label: 'TB' },
-    poor:    { bars: 1, color: '#ef4444', label: 'Yếu' },
+    good: { bars: 3, color: '#10b981', label: 'Tốt' },
+    medium: { bars: 2, color: '#f59e0b', label: 'TB' },
+    poor: { bars: 1, color: '#ef4444', label: 'Yếu' },
     unknown: { bars: 0, color: '#64748b', label: '?' },
 };
 
@@ -80,7 +80,7 @@ function SignalBars({ quality }) {
     const meta = QUALITY_META[quality?.level || 'unknown'];
     return (
         <div title={quality?.rtt != null ? `RTT: ${quality.rtt}ms · Loss: ${quality.loss}%` : 'Đang đo...'}
-             style={{ display: 'flex', alignItems: 'flex-end', gap: 2, cursor: 'default' }}>
+            style={{ display: 'flex', alignItems: 'flex-end', gap: 2, cursor: 'default' }}>
             {[1, 2, 3].map(i => (
                 <div key={i} style={{
                     width: 4,
@@ -138,7 +138,7 @@ function VideoCell({ stream, muted = false, label, isLocal = false, noVideo = fa
     useEffect(() => {
         if (!ref.current || !stream) return;
         ref.current.srcObject = stream;
-        if (!isLocal) ref.current.play().catch(() => {});
+        if (!isLocal) ref.current.play().catch(() => { });
         const check = () => setHasVideo(stream.getVideoTracks().some(t => t.enabled));
         check();
         stream.addEventListener('addtrack', check);
@@ -152,15 +152,15 @@ function VideoCell({ stream, muted = false, label, isLocal = false, noVideo = fa
     return (
         <div className="vc-cell" style={{ boxShadow: isTalking ? '0 0 0 3px #10b981' : 'none', transition: 'box-shadow 0.2s' }}>
             {/* LUÔN RENDER thẻ video/audio để phát tiếng. Nếu ẩn UI, dùng opacity thay vì display:none để không bị trình duyệt tối ưu hóa ngắt tiếng */}
-            <video 
-                ref={ref} 
-                autoPlay 
-                playsInline 
-                muted={isLocal || muted} 
-                className="vc-video" 
-                style={showVideo ? {} : { opacity: 0, position: 'absolute', width: 1, height: 1, pointerEvents: 'none' }} 
+            <video
+                ref={ref}
+                autoPlay
+                playsInline
+                muted={isLocal || muted}
+                className="vc-video"
+                style={showVideo ? {} : { opacity: 0, position: 'absolute', width: 1, height: 1, pointerEvents: 'none' }}
             />
-            
+
             {!showVideo && (
                 <div className="vc-no-video">
                     <div style={{
@@ -174,7 +174,7 @@ function VideoCell({ stream, muted = false, label, isLocal = false, noVideo = fa
                 </div>
             )}
             <div className="vc-cell-footer">
-                <span className="vc-cell-label" style={{position:'static',background:'none',padding:0}}>{label}</span>
+                <span className="vc-cell-label" style={{ position: 'static', background: 'none', padding: 0 }}>{label}</span>
                 {quality && <SignalBars quality={quality} />}
             </div>
         </div>
@@ -349,7 +349,7 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
             const gainNode = audioCtx.createGain();
             gainNode.gain.value = micSensitivity / 100;
             gainNodeRef.current = gainNode;
-            
+
             // 1. Noise Gate (Chặn tiếng vọng/ngưỡng mở Mic)
             const gateNode = audioCtx.createGain();
             gateNode.gain.value = 1;
@@ -358,16 +358,16 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
             const analyser = audioCtx.createAnalyser();
             analyser.fftSize = 256;
             const dataArray = new Uint8Array(analyser.frequencyBinCount);
-            
+
             const gateLoop = () => {
                 if (!audioCtxRef.current) return;
                 analyser.getByteFrequencyData(dataArray);
                 let sum = 0;
                 for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
                 const avg = sum / dataArray.length;
-                
+
                 const threshold = noiseGateRef.current;
-                
+
                 // --- DISCORD VU METER ---
                 // Cập nhật DOM trực tiếp 60fps siêu mượt, không làm lag React
                 if (vuMeterRef.current) {
@@ -375,7 +375,7 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
                     vuMeterRef.current.style.width = `${percent}%`;
                     vuMeterRef.current.style.backgroundColor = avg >= threshold ? '#10b981' : '#f59e0b'; // Xanh lá nếu Mic mở, Cam nếu Mic đóng
                 }
-                
+
                 // Nếu âm thanh quá nhỏ (dưới ngưỡng) -> Bóp âm lượng về 0 (Mute) để chặn tiếng vọng từ loa
                 if (avg < threshold) {
                     gateNode.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1); // Fade out mềm
@@ -385,11 +385,11 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
                 gateRafRef.current = requestAnimationFrame(gateLoop);
             };
             gateLoop();
-            
+
             // 2. Highpass Filter: Cắt dải âm trầm (tiếng xe cộ, tiếng gió ù ù)
             const highpassFilter = audioCtx.createBiquadFilter();
             highpassFilter.type = 'highpass';
-            highpassFilter.frequency.value = noiseLevel * 10; 
+            highpassFilter.frequency.value = noiseLevel * 10;
             filterNodeRef.current = highpassFilter;
 
             // 3. Dynamics Compressor: Cân bằng giọng nói (Giảm hú, chống chói tai khi nói to)
@@ -401,7 +401,7 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
             compressor.release.value = 0.25;
 
             const destination = audioCtx.createMediaStreamDestination();
-            
+
             // Kết nối chuỗi DSP: Mic -> Gain -> [Analyser & Gate] -> Highpass -> Compressor -> Output
             source.connect(gainNode);
             gainNode.connect(analyser); // Analyser đọc âm thanh trước khi qua Gate để biết khi nào mở Gate
@@ -415,9 +415,9 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
                 ...destination.stream.getAudioTracks(),
                 ...stream.getVideoTracks()
             ]);
-            
+
             rawStreamRef.current = stream; // Giữ lại luồng gốc để tắt phần cứng sau này
-            
+
             localRef.current = processedStream;
             setLocalStream(processedStream);
             setCallType(finalType);
@@ -438,7 +438,7 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
         setLocalStream(null);
         setRemoteStreams({});
         if (audioCtxRef.current && audioCtxRef.current.state !== 'closed') {
-            audioCtxRef.current.close().catch(() => {});
+            audioCtxRef.current.close().catch(() => { });
         }
     }, []);
 
@@ -470,7 +470,7 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
                 setRemoteStreams(p => { const n = { ...p }; delete n[targetId]; return n; });
                 pc.close();
                 delete pcsRef.current[targetId];
-                
+
                 // Nếu không còn ai trong cuộc gọi (1-1), tự động kết thúc luôn
                 if (Object.keys(pcsRef.current).length === 0) {
                     addToast('Người kia đã rời khỏi cuộc gọi.', 'info');
@@ -484,7 +484,7 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
     }, []);
 
     const handleSignal = useCallback(async (fromId, signal) => {
-        const sigKey = `${fromId}-${signal.type}-${JSON.stringify(signal).slice(0,40)}`;
+        const sigKey = `${fromId}-${signal.type}-${JSON.stringify(signal).slice(0, 40)}`;
         if (processedRef.current.has(sigKey)) return;
         processedRef.current.add(sigKey);
 
@@ -496,7 +496,7 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
         try {
             if (signal.type === 'offer') {
                 await pc.setRemoteDescription(new RTCSessionDescription(signal));
-                for (const c of (queueRef.current[fromId] || [])) await pc.addIceCandidate(c).catch(() => {});
+                for (const c of (queueRef.current[fromId] || [])) await pc.addIceCandidate(c).catch(() => { });
                 delete queueRef.current[fromId];
                 const answer = await pc.createAnswer();
                 answer.sdp = applyHighBitrate(answer.sdp);
@@ -505,12 +505,12 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
 
             } else if (signal.type === 'answer') {
                 await pc.setRemoteDescription(new RTCSessionDescription(signal));
-                for (const c of (queueRef.current[fromId] || [])) await pc.addIceCandidate(c).catch(() => {});
+                for (const c of (queueRef.current[fromId] || [])) await pc.addIceCandidate(c).catch(() => { });
                 delete queueRef.current[fromId];
 
             } else if (signal.type === 'ice-candidate') {
                 const cand = new RTCIceCandidate(signal.candidate);
-                if (pc.remoteDescription) await pc.addIceCandidate(cand).catch(() => {});
+                if (pc.remoteDescription) await pc.addIceCandidate(cand).catch(() => { });
                 else { if (!queueRef.current[fromId]) queueRef.current[fromId] = []; queueRef.current[fromId].push(cand); }
             }
         } catch (e) { myError('CALL', '[VoiceCall] handleSignal', signal.type, e.message); }
@@ -601,7 +601,7 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
     const acceptCall = async () => {
         const meta = metaRef.current;
         const type = meta?.callType || 'voice';
-        
+
         // Xin quyền mic/cam
         const stream = await getMedia(type);
         if (!stream) {
@@ -612,7 +612,7 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
         socketRef.current?.emit('call:accept', { callId: meta.callId }, async (res) => {
             if (res?.success) {
                 setPhase('CONNECTED');
-                
+
                 // Bây giờ mới xử lý các tín hiệu (Offer) bị kẹt lại trong lúc chuông reo
                 // Lúc này getMedia đã xong => localRef.current ĐÃ CÓ audio track => addTrack thành công!
                 for (const { fromUserId, signal } of incomingSignalsRef.current) {
@@ -646,7 +646,7 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
 
     const toggleSpeaker = async () => {
         const nextMode = speakerMode === 'speaker' ? 'earpiece' : 'speaker';
-        
+
         // 1. Logic dành cho App Android/iOS (Capacitor/Cordova) sau này
         if (window.AudioToggle) {
             window.AudioToggle.setAudioMode(nextMode === 'speaker' ? window.AudioToggle.SPEAKER : window.AudioToggle.EARPIECE);
@@ -663,13 +663,13 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
         try {
             const devices = await navigator.mediaDevices.enumerateDevices();
             const audioOutputs = devices.filter(d => d.kind === 'audiooutput');
-            
+
             if (audioOutputs.length <= 1) {
                 // Đa số trình duyệt Web (nhất là iOS Safari) không cho phép tự chọn loa đầu ra (API bị khóa)
                 addToast('Trình duyệt Web hiện tại chỉ hỗ trợ 1 đầu ra mặc định.', 'warning');
                 return;
             }
-            
+
             // Nếu có nhiều ngõ ra, cập nhật state (cần tích hợp logic setSinkId vào VideoCell nếu muốn chạy thật trên Web)
             setSpeakerMode(nextMode);
             addToast(`Đã chuyển sang ${nextMode === 'speaker' ? 'Loa ngoài' : 'Loa trong'}`, 'success');
@@ -728,7 +728,7 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
                                 <Btn icon={speakerMode === 'speaker' ? '🔊' : '🔉'} label={speakerMode === 'speaker' ? 'Loa ngoài' : 'Loa trong'} active={speakerMode === 'speaker'} onClick={toggleSpeaker} />
                                 <Btn icon="⚙️" label="Âm thanh" active={showSettings} onClick={() => setShowSettings(!showSettings)} />
                             </div>
-                            
+
                             {/* Bảng Cài đặt Âm thanh (Discord Style) */}
                             {showSettings && (
                                 <div className="vc-dsp-panel">
