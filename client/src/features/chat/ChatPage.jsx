@@ -377,30 +377,34 @@ export default function ChatPage({ user, addToast, onStartCall }) {
                     {activeRoomId ? (
                         <>
                             {/* Chat header */}
-                            <div style={{ padding: '16px 24px', borderBottom: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', gap: 12, background: 'var(--bg-secondary)' }}>
+                            <div className="chat-msg-header" style={{ padding: '12px 16px', borderBottom: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', gap: 8, background: 'var(--bg-secondary)' }}>
                                 <button className="btn" style={{ padding: '4px 8px', borderRadius: '50%', border: 'none', background: 'transparent', fontSize: '20px' }} onClick={() => setActiveRoomId(null)}>
                                     ‹
                                 </button>
                                 <div style={{ width: 36, height: 36, minWidth: 36, minHeight: 36, flexShrink: 0, borderRadius: '50%', background: activeRoom?.type === 'group' ? 'linear-gradient(135deg, #10b981, #047857)' : 'linear-gradient(135deg, var(--gold), var(--gold-dark))', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 'bold' }}>
                                     {activeRoom?.avatar ? <img src={activeRoom.avatar} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} /> : (activeRoom?.type === 'group' ? '👥' : activeRoom?.display_name?.substring(0, 2).toUpperCase())}
                                 </div>
-                                <div>
+                                <div style={{ flex: 1, minWidth: 0 }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                                        <h3 style={{ margin: 0, fontSize: 16 }}>{activeRoom?.display_name || 'Nhóm'}</h3>
+                                        <h3 style={{ margin: 0, fontSize: 16, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{activeRoom?.display_name || 'Nhóm'}</h3>
                                         {activeRoom?.type === 'group' && (
-                                            <button className="btn" title="Đổi tên nhóm" style={{ padding: '2px 6px', fontSize: 12, background: 'transparent', border: '1px solid var(--border-subtle)', borderRadius: 4 }} onClick={handleRenameGroup}>✏️</button>
+                                            <button className="btn" title="Đổi tên nhóm" style={{ padding: '2px 6px', fontSize: 12, background: 'transparent', border: '1px solid var(--border-subtle)', borderRadius: 4, flexShrink: 0 }} onClick={handleRenameGroup}>✏️</button>
                                         )}
                                     </div>
                                     {activeRoom?.type === 'direct' && (
-                                        <span style={{ fontSize: 12, color: activeRoom.is_online ? '#10b981' : 'var(--text-muted)' }}>
+                                        <span style={{ fontSize: 12, color: activeRoom.is_online ? '#10b981' : 'var(--text-muted)', whiteSpace: 'nowrap', display: 'block' }}>
                                             {activeRoom.is_online ? '🟢 Đang trực tuyến' : '⚪ Ngoại tuyến'}
                                         </span>
                                     )}
                                 </div>
-                                <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
-                                    <button className="btn" title="Gọi thoại" style={{ padding: '6px 12px' }} onClick={() => onStartCall({ ...activeRoom, requestVideo: false })}>📞 Gọi thoại</button>
-                                    <button className="btn btn-primary" title="Gọi video" style={{ padding: '6px 12px' }} onClick={() => onStartCall({ ...activeRoom, requestVideo: true })}>📹 Video Call</button>
-                                    <button className="btn btn-icon" title="Chi tiết nhóm" style={{ fontSize: 18 }} onClick={() => setShowGroupInfo(true)}>ℹ️</button>
+                                <div style={{ marginLeft: 'auto', display: 'flex', gap: 4, flexShrink: 0 }}>
+                                    <button className="btn call-btn-mobile" title="Gọi thoại" style={{ padding: '6px 10px' }} onClick={() => onStartCall({ ...activeRoom, requestVideo: false })}>
+                                        📞 <span className="hide-on-mobile">Gọi</span>
+                                    </button>
+                                    <button className="btn btn-primary call-btn-mobile" title="Gọi video" style={{ padding: '6px 10px' }} onClick={() => onStartCall({ ...activeRoom, requestVideo: true })}>
+                                        📹 <span className="hide-on-mobile">Video</span>
+                                    </button>
+                                    <button className="btn btn-icon" title="Chi tiết nhóm" style={{ fontSize: 18, padding: '4px' }} onClick={() => setShowGroupInfo(true)}>ℹ️</button>
                                 </div>
                             </div>
 
@@ -576,6 +580,10 @@ export default function ChatPage({ user, addToast, onStartCall }) {
                 {`
                 /* Some flex utilities inside component */
                 .form-input:focus { border-color: var(--primary); outline: none; }
+                @media (max-width: 768px) {
+                    .hide-on-mobile { display: none; }
+                    .call-btn-mobile { padding: 6px 8px !important; font-size: 16px !important; }
+                }
                 `}
             </style>
         </div>

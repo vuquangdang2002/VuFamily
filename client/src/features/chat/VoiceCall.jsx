@@ -312,11 +312,33 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
 
     // ── Media ─────────────────────────────────────────────────────────────────
     const getMedia = useCallback(async (type = 'voice') => {
+        let stream;
+        let finalType = type;
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({
+            stream = await navigator.mediaDevices.getUserMedia({
                 audio: AUDIO_CONSTRAINTS,
-                video: type === 'video' ? VIDEO_CONSTRAINTS : false,
+                video: finalType === 'video' ? VIDEO_CONSTRAINTS : false,
             });
+        } catch (e) {
+            if (finalType === 'video') {
+                addToast('Không thể mở Camera. Đang chuyển sang gọi thoại...', 'warning');
+                try {
+                    stream = await navigator.mediaDevices.getUserMedia({
+                        audio: AUDIO_CONSTRAINTS,
+                        video: false,
+                    });
+                    finalType = 'voice';
+                } catch (err2) {
+                    addToast('Không truy cập được micro: ' + err2.message, 'error');
+                    return null;
+                }
+            } else {
+                addToast('Không truy cập được micro: ' + e.message, 'error');
+                return null;
+            }
+        }
+
+        try {
 
             // --- LỌC TẠP ÂM ĐỘNG BẰNG WEB AUDIO API (DSP) ---
             const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -398,14 +420,14 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
             
             localRef.current = processedStream;
             setLocalStream(processedStream);
-            setCallType(type);
-            setCamOff(type === 'voice');
+            setCallType(finalType);
+            setCamOff(finalType === 'voice');
             return processedStream;
         } catch (e) {
-            addToast('Không truy cập được micro/camera: ' + e.message, 'error');
+            addToast('Lỗi xử lý âm thanh: ' + e.message, 'error');
             return null;
         }
-    }, [addToast, noiseLevel]);
+    }, [addToast, noiseLevel, micSensitivity]);
 
     const stopMedia = useCallback(() => {
         if (gateRafRef.current) cancelAnimationFrame(gateRafRef.current);
