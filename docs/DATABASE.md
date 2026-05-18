@@ -109,18 +109,25 @@ members.spouse_id → members.id   (self-referencing, vợ/chồng)
 | `username` | `TEXT` | `UNIQUE NOT NULL` | Tên đăng nhập |
 | `password` | `TEXT` | `NOT NULL` | Hash bcrypt |
 | `display_name` | `TEXT` | | Tên hiển thị |
-| `role_id` | `SMALLINT` | `CHECK(1,2,3)` | 1=Admin, 2=Editor, 3=Viewer |
-| `status_id` | `SMALLINT` | `CHECK(1,2)` | 1=Active, 2=Banned |
+| `email` | `TEXT` | | Email |
+| `phone` | `TEXT` | | Số điện thoại |
+| `avatar` | `TEXT` | | Link ảnh đại diện |
+| `role` | `TEXT` | `CHECK` | admin, editor, viewer |
+| `status` | `TEXT` | `CHECK` | active, banned |
+| `last_active` | `TIMESTAMPTZ` | | Hoạt động cuối |
+| `is_online` | `BOOLEAN` | Default `false` | Đang online |
+| `email_verified` | `BOOLEAN` | Default `false` | Trạng thái xác thực email |
+| `verification_token` | `TEXT` | | Token xác thực email |
 | `token` | `TEXT` | | Session token |
-| `created_at` | `BIGINT` | | Unix Timestamp (ms) |
-| `updated_at` | `BIGINT` | | Unix Timestamp (ms) |
+| `created_at` | `TIMESTAMPTZ` | `NOW()` | |
+| `updated_at` | `TIMESTAMPTZ` | `NOW()` | |
 
 **Default accounts (Tài khoản test):**
 | Username | Role | Mặc định (Mật khẩu) |
 |----------|------|----------------------|
 | `dangvq` | admin | Quản trị chính (`DangVQ@2002`) |
 | `admin1` -> `admin5` | admin | Tài khoản Admin Test (`Admin@1234`) |
-| `test1` -> `test5` | viewer | Tài khoản Viewer Test (`Viewer@1234`) |
+| `viewer1` -> `viewer5` | viewer | Tài khoản Viewer Test (`Viewer@1234`) |
 
 ---
 

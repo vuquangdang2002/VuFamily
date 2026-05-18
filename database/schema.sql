@@ -75,6 +75,8 @@ CREATE TABLE IF NOT EXISTS users (
   status TEXT CHECK(status IN ('active', 'banned')) DEFAULT 'active',
   last_active TIMESTAMPTZ,
   is_online BOOLEAN DEFAULT false,
+  email_verified BOOLEAN DEFAULT false,
+  verification_token TEXT,
   token TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
