@@ -398,7 +398,8 @@ export default function ChatPage({ user, addToast, onStartCall }) {
                                     )}
                                 </div>
                                 <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
-                                    <button className="btn" title="Gọi thoại" style={{ padding: '6px 12px' }} onClick={() => onStartCall(activeRoom)}>📞 Gọi</button>
+                                    <button className="btn" title="Gọi thoại" style={{ padding: '6px 12px' }} onClick={() => onStartCall({ ...activeRoom, requestVideo: false })}>📞 Gọi thoại</button>
+                                    <button className="btn btn-primary" title="Gọi video" style={{ padding: '6px 12px' }} onClick={() => onStartCall({ ...activeRoom, requestVideo: true })}>📹 Video Call</button>
                                     <button className="btn btn-icon" title="Chi tiết nhóm" style={{ fontSize: 18 }} onClick={() => setShowGroupInfo(true)}>ℹ️</button>
                                 </div>
                             </div>

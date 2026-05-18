@@ -666,7 +666,7 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
         <div className="vc-overlay">
             <div className="vc-card">
                 <div className="vc-head">
-                    <span>{callType === 'video' ? '📹' : '📞'} VuFamily</span>
+                    <span>{callType === 'video' || callMeta?.callType === 'video' ? '📹' : '📞'} VuFamily</span>
                     {phase === 'CONNECTED' && <span className="vc-timer">{fmt(duration)}</span>}
                 </div>
 
@@ -685,7 +685,7 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
                         </div>
                         <h2 className="vc-name">{callerName}</h2>
                         <p className="vc-status">
-                            {phase === 'RINGING' && 'Đang gọi cho bạn...'}
+                            {phase === 'RINGING' && `Đang gọi ${callMeta?.callType === 'video' ? 'video ' : ''}cho bạn...`}
                             {phase === 'CALLING' && 'Đang đổ chuông...'}
                         </p>
                     </div>
@@ -695,7 +695,7 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
                     {phase === 'RINGING' ? (
                         <>
                             <Btn icon="📵" label="Từ chối" cls="reject" onClick={rejectCall} />
-                            <Btn icon="📞" label="Nghe" cls="accept pulse-btn" onClick={acceptCall} />
+                            <Btn icon={callMeta?.callType === 'video' ? '📹' : '📞'} label="Nghe" cls="accept pulse-btn" onClick={acceptCall} />
                         </>
                     ) : (
                         <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
