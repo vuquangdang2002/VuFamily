@@ -28,6 +28,7 @@ import { LocalNotifications } from '@capacitor/local-notifications';
 import { SplashScreen } from '@capacitor/splash-screen';
 import { TrackingHelper } from './shared/services/TrackingHelper';
 import { syncRemoteConfig } from './firebase.js';
+import { I18nHelper } from './shared/services/i18n.js';
 const AUTH_KEY = 'vuFamilyAuth';
 
 function getStoredAuth() {
@@ -38,7 +39,7 @@ export default function App() {
     const [user, setUser] = useState(null);
     const [authChecked, setAuthChecked] = useState(false);
     const [loadingProgress, setLoadingProgress] = useState(0);
-    const [loadingStatus, setLoadingStatus] = useState('Đang khởi tạo ứng dụng...');
+    const [loadingStatus, setLoadingStatus] = useState(I18nHelper.t('splash.initializing'));
     const [members, setMembers] = useState([]);
     const [isLoadingMembers, setIsLoadingMembers] = useState(true);
     const [selected, setSelected] = useState(null);
@@ -162,7 +163,7 @@ export default function App() {
 
         const finishLoading = () => {
             setLoadingProgress(100);
-            setLoadingStatus('Hoàn tất!');
+            setLoadingStatus(I18nHelper.t('splash.done'));
             setTimeout(() => {
                 setAuthChecked(true);
                 // Hide native splash screen
@@ -175,16 +176,16 @@ export default function App() {
         // Handle email verification link
         const verifyToken = urlParams.get('verifyToken');
         if (verifyToken) {
-            setLoadingStatus('Đang xác nhận tài khoản...');
+            setLoadingStatus(I18nHelper.t('splash.verifying_account'));
             setLoadingProgress(30);
             window.history.replaceState({}, document.title, window.location.pathname);
             fetch(`${getApiBase()}/auth/verify-email?token=${encodeURIComponent(verifyToken)}`)
                 .then(r => r.json())
                 .then(data => {
                     setLoadingProgress(70);
-                    setVerifyMsg({ success: data.success, text: data.message || data.error || 'Đã xử lý xác nhận' });
+                    setVerifyMsg({ success: data.success, text: data.message || data.error || I18nHelper.t('splash.verify_processed') });
                 })
-                .catch(() => setVerifyMsg({ success: false, text: 'Lỗi kết nối khi xác nhận email' }))
+                .catch(() => setVerifyMsg({ success: false, text: I18nHelper.t('splash.verify_error') }))
                 .finally(() => finishLoading());
             return;
         }
@@ -193,7 +194,7 @@ export default function App() {
         const autoPw = urlParams.get('resetPw');
 
         if (autoUser && autoPw) {
-            setLoadingStatus('Đang đăng nhập tự động...');
+            setLoadingStatus(I18nHelper.t('splash.auto_login'));
             setLoadingProgress(30);
             handleLogin(autoUser, autoPw, true)
                 .then(() => {
@@ -207,7 +208,7 @@ export default function App() {
             return;
         }
 
-        setLoadingStatus('Kiểm tra phiên đăng nhập...');
+        setLoadingStatus(I18nHelper.t('splash.checking_session'));
         setLoadingProgress(20);
         const stored = getStoredAuth();
         if (!stored || !stored.token) {
@@ -217,7 +218,7 @@ export default function App() {
             return;
         }
 
-        setLoadingStatus('Xác thực với máy chủ...');
+        setLoadingStatus(I18nHelper.t('splash.authenticating'));
         setLoadingProgress(50);
         // Verify token with server
         fetch(`${getApiBase()}/auth/me`, {
@@ -227,7 +228,7 @@ export default function App() {
             .then(data => {
                 setLoadingProgress(80);
                 if (data.success && data.data) {
-                    setLoadingStatus('Đang nạp hồ sơ người dùng...');
+                    setLoadingStatus(I18nHelper.t('splash.loading_profile'));
                     const freshUser = { ...stored, ...data.data };
                     localStorage.setItem(AUTH_KEY, JSON.stringify(freshUser));
                     setUser(freshUser);

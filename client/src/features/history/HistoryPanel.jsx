@@ -1,43 +1,18 @@
+// HistoryPanel.jsx — Trang lịch sử chỉnh sửa gia phả (đã localize)
 import '../../shared/components/SidePanels.css';
 import { myLog, myError } from '../../shared/utils/logger';
 import { useState, useEffect } from 'react';
-import '../../shared/components/SidePanels.css';
 import { api, localApi, formatDate } from '../../shared/services/api';
 import { TrackingHelper } from '../../shared/services/TrackingHelper';
+import { useTranslation } from '../../shared/hooks/useTranslation';
 
-const ACTION_LABELS = {
-    create: { icon: '➕', text: 'Thêm mới', color: '#4CAF50' },
-    update: { icon: '✏️', text: 'Cập nhật', color: '#FF9800' },
-    delete: { icon: '🗑️', text: 'Xóa', color: '#f44336' },
-};
-
-// Field labels for diff view
-const FIELD_LABELS = {
-    name: 'Họ tên', gender: 'Giới tính', birthDate: 'Ngày sinh', birthTime: 'Giờ sinh',
-    deathDate: 'Ngày mất', deathDateLunar: 'Ngày mất (ÂL)', birthPlace: 'Quê quán',
-    deathPlace: 'Nơi mất', occupation: 'Nghề nghiệp', phone: 'Điện thoại',
-    email: 'Email', address: 'Địa chỉ', note: 'Ghi chú', generation: 'Đời thứ',
-    birthOrder: 'Con thứ', childType: 'Loại', photo: 'Ảnh',
-};
-
-function timeAgo(dateStr) {
-    const d = new Date(dateStr);
-    const now = new Date();
-    const diff = Math.floor((now - d) / 1000);
-    if (diff < 60) return 'Vừa xong';
-    if (diff < 3600) return `${Math.floor(diff / 60)} phút trước`;
-    if (diff < 86400) return `${Math.floor(diff / 3600)} giờ trước`;
-    if (diff < 604800) return `${Math.floor(diff / 86400)} ngày trước`;
-    return formatDate(dateStr.slice(0, 10));
-}
-
-function DiffView({ before, after }) {
+function DiffView({ before, after, t }) {
     let finalAfter = after;
     if (typeof finalAfter === 'string') {
-        try { finalAfter = JSON.parse(finalAfter); } catch (e) { myError('HISTORY', "HistoryPanel JSON Parse Fallback:", e.message); }
+        try { finalAfter = JSON.parse(finalAfter); } catch (e) { myError('HISTORY', "JSON Parse:", e.message); }
     }
     if (typeof finalAfter === 'string') {
-        try { finalAfter = JSON.parse(finalAfter); } catch (e) { myError('HISTORY', "HistoryPanel JSON Parse Fallback:", e.message); }
+        try { finalAfter = JSON.parse(finalAfter); } catch (e) { myError('HISTORY', "JSON Parse:", e.message); }
     }
 
     if (!before && !finalAfter) return null;
@@ -52,24 +27,24 @@ function DiffView({ before, after }) {
             changed.push({ field: f, before: bv, after: av });
         }
     });
-    if (changed.length === 0) return <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Không có thay đổi</div>;
+    if (changed.length === 0) return <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{t('history.no_changes')}</div>;
     return (
         <div className="diff-view">
             {changed.map(c => (
                 <div key={c.field} className="diff-row">
-                    <div className="diff-label">{FIELD_LABELS[c.field] || c.field}</div>
+                    <div className="diff-label">{t(`field.${c.field}`) !== `field.${c.field}` ? t(`field.${c.field}`) : c.field}</div>
                     <div className="diff-values">
                         {c.field === 'photo' ? (
                             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                                {c.before && <img src={c.before} alt="Trước" style={{ width: 32, height: 32, borderRadius: '50%', border: '2px solid #f44336' }} />}
+                                {c.before && <img src={c.before} alt={t('history.before')} style={{ width: 32, height: 32, borderRadius: '50%', border: '2px solid #f44336' }} />}
                                 <span style={{ color: 'var(--text-muted)' }}>→</span>
-                                {c.after && <img src={c.after} alt="Sau" style={{ width: 32, height: 32, borderRadius: '50%', border: '2px solid #4CAF50' }} />}
+                                {c.after && <img src={c.after} alt={t('history.after')} style={{ width: 32, height: 32, borderRadius: '50%', border: '2px solid #4CAF50' }} />}
                             </div>
                         ) : (
                             <>
                                 {c.before && <span className="diff-old">{String(c.before)}</span>}
                                 <span style={{ color: 'var(--text-muted)', margin: '0 4px' }}>→</span>
-                                <span className="diff-new">{String(c.after) || '(trống)'}</span>
+                                <span className="diff-new">{String(c.after) || t('history.empty_value')}</span>
                             </>
                         )}
                     </div>
@@ -80,52 +55,66 @@ function DiffView({ before, after }) {
 }
 
 export default function HistoryPage({ isAdmin, user, onRefresh, addToast, members = [] }) {
+    const { t } = useTranslation();
     const [history, setHistory] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [expandedId, setExpandedId] = useState(null);
+
+    const ACTION_LABELS = {
+        create: { icon: '➕', text: t('history.action_create'), color: '#4CAF50' },
+        update: { icon: '✏️', text: t('history.action_update'), color: '#FF9800' },
+        delete: { icon: '🗑️', text: t('history.action_delete'), color: '#f44336' },
+    };
+
+    function timeAgo(dateStr) {
+        const d = new Date(dateStr);
+        const now = new Date();
+        const diff = Math.floor((now - d) / 1000);
+        if (diff < 60) return t('common.just_now');
+        if (diff < 3600) return `${Math.floor(diff / 60)} ${t('common.minutes_ago')}`;
+        if (diff < 86400) return `${Math.floor(diff / 3600)} ${t('common.hours_ago')}`;
+        if (diff < 604800) return `${Math.floor(diff / 86400)} ${t('common.days_ago')}`;
+        return formatDate(dateStr.slice(0, 10));
+    }
 
     const fetchHistory = async () => {
         try {
             setIsLoading(true);
             const res = await api.getAllRequests();
             if (res.success) {
-                // We consider 'approved' requests as our Edit History!
                 const approved = (res.data || []).filter(r => r.status === 'approved');
-                // Admin sees all, Viewer sees only their own
                 const filtered = isAdmin ? approved : approved.filter(r => r.requestedBy === user?.username);
                 setHistory(filtered);
             }
         } catch (e) {
-            addToast('Lỗi tải lịch sử chỉnh sửa', 'error');
+            addToast(t('history.load_error'), 'error');
         } finally {
             setIsLoading(false);
         }
     };
 
-    useEffect(() => {
-        fetchHistory();
-    }, []);
+    useEffect(() => { fetchHistory(); }, []);
 
     const handleRevert = (entry) => {
-        addToast('Tạm không hỗ trợ Hoàn tác trên hệ thống Online.', 'error');
+        addToast(t('history.revert_unavailable'), 'error');
     };
 
     return (
         <div className="page-container flex flex-col h-screen pt-16 sm:pt-0 overflow-hidden">
             <div className="page-header shrink-0">
-                <h2>{isAdmin ? '📜 Lịch sử chỉnh sửa' : '📜 Lịch sử của tôi'}</h2>
-                <p className="page-subtitle">Theo dõi các thay đổi dữ liệu gia phả</p>
+                <h2>{isAdmin ? t('history.title_admin') : t('history.title_user')}</h2>
+                <p className="page-subtitle">{t('history.subtitle')}</p>
             </div>
             <div className="page-body flex-1 overflow-y-auto p-4 md:p-6 pb-24 relative min-h-[200px]">
                 {isLoading ? (
                     <div className="flex flex-col items-center justify-center p-12 text-gray-500">
                         <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-                        Vui lòng chờ...
+                        {t('common.loading')}
                     </div>
                 ) : history.length === 0 ? (
                     <div className="empty-state">
                         <span style={{ fontSize: 40 }}>📭</span>
-                        <p>Chưa có lịch sử chỉnh sửa nào.</p>
+                        <p>{t('history.empty')}</p>
                     </div>
                 ) : (
                     <div className="history-timeline">
@@ -141,18 +130,18 @@ export default function HistoryPage({ isAdmin, user, onRefresh, addToast, member
                                                 <strong>{action.text}</strong> — {entry.memberName}
                                             </div>
                                             <div className="history-entry-meta">
-                                                👤 {entry.requestedByName} · Duyệt bởi {entry.reviewedBy} lúc {timeAgo(entry.reviewedAt)}
+                                                👤 {entry.requestedByName} · {t('history.approved_by')} {entry.reviewedBy} {t('history.at')} {timeAgo(entry.reviewedAt)}
                                             </div>
                                         </div>
                                         <span className="history-entry-expand">{isExpanded ? '▲' : '▼'}</span>
                                     </div>
                                     {isExpanded && (
                                         <div className="history-entry-details">
-                                            <DiffView before={members.find(m => String(m.id) === String(entry.memberId))} after={entry.changes} />
+                                            <DiffView before={members.find(m => String(m.id) === String(entry.memberId))} after={entry.changes} t={t} />
                                             {isAdmin && (
                                                 <button className="btn btn-sm" style={{ marginTop: 8 }}
                                                     onClick={() => handleRevert(entry)}>
-                                                    ↩️ Hoàn tác
+                                                    {t('history.revert')}
                                                 </button>
                                             )}
                                         </div>

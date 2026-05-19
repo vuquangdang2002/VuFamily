@@ -1,15 +1,15 @@
+// NewsfeedPage.jsx — Bảng tin & Liên hệ dòng họ (đã localize)
 import { useState, useEffect, useRef } from 'react';
 import { myLog, myError } from '../../shared/utils/logger';
 import { localApi, api } from '../../shared/services/api';
 import { ConfigAPI } from '../../config.js';
 import { TrackingHelper } from '../../shared/services/TrackingHelper';
+import { useTranslation } from '../../shared/hooks/useTranslation';
 
-// Import brand icons
 import iconZalo from '../../assets/icons/icon_zalo.png';
 import iconFacebook from '../../assets/icons/icon_facebook.png';
 import iconMessenger from '../../assets/icons/icon_messenger.png';
 
-// Simple QR Code generator using public API
 function generateQR(text, size = 200) {
     return `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(text)}`;
 }
@@ -17,16 +17,7 @@ function generateQR(text, size = 200) {
 import './Newsfeed.css';
 import { AuthHelper } from '../../shared/services/AuthHelper';
 
-function timeAgo(dateStr) {
-    const d = new Date(dateStr);
-    const now = new Date();
-    const diff = Math.floor((now - d) / 1000);
-    if (diff < 60) return 'Vừa xong';
-    if (diff < 3600) return `${Math.floor(diff / 60)} phút trước`;
-    if (diff < 86400) return `${Math.floor(diff / 3600)} giờ trước`;
-    if (diff < 604800) return `${Math.floor(diff / 86400)} ngày trước`;
-    return d.toLocaleDateString('vi-VN');
-}
+// timeAgo sẽ được tạo bên trong component để dùng t()
 
 // Brand icons map
 const BRAND_ICONS = { zalo: iconZalo, facebook: iconFacebook, messenger: iconMessenger };
@@ -54,6 +45,18 @@ function getTodayLabel() {
 }
 
 export default function NewsfeedPage({ user, isAdmin, addToast, members = [], onNavigate }) {
+    const { t } = useTranslation();
+
+    function timeAgo(dateStr) {
+        const d = new Date(dateStr);
+        const now = new Date();
+        const diff = Math.floor((now - d) / 1000);
+        if (diff < 60) return t('common.just_now');
+        if (diff < 3600) return `${Math.floor(diff / 60)} ${t('common.minutes_ago')}`;
+        if (diff < 86400) return `${Math.floor(diff / 3600)} ${t('common.hours_ago')}`;
+        if (diff < 604800) return `${Math.floor(diff / 86400)} ${t('common.days_ago')}`;
+        return d.toLocaleDateString('vi-VN');
+    }
     const [posts, setPosts] = useState(cachedPosts || []);
     const [hasNewPostsHint, setHasNewPostsHint] = useState(false);
     const [contacts, setContacts] = useState(() => localApi.getContacts());
@@ -135,24 +138,24 @@ export default function NewsfeedPage({ user, isAdmin, addToast, members = [], on
             const json = await api.createPost({ content: newPost.trim() });
             if (json.success) {
                 setNewPost('');
-                addToast('Đã đăng bài thành công!');
+                addToast(t('newsfeed.post_success'));
                 TrackingHelper.trackCreatePost(false); // Update to true if image upload is added
                 fetchPosts(true);
             } else {
-                addToast(json.error || 'Lỗi đăng bài');
+                addToast(json.error || t('newsfeed.post_fail'));
             }
-        } catch (e) { addToast('Lỗi kết nối server'); }
+        } catch (e) { addToast(t('login.error_connection')); }
     };
 
     const handleDeletePost = async (id) => {
-        if (!confirm('Xóa bài đăng này?')) return;
+        if (!confirm(t('newsfeed.delete_confirm'))) return;
         try {
             const json = await api.deletePost(id);
             if (json.success) {
-                addToast('Đã xóa bài đăng.');
+                addToast(t('newsfeed.delete_success'));
                 fetchPosts(true);
             }
-        } catch (e) { addToast('Lỗi xóa bài'); }
+        } catch (e) { addToast(t('newsfeed.delete_post_err')); }
     };
 
     // ─── Reactions (optimistic) ───
@@ -230,7 +233,7 @@ export default function NewsfeedPage({ user, isAdmin, addToast, members = [], on
                     [postId]: (prev[postId] || []).map(c => c.id === tempComment.id ? json.data : c)
                 }));
             }
-        } catch (e) { addToast('Lỗi gửi bình luận'); }
+        } catch (e) { addToast(t('chat.send_error')); }
     };
 
     const handleDeleteComment = async (commentId, postId) => {
@@ -238,7 +241,7 @@ export default function NewsfeedPage({ user, isAdmin, addToast, members = [], on
         setPosts(prev => prev.map(p => p.id === postId ? { ...p, comment_count: Math.max(0, (p.comment_count || 1) - 1) } : p));
         try {
             await api.deleteComment(commentId);
-        } catch (e) { addToast('Lỗi xóa bình luận'); }
+        } catch (e) { addToast(t('newsfeed.delete_comment_err')); }
     };
 
     const currentUserId = (() => {
@@ -251,7 +254,7 @@ export default function NewsfeedPage({ user, isAdmin, addToast, members = [], on
         localApi.updateContact(c.id, { ...c, url: editUrl });
         setContacts(localApi.getContacts());
         setEditingContact(null);
-        addToast('Đã cập nhật link!');
+        addToast(t('profile.toast_update_success'));
     };
 
     return (
@@ -262,7 +265,7 @@ export default function NewsfeedPage({ user, isAdmin, addToast, members = [], on
                 <div className="nf-welcome-row">
                     <div>
                         <h2 className="nf-welcome-greeting">
-                            Xin chào, {user?.displayName || 'thành viên'}! 👋
+                            {t('newsfeed.greeting')}, {user?.displayName || t('role.member')}! 👋
                         </h2>
                         <p className="nf-welcome-sub">{getTodayLabel()}</p>
                     </div>
@@ -274,28 +277,28 @@ export default function NewsfeedPage({ user, isAdmin, addToast, members = [], on
                         <div className="nf-stat-icon" style={{ background: 'rgba(245,158,11,0.1)' }}>👥</div>
                         <div className="nf-stat-body">
                             <div className="nf-stat-value">{totalMembers}</div>
-                            <div className="nf-stat-label">Thành viên</div>
+                            <div className="nf-stat-label">{t('newsfeed.stats_members')}</div>
                         </div>
                     </div>
                     <div className="nf-stat-card">
                         <div className="nf-stat-icon" style={{ background: 'rgba(59,130,246,0.1)' }}>🌿</div>
                         <div className="nf-stat-body">
                             <div className="nf-stat-value">{generations}</div>
-                            <div className="nf-stat-label">Thế hệ</div>
+                            <div className="nf-stat-label">{t('newsfeed.stats_generations')}</div>
                         </div>
                     </div>
                     <div className="nf-stat-card">
                         <div className="nf-stat-icon" style={{ background: 'rgba(16,185,129,0.1)' }}>🎂</div>
                         <div className="nf-stat-body">
                             <div className="nf-stat-value">{upcomingBirthdays.length}</div>
-                            <div className="nf-stat-label">Sinh nhật sắp tới</div>
+                            <div className="nf-stat-label">{t('newsfeed.upcoming_birthdays')}</div>
                         </div>
                     </div>
                     <div className="nf-stat-card">
                         <div className="nf-stat-icon" style={{ background: 'rgba(239,68,68,0.1)' }}>📝</div>
                         <div className="nf-stat-body">
                             <div className="nf-stat-value">{posts.length}</div>
-                            <div className="nf-stat-label">Bài đăng</div>
+                            <div className="nf-stat-label">{t('newsfeed.tab_posts')}</div>
                         </div>
                     </div>
                 </div>
@@ -308,10 +311,10 @@ export default function NewsfeedPage({ user, isAdmin, addToast, members = [], on
                     {/* Tab Navigation */}
                     <div className="nf-tabs">
                         <button className={`nf-tab ${tab === 'posts' ? 'active' : ''}`} onClick={() => switchTab('posts')}>
-                            📝 Bài đăng
+                            📝 {t('newsfeed.tab_posts')}
                         </button>
                         <button className={`nf-tab ${tab === 'contacts' ? 'active' : ''}`} onClick={() => switchTab('contacts')}>
-                            📱 Liên hệ
+                            📱 {t('newsfeed.tab_contacts')}
                         </button>
                     </div>
 
@@ -326,7 +329,7 @@ export default function NewsfeedPage({ user, isAdmin, addToast, members = [], on
                                     </div>
                                     <textarea
                                         className="nf-post-input"
-                                        placeholder="Chia sẻ thông tin với dòng họ..."
+                                        placeholder={t('newsfeed.write_post')}
                                         value={newPost}
                                         onChange={e => setNewPost(e.target.value)}
                                         rows={3}
@@ -334,7 +337,7 @@ export default function NewsfeedPage({ user, isAdmin, addToast, members = [], on
                                     <div className="nf-create-footer">
                                         <span className="nf-char-count">{newPost.length}/500</span>
                                         <button className="btn btn-primary" onClick={handleCreatePost} disabled={!newPost.trim()}>
-                                            📤 Đăng bài
+                                            📤 {t('newsfeed.post_btn')}
                                         </button>
                                     </div>
                                 </div>
@@ -347,7 +350,7 @@ export default function NewsfeedPage({ user, isAdmin, addToast, members = [], on
                                             onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
                                             onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
                                         >
-                                            <span style={{ fontSize: 16 }}>↑</span> Tải bài viết mới
+                                            <span style={{ fontSize: 16 }}>↑</span> {t('newsfeed.new_posts_hint')}
                                         </button>
                                     </div>
                                 )}
@@ -355,13 +358,12 @@ export default function NewsfeedPage({ user, isAdmin, addToast, members = [], on
                                 {loading && posts.length === 0 ? (
                                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 0' }}>
                                         <div className="nf-spinner"></div>
-                                        <span style={{ marginLeft: 12, color: 'var(--text-muted)' }}>Đang tải bài đăng...</span>
+                                        <span style={{ marginLeft: 12, color: 'var(--text-muted)' }}>{t('common.loading')}</span>
                                     </div>
                                 ) : posts.length === 0 ? (
                                     <div className="empty-state">
                                         <span style={{ fontSize: 48 }}>📭</span>
-                                        <h3>Chưa có bài đăng nào</h3>
-                                        <p>Hãy là người đầu tiên chia sẻ thông tin!</p>
+                                        <h3>{t('newsfeed.empty')}</h3>
                                     </div>
                                 ) : (
                                     <div className="nf-posts-list">
@@ -399,7 +401,7 @@ export default function NewsfeedPage({ user, isAdmin, addToast, members = [], on
                                                     </div>
                                                     <div style={{ display: 'flex', gap: 12 }}>
                                                         <span style={{ cursor: 'pointer' }} onClick={() => toggleComments(post.id)}>
-                                                            {post.comment_count || 0} bình luận
+                                                            {post.comment_count || 0} {t('newsfeed.tab_posts') === 'Posts' ? 'comments' : 'bình luận'}
                                                         </span>
                                                     </div>
                                                 </div>
@@ -436,7 +438,7 @@ export default function NewsfeedPage({ user, isAdmin, addToast, members = [], on
                                                         <span style={{ fontSize: 18 }}><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg></span>
                                                         <span>Bình luận</span>
                                                     </button>
-                                                    <button className="nf-action-btn" onClick={() => addToast('Tính năng chia sẻ sắp ra mắt')}>
+                                                    <button className="nf-action-btn" onClick={() => addToast(t('newsfeed.share_coming'))}>
                                                         <span style={{ fontSize: 18 }}><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><polyline points="16 6 12 2 8 6"></polyline><line x1="12" y1="2" x2="12" y2="15"></line></svg></span>
                                                         <span>Chia sẻ</span>
                                                     </button>
@@ -463,7 +465,7 @@ export default function NewsfeedPage({ user, isAdmin, addToast, members = [], on
                                                         <div className="nf-comment-input-wrap">
                                                             <input
                                                                 className="nf-comment-input"
-                                                                placeholder="Viết bình luận..."
+                                                                placeholder={t('newsfeed.comment_placeholder')}
                                                                 value={commentTexts[post.id] || ''}
                                                                 onChange={e => setCommentTexts(prev => ({ ...prev, [post.id]: e.target.value }))}
                                                                 onKeyDown={e => e.key === 'Enter' && handleAddComment(post.id)}
@@ -527,7 +529,7 @@ export default function NewsfeedPage({ user, isAdmin, addToast, members = [], on
                                                         </button>
                                                     </>
                                                 ) : (
-                                                    <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Chưa có link</span>
+                                                    <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{t('newsfeed.no_contacts')}</span>
                                                 )}
                                                 {isAdmin && editingContact !== c.id && (
                                                     <button className="btn btn-sm" onClick={() => handleStartEdit(c)}>✏️ Sửa link</button>
@@ -547,9 +549,9 @@ export default function NewsfeedPage({ user, isAdmin, addToast, members = [], on
                 <div className="nf-right-panel">
                     {/* Upcoming birthdays */}
                     <div className="nf-panel-card">
-                        <p className="nf-panel-title">🎂 Sinh nhật sắp tới</p>
+                        <p className="nf-panel-title">{t('newsfeed.upcoming_birthdays')}</p>
                         {upcomingBirthdays.length === 0 ? (
-                            <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>Không có sinh nhật nào trong 30 ngày tới</p>
+                            <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>{t('newsfeed.no_birthdays_30')}</p>
                         ) : (
                             <div className="nf-event-list">
                                 {upcomingBirthdays.map((b, i) => (
@@ -557,7 +559,7 @@ export default function NewsfeedPage({ user, isAdmin, addToast, members = [], on
                                         <div className="nf-event-dot" />
                                         <div>
                                             <div className="nf-event-name">{b.name}</div>
-                                            <div className="nf-event-date">{b.days === 0 ? 'Hôm nay! 🎉' : `Còn ${b.days} ngày`}</div>
+                                            <div className="nf-event-date">{b.days === 0 ? `${t('newsfeed.today_birthday')} 🎉` : `${b.days} ${t('newsfeed.days_left')}`}</div>
                                         </div>
                                     </div>
                                 ))}
@@ -571,15 +573,15 @@ export default function NewsfeedPage({ user, isAdmin, addToast, members = [], on
                         <div className="nf-quick-actions">
                             <button className="nf-quick-btn" onClick={() => onNavigate && onNavigate('tree')}>
                                 <span className="nf-quick-btn-icon" style={{ background: 'rgba(245,158,11,0.1)' }}>🌳</span>
-                                Xem gia phả
+                                {t('nav.tree')}
                             </button>
                             <button className="nf-quick-btn" onClick={() => onNavigate && onNavigate('chat')}>
                                 <span className="nf-quick-btn-icon" style={{ background: 'rgba(59,130,246,0.1)' }}>💬</span>
-                                Nhắn tin
+                                {t('nav.chat')}
                             </button>
                             <button className="nf-quick-btn" onClick={() => onNavigate && onNavigate('calendar')}>
                                 <span className="nf-quick-btn-icon" style={{ background: 'rgba(16,185,129,0.1)' }}>📅</span>
-                                Lịch sự kiện
+                                {t('nav.calendar')}
                             </button>
                         </div>
                     </div>

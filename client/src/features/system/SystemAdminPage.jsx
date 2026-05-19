@@ -3,8 +3,10 @@ import { myLog, myError } from '../../shared/utils/logger';
 import { getApiBase } from '../../shared/services/api';
 import { AuthHelper } from '../../shared/services/AuthHelper';
 import { TrackingHelper } from '../../shared/services/TrackingHelper';
+import { useTranslation } from '../../shared/hooks/useTranslation';
 
 export default function SystemAdminPage({ addToast }) {
+    const { t } = useTranslation();
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(false);
     const [showCreate, setShowCreate] = useState(false);
@@ -62,13 +64,13 @@ export default function SystemAdminPage({ addToast }) {
 
     const handleCreate = async () => {
         if (!newUser.username || !newUser.password) {
-            addToast('Tên đăng nhập và mật khẩu là bắt buộc', 'error');
+            addToast(t('admin.err_required'), 'error');
             return;
         }
 
         const strongRegex = new RegExp("^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\\$%\\^&\\*])(?=.{8,})");
         if (!strongRegex.test(newUser.password)) {
-            addToast('Mật khẩu phải từ 8 ký tự, gồm chữ hoa, thường, số và ký tự đặc biệt', 'error');
+            addToast(t('admin.err_weak_password'), 'error');
             return;
         }
         try {
@@ -80,14 +82,14 @@ export default function SystemAdminPage({ addToast }) {
             const json = await res.json();
             if (json.success) {
                 TrackingHelper.trackCreateAccount(newUser.role);
-                addToast('Đã tạo tài khoản thành công!');
+                addToast(t('admin.create_success'));
                 setShowCreate(false);
                 setNewUser({ username: '', password: '', displayName: '', role: 'viewer' });
                 fetchUsers();
             } else {
-                addToast(json.error || 'Lỗi tạo tài khoản', 'error');
+                addToast(json.error || t('admin.create_fail'), 'error');
             }
-        } catch (e) { addToast('Lỗi kết nối server', 'error'); }
+        } catch (e) { addToast(t('admin.conn_error'), 'error'); }
     };
 
     const handleDelete = async (id, username) => {
@@ -100,20 +102,20 @@ export default function SystemAdminPage({ addToast }) {
             const json = await res.json();
             if (json.success) {
                 TrackingHelper.trackBanAccount(id);
-                addToast('Đã xóa tài khoản');
+                addToast(t('admin.delete_success'));
                 fetchUsers();
             } else {
-                addToast(json.error || 'Lỗi xóa tài khoản', 'error');
+                addToast(json.error || t('admin.delete_fail'), 'error');
             }
-        } catch (e) { addToast('Lỗi kết nối server', 'error'); }
+        } catch (e) { addToast(t('admin.conn_error'), 'error'); }
     };
 
     const handleResetPassword = async () => {
-        if (!resetPw) { addToast('Vui lòng nhập mật khẩu mới', 'error'); return; }
+        if (!resetPw) { addToast(t('admin.reset_pw_empty'), 'error'); return; }
 
         const strongRegex = new RegExp("^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\\$%\\^&\\*])(?=.{8,})");
         if (!strongRegex.test(resetPw)) {
-            addToast('Mật khẩu phải từ 8 ký tự, gồm chữ hoa, thường, số và ký tự đặc biệt', 'error');
+            addToast(t('admin.err_weak_password'), 'error');
             return;
         }
         try {
@@ -124,13 +126,13 @@ export default function SystemAdminPage({ addToast }) {
             });
             const json = await res.json();
             if (json.success) {
-                addToast(`Đã đặt lại mật khẩu cho ${resetModal.username}`);
+                addToast(`${t('admin.reset_pw_success')} ${resetModal.username}`);
                 setResetModal(null);
                 setResetPw('');
             } else {
-                addToast(json.error || 'Lỗi đặt lại mật khẩu', 'error');
+                addToast(json.error || t('admin.reset_pw_fail'), 'error');
             }
-        } catch (e) { addToast('Lỗi kết nối server', 'error'); }
+        } catch (e) { addToast(t('admin.conn_error'), 'error'); }
     };
 
     const handleEditUser = async () => {
@@ -142,14 +144,14 @@ export default function SystemAdminPage({ addToast }) {
             });
             const json = await res.json();
             if (json.success) {
-                addToast('Đã cập nhật thông tin tài khoản!');
+                addToast(t('admin.update_success'));
                 setEditModal(null);
                 fetchUsers();
             } else {
-                addToast(json.error || 'Lỗi cập nhật tài khoản', 'error');
+                addToast(json.error || t('admin.update_fail'), 'error');
             }
         } catch (e) {
-            addToast('Lỗi kết nối khi cập nhật tài khoản', 'error');
+            addToast(t('admin.update_conn_error'), 'error');
         }
     };
 
@@ -161,7 +163,7 @@ export default function SystemAdminPage({ addToast }) {
             });
             if (!res.ok) {
                 const text = await res.text();
-                addToast('Lỗi khi xuất dữ liệu: ' + text, 'error');
+                addToast(t('admin.export_fail') + ' ' + text, 'error');
                 setIsProcessingDb(false);
                 return;
             }
@@ -172,9 +174,9 @@ export default function SystemAdminPage({ addToast }) {
             a.download = `vufamily_backup_${new Date().toISOString().split('T')[0]}.${exportFormat}${exportEncrypted ? '_encrypted' : ''}.zip`;
             a.click();
             window.URL.revokeObjectURL(url);
-            addToast('Đã xuất dữ liệu thành công!');
+            addToast(t('admin.export_success'));
         } catch (e) {
-            addToast('Lỗi kết nối server', 'error');
+            addToast(t('admin.conn_error'), 'error');
         } finally {
             setIsProcessingDb(false);
         }
@@ -182,7 +184,7 @@ export default function SystemAdminPage({ addToast }) {
 
     const handleImportDb = async () => {
         if (!importFile) {
-            addToast('Vui lòng chọn file zip', 'error');
+            addToast(t('admin.import_file_required'), 'error');
             return;
         }
         if (!confirm('CẢNH BÁO: Quá trình này sẽ khôi phục/thêm mới dữ liệu vào Database. Bạn có chắc chắn?')) return;
@@ -201,14 +203,14 @@ export default function SystemAdminPage({ addToast }) {
             });
             const json = await res.json();
             if (json.success) {
-                addToast(json.message || 'Nhập dữ liệu thành công!', 'success');
+                addToast(json.message || t('admin.import_success'), 'success');
                 setImportFile(null);
                 fetchUsers();
             } else {
-                addToast(json.error || 'Lỗi nhập dữ liệu', 'error');
+                addToast(json.error || t('admin.import_fail'), 'error');
             }
         } catch (e) {
-            addToast('Lỗi kết nối server', 'error');
+            addToast(t('admin.conn_error'), 'error');
         } finally {
             setIsProcessingDb(false);
             document.getElementById('import-file-input').value = '';

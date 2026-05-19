@@ -6,7 +6,7 @@ import { TrackingHelper } from './TrackingHelper';
 export const requestNotificationPermission = async () => {
     try {
         if (!('Notification' in window)) {
-            myError('FIREBASE', 'Trình duyệt không hỗ trợ notification.');
+            myError('FIREBASE', 'Browser does not support notifications.');
             return null;
         }
 

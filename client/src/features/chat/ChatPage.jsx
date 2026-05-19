@@ -34,7 +34,7 @@ export default function ChatPage({ user, addToast, onStartCall }) {
      * Cập nhật IndexedDB để dùng cho lần mở app tiếp theo.
      */
     const fetchRooms = async () => {
-        myLog('CHAT', '[ChatPage - fetchRooms] Bắt đầu đồng bộ danh sách phòng chat từ Server...');
+        myLog('CHAT', '[ChatPage - fetchRooms] Syncing room list from Server...');
         try {
             const res = await fetch(`${getApiBase()}/chats`, { headers: { 'x-auth-token': AuthHelper.getToken() } });
             const json = await res.json();
@@ -42,11 +42,11 @@ export default function ChatPage({ user, addToast, onStartCall }) {
                 const serverRooms = json.data || [];
                 setRooms(serverRooms);
                 // Lưu vào IndexedDB cache (chạy ngầm)
-                cacheRooms(serverRooms).catch((e) => { myError('CHAT', "[ChatPage] Lỗi lưu Cache Phòng Chat:", e); });
-                myLog('CHAT', `[ChatPage - fetchRooms] Đã đồng bộ thành công ${serverRooms.length} phòng chat.`);
+                cacheRooms(serverRooms).catch((e) => { myError('CHAT', "[ChatPage] Error caching rooms:", e); });
+                myLog('CHAT', `[ChatPage - fetchRooms] Synced ${serverRooms.length} rooms successfully.`);
             }
         } catch (e) {
-            myWarning('CHAT', '[ChatPage - fetchRooms] Đang Offline hoặc Mạng yếu, sử dụng danh sách phòng từ Cache.', e);
+            myWarning('CHAT', '[ChatPage - fetchRooms] Offline or weak network, using cached rooms.', e);
             // Offline: keep using cached rooms
         } finally {
             setLoadingRooms(false);
@@ -67,7 +67,7 @@ export default function ChatPage({ user, addToast, onStartCall }) {
      * Tải toàn bộ tin nhắn của một phòng (Dùng khi mới chuyển phòng).
      */
     const fetchMessagesFull = async (roomId) => {
-        myLog('CHAT', `[ChatPage - fetchMessagesFull] Đang tải toàn bộ lịch sử tin nhắn cho Phòng ID: ${roomId}`);
+        myLog('CHAT', `[ChatPage - fetchMessagesFull] Loading full message history for Room ID: ${roomId}`);
         try {
             const res = await fetch(`${getApiBase()}/chats/${roomId}/messages`, { headers: { 'x-auth-token': AuthHelper.getToken() } });
             const json = await res.json();
@@ -76,8 +76,8 @@ export default function ChatPage({ user, addToast, onStartCall }) {
                 setMessages(serverMsgs);
 
                 // Cập nhật Cache cục bộ
-                cacheMessages(roomId, serverMsgs).catch((e) => { myError('CHAT', "[ChatPage] Lỗi lưu Cache Tin Nhắn:", e); });
-                myLog('CHAT', `[ChatPage - fetchMessagesFull] Tải thành công ${serverMsgs.length} tin nhắn.`);
+                cacheMessages(roomId, serverMsgs).catch((e) => { myError('CHAT', "[ChatPage] Error caching messages:", e); });
+                myLog('CHAT', `[ChatPage - fetchMessagesFull] Loaded ${serverMsgs.length} messages successfully.`);
 
                 // Ghi nhớ mốc thời gian của tin nhắn cuối cùng để phục vụ cho Incremental Polling
                 if (serverMsgs.length > 0) {
@@ -110,7 +110,7 @@ export default function ChatPage({ user, addToast, onStartCall }) {
             const json = await res.json();
             if (json.success && json.data && json.data.length > 0) {
                 const newMsgs = json.data;
-                myLog('CHAT', `[ChatPage - fetchMessagesIncremental] Tìm thấy ${newMsgs.length} tin nhắn mới.`);
+                myLog('CHAT', `[ChatPage - fetchMessagesIncremental] Found ${newMsgs.length} new messages.`);
                 setMessages(prev => {
                     // Loại bỏ trùng lặp (Deduplicate) dựa trên ID tin nhắn
                     const existingIds = new Set(prev.map(m => m.id));
@@ -119,7 +119,7 @@ export default function ChatPage({ user, addToast, onStartCall }) {
                     const merged = [...prev, ...unique];
 
                     // Lưu tin nhắn mới vào Cache
-                    cacheMessages(roomId, merged).catch((e) => { myError('CHAT', "[ChatPage] Lỗi lưu Cache Tin Nhắn mới:", e); });
+                    cacheMessages(roomId, merged).catch((e) => { myError('CHAT', "[ChatPage] Error caching new messages:", e); });
                     return merged;
                 });
                 latestMsgTimeRef.current = newMsgs[newMsgs.length - 1].created_at;
