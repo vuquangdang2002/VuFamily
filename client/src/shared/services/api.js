@@ -1,8 +1,7 @@
 // API service layer
 import { Solar, Lunar } from '../utils/lunar.js';
 import { ganZhiToViet } from '../utils/vietLunar.js';
-import { API_BASE_URL } from '../../config.js';
-import { getRemoteConfigValue } from '../../firebase.js';
+import { API_BASE_URL, ConfigAPI } from '../../config.js';
 import { SAMPLE_MEMBERS, SAMPLE_ACHIEVEMENTS, SAMPLE_POSTS, SAMPLE_REQUESTS, SAMPLE_HISTORY } from './sampleData.js';
 
 export function getApiBase() {
@@ -10,7 +9,7 @@ export function getApiBase() {
     if (!window.Capacitor && window.location.hostname === 'localhost' && window.location.port) {
         return '/api';
     }
-    const remoteUrl = getRemoteConfigValue('api_base_url', 'string');
+    const remoteUrl = ConfigAPI.getString('api_base_url', API_BASE_URL);
     return remoteUrl || API_BASE_URL;
 }
 
