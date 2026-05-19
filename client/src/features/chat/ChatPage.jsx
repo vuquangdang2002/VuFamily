@@ -320,7 +320,7 @@ export default function ChatPage({ user, addToast, onStartCall }) {
     const currentUserRole = activeRoom?.type === 'group' ? (activeRoom.members?.find(m => m.id === user.id)?.role || 'member') : 'member';
 
     return (
-        <div className="page-container" style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: 0 }}>
+        <div className="page-container no-mobile-padding" style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: 0 }}>
             <div className={`chat-layout ${activeRoomId ? 'room-active' : ''}`}>
                 {/* INBOX PANEL */}
                 <div className="chat-inbox-panel">

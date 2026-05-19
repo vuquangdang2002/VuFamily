@@ -168,16 +168,73 @@
 }
 
 @media (max-width: 768px) {
+    .guide-header {
+        margin-bottom: 24px;
+        padding-bottom: 16px;
+    }
+    .guide-header h1 {
+        font-size: 24px;
+    }
+    .guide-header p {
+        font-size: 14px;
+    }
     .guide-layout {
         flex-direction: column;
+        gap: 16px;
     }
     .guide-sidebar {
         width: 100%;
         flex-direction: row;
         overflow-x: auto;
         padding-bottom: 8px;
+        scrollbar-width: none; /* Hide scrollbar Firefox */
+    }
+    .guide-sidebar::-webkit-scrollbar {
+        display: none; /* Hide scrollbar WebKit */
     }
     .guide-nav-btn {
         white-space: nowrap;
+        padding: 10px 14px;
+        font-size: 14px;
+    }
+    .guide-content {
+        padding: 20px 16px;
+        min-height: unset;
+        border-radius: 16px;
+    }
+    .guide-section-header h2 {
+        font-size: 20px;
+    }
+    .guide-section-desc {
+        font-size: 14px;
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+    }
+    .guide-card {
+        padding: 16px;
+        margin-bottom: 16px;
+    }
+    .guide-card h3 {
+        font-size: 14px;
+        margin-bottom: 12px;
+    }
+    .guide-list li {
+        font-size: 14px;
+        padding-left: 20px;
+    }
+    .guide-admin-block {
+        margin-top: 16px;
+        padding-top: 16px;
+    }
+    .guide-admin-block h4 {
+        font-size: 14px;
+    }
+    .guide-action {
+        justify-content: center;
+        margin-top: 24px;
+    }
+    .guide-action .btn {
+        width: 100%;
+        justify-content: center;
     }
 }

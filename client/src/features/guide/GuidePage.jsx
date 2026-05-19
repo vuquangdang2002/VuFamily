@@ -79,7 +79,7 @@ export default function GuidePage({ user, onNavigate }) {
     const [activeSection, setActiveSection] = useState('tree');
 
     return (
-        <div className="page-container" style={{ padding: '32px' }}>
+        <div className="page-container">
             <div className="guide-header">
                 <h1>📚 Hướng dẫn sử dụng VuFamily</h1>
                 <p>Khám phá các tính năng và cách tương tác với hệ thống Gia phả Điện tử chuyên nghiệp.</p>
