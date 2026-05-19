@@ -23,9 +23,19 @@
         overflow-x: auto;
     }
 
-    /* 2. Chat UI input overlapping */
+    /* Search input should be narrower on mobile */
+    .search-wrapper {
+        max-width: 100%;
+    }
+
+    .search-input {
+        font-size: 14px !important;
+    }
+
+    /* 2. Chat UI — full height minus bottom nav */
     .chat-layout {
         flex-direction: column;
+        height: calc(100dvh - 86px) !important;
     }
 
     .chat-inbox-panel {
@@ -51,6 +61,23 @@
         width: 95% !important;
         margin: 10px;
         max-height: 90vh;
+    }
+
+    /* 5. Ensure calendar is not cut off */
+    .calendar-page {
+        overflow-y: auto !important;
+    }
+    
+    /* 6. Tree loading overlay fix */
+    .tree-page .absolute.inset-0 {
+        position: fixed !important;
+        z-index: 999;
+    }
+
+    /* 7. Toolbar should scroll on mobile */
+    .toolbar {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
     }
 }
 

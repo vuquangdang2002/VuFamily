@@ -114,13 +114,13 @@ export default function RequestsPage({ user, onRefresh, addToast, members = [] }
     const pendingCount = requests.filter(r => r.status === 'pending').length;
 
     return (
-        <div className="page-container flex flex-col h-screen pt-16 sm:pt-0 overflow-hidden">
+        <div className="page-container">
             <div className="page-header shrink-0">
                 <h2>{t('requests.title')} {pendingCount > 0 && <span className="badge">{pendingCount}</span>}</h2>
                 <p className="page-subtitle">{t('requests.subtitle')}</p>
             </div>
 
-            <div className="page-body flex-1 overflow-y-auto p-4 md:p-6 pb-24">
+            <div className="page-body">
                 <div className="request-filters" style={{ marginBottom: 16 }}>
                     <button className={`filter-btn ${filter === 'pending' ? 'active' : ''}`} onClick={() => setFilter('pending')}>
                         {t('requests.filter_pending')} {pendingCount > 0 && `(${pendingCount})`}
@@ -136,7 +136,7 @@ export default function RequestsPage({ user, onRefresh, addToast, members = [] }
                     </button>
                 </div>
 
-                <div className="side-panel-body relative min-h-[200px]">
+                <div className="side-panel-body">
                     {isLoading ? (
                         <div className="flex flex-col items-center justify-center p-12 text-gray-500">
                             <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4"></div>

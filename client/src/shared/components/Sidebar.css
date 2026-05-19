@@ -453,4 +453,40 @@
         border: 1px solid rgba(255, 255, 255, 0.08) !important;
         box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4) !important;
     }
+
+    /* Fix tree page header buttons overflow on mobile */
+    .header {
+        padding: 8px 12px !important;
+        gap: 6px;
+    }
+
+    .header-right {
+        gap: 4px !important;
+    }
+
+    .header-right .btn {
+        padding: 6px 10px !important;
+        font-size: 12px !important;
+    }
+
+    /* Fix chat input bar hidden behind bottom nav */
+    .chat-input-bar {
+        padding-bottom: calc(12px + 86px) !important;
+    }
+
+    /* Fix calendar page overflow hidden cutting content */
+    .calendar-page .page-container {
+        overflow-y: auto !important;
+    }
+
+    .calendar-layout {
+        height: auto !important;
+        overflow: visible !important;
+    }
+
+    /* Fix history/requests page with h-screen causing double scroll */
+    .page-container.flex.flex-col.h-screen {
+        height: auto !important;
+        min-height: 100%;
+    }
 }

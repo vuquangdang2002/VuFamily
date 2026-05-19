@@ -100,12 +100,12 @@ export default function HistoryPage({ isAdmin, user, onRefresh, addToast, member
     };
 
     return (
-        <div className="page-container flex flex-col h-screen pt-16 sm:pt-0 overflow-hidden">
+        <div className="page-container">
             <div className="page-header shrink-0">
                 <h2>{isAdmin ? t('history.title_admin') : t('history.title_user')}</h2>
                 <p className="page-subtitle">{t('history.subtitle')}</p>
             </div>
-            <div className="page-body flex-1 overflow-y-auto p-4 md:p-6 pb-24 relative min-h-[200px]">
+            <div className="page-body">
                 {isLoading ? (
                     <div className="flex flex-col items-center justify-center p-12 text-gray-500">
                         <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4"></div>

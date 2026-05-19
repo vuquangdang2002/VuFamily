@@ -551,11 +551,11 @@ export default function App() {
                 // Save to localStorage (same as importJSON does)
                 localStorage.setItem('vuFamilyMembers', JSON.stringify(members));
                 refresh();
-                addToast(`Đã nhập ${members.length} thành viên từ CSV!`);
+                addToast(I18nHelper.t('admin.import_success').replace('Nhập dữ liệu', `${members.length} CSV`));
             } else {
                 await localApi.importJSON(file);
                 refresh();
-                addToast('Đã nhập dữ liệu JSON thành công!');
+                addToast(I18nHelper.t('admin.import_success'));
             }
         } catch (err) { addToast(`Lỗi: ${err.message}`, 'error'); }
     };
@@ -664,35 +664,35 @@ export default function App() {
                         onClick={() => { setActivePage('tree'); setShowMobileMenu(false); }}
                     >
                         <span className="bottom-nav-item-icon">🌳</span>
-                        <span>Gia phả</span>
+                        <span>{I18nHelper.t('nav.tree')}</span>
                     </button>
                     <button
                         className={`bottom-nav-item ${activePage === 'newsfeed' && !showMobileMenu ? 'active' : ''}`}
                         onClick={() => { setActivePage('newsfeed'); setShowMobileMenu(false); }}
                     >
                         <span className="bottom-nav-item-icon">📰</span>
-                        <span>Bảng tin</span>
+                        <span>{I18nHelper.t('nav.newsfeed')}</span>
                     </button>
                     <button
                         className={`bottom-nav-item ${activePage === 'chat' && !showMobileMenu ? 'active' : ''}`}
                         onClick={() => { setActivePage('chat'); setShowMobileMenu(false); }}
                     >
                         <span className="bottom-nav-item-icon">💬</span>
-                        <span>Trò chuyện</span>
+                        <span>{I18nHelper.t('nav.chat')}</span>
                     </button>
                     <button
                         className={`bottom-nav-item ${activePage === 'calendar' && !showMobileMenu ? 'active' : ''}`}
                         onClick={() => { setActivePage('calendar'); setShowMobileMenu(false); }}
                     >
                         <span className="bottom-nav-item-icon">📅</span>
-                        <span>Lịch</span>
+                        <span>{I18nHelper.t('nav.calendar')}</span>
                     </button>
                     <button
                         className={`bottom-nav-item ${showMobileMenu ? 'active' : ''}`}
                         onClick={() => setShowMobileMenu(!showMobileMenu)}
                     >
                         <span className="bottom-nav-item-icon">⚙️</span>
-                        <span>Thêm</span>
+                        <span>+</span>
                         {pendingCount > 0 && <span className="bottom-nav-badge">{pendingCount}</span>}
                     </button>
                 </div>
@@ -703,18 +703,18 @@ export default function App() {
                 <div className="bottom-sheet-overlay" onClick={() => setShowMobileMenu(false)}>
                     <div className="bottom-sheet" onClick={(e) => e.stopPropagation()}>
                         <div className="bottom-sheet-drag-handle" />
-                        <div className="bottom-sheet-title">DANH MỤC TIỆN ÍCH</div>
+                        <div className="bottom-sheet-title">{I18nHelper.t('sidebar.admin_section')}</div>
 
                         <div className="bottom-sheet-grid">
                             <div className="bottom-sheet-item" onClick={() => { setProfileModalOpen(true); setShowMobileMenu(false); }}>
                                 <span className="bottom-sheet-item-icon">👤</span>
-                                <span>Hồ sơ cá nhân</span>
+                                <span>{I18nHelper.t('sidebar.profile_password')}</span>
                             </div>
 
                             {(user?.role === 'admin' || user?.role === 'editor') && (
                                 <div className="bottom-sheet-item" onClick={() => { setActivePage('requests'); setShowMobileMenu(false); }}>
                                     <span className="bottom-sheet-item-icon">📋</span>
-                                    <span>Yêu cầu</span>
+                                    <span>{I18nHelper.t('nav.requests')}</span>
                                     {pendingCount > 0 && <span className="bottom-nav-badge">{pendingCount}</span>}
                                 </div>
                             )}
@@ -722,23 +722,23 @@ export default function App() {
                             {isAdmin && (
                                 <div className="bottom-sheet-item" onClick={() => { setActivePage('system'); setShowMobileMenu(false); }}>
                                     <span className="bottom-sheet-item-icon">⚙️</span>
-                                    <span>Hệ trị hệ thống</span>
+                                    <span>{I18nHelper.t('nav.system')}</span>
                                 </div>
                             )}
 
                             <div className="bottom-sheet-item" onClick={() => { setActivePage('history'); setShowMobileMenu(false); }}>
                                 <span className="bottom-sheet-item-icon">📜</span>
-                                <span>Lịch sử</span>
+                                <span>{I18nHelper.t('nav.history')}</span>
                             </div>
 
                             <div className="bottom-sheet-item" onClick={() => { setActivePage('guide'); setShowMobileMenu(false); }}>
                                 <span className="bottom-sheet-item-icon">❓</span>
-                                <span>Hướng dẫn</span>
+                                <span>{I18nHelper.t('sidebar.user_guide')}</span>
                             </div>
                         </div>
 
                         <button className="bottom-sheet-logout" onClick={() => { handleLogout(); setShowMobileMenu(false); }}>
-                            🚪 Đăng xuất tài khoản
+                            🚪 {I18nHelper.t('app.logout')}
                         </button>
                     </div>
                 </div>

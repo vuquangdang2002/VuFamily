@@ -470,6 +470,16 @@ html.light .chat-input-bar input {
     .chat-back-btn {
         display: flex !important;
     }
+
+    /* Ensure chat messages panel fills available space above bottom nav */
+    .chat-messages-panel {
+        height: calc(100dvh - 86px) !important;
+    }
+
+    /* Ensure chat message body scrolls above the input bar */
+    .chat-msg-body {
+        padding-bottom: 8px;
+    }
 }
 
 @media (min-width: 769px) {
