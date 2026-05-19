@@ -1,21 +1,29 @@
 import { useState, useEffect } from 'react';
-import { getRemoteConfigValue } from '../../firebase.js';
+import { ConfigAPI } from '../../config.js';
 
 /**
  * Hook tùy chỉnh theo chuẩn Remote Config mới.
- * Khởi tạo với giá trị Default nội bộ (hoặc từ cache nếu có).
- * Tự động re-render khi fetchAndActivate() phát sự kiện 'remoteConfigUpdated'.
+ * Sử dụng ConfigAPI để lấy và ép kiểu an toàn.
+ * Tự động re-render khi firebase sync thành công.
  * 
- * @param {string} key - Tên cấu hình trên Firebase
- * @param {string} type - 'string', 'boolean', 'number'
- * @returns Giá trị cấu hình hiện tại
+ * @param {string} key - Tên cấu hình
+ * @param {string} type - 'string', 'number', 'boolean', 'json'
+ * @param {any} fallback - Giá trị mặc định (Tùy chọn)
+ * @returns Giá trị cấu hình đã ép kiểu
  */
-export function useRemoteConfig(key, type = 'string') {
-    const [value, setValue] = useState(() => getRemoteConfigValue(key, type));
+export function useRemoteConfig(key, type = 'string', fallback) {
+    const getValue = () => {
+        if (type === 'number') return ConfigAPI.getNumber(key, fallback);
+        if (type === 'boolean') return ConfigAPI.getBoolean(key, fallback);
+        if (type === 'json') return ConfigAPI.getJSON(key, fallback);
+        return ConfigAPI.getString(key, fallback);
+    };
+
+    const [value, setValue] = useState(getValue);
 
     useEffect(() => {
         const handleUpdate = () => {
-            setValue(getRemoteConfigValue(key, type));
+            setValue(getValue());
         };
         // Lắng nghe sự kiện toàn cục từ firebase.js
         window.addEventListener('remoteConfigUpdated', handleUpdate);

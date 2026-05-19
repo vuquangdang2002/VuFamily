@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { myLog, myError } from '../../shared/utils/logger';
-import { localApi } from '../../shared/services/api';
+import { localApi, api } from '../../shared/services/api';
+import { ConfigAPI } from '../../config.js';
 
 // Import brand icons
 import iconZalo from '../../assets/icons/icon_zalo.png';
@@ -41,13 +42,18 @@ function getToken() {
     } catch { return ''; }
 }
 
+// Biến toàn cục để cache lại bài đăng trong phiên làm việc
+let cachedPosts = null;
+let lastFetchTime = 0;
+
 function getTodayLabel() {
     const d = new Date();
     return d.toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 }
 
 export default function NewsfeedPage({ user, isAdmin, addToast, members = [], onNavigate }) {
-    const [posts, setPosts] = useState([]);
+    const [posts, setPosts] = useState(cachedPosts || []);
+    const [hasNewPostsHint, setHasNewPostsHint] = useState(false);
     const [contacts, setContacts] = useState(() => localApi.getContacts());
     const [newPost, setNewPost] = useState('');
     const [editingContact, setEditingContact] = useState(null);
@@ -78,12 +84,36 @@ export default function NewsfeedPage({ user, isAdmin, addToast, members = [], on
     })();
 
     // Fetch posts from API
-    const fetchPosts = async () => {
-        setLoading(true);
+    const fetchPosts = async (force = false) => {
+        // Đọc trực tiếp cấu hình hiện hành từ ConfigAPI
+        const refreshIntervalMs = ConfigAPI.getNumber('newsfeed_refresh_interval_ms', 5 * 60 * 1000);
+
+        if (!force && cachedPosts && (Date.now() - lastFetchTime < refreshIntervalMs)) {
+            return; // Dùng cache, không gọi API nếu chưa quá thời gian cấu hình
+        }
+
+        if (force || !cachedPosts) setLoading(true);
         try {
-            const res = await fetch('/api/posts');
-            const json = await res.json();
-            if (json.success) setPosts(json.data || []);
+            const json = await api.getPosts();
+            if (json.success) {
+                const newPosts = json.data || [];
+                
+                // Nếu fetch ngầm (background) và thấy có bài đăng mới ở đầu danh sách
+                if (!force && cachedPosts && cachedPosts.length > 0) {
+                    if (newPosts.length > 0 && newPosts[0].id !== cachedPosts[0].id) {
+                        setHasNewPostsHint(true);
+                    } else {
+                        // Cập nhật lastFetchTime để không hỏi lại liên tục
+                        lastFetchTime = Date.now();
+                    }
+                } else {
+                    // Update cache và state ngay lập tức
+                    setPosts(newPosts);
+                    cachedPosts = newPosts;
+                    lastFetchTime = Date.now();
+                    setHasNewPostsHint(false);
+                }
+            }
         } catch (e) { myError('NEWSFEED', 'Error fetching posts:', e); }
         setLoading(false);
     };
@@ -100,16 +130,11 @@ export default function NewsfeedPage({ user, isAdmin, addToast, members = [], on
     const handleCreatePost = async () => {
         if (!newPost.trim()) return;
         try {
-            const res = await fetch('/api/posts', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'x-auth-token': getToken() },
-                body: JSON.stringify({ content: newPost.trim() })
-            });
-            const json = await res.json();
+            const json = await api.createPost({ content: newPost.trim() });
             if (json.success) {
                 setNewPost('');
                 addToast('Đã đăng bài thành công!');
-                fetchPosts();
+                fetchPosts(true);
             } else {
                 addToast(json.error || 'Lỗi đăng bài');
             }
@@ -119,14 +144,10 @@ export default function NewsfeedPage({ user, isAdmin, addToast, members = [], on
     const handleDeletePost = async (id) => {
         if (!confirm('Xóa bài đăng này?')) return;
         try {
-            const res = await fetch(`/api/posts/${id}`, {
-                method: 'DELETE',
-                headers: { 'x-auth-token': getToken() }
-            });
-            const json = await res.json();
+            const json = await api.deletePost(id);
             if (json.success) {
                 addToast('Đã xóa bài đăng.');
-                fetchPosts();
+                fetchPosts(true);
             }
         } catch (e) { addToast('Lỗi xóa bài'); }
     };
@@ -164,11 +185,7 @@ export default function NewsfeedPage({ user, isAdmin, addToast, members = [], on
             return { ...post, reactions };
         }));
         try {
-            await fetch(`/api/posts/${postId}/reactions`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'x-auth-token': getToken() },
-                body: JSON.stringify({ emoji })
-            });
+            await api.reactToPost(postId, emoji);
         } catch (e) { myError('NEWSFEED', e); }
     };
 
@@ -182,8 +199,7 @@ export default function NewsfeedPage({ user, isAdmin, addToast, members = [], on
         setExpandedComments(prev => ({ ...prev, [postId]: !isOpen }));
         if (!isOpen && !comments[postId]) {
             try {
-                const res = await fetch(`/api/posts/${postId}/comments`);
-                const json = await res.json();
+                const json = await api.getComments(postId);
                 if (json.success) setComments(prev => ({ ...prev, [postId]: json.data || [] }));
             } catch (e) { myError('NEWSFEED', e); }
         }
@@ -203,12 +219,7 @@ export default function NewsfeedPage({ user, isAdmin, addToast, members = [], on
         setPosts(prev => prev.map(p => p.id === postId ? { ...p, comment_count: (p.comment_count || 0) + 1 } : p));
         setCommentTexts(prev => ({ ...prev, [postId]: '' }));
         try {
-            const res = await fetch(`/api/posts/${postId}/comments`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'x-auth-token': getToken() },
-                body: JSON.stringify({ content: text })
-            });
-            const json = await res.json();
+            const json = await api.addComment(postId, text);
             if (json.success && json.data) {
                 setComments(prev => ({
                     ...prev,
@@ -222,7 +233,7 @@ export default function NewsfeedPage({ user, isAdmin, addToast, members = [], on
         setComments(prev => ({ ...prev, [postId]: (prev[postId] || []).filter(c => c.id !== commentId) }));
         setPosts(prev => prev.map(p => p.id === postId ? { ...p, comment_count: Math.max(0, (p.comment_count || 1) - 1) } : p));
         try {
-            await fetch(`/api/comments/${commentId}`, { method: 'DELETE', headers: { 'x-auth-token': getToken() } });
+            await api.deleteComment(commentId);
         } catch (e) { addToast('Lỗi xóa bình luận'); }
     };
 
@@ -325,7 +336,25 @@ export default function NewsfeedPage({ user, isAdmin, addToast, members = [], on
                                     </div>
                                 </div>
 
-                                {posts.length === 0 ? (
+                                {hasNewPostsHint && (
+                                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
+                                        <button 
+                                            onClick={() => fetchPosts(true)}
+                                            style={{ background: 'var(--primary)', color: '#fff', border: 'none', padding: '8px 20px', borderRadius: 24, fontSize: 13, fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 12px rgba(59,130,246,0.3)', display: 'flex', alignItems: 'center', gap: 6, transition: 'all 0.2s' }}
+                                            onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+                                            onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                                        >
+                                            <span style={{ fontSize: 16 }}>↑</span> Tải bài viết mới
+                                        </button>
+                                    </div>
+                                )}
+
+                                {loading && posts.length === 0 ? (
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 0' }}>
+                                        <div className="nf-spinner"></div>
+                                        <span style={{ marginLeft: 12, color: 'var(--text-muted)' }}>Đang tải bài đăng...</span>
+                                    </div>
+                                ) : posts.length === 0 ? (
                                     <div className="empty-state">
                                         <span style={{ fontSize: 48 }}>📭</span>
                                         <h3>Chưa có bài đăng nào</h3>

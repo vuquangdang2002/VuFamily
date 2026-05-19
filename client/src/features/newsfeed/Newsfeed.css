@@ -798,6 +798,20 @@ html.dark .nf-reaction-picker-btn::after {
     border: 1.5px solid var(--border-subtle);
     border-radius: 24px;
     background: var(--bg-primary);
+}
+
+.nf-spinner {
+    width: 28px;
+    height: 28px;
+    border: 3px solid rgba(59, 130, 246, 0.15);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: nf-spin 0.8s linear infinite;
+}
+
+@keyframes nf-spin {
+    to { transform: rotate(360deg); }
+}
     color: var(--text-primary);
     font-family: var(--font-body);
     font-size: 13px;

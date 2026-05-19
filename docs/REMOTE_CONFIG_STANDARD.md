@@ -51,5 +51,27 @@ function MyComponent() {
 }
 ```
 
+## 3. Danh sách Cấu hình (Remote Config Registry)
+
+Dưới đây là danh sách các biến cấu hình đang được sử dụng trên hệ thống, kèm theo giá trị mặc định của chúng:
+
+| Khóa (Key) | Kiểu (Type) | Mặc định (Default) | Ý nghĩa (Description) |
+| --- | --- | --- | --- |
+| `api_base_url` | String | `API_BASE_URL` (env) | URL gốc của máy chủ backend để gọi API. |
+| `enable_new_call_ui` | Boolean | `true` | Bật/tắt giao diện Video Call & Voice Call mới. |
+| `maintenance_mode` | Boolean | `false` | Bật/tắt chế độ bảo trì toàn hệ thống. |
+| `newsfeed_refresh_interval_ms` | Number | `300000` (5 phút) | Thời gian cache tối đa của Bảng tin (Newsfeed). Sau thời gian này, app sẽ tự động tìm kiếm bài viết mới ngầm và hiện nút gợi ý làm mới dữ liệu. Giúp giảm tải giật lag mạng. |
+
+## 4. Danh sách Cấu hình Tĩnh (Static / Env Config Registry)
+
+Các cấu hình tĩnh được lưu tại `client/src/config.js` và lấy dữ liệu từ file `.env`. Khác với Remote Config, những cấu hình này yêu cầu **phải Build lại ứng dụng** nếu có thay đổi.
+
+| Khóa .env (Env Key) | Biến xuất (Exported Variable) | Mặc định (Default Fallback) | Ý nghĩa (Description) |
+| --- | --- | --- | --- |
+| `VITE_APP_DOMAIN` | `APP_DOMAIN` | `family.dangvq.online` | Tên miền chính của toàn bộ hệ thống. Các URL khác sẽ tự động nội suy từ đây. |
+| `VITE_APP_URL` | `APP_URL` | `https://${APP_DOMAIN}` | URL gốc của website frontend (Dùng để set CORS hoặc share link). |
+| `VITE_API_BASE_URL` | `API_BASE_URL` | `https://${APP_DOMAIN}/api` | URL của Backend Server để gọi REST API. |
+| `VITE_HUB_URL` | `HUB_URL` | `http://localhost:3000` (Local)<br/>`https://${APP_DOMAIN}` (Prod) | URL của máy chủ Socket.io để xử lý Real-time (Chat, Gọi Video, Push Event). |
+
 ---
 *Quy chuẩn này được áp dụng làm tiêu chuẩn bắt buộc cho mọi bản cập nhật và cấu hình tham số của VuFamily từ thời điểm hiện tại.*

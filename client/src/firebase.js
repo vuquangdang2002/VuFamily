@@ -23,38 +23,48 @@ const remoteConfig = getRemoteConfig(app);
 
 import { API_BASE_URL } from './config.js';
 
-// Default configurations
-remoteConfig.settings.minimumFetchIntervalMillis = 3600000; // 1 hour
+// Cấu hình mặc định (Default configurations)
+// Sẽ được sử dụng nếu không có kết nối mạng hoặc Remote Config chưa kịp tải về.
+remoteConfig.settings.minimumFetchIntervalMillis = 3600000; // Cache cấu hình trong 1 giờ
+
 remoteConfig.defaultConfig = {
+  // Đường dẫn gốc của API Server (VD: localhost hoặc https://...)
   "api_base_url": API_BASE_URL,
+  
+  // Kích hoạt giao diện gọi điện mới (Video/Voice Call)
   "enable_new_call_ui": true,
-  "maintenance_mode": false
+  
+  // Bật/tắt chế độ bảo trì toàn hệ thống
+  "maintenance_mode": false,
+  
+  // (NEWSFEED) Thời gian bộ nhớ đệm bảng tin (tính bằng milli-giây).
+  // 300000 = 5 phút. Khi người dùng quay lại Bảng tin, nếu quá thời gian này 
+  // hệ thống sẽ gọi API ngầm để kiểm tra có bài mới không.
+  "newsfeed_refresh_interval_ms": 300000 
 };
+
+import { updateAppConfigFromRemote } from './config.js';
+import { getAll } from "firebase/remote-config";
+import { myLog, myError } from './shared/utils/logger.js';
 
 // Utilities for fetching and reading remote configs
 export const syncRemoteConfig = async () => {
   try {
     const fetched = await fetchAndActivate(remoteConfig);
     if (fetched) {
-      console.log('✅ Firebase Remote Config fetched and activated.');
+      myLog('FIREBASE', '✅ Firebase Remote Config fetched and activated.');
     } else {
-      console.log('✅ Firebase Remote Config already up-to-date.');
+      myLog('FIREBASE', '✅ Firebase Remote Config already up-to-date.');
     }
+    
+    // Đọc tất cả cấu hình từ Firebase và parse tự động vào AppConfig
+    const allConfigs = getAll(remoteConfig);
+    updateAppConfigFromRemote(allConfigs);
+    
+    // Báo hiệu UI cập nhật
     window.dispatchEvent(new Event('remoteConfigUpdated'));
   } catch (err) {
-    console.error('❌ Firebase Remote Config sync failed:', err);
-  }
-};
-
-export const getRemoteConfigValue = (key, type = 'string') => {
-  try {
-    const val = getValue(remoteConfig, key);
-    if (type === 'boolean') return val.asBoolean();
-    if (type === 'number') return val.asNumber();
-    return val.asString();
-  } catch (e) {
-    console.error(`Error getting remote config [${key}]:`, e);
-    return null;
+    myError('FIREBASE', '❌ Firebase Remote Config sync failed:', err);
   }
 };
 

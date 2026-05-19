@@ -20,6 +20,7 @@ export const LOG_FLAGS = {
     ACCOUNTS: true,
     APP: true,
     FIREBASE: true,
+    CONFIG: true,
     ANALYTICS: true
 };
 
