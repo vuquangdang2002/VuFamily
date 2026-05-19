@@ -33,6 +33,14 @@ export const AppConfig = {
     enable_new_call_ui: true,
     maintenance_mode: false,
     newsfeed_refresh_interval_ms: 300000,
+    
+    // Tính năng
+    feature_tree_enabled: true,
+    feature_newsfeed_enabled: true,
+    feature_calendar_enabled: true,
+    feature_chat_enabled: true,
+    feature_history_enabled: true,
+    feature_requests_enabled: true,
     // (Có thể mở rộng thêm các Config dạng Object JSON ở đây)
 };
 

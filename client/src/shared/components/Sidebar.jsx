@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 
+import { ConfigAPI } from '../../config.js';
+
 const MENU_ITEMS = [
     { id: 'tree', icon: '🌳', label: 'Gia phả' },
     { id: 'newsfeed', icon: '📰', label: 'Bảng tin' },
@@ -31,6 +33,11 @@ export default function Sidebar({ activePage, onNavigate, isAdmin, user, onLogou
     const isEditorOrAdmin = user?.role === 'admin' || user?.role === 'editor';
     const [showUserMenu, setShowUserMenu] = useState(false);
     const menuRef = useRef(null);
+
+    // Lọc tính năng (Feature Toggles) dựa trên Remote Config
+    const activeMenuItems = MENU_ITEMS.filter(item => ConfigAPI.getBoolean(`feature_${item.id}_enabled`, true));
+    const activeCommonItems = COMMON_ITEMS.filter(item => ConfigAPI.getBoolean(`feature_${item.id}_enabled`, true));
+    const activeEditorItems = EDITOR_ITEMS.filter(item => ConfigAPI.getBoolean(`feature_${item.id}_enabled`, true));
 
     // Close menu on outside click
     useEffect(() => {
@@ -64,7 +71,7 @@ export default function Sidebar({ activePage, onNavigate, isAdmin, user, onLogou
 
             {/* Main nav */}
             <nav className="sidebar-nav">
-                {MENU_ITEMS.map(item => (
+                {activeMenuItems.map(item => (
                     <button
                         key={item.id}
                         className={`sidebar-item ${activePage === item.id ? 'active' : ''}`}
@@ -76,7 +83,7 @@ export default function Sidebar({ activePage, onNavigate, isAdmin, user, onLogou
                     </button>
                 ))}
 
-                {COMMON_ITEMS.map(item => (
+                {activeCommonItems.map(item => (
                     <button
                         key={item.id}
                         className={`sidebar-item ${activePage === item.id ? 'active' : ''}`}
@@ -95,7 +102,7 @@ export default function Sidebar({ activePage, onNavigate, isAdmin, user, onLogou
                     </>
                 )}
 
-                {isEditorOrAdmin && EDITOR_ITEMS.map(item => (
+                {isEditorOrAdmin && activeEditorItems.map(item => (
                     <button
                         key={item.id}
                         className={`sidebar-item ${activePage === item.id ? 'active' : ''}`}

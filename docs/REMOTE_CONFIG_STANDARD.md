@@ -61,6 +61,12 @@ Dưới đây là danh sách các biến cấu hình đang được sử dụng 
 | `enable_new_call_ui` | Boolean | `true` | Bật/tắt giao diện Video Call & Voice Call mới. |
 | `maintenance_mode` | Boolean | `false` | Bật/tắt chế độ bảo trì toàn hệ thống. |
 | `newsfeed_refresh_interval_ms` | Number | `300000` (5 phút) | Thời gian cache tối đa của Bảng tin (Newsfeed). Sau thời gian này, app sẽ tự động tìm kiếm bài viết mới ngầm và hiện nút gợi ý làm mới dữ liệu. Giúp giảm tải giật lag mạng. |
+| `feature_tree_enabled` | Boolean | `true` | Bật/tắt tính năng Cây gia phả (Tree). |
+| `feature_newsfeed_enabled` | Boolean | `true` | Bật/tắt tính năng Bảng tin (Newsfeed). |
+| `feature_calendar_enabled` | Boolean | `true` | Bật/tắt tính năng Lịch sự kiện (Calendar). |
+| `feature_chat_enabled` | Boolean | `true` | Bật/tắt tính năng Nhắn tin (Chat). |
+| `feature_history_enabled` | Boolean | `true` | Bật/tắt tính năng Lịch sử chỉnh sửa (History). |
+| `feature_requests_enabled` | Boolean | `true` | Bật/tắt tính năng Duyệt yêu cầu (Requests). |
 
 ## 4. Danh sách Cấu hình Tĩnh (Static / Env Config Registry)
 

@@ -40,7 +40,15 @@ remoteConfig.defaultConfig = {
   // (NEWSFEED) Thời gian bộ nhớ đệm bảng tin (tính bằng milli-giây).
   // 300000 = 5 phút. Khi người dùng quay lại Bảng tin, nếu quá thời gian này 
   // hệ thống sẽ gọi API ngầm để kiểm tra có bài mới không.
-  "newsfeed_refresh_interval_ms": 300000 
+  "newsfeed_refresh_interval_ms": 300000,
+  
+  // BẬT/TẮT CÁC TÍNH NĂNG (FEATURE TOGGLES)
+  "feature_tree_enabled": true,
+  "feature_newsfeed_enabled": true,
+  "feature_calendar_enabled": true,
+  "feature_chat_enabled": true,
+  "feature_history_enabled": true,
+  "feature_requests_enabled": true
 };
 
 import { updateAppConfigFromRemote } from './config.js';
