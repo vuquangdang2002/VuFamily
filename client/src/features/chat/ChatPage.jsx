@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { getApiBase } from '../../shared/services/api';
+import { AuthHelper } from '../../shared/services/AuthHelper';
 import {
     cacheRooms, getCachedRooms,
-import { cacheMessages, getCachedMessages, getLatestMessageTime, cacheSingleMessage } from '../../shared/services/chatCache';
+    cacheMessages, getCachedMessages, getLatestMessageTime, cacheSingleMessage
+} from '../../shared/services/chatCache';
 import { myLog, myError, myWarning } from '../../shared/utils/logger';
 import { TrackingHelper } from '../../shared/services/TrackingHelper';
 import './Chat.css';
