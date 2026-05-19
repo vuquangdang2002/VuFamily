@@ -798,6 +798,11 @@ html.dark .nf-reaction-picker-btn::after {
     border: 1.5px solid var(--border-subtle);
     border-radius: 24px;
     background: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    font-size: 13px;
+    outline: none;
+    transition: border-color 200ms, box-shadow 200ms;
 }
 
 .nf-spinner {
@@ -811,12 +816,6 @@ html.dark .nf-reaction-picker-btn::after {
 
 @keyframes nf-spin {
     to { transform: rotate(360deg); }
-}
-    color: var(--text-primary);
-    font-family: var(--font-body);
-    font-size: 13px;
-    outline: none;
-    transition: border-color 200ms, box-shadow 200ms;
 }
 
 .nf-comment-input:focus {
