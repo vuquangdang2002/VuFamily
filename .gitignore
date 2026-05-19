@@ -5,3 +5,5 @@ database/*.db
 .vercel
 client/dist/
 public/
+.DS_Store
+*.apks
