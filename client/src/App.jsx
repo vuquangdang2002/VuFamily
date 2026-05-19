@@ -77,12 +77,12 @@ export default function App() {
 
     // ── Analytics ──
     useEffect(() => {
-        Analytics.trackEvent('app_open', { platform: window.navigator.userAgent.toLowerCase().includes('android') ? 'android' : 'web' });
+        TrackingHelper.trackAppOpen(window.navigator.userAgent.toLowerCase().includes('android') ? 'android' : 'web');
     }, []);
 
     useEffect(() => {
         if (user) {
-            Analytics.identifyUser(user.id || user.username, { role: user.role, name: user.displayName });
+            TrackingHelper.identifyUser(user.id || user.username, { role: user.role, name: user.displayName });
         }
     }, [user?.id, user?.username]);
     const [forceChangeError, setForceChangeError] = useState('');
@@ -289,7 +289,7 @@ export default function App() {
                 const authData = { ...data.data, source: 'api' };
                 localStorage.setItem(AUTH_KEY, JSON.stringify(authData));
                 setUser(authData);
-                Analytics.trackEvent('login_success', { method: 'token', role: authData.role });
+                TrackingHelper.trackLoginSuccess('token');
                 if (isAutoReset) {
                     setTempPwd(password);
                     setForceChangePwd(true);
@@ -312,7 +312,7 @@ export default function App() {
                     const authData = { username: u.username, displayName: u.displayName, role: u.role, source: 'local' };
                     localStorage.setItem(AUTH_KEY, JSON.stringify(authData));
                     setUser(authData);
-                    Analytics.trackEvent('login_success', { method: 'local', role: authData.role });
+                    TrackingHelper.trackLoginSuccess('local');
                     addToast(`Chào mừng ${u.displayName}! (Chế độ offline)`);
                     return;
                 }
@@ -334,7 +334,7 @@ export default function App() {
         setUser(null);
         setSelected(null);
         setDetailOpen(false);
-        Analytics.trackEvent('logout');
+        TrackingHelper.trackLogout();
         addToast('Đã đăng xuất thành công');
 
         // Let's reset URL in case of auto-login
