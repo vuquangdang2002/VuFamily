@@ -2,7 +2,7 @@ import './Tree.css';
 import { useRef, useEffect, useCallback } from 'react';
 import './Tree.css';
 import { buildHierarchy, calculateLayout } from '../../shared/utils/treeLayout';
-import { Analytics } from '../../shared/services/analytics';
+import { TrackingHelper } from '../../shared/services/TrackingHelper';
 
 // ─── Read canvas colors from CSS custom properties (cached) ───
 let _cachedColors = null;
@@ -42,7 +42,7 @@ export default function TreeCanvas({ members, selectedId, searchResultIds, onSel
     // ── Analytics ──
     useEffect(() => {
         if (members && members.length > 0) {
-            Analytics.trackEvent('view_family_tree', { total_nodes: members.length });
+            TrackingHelper.trackViewFamilyTree(members.length);
         }
     }, [members.length > 0 ? true : false]);
 

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
-
 import { ConfigAPI } from '../../config.js';
+import { useTranslation } from '../hooks/useTranslation.js';
 
 const MENU_ITEMS = [
     { id: 'tree', icon: '🌳', label: 'Gia phả' },
@@ -23,13 +23,14 @@ const COMMON_ITEMS = [
     { id: 'history', icon: '📜', label: 'Lịch sử' },
 ];
 
-function getRoleLabel(role) {
-    if (role === 'admin') return 'Quản trị viên';
-    if (role === 'editor') return 'Biên tập viên';
-    return 'Thành viên';
+function getRoleLabel(role, t) {
+    if (role === 'admin') return t('role.admin') || 'Quản trị viên';
+    if (role === 'editor') return t('role.editor') || 'Biên tập viên';
+    return t('role.member') || 'Thành viên';
 }
 
 export default function Sidebar({ activePage, onNavigate, isAdmin, user, onLogout, collapsed, onToggle, pendingCount, onOpenProfile, theme, setTheme }) {
+    const { t, lang, changeLanguage } = useTranslation();
     const isEditorOrAdmin = user?.role === 'admin' || user?.role === 'editor';
     const [showUserMenu, setShowUserMenu] = useState(false);
     const menuRef = useRef(null);
@@ -59,12 +60,12 @@ export default function Sidebar({ activePage, onNavigate, isAdmin, user, onLogou
                     <div className="sidebar-logo">
                         <span className="sidebar-logo-icon">🏛️</span>
                         <div className="sidebar-logo-text">
-                            <span className="sidebar-logo-title">Gia Phả</span>
-                            <span className="sidebar-logo-sub">Dòng Họ Vũ</span>
+                            <span className="sidebar-logo-title">{t('sidebar.logo_title')}</span>
+                            <span className="sidebar-logo-sub">{t('sidebar.logo_sub')}</span>
                         </div>
                     </div>
                 )}
-                <button className="sidebar-toggle" onClick={onToggle} title={collapsed ? 'Mở menu' : 'Thu gọn'}>
+                <button className="sidebar-toggle" onClick={onToggle} title={collapsed ? t('sidebar.open_menu') : t('sidebar.collapse')}>
                     {collapsed ? '›' : '‹'}
                 </button>
             </div>
@@ -76,10 +77,10 @@ export default function Sidebar({ activePage, onNavigate, isAdmin, user, onLogou
                         key={item.id}
                         className={`sidebar-item ${activePage === item.id ? 'active' : ''}`}
                         onClick={() => onNavigate(item.id)}
-                        title={collapsed ? item.label : ''}
+                        title={collapsed ? t('nav.' + item.id) : ''}
                     >
                         <span className="sidebar-item-icon">{item.icon}</span>
-                        {!collapsed && <span className="sidebar-item-label">{item.label}</span>}
+                        {!collapsed && <span className="sidebar-item-label">{t('nav.' + item.id) || item.label}</span>}
                     </button>
                 ))}
 
@@ -88,17 +89,17 @@ export default function Sidebar({ activePage, onNavigate, isAdmin, user, onLogou
                         key={item.id}
                         className={`sidebar-item ${activePage === item.id ? 'active' : ''}`}
                         onClick={() => onNavigate(item.id)}
-                        title={collapsed ? item.label : ''}
+                        title={collapsed ? t('nav.' + item.id) : ''}
                     >
                         <span className="sidebar-item-icon">{item.icon}</span>
-                        {!collapsed && <span className="sidebar-item-label">{item.label}</span>}
+                        {!collapsed && <span className="sidebar-item-label">{t('nav.' + item.id) || item.label}</span>}
                     </button>
                 ))}
 
                 {(isEditorOrAdmin) && (
                     <>
                         <div className="sidebar-divider" style={{ marginTop: '16px' }} />
-                        {!collapsed && <div style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-muted)', textTransform: 'uppercase', padding: '12px 16px 4px', letterSpacing: '0.5px' }}>Khu vực Quản trị</div>}
+                        {!collapsed && <div style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-muted)', textTransform: 'uppercase', padding: '12px 16px 4px', letterSpacing: '0.5px' }}>{t('sidebar.admin_section')}</div>}
                     </>
                 )}
 
@@ -107,10 +108,10 @@ export default function Sidebar({ activePage, onNavigate, isAdmin, user, onLogou
                         key={item.id}
                         className={`sidebar-item ${activePage === item.id ? 'active' : ''}`}
                         onClick={() => onNavigate(item.id)}
-                        title={collapsed ? item.label : ''}
+                        title={collapsed ? t('nav.' + item.id) : ''}
                     >
                         <span className="sidebar-item-icon">{item.icon}</span>
-                        {!collapsed && <span className="sidebar-item-label">{item.label}</span>}
+                        {!collapsed && <span className="sidebar-item-label">{t('nav.' + item.id) || item.label}</span>}
                         {item.id === 'requests' && pendingCount > 0 && (
                             <span className="sidebar-badge">{pendingCount}</span>
                         )}
@@ -121,10 +122,10 @@ export default function Sidebar({ activePage, onNavigate, isAdmin, user, onLogou
                         key={item.id}
                         className={`sidebar-item ${activePage === item.id ? 'active' : ''}`}
                         onClick={() => onNavigate(item.id)}
-                        title={collapsed ? item.label : ''}
+                        title={collapsed ? t('nav.' + item.id) : ''}
                     >
                         <span className="sidebar-item-icon">{item.icon}</span>
-                        {!collapsed && <span className="sidebar-item-label">{item.label}</span>}
+                        {!collapsed && <span className="sidebar-item-label">{t('nav.' + item.id) || item.label}</span>}
                     </button>
                 ))}
             </nav>
@@ -144,39 +145,58 @@ export default function Sidebar({ activePage, onNavigate, isAdmin, user, onLogou
                             </span>
                             <div>
                                 <div className="sidebar-user-menu-name">{user?.displayName || user?.username}</div>
-                                <div className="sidebar-user-menu-role">{getRoleLabel(user?.role)}</div>
+                                <div className="sidebar-user-menu-role">{getRoleLabel(user?.role, t)}</div>
                             </div>
                         </div>
                         <div className="sidebar-user-menu-divider" />
 
                         <div className="sidebar-user-menu-item" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'default' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                <span>🌓</span> Giao diện
+                                <span>🌓</span> {t('app.theme')}
                             </div>
                             <div style={{ display: 'flex', gap: '4px', background: 'var(--bg-card)', borderRadius: '6px', padding: '2px' }}>
                                 <button 
                                     onClick={(e) => { e.stopPropagation(); setTheme('light', e); }}
                                     style={{ border: 'none', background: theme === 'light' ? 'var(--primary)' : 'transparent', color: theme === 'light' ? '#fff' : 'var(--text-muted)', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', transition: 'all 0.2s' }}
-                                >Sáng</button>
+                                >{t('theme.light')}</button>
                                 <button 
                                     onClick={(e) => { e.stopPropagation(); setTheme('dark', e); }}
                                     style={{ border: 'none', background: theme === 'dark' ? 'var(--primary)' : 'transparent', color: theme === 'dark' ? '#fff' : 'var(--text-muted)', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', transition: 'all 0.2s' }}
-                                >Tối</button>
+                                >{t('theme.dark')}</button>
                             </div>
                         </div>
 
-                        <div className="sidebar-user-menu-divider" />
+                        {ConfigAPI.getBoolean('feature_localize_enabled', true) && (
+                            <>
+                                <div className="sidebar-user-menu-item" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'default' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                        <span>🌐</span> {t('app.language')}
+                                    </div>
+                                    <div style={{ display: 'flex', gap: '4px', background: 'var(--bg-card)', borderRadius: '6px', padding: '2px' }}>
+                                        <button 
+                                            onClick={(e) => { e.stopPropagation(); changeLanguage('vi'); }}
+                                            style={{ border: 'none', background: lang === 'vi' ? 'var(--primary)' : 'transparent', color: lang === 'vi' ? '#fff' : 'var(--text-muted)', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', transition: 'all 0.2s' }}
+                                        >VI</button>
+                                        <button 
+                                            onClick={(e) => { e.stopPropagation(); changeLanguage('en'); }}
+                                            style={{ border: 'none', background: lang === 'en' ? 'var(--primary)' : 'transparent', color: lang === 'en' ? '#fff' : 'var(--text-muted)', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', transition: 'all 0.2s' }}
+                                        >EN</button>
+                                    </div>
+                                </div>
+                                <div className="sidebar-user-menu-divider" />
+                            </>
+                        )}
 
                         <button className="sidebar-user-menu-item" onClick={() => { setShowUserMenu(false); onOpenProfile && onOpenProfile(); }}>
-                            <span>⚙️</span> Hồ sơ & Mật khẩu
+                            <span>⚙️</span> {t('sidebar.profile_password')}
                         </button>
 
                         <button className="sidebar-user-menu-item" onClick={() => { setShowUserMenu(false); onNavigate('guide'); }}>
-                            <span>❓</span> Hướng dẫn sử dụng
+                            <span>❓</span> {t('sidebar.user_guide')}
                         </button>
                         <div className="sidebar-user-menu-divider" />
                         <button className="sidebar-user-menu-item logout" onClick={() => { setShowUserMenu(false); onLogout(); }}>
-                            <span>🚪</span> Đăng xuất
+                            <span>🚪</span> {t('app.logout')}
                         </button>
                     </div>
                 )}
@@ -193,7 +213,7 @@ export default function Sidebar({ activePage, onNavigate, isAdmin, user, onLogou
                     {!collapsed && (
                         <div className="sidebar-user-info">
                             <span className="sidebar-user-name">{user?.displayName || user?.username}</span>
-                            <span className="sidebar-user-role">{getRoleLabel(user?.role)}</span>
+                            <span className="sidebar-user-role">{getRoleLabel(user?.role, t)}</span>
                         </div>
                     )}
                     {!collapsed && (

@@ -1,12 +1,9 @@
 import { useState, useEffect } from 'react';
 import { myLog, myError } from '../../shared/utils/logger';
 import { getApiBase } from '../../shared/services/api';
-import { Analytics } from '../../shared/services/analytics';
+import { TrackingHelper } from '../../shared/services/TrackingHelper';
 
-function getToken() {
-    try { return JSON.parse(localStorage.getItem('vuFamilyAuth') || '{}').token || ''; }
-    catch { return ''; }
-}
+
 
 export default function SystemAdminPage({ addToast }) {
     const [users, setUsers] = useState([]);
@@ -54,7 +51,7 @@ export default function SystemAdminPage({ addToast }) {
         setLoading(true);
         try {
             const res = await fetch(`${getApiBase()}/users`, {
-                headers: { 'x-auth-token': getToken() }
+                headers: { 'x-auth-token': AuthHelper.getToken() }
             });
             const json = await res.json();
             if (json.success) setUsers(json.data || []);
@@ -78,12 +75,12 @@ export default function SystemAdminPage({ addToast }) {
         try {
             const res = await fetch(`${getApiBase()}/users`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'x-auth-token': getToken() },
+                headers: { 'Content-Type': 'application/json', 'x-auth-token': AuthHelper.getToken() },
                 body: JSON.stringify(newUser)
             });
             const json = await res.json();
             if (json.success) {
-                Analytics.trackEvent('create_account', { target_role: newUser.role });
+                TrackingHelper.trackCreateAccount(newUser.role);
                 addToast('Đã tạo tài khoản thành công!');
                 setShowCreate(false);
                 setNewUser({ username: '', password: '', displayName: '', role: 'viewer' });
@@ -99,11 +96,11 @@ export default function SystemAdminPage({ addToast }) {
         try {
             const res = await fetch(`${getApiBase()}/users/${id}`, {
                 method: 'DELETE',
-                headers: { 'x-auth-token': getToken() }
+                headers: { 'x-auth-token': AuthHelper.getToken() }
             });
             const json = await res.json();
             if (json.success) {
-                Analytics.trackEvent('ban_account', { target_user_id: id });
+                TrackingHelper.trackBanAccount(id);
                 addToast('Đã xóa tài khoản');
                 fetchUsers();
             } else {
@@ -123,7 +120,7 @@ export default function SystemAdminPage({ addToast }) {
         try {
             const res = await fetch(`${getApiBase()}/users/${resetModal.id}/reset-password`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'x-auth-token': getToken() },
+                headers: { 'Content-Type': 'application/json', 'x-auth-token': AuthHelper.getToken() },
                 body: JSON.stringify({ newPassword: resetPw })
             });
             const json = await res.json();
@@ -141,7 +138,7 @@ export default function SystemAdminPage({ addToast }) {
         try {
             const res = await fetch(`${getApiBase()}/users/${editModal.id}`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json', 'x-auth-token': getToken() },
+                headers: { 'Content-Type': 'application/json', 'x-auth-token': AuthHelper.getToken() },
                 body: JSON.stringify(editUser)
             });
             const json = await res.json();
@@ -161,7 +158,7 @@ export default function SystemAdminPage({ addToast }) {
         try {
             setIsProcessingDb(true);
             const res = await fetch(`${getApiBase()}/database/export?format=${exportFormat}&isEncrypted=${exportEncrypted}&tables=${selectedTables.join(',')}`, {
-                headers: { 'x-auth-token': getToken() }
+                headers: { 'x-auth-token': AuthHelper.getToken() }
             });
             if (!res.ok) {
                 const text = await res.text();
@@ -200,7 +197,7 @@ export default function SystemAdminPage({ addToast }) {
 
             const res = await fetch(`${getApiBase()}/database/import`, {
                 method: 'POST',
-                headers: { 'x-auth-token': getToken() },
+                headers: { 'x-auth-token': AuthHelper.getToken() },
                 body: formData
             });
             const json = await res.json();

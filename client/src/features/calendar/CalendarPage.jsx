@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { myLog, myError } from '../../shared/utils/logger';
 import { Solar, Lunar } from '../../shared/utils/lunar.js';
 import { ganZhiToViet, lunarDayLabel } from '../../shared/utils/vietLunar.js';

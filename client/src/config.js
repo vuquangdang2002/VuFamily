@@ -41,6 +41,7 @@ export const AppConfig = {
     feature_chat_enabled: true,
     feature_history_enabled: true,
     feature_requests_enabled: true,
+    feature_localize_enabled: true,
     // (Có thể mở rộng thêm các Config dạng Object JSON ở đây)
 };
 
@@ -51,10 +52,13 @@ export const AppConfig = {
  */
 export const updateAppConfigFromRemote = (remoteConfigsMap) => {
     myLog('CONFIG', '📥 Đang đồng bộ Remote Config vào bộ nhớ (AppConfig)...');
+    const fetchedDetails = {};
     for (const [key, valueObj] of Object.entries(remoteConfigsMap)) {
-        AppConfig[key] = valueObj.asString();
+        const valStr = valueObj.asString();
+        AppConfig[key] = valStr;
+        fetchedDetails[key] = valStr;
     }
-    myLog('CONFIG', '✅ Đã ghi đè cấu hình thành công. AppConfig hiện tại:', AppConfig);
+    myLog('CONFIG', '✅ Đã ghi đè cấu hình thành công. Danh sách Configs đã nhận:', fetchedDetails);
 };
 
 // ============================================================================

@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import loginHero from '../../assets/login-hero.png';
+import { useTranslation } from '../../shared/hooks/useTranslation.js';
 import './Login.css';
 
 export default function LoginPage({ onLogin, verifyMsg }) {
+    const { t } = useTranslation();
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [showPass, setShowPass] = useState(false);
@@ -26,7 +28,7 @@ export default function LoginPage({ onLogin, verifyMsg }) {
 
         if (isRegisterMode) {
             if (!username.trim() || !password.trim()) {
-                setError('Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu');
+                setError(t('login.error_missing'));
                 return;
             }
             setLoading(true);
@@ -53,7 +55,7 @@ export default function LoginPage({ onLogin, verifyMsg }) {
                     setError(json.error || 'Đăng ký thất bại');
                 }
             } catch (err) {
-                setError('Lỗi kết nối server');
+                setError(t('login.error_connection'));
             } finally {
                 setLoading(false);
             }
@@ -61,7 +63,7 @@ export default function LoginPage({ onLogin, verifyMsg }) {
         }
 
         if (!username.trim() || !password.trim()) {
-            setError('Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu');
+            setError(t('login.error_missing'));
             return;
         }
         setLoading(true);
@@ -87,7 +89,7 @@ export default function LoginPage({ onLogin, verifyMsg }) {
             });
             const json = await res.json();
             setForgotMsg(json.message || json.error || 'Đã xử lý yêu cầu');
-        } catch (e) { setForgotMsg('Lỗi kết nối server'); }
+        } catch (e) { setForgotMsg(t('login.error_connection')); }
         setForgotLoading(false);
     };
 
@@ -98,8 +100,8 @@ export default function LoginPage({ onLogin, verifyMsg }) {
                 <div className="lp-logo">
                     <div className="lp-logo-icon">族</div>
                     <div>
-                        <div className="lp-logo-text">{isRegisterMode ? 'Tạo tài khoản' : 'Gia Phả'}</div>
-                        <div className="lp-logo-sub">{isRegisterMode ? 'Đăng ký thành viên' : 'Dòng Họ Vũ'}</div>
+                        <div className="lp-logo-text">{isRegisterMode ? t('login.create_account') : t('login.title')}</div>
+                        <div className="lp-logo-sub">{isRegisterMode ? t('login.register_member') : t('login.sub')}</div>
                     </div>
                 </div>
 
@@ -124,14 +126,14 @@ export default function LoginPage({ onLogin, verifyMsg }) {
 
                 {showForgot && (
                     <div className="lp-forgot-panel" style={{ marginBottom: 16 }}>
-                        <p>Nhập tên đăng nhập để quản trị viên gửi mật khẩu mới qua email.</p>
-                        <input className="lp-input" type="text" placeholder="Tên đăng nhập..." value={forgotUser} onChange={e => setForgotUser(e.target.value)} autoFocus />
+                        <p>{t('login.forgot_hint')}</p>
+                        <input className="lp-input" type="text" placeholder={t('login.forgot_placeholder')} value={forgotUser} onChange={e => setForgotUser(e.target.value)} autoFocus />
                         {forgotMsg && <div className="lp-forgot-msg">{forgotMsg}</div>}
                         <div style={{ display: 'flex', gap: 8 }}>
                             <button className="lp-btn-primary" style={{ flex: 1 }} onClick={handleForgotPassword} disabled={forgotLoading}>
-                                {forgotLoading ? 'Đang gửi...' : '📧 Gửi yêu cầu'}
+                                {forgotLoading ? t('login.forgot_sending') : t('login.forgot_submit')}
                             </button>
-                            <button className="lp-btn-outline" style={{ flex: 1 }} onClick={() => setShowForgot(false)}>Hủy</button>
+                            <button className="lp-btn-outline" style={{ flex: 1 }} onClick={() => setShowForgot(false)}>{t('action.cancel')}</button>
                         </div>
                     </div>
                 )}
@@ -139,13 +141,13 @@ export default function LoginPage({ onLogin, verifyMsg }) {
                 <form className="lp-form" onSubmit={handleSubmit}>
                     {isRegisterMode && (
                         <div className="lp-field">
-                            <label className="lp-label">Họ tên</label>
+                            <label className="lp-label">{t('login.fullname')}</label>
                             <input className="lp-input" type="text" value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder="Nguyễn Văn A" />
                         </div>
                     )}
 
                     <div className="lp-field">
-                        <label className="lp-label"><span className="req">*</span>Tên đăng nhập</label>
+                        <label className="lp-label"><span className="req">*</span>{t('login.username')}</label>
                         <div className="lp-input-wrap">
                             <span className="lp-input-icon">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
@@ -155,7 +157,7 @@ export default function LoginPage({ onLogin, verifyMsg }) {
                                 type="text"
                                 value={username}
                                 onChange={e => setUsername(e.target.value)}
-                                placeholder="Tên đăng nhập"
+                                placeholder={t('login.username')}
                                 autoFocus
                             />
                         </div>
@@ -166,14 +168,14 @@ export default function LoginPage({ onLogin, verifyMsg }) {
                             <div className="lp-field">
                                 <label className="lp-label"><span className="req">*</span>Email</label>
                                 <input className="lp-input" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="email@example.com" />
-                                <p className="lp-input-hint">Link xác nhận sẽ được gửi đến email này.</p>
+                                <p className="lp-input-hint">{t('login.email_hint')}</p>
                             </div>
                             <div className="lp-field">
-                                <label className="lp-label">Số điện thoại <span style={{ color: '#9CA3AF', fontWeight: 'normal' }}>(Tùy chọn)</span></label>
+                                <label className="lp-label">{t('login.phone')} <span style={{ color: '#9CA3AF', fontWeight: 'normal' }}>{t('login.optional')}</span></label>
                                 <input className="lp-input" type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="0912345678" />
                             </div>
                             <div className="lp-field">
-                                <label className="lp-label">Link Facebook <span style={{ color: '#9CA3AF', fontWeight: 'normal' }}>(Tùy chọn)</span></label>
+                                <label className="lp-label">{t('login.facebook')} <span style={{ color: '#9CA3AF', fontWeight: 'normal' }}>{t('login.optional')}</span></label>
                                 <input className="lp-input" type="url" value={facebook} onChange={e => setFacebook(e.target.value)} placeholder="https://facebook.com/..." />
                             </div>
                         </>
@@ -181,7 +183,7 @@ export default function LoginPage({ onLogin, verifyMsg }) {
 
                     <div className="lp-field">
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <label className="lp-label"><span className="req">*</span>Mật khẩu</label>
+                            <label className="lp-label"><span className="req">*</span>{t('login.password')}</label>
                         </div>
                         <div className="lp-input-wrap">
                             <span className="lp-input-icon">
@@ -192,7 +194,7 @@ export default function LoginPage({ onLogin, verifyMsg }) {
                                 type={showPass ? 'text' : 'password'}
                                 value={password}
                                 onChange={e => setPassword(e.target.value)}
-                                placeholder="Mật khẩu"
+                                placeholder={t('login.password')}
                                 style={{ paddingRight: 42 }}
                             />
                             <button type="button" className="lp-eye" onClick={() => setShowPass(!showPass)} tabIndex={-1}>
@@ -204,13 +206,13 @@ export default function LoginPage({ onLogin, verifyMsg }) {
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px' }}>
                             {isRegisterMode ? (
-                                <p className="lp-input-hint" style={{ margin: 0 }}>Tối thiểu 8 ký tự, gồm chữ hoa, thường, số và ký tự đặc biệt.</p>
+                                <p className="lp-input-hint" style={{ margin: 0 }}>{t('login.password_hint')}</p>
                             ) : (
                                 <div style={{ flex: 1 }} /> // Spacer
                             )}
                             {!isRegisterMode && (
                                 <button type="button" className="lp-forgot-link" onClick={() => { setShowForgot(!showForgot); setForgotMsg(''); }}>
-                                    Quên mật khẩu?
+                                    {t('login.forgot_password')}
                                 </button>
                             )}
                         </div>
@@ -224,16 +226,16 @@ export default function LoginPage({ onLogin, verifyMsg }) {
                     </button>
                 </form>
 
-                <div className="lp-or">HOẶC</div>
+                <div className="lp-or">{t('login.or')}</div>
 
                 <button type="button" className="lp-btn-outline" onClick={() => { setIsRegisterMode(!isRegisterMode); setError(''); setShowForgot(false); }}>
-                    {isRegisterMode ? 'Đăng nhập' : 'Tạo tài khoản mới'}
+                    {isRegisterMode ? t('login.sign_in') : t('login.create_new_account')}
                 </button>
 
                 <div className="lp-footer">
-                    <a href="#">Về chúng tôi</a>
-                    <a href="#">Liên hệ</a>
-                    <a href="#">Hướng dẫn</a>
+                    <a href="#">{t('login.about_us')}</a>
+                    <a href="#">{t('login.contact')}</a>
+                    <a href="#">{t('login.guide')}</a>
                 </div>
                 <p className="lp-copyright">Copyright © 2026 by DangVQ</p>
             </div>

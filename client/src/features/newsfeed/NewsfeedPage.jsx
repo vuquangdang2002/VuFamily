@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { myLog, myError } from '../../shared/utils/logger';
 import { localApi, api } from '../../shared/services/api';
 import { ConfigAPI } from '../../config.js';
+import { TrackingHelper } from '../../shared/services/TrackingHelper';
 
 // Import brand icons
 import iconZalo from '../../assets/icons/icon_zalo.png';
@@ -134,6 +135,7 @@ export default function NewsfeedPage({ user, isAdmin, addToast, members = [], on
             if (json.success) {
                 setNewPost('');
                 addToast('Đã đăng bài thành công!');
+                TrackingHelper.trackCreatePost(false); // Update to true if image upload is added
                 fetchPosts(true);
             } else {
                 addToast(json.error || 'Lỗi đăng bài');
@@ -181,6 +183,7 @@ export default function NewsfeedPage({ user, isAdmin, addToast, members = [], on
                 nr.users = [...nr.users, currentUserId];
                 nr.count++;
                 reactions[emoji] = nr;
+                TrackingHelper.trackReactPost(emoji);
             }
             return { ...post, reactions };
         }));

@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { myLog, myError } from '../../shared/utils/logger';
+import { TrackingHelper } from '../../shared/services/TrackingHelper';
 import { io } from 'socket.io-client';
 import { HUB_URL } from '../../config';
 import './VoiceCall.css';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-const getToken = () => { try { return JSON.parse(localStorage.getItem('vuFamilyAuth') || '{}').token || ''; } catch { return ''; } };
+
 const fmt = (s) => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
 
 const AUDIO_CONSTRAINTS = {
@@ -253,7 +254,7 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
         if (!user?.token) return;
         const socket = io(HUB_URL, {
             path: '/hub',
-            auth: { token: getToken() },
+            auth: { token: AuthHelper.getToken() },
             transports: ['websocket', 'polling'],
             upgrade: true,
             rememberUpgrade: true,
@@ -547,6 +548,9 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
     // ── Cleanup ───────────────────────────────────────────────────────────────
     const cleanup = useCallback(() => {
         myLog('CALL', '[VoiceCall] Thực hiện dọn dẹp (cleanup) và kết thúc cuộc gọi.');
+        if (duration > 0) {
+            TrackingHelper.trackEndVoiceCall(duration);
+        }
         setPhase('IDLE'); setCallMeta(null);
         stopMedia();
         Object.values(pcsRef.current).forEach(pc => pc.close());
@@ -578,6 +582,7 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
 
         setPhase('CALLING');
         setCallMeta({ roomId: room.id, room, caller: { displayName: room.display_name }, isInitiator: true });
+        TrackingHelper.trackStartVoiceCall(room.type === 'group' || room.members?.length > 2 ? 'group' : '1-1');
 
         socketRef.current?.emit('call:start', { roomId: room.id, callType: type }, async (res) => {
             if (!res?.success) { cleanup(); addToast(res?.error || 'Lỗi bắt đầu cuộc gọi', 'error'); return; }

@@ -26,7 +26,8 @@ import { api, localApi, getApiBase } from './shared/services/api';
 import { clearAllCache as clearChatCache } from './shared/services/chatCache';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { SplashScreen } from '@capacitor/splash-screen';
-import { Analytics } from './shared/services/analytics';
+import { TrackingHelper } from './shared/services/TrackingHelper';
+import { syncRemoteConfig } from './firebase.js';
 const AUTH_KEY = 'vuFamilyAuth';
 
 function getStoredAuth() {
@@ -98,8 +99,7 @@ export default function App() {
     useEffect(() => {
         async function requestAppPermissions() {
             try {
-                // Initialize Remote Config for feature flags/dynamic settings
-                const { syncRemoteConfig } = await import('./firebase.js');
+                // Initialize Remote Config for feature flags/dynamic settings synchronously
                 await syncRemoteConfig();
 
                 if (window.Capacitor) {
@@ -108,7 +108,12 @@ export default function App() {
                     await Notification.requestPermission();
                 }
             } catch (e) {
-                myError('APP', 'Không thể xin quyền thông báo:', e);
+                myError('APP', 'Không thể xin quyền thông báo hoặc lỗi tải module:', e);
+                // Nếu lỗi do phiên bản cũ bị cache (Failed to fetch dynamically imported module)
+                if (e.name === 'TypeError' && e.message.includes('dynamically imported module')) {
+                    console.log('Phát hiện phiên bản mới, đang tải lại trang...');
+                    window.location.reload();
+                }
             }
 
             // Tính năng đồng bộ: Xin quyền Microphone ngay để Native chặn popup một lần duy nhất lúc mở App
@@ -452,6 +457,8 @@ export default function App() {
                         await api.addAchievement({ ...a, memberId: res.data.id });
                     }
                 }
+                const relationship = data.parentId ? 'con' : (data.spouseId ? 'vo_chong' : 'goc');
+                TrackingHelper.trackAddTreeMember(relationship);
                 addToast(`Đã thêm thành viên "${data.name}" thành công!`);
             }
             await refresh();

@@ -3,6 +3,7 @@ import { Solar, Lunar } from '../utils/lunar.js';
 import { ganZhiToViet } from '../utils/vietLunar.js';
 import { API_BASE_URL, ConfigAPI } from '../../config.js';
 import { SAMPLE_MEMBERS, SAMPLE_ACHIEVEMENTS, SAMPLE_POSTS, SAMPLE_REQUESTS, SAMPLE_HISTORY } from './sampleData.js';
+import { AuthHelper } from './AuthHelper.js';
 
 export function getApiBase() {
     // If not Capacitor and on localhost, fallback to proxy
@@ -16,8 +17,8 @@ export function getApiBase() {
 async function request(url, options = {}) {
     let headers = { 'Content-Type': 'application/json', ...options.headers };
     try {
-        const auth = JSON.parse(localStorage.getItem('vuFamilyAuth'));
-        if (auth && auth.token) headers['x-auth-token'] = auth.token;
+        const token = AuthHelper.getToken();
+        if (token) headers['x-auth-token'] = token;
     } catch (e) { console.error("Auth Token Fetch Error:", e); }
 
     const baseUrl = getApiBase();
@@ -90,6 +91,47 @@ export const api = {
     getComments: (postId) => request(`/posts/${postId}/comments`),
     addComment: (postId, content) => request(`/posts/${postId}/comments`, { method: 'POST', body: JSON.stringify({ content }) }),
     deleteComment: (commentId) => request(`/comments/${commentId}`, { method: 'DELETE' }),
+
+    // ==========================================
+    // USERS & AUTH
+    // ==========================================
+    login: (username, password) => request('/auth/login', { method: 'POST', body: JSON.stringify({ username, password }) }),
+    register: (data) => request('/auth/register', { method: 'POST', body: JSON.stringify(data) }),
+    forgotPassword: (email) => request('/auth/forgot-password', { method: 'POST', body: JSON.stringify({ email }) }),
+    getUsers: () => request('/users'),
+    getUserAdmin: (id) => request(`/users/${id}`),
+    resetUserPassword: (id, newPassword) => request(`/users/${id}/reset-password`, { method: 'POST', body: JSON.stringify({ newPassword }) }),
+    updateUserAdmin: (id, data) => request(`/users/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    updateProfile: (data) => request('/auth/profile', { method: 'PUT', body: JSON.stringify(data) }),
+    changePassword: (data) => request('/auth/change-password', { method: 'POST', body: JSON.stringify(data) }),
+    uploadAvatar: (formData) => {
+        return fetch(`${getApiBase()}/auth/avatar`, { 
+            method: 'POST', body: formData, headers: { 'x-auth-token': AuthHelper.getToken() } 
+        }).then(res => res.json());
+    },
+    getPublicUsers: () => request('/users/public'),
+    
+    // ==========================================
+    // CHATS
+    // ==========================================
+    getChats: () => request('/chats'),
+    createChat: (data) => request('/chats', { method: 'POST', body: JSON.stringify(data) }),
+    getChatMessages: (roomId) => request(`/chats/${roomId}/messages`),
+    getChatMessagesSince: (roomId, since) => request(`/chats/${roomId}/messages?since=${since}`),
+    sendChatMessage: (roomId, data) => request(`/chats/${roomId}/messages`, { method: 'POST', body: JSON.stringify(data) }),
+    updateChatName: (roomId, name) => request(`/chats/${roomId}/name`, { method: 'PUT', body: JSON.stringify({ name }) }),
+    leaveChat: (roomId) => request(`/chats/${roomId}/leave`, { method: 'POST' }),
+    kickChatUser: (roomId, userId) => request(`/chats/${roomId}/kick/${userId}`, { method: 'POST' }),
+
+    // ==========================================
+    // DATABASE ADMIN
+    // ==========================================
+    exportDatabase: (format, isEncrypted, tables) => request(`/database/export?format=${format}&isEncrypted=${isEncrypted}&tables=${tables}`),
+    importDatabase: (formData) => {
+        return fetch(`${getApiBase()}/database/import`, { 
+            method: 'POST', body: formData, headers: { 'x-auth-token': AuthHelper.getToken() } 
+        }).then(res => res.json());
+    },
 };
 
 // ====================================

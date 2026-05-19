@@ -1,7 +1,7 @@
 import { messaging } from '../../firebase';
 import { myLog, myError } from '../utils/logger';
 import { getToken, onMessage } from 'firebase/messaging';
-import { Analytics } from './analytics';
+import { TrackingHelper } from './TrackingHelper';
 
 export const requestNotificationPermission = async () => {
     try {
@@ -21,7 +21,7 @@ export const requestNotificationPermission = async () => {
 
             if (currentToken) {
                 myLog('FIREBASE', 'Firebase Cloud Messaging Token:', currentToken);
-                Analytics.trackEvent('fcm_token_granted');
+                TrackingHelper.TrackingEvent('fcm_token_granted'); // We don't have a specific method for this yet, so we just track it generically
                 // You would typically send this token to your backend here
                 return currentToken;
             } else {
@@ -30,7 +30,7 @@ export const requestNotificationPermission = async () => {
             }
         } else {
             myError('FIREBASE', 'Notification permission not granted.');
-            Analytics.trackEvent('fcm_token_denied');
+            TrackingHelper.TrackingEvent('fcm_token_denied');
             return null;
         }
     } catch (err) {
@@ -39,11 +39,13 @@ export const requestNotificationPermission = async () => {
     }
 };
 
-export const onMessageListener = () =>
-    new Promise((resolve) => {
+export const setupMessageListener = () => {
+    if (!messaging) return Promise.resolve(null);
+    return new Promise((resolve) => {
         onMessage(messaging, (payload) => {
             myLog('FIREBASE', 'Payload received: ', payload);
-            Analytics.trackEvent('notification_received');
+            TrackingHelper.TrackingEvent('notification_received');
             resolve(payload);
         });
     });
+};

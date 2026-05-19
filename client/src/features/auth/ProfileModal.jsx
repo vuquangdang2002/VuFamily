@@ -1,11 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
+import { useTranslation } from '../../shared/hooks/useTranslation.js';
 
-function getToken() {
-    try { return JSON.parse(localStorage.getItem('vuFamilyAuth') || '{}').token || ''; }
-    catch { return ''; }
-}
+
 
 export default function ProfileModal({ isOpen, onClose, user, onUpdateUser, onAddToast, theme, setTheme }) {
+    const { t } = useTranslation();
     const [activeTab, setActiveTab] = useState('info');
 
     // Info fields
@@ -52,11 +51,11 @@ export default function ProfileModal({ isOpen, onClose, user, onUpdateUser, onAd
         const file = e.target.files?.[0];
         if (!file) return;
         if (!file.type.startsWith('image/')) {
-            onAddToast('Vui lòng chọn file ảnh (JPG, PNG, WebP...)', 'error');
+            onAddToast(t('profile.toast_invalid_file'), 'error');
             return;
         }
         if (file.size > 5 * 1024 * 1024) {
-            onAddToast('Ảnh quá lớn. Giới hạn 5MB.', 'error');
+            onAddToast(t('profile.toast_file_too_large'), 'error');
             return;
         }
         if (avatarPreview) URL.revokeObjectURL(avatarPreview);
@@ -71,7 +70,7 @@ export default function ProfileModal({ isOpen, onClose, user, onUpdateUser, onAd
         !!avatarFile;
 
     const handleUpdateInfo = async () => {
-        if (!displayName.trim()) { onAddToast('Tên hiển thị không được để trống', 'error'); return; }
+        if (!displayName.trim()) { onAddToast(t('profile.toast_empty_display'), 'error'); return; }
         setLoadingInfo(true);
         try {
             let finalAvatarUrl = avatar;
@@ -83,7 +82,7 @@ export default function ProfileModal({ isOpen, onClose, user, onUpdateUser, onAd
                     method: 'POST',
                     headers: {
                         'Content-Type': avatarFile.type,
-                        'x-auth-token': getToken(),
+                        'x-auth-token': AuthHelper.getToken(),
                     },
                     body: avatarFile,
                 });
@@ -96,7 +95,7 @@ export default function ProfileModal({ isOpen, onClose, user, onUpdateUser, onAd
             // 2. Cập nhật profile
             const res = await fetch('/api/auth/profile', {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json', 'x-auth-token': getToken() },
+                headers: { 'Content-Type': 'application/json', 'x-auth-token': AuthHelper.getToken() },
                 body: JSON.stringify({
                     displayName: displayName.trim(),
                     email: email.trim(),
@@ -110,12 +109,12 @@ export default function ProfileModal({ isOpen, onClose, user, onUpdateUser, onAd
                 setAvatar(finalAvatarUrl);
                 setAvatarFile(null);
                 if (avatarPreview) { URL.revokeObjectURL(avatarPreview); setAvatarPreview(''); }
-                onAddToast('Cập nhật thông tin thành công!');
+                onAddToast(t('profile.toast_update_success'));
             } else {
-                onAddToast(data.error || 'Cập nhật thất bại', 'error');
+                onAddToast(data.error || t('profile.toast_update_fail'), 'error');
             }
         } catch (e) {
-            onAddToast(e.message || 'Lỗi kết nối khi cập nhật', 'error');
+            onAddToast(e.message || t('profile.toast_conn_error'), 'error');
         } finally {
             setLoadingInfo(false);
             setUploadingAvatar(false);
@@ -124,26 +123,26 @@ export default function ProfileModal({ isOpen, onClose, user, onUpdateUser, onAd
 
     const handleChangePassword = async () => {
         setPwdError('');
-        if (!currentPwd || !newPwd || !confirmNewPwd) { setPwdError('Vui lòng điền đầy đủ các trường mật khẩu'); return; }
+        if (!currentPwd || !newPwd || !confirmNewPwd) { setPwdError(t('profile.toast_pwd_empty')); return; }
         const strongRegex = new RegExp("^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\\$%\\^&\\*])(?=.{8,})");
-        if (!strongRegex.test(newPwd)) { setPwdError('Mật khẩu yếu. Yêu cầu: ≥8 ký tự, chữ Hoa, chữ thường, số, ký tự đặc biệt (!@#$).'); return; }
-        if (newPwd !== confirmNewPwd) { setPwdError('Mật khẩu mới không khớp'); return; }
+        if (!strongRegex.test(newPwd)) { setPwdError(t('profile.toast_pwd_weak')); return; }
+        if (newPwd !== confirmNewPwd) { setPwdError(t('profile.toast_pwd_mismatch')); return; }
         setLoadingPwd(true);
         try {
             const res = await fetch('/api/auth/change-password', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'x-auth-token': getToken() },
+                headers: { 'Content-Type': 'application/json', 'x-auth-token': AuthHelper.getToken() },
                 body: JSON.stringify({ currentPassword: currentPwd, newPassword: newPwd })
             });
             const data = await res.json();
             if (data.success) {
-                onAddToast('Đổi mật khẩu thành công!');
+                onAddToast(t('profile.toast_pwd_success'));
                 setCurrentPwd(''); setNewPwd(''); setConfirmNewPwd('');
             } else {
-                setPwdError(data.error || 'Đổi mật khẩu thất bại');
+                setPwdError(data.error || t('profile.toast_pwd_fail'));
             }
         } catch (e) {
-            setPwdError('Lỗi kết nối khi đổi mật khẩu');
+            setPwdError(t('profile.toast_pwd_conn_error'));
         } finally {
             setLoadingPwd(false);
         }
@@ -162,7 +161,7 @@ export default function ProfileModal({ isOpen, onClose, user, onUpdateUser, onAd
                         <div
                             style={{ position: 'relative', cursor: 'pointer', flexShrink: 0 }}
                             onClick={() => fileInputRef.current?.click()}
-                            title="Nhấp để thay đổi ảnh đại diện"
+                            title={t('profile.avatar_title')}
                         >
                             <img
                                 src={displayedAvatar}
@@ -201,11 +200,11 @@ export default function ProfileModal({ isOpen, onClose, user, onUpdateUser, onAd
                         <div>
                             <h2 style={{ fontSize: 17, margin: 0 }}>{displayName || user?.username}</h2>
                             <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                                @{user?.username} · {user?.role === 'admin' ? '👑 Admin' : '👤 Viewer'}
+                                @{user?.username} · {user?.role === 'admin' ? '👑 ' + t('role.admin') : '👤 ' + t('role.member')}
                             </span>
                             {avatarFile && (
                                 <div style={{ fontSize: 11, color: 'var(--accent-success)', marginTop: 2 }}>
-                                    📷 Ảnh mới: {avatarFile.name} ({(avatarFile.size / 1024).toFixed(0)}KB)
+                                    📷 {t('profile.avatar_new')} {avatarFile.name} ({(avatarFile.size / 1024).toFixed(0)}KB)
                                 </div>
                             )}
                         </div>
@@ -215,7 +214,7 @@ export default function ProfileModal({ isOpen, onClose, user, onUpdateUser, onAd
 
                 {/* Tabs */}
                 <div style={{ display: 'flex', borderBottom: '1px solid var(--border-subtle)', padding: '0 20px', marginTop: 16 }}>
-                    {[['info', '👤 Thông tin'], ['password', '🔑 Mật khẩu']].map(([key, label]) => (
+                    {[['info', t('profile.tab_info')], ['password', t('profile.tab_password')]].map(([key, label]) => (
                         <button key={key} onClick={() => setActiveTab(key)} style={{
                             padding: '10px 16px', background: 'none', border: 'none',
                             borderBottom: activeTab === key ? '2px solid var(--primary)' : '2px solid transparent',
@@ -231,22 +230,22 @@ export default function ProfileModal({ isOpen, onClose, user, onUpdateUser, onAd
                     {activeTab === 'info' && (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                             <div className="form-group">
-                                <label className="form-label">Tên đăng nhập</label>
+                                <label className="form-label">{t('profile.username')}</label>
                                 <input className="form-input" value={user?.username || ''} disabled style={{ opacity: 0.55, cursor: 'not-allowed' }} />
-                                <small style={{ color: 'var(--text-muted)', fontSize: 11 }}>Tên đăng nhập không thể thay đổi</small>
+                                <small style={{ color: 'var(--text-muted)', fontSize: 11 }}>{t('profile.username_immutable')}</small>
                             </div>
                             <div className="form-group">
-                                <label className="form-label">✏️ Tên hiển thị *</label>
+                                <label className="form-label">{t('profile.display_name')}</label>
                                 <input className="form-input" type="text" value={displayName}
                                     onChange={e => setDisplayName(e.target.value)} placeholder="Nguyễn Văn A..." autoFocus />
                             </div>
                             <div className="form-group">
-                                <label className="form-label">📧 Email</label>
+                                <label className="form-label">{t('profile.email')}</label>
                                 <input className="form-input" type="email" value={email}
                                     onChange={e => setEmail(e.target.value)} placeholder="email@example.com" />
                             </div>
                             <div className="form-group">
-                                <label className="form-label">📞 Số điện thoại</label>
+                                <label className="form-label">{t('profile.phone')}</label>
                                 <input className="form-input" type="tel" value={phone}
                                     onChange={e => setPhone(e.target.value)} placeholder="0901 234 567" />
                             </div>
@@ -261,12 +260,12 @@ export default function ProfileModal({ isOpen, onClose, user, onUpdateUser, onAd
                                 <span style={{ fontSize: 24 }}>📷</span>
                                 <div>
                                     <div style={{ fontSize: 13, fontWeight: 600 }}>
-                                        {avatarFile ? `Đã chọn: ${avatarFile.name}` : 'Thay đổi ảnh đại diện'}
+                                        {avatarFile ? `Đã chọn: ${avatarFile.name}` : t('profile.avatar_choose')}
                                     </div>
                                     <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
                                         {avatarFile
                                             ? `${(avatarFile.size / 1024).toFixed(0)}KB — Nhấp để chọn file khác`
-                                            : 'Nhấp để chọn ảnh từ máy tính (JPG, PNG, WebP — tối đa 5MB)'}
+                                            : t('profile.avatar_choose_hint')}
                                     </div>
                                 </div>
                                 {avatarFile && (
@@ -278,10 +277,10 @@ export default function ProfileModal({ isOpen, onClose, user, onUpdateUser, onAd
                             </div>
 
                             <div style={{ marginTop: 4, display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-                                <button className="btn" onClick={onClose}>Hủy</button>
+                                <button className="btn" onClick={onClose}>{t('action.cancel')}</button>
                                 <button className="btn btn-primary" onClick={handleUpdateInfo}
                                     disabled={loadingInfo || !infoChanged}>
-                                    {uploadingAvatar ? '☁️ Đang upload ảnh...' : loadingInfo ? '⏳ Đang lưu...' : '💾 Lưu thay đổi'}
+                                    {uploadingAvatar ? t('profile.avatar_uploading') : loadingInfo ? t('profile.saving') : t('profile.save_changes')}
                                 </button>
                             </div>
                         </div>
@@ -292,19 +291,19 @@ export default function ProfileModal({ isOpen, onClose, user, onUpdateUser, onAd
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                             {pwdError && <div className="login-error">⚠️ {pwdError}</div>}
                             <div className="form-group">
-                                <label className="form-label">Mật khẩu hiện tại</label>
+                                <label className="form-label">{t('profile.current_password')}</label>
                                 <input className="form-input" type={showPwds ? 'text' : 'password'}
                                     value={currentPwd} onChange={e => setCurrentPwd(e.target.value)}
                                     placeholder="Nhập mật khẩu hiện tại..." />
                             </div>
                             <div className="form-group">
-                                <label className="form-label">Mật khẩu mới</label>
+                                <label className="form-label">{t('profile.new_password')}</label>
                                 <input className="form-input" type={showPwds ? 'text' : 'password'}
                                     value={newPwd} onChange={e => setNewPwd(e.target.value)}
-                                    placeholder="Mật khẩu mới (≥8 ký tự)..." />
+                                    placeholder={t('profile.new_password_placeholder')} />
                             </div>
                             <div className="form-group">
-                                <label className="form-label">Nhập lại mật khẩu mới</label>
+                                <label className="form-label">{t('profile.confirm_password')}</label>
                                 <input className="form-input" type={showPwds ? 'text' : 'password'}
                                     value={confirmNewPwd} onChange={e => setConfirmNewPwd(e.target.value)}
                                     placeholder="Nhập lại mật khẩu mới..."
@@ -312,15 +311,15 @@ export default function ProfileModal({ isOpen, onClose, user, onUpdateUser, onAd
                             </div>
                             <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, cursor: 'pointer', color: 'var(--text-muted)' }}>
                                 <input type="checkbox" checked={showPwds} onChange={e => setShowPwds(e.target.checked)} />
-                                Hiện mật khẩu
+                                {t('profile.show_passwords')}
                             </label>
                             <div style={{ background: 'rgba(234,179,8,0.08)', border: '1px solid rgba(234,179,8,0.25)', borderRadius: 8, padding: '8px 12px', fontSize: 12, color: '#a16207' }}>
-                                ⚠️ Yêu cầu: ít nhất 8 ký tự, gồm chữ <b>Hoa</b>, chữ thường, số và ký tự đặc biệt (!@#$...)
+                                {t('profile.password_strength_warning')}
                             </div>
                             <div style={{ marginTop: 4, display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
                                 <button className="btn" onClick={onClose}>Hủy</button>
                                 <button className="btn btn-primary" onClick={handleChangePassword} disabled={loadingPwd}>
-                                    {loadingPwd ? '⏳ Đang đổi...' : '🔑 Đổi mật khẩu'}
+                                    {loadingPwd ? t('profile.changing_password') : t('profile.change_password_btn')}
                                 </button>
                             </div>
                         </div>

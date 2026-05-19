@@ -2,15 +2,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import { getApiBase } from '../../shared/services/api';
 import {
     cacheRooms, getCachedRooms,
-    cacheMessages, getCachedMessages, getLatestMessageTime, cacheSingleMessage
-} from '../../shared/services/chatCache';
+import { cacheMessages, getCachedMessages, getLatestMessageTime, cacheSingleMessage } from '../../shared/services/chatCache';
 import { myLog, myError, myWarning } from '../../shared/utils/logger';
+import { TrackingHelper } from '../../shared/services/TrackingHelper';
 import './Chat.css';
 
-function getToken() {
-    try { return JSON.parse(localStorage.getItem('vuFamilyAuth') || '{}').token || ''; }
-    catch { return ''; }
-}
+
 
 export default function ChatPage({ user, addToast, onStartCall }) {
     const [rooms, setRooms] = useState([]);
@@ -39,7 +36,7 @@ export default function ChatPage({ user, addToast, onStartCall }) {
     const fetchRooms = async () => {
         myLog('CHAT', '[ChatPage - fetchRooms] Bắt đầu đồng bộ danh sách phòng chat từ Server...');
         try {
-            const res = await fetch(`${getApiBase()}/chats`, { headers: { 'x-auth-token': getToken() } });
+            const res = await fetch(`${getApiBase()}/chats`, { headers: { 'x-auth-token': AuthHelper.getToken() } });
             const json = await res.json();
             if (json.success) {
                 const serverRooms = json.data || [];
@@ -58,7 +55,7 @@ export default function ChatPage({ user, addToast, onStartCall }) {
 
     const fetchPublicUsers = async () => {
         try {
-            const res = await fetch(`${getApiBase()}/users/public`, { headers: { 'x-auth-token': getToken() } });
+            const res = await fetch(`${getApiBase()}/users/public`, { headers: { 'x-auth-token': AuthHelper.getToken() } });
             const json = await res.json();
             if (json.success) {
                 setAllUsers(json.data.filter(u => u.id !== user.id));
@@ -72,7 +69,7 @@ export default function ChatPage({ user, addToast, onStartCall }) {
     const fetchMessagesFull = async (roomId) => {
         myLog('CHAT', `[ChatPage - fetchMessagesFull] Đang tải toàn bộ lịch sử tin nhắn cho Phòng ID: ${roomId}`);
         try {
-            const res = await fetch(`${getApiBase()}/chats/${roomId}/messages`, { headers: { 'x-auth-token': getToken() } });
+            const res = await fetch(`${getApiBase()}/chats/${roomId}/messages`, { headers: { 'x-auth-token': AuthHelper.getToken() } });
             const json = await res.json();
             if (json.success) {
                 const serverMsgs = json.data || [];
@@ -108,7 +105,7 @@ export default function ChatPage({ user, addToast, onStartCall }) {
         try {
             const since = encodeURIComponent(latestMsgTimeRef.current);
             const res = await fetch(`${getApiBase()}/chats/${roomId}/messages?since=${since}`, {
-                headers: { 'x-auth-token': getToken() }
+                headers: { 'x-auth-token': AuthHelper.getToken() }
             });
             const json = await res.json();
             if (json.success && json.data && json.data.length > 0) {
@@ -200,13 +197,14 @@ export default function ChatPage({ user, addToast, onStartCall }) {
         try {
             const res = await fetch(`${getApiBase()}/chats/${activeRoomId}/messages`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'x-auth-token': getToken() },
+                headers: { 'Content-Type': 'application/json', 'x-auth-token': AuthHelper.getToken() },
                 body: JSON.stringify({ content })
             });
             const json = await res.json();
             if (json.success) {
                 // Immediately append + cache
                 setMessages(prev => [...prev, json.data]);
+                TrackingHelper.trackSendChatMessage(activeRoom?.type || 'direct');
                 cacheSingleMessage(activeRoomId, json.data).catch((e) => { myError('CHAT', "ChatPage Background Sync Error:", e); });
                 latestMsgTimeRef.current = json.data.created_at;
                 scrollToBottom();
@@ -225,7 +223,7 @@ export default function ChatPage({ user, addToast, onStartCall }) {
         try {
             const res = await fetch(`${getApiBase()}/chats`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'x-auth-token': getToken() },
+                headers: { 'Content-Type': 'application/json', 'x-auth-token': AuthHelper.getToken() },
                 body: JSON.stringify({
                     type: selectedUserIds.length > 1 ? 'group' : 'direct',
                     participantIds: selectedUserIds
@@ -259,7 +257,7 @@ export default function ChatPage({ user, addToast, onStartCall }) {
         try {
             const res = await fetch(`${getApiBase()}/chats/${activeRoomId}/name`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json', 'x-auth-token': getToken() },
+                headers: { 'Content-Type': 'application/json', 'x-auth-token': AuthHelper.getToken() },
                 body: JSON.stringify({ name: newName.trim() })
             });
             const json = await res.json();
@@ -278,7 +276,7 @@ export default function ChatPage({ user, addToast, onStartCall }) {
         try {
             const res = await fetch(`${getApiBase()}/chats/${activeRoomId}/leave`, {
                 method: 'POST',
-                headers: { 'x-auth-token': getToken() }
+                headers: { 'x-auth-token': AuthHelper.getToken() }
             });
             const json = await res.json();
             if (json.success) {
@@ -299,7 +297,7 @@ export default function ChatPage({ user, addToast, onStartCall }) {
         try {
             const res = await fetch(`${getApiBase()}/chats/${activeRoomId}/kick/${userId}`, {
                 method: 'POST',
-                headers: { 'x-auth-token': getToken() }
+                headers: { 'x-auth-token': AuthHelper.getToken() }
             });
             const json = await res.json();
             if (json.success) {
