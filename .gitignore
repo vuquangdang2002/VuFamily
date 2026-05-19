@@ -7,3 +7,4 @@ client/dist/
 public/
 .DS_Store
 *.apks
+*.apk
