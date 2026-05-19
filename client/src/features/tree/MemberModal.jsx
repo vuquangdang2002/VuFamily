@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { localApi } from '../../shared/services/api';
 import PhotoCropper from './PhotoCropper';
+import { TrackingHelper } from '../../shared/services/TrackingHelper';
+import { myLog, myError } from '../../shared/utils/logger';
 
 const CATEGORIES = [
     { value: 'education', label: '🎓 Học tập' },

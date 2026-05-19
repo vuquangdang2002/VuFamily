@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react';
 import { myLog, myError } from '../../shared/utils/logger';
 import { getApiBase } from '../../shared/services/api';
+import { AuthHelper } from '../../shared/services/AuthHelper';
 import { TrackingHelper } from '../../shared/services/TrackingHelper';
-
-
 
 export default function SystemAdminPage({ addToast }) {
     const [users, setUsers] = useState([]);
@@ -21,7 +20,7 @@ export default function SystemAdminPage({ addToast }) {
     const [importFile, setImportFile] = useState(null);
     const [importEncrypted, setImportEncrypted] = useState(false);
     const [isProcessingDb, setIsProcessingDb] = useState(false);
-    
+
     // Tabs
     const [activeTab, setActiveTab] = useState('data');
 
@@ -187,7 +186,7 @@ export default function SystemAdminPage({ addToast }) {
             return;
         }
         if (!confirm('CẢNH BÁO: Quá trình này sẽ khôi phục/thêm mới dữ liệu vào Database. Bạn có chắc chắn?')) return;
-        
+
         try {
             setIsProcessingDb(true);
             const formData = new FormData();
@@ -225,14 +224,14 @@ export default function SystemAdminPage({ addToast }) {
 
             {/* Tabs */}
             <div style={{ display: 'flex', gap: 24, borderBottom: '1px solid var(--border-subtle)', marginBottom: 24, padding: '0 20px' }}>
-                <button 
+                <button
                     className={`btn ${activeTab === 'data' ? 'active' : ''}`}
                     onClick={() => setActiveTab('data')}
                     style={{ background: 'transparent', border: 'none', padding: '12px 0', borderBottom: activeTab === 'data' ? '2px solid var(--primary)' : '2px solid transparent', color: activeTab === 'data' ? 'var(--primary)' : 'var(--text-muted)', fontWeight: activeTab === 'data' ? 600 : 500, borderRadius: 0 }}
                 >
                     🗄️ Dữ liệu
                 </button>
-                <button 
+                <button
                     className={`btn ${activeTab === 'accounts' ? 'active' : ''}`}
                     onClick={() => setActiveTab('accounts')}
                     style={{ background: 'transparent', border: 'none', padding: '12px 0', borderBottom: activeTab === 'accounts' ? '2px solid var(--primary)' : '2px solid transparent', color: activeTab === 'accounts' ? 'var(--primary)' : 'var(--text-muted)', fontWeight: activeTab === 'accounts' ? 600 : 500, borderRadius: 0 }}
@@ -247,7 +246,7 @@ export default function SystemAdminPage({ addToast }) {
                         {/* Database section */}
                         <div style={{ padding: 16, background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-sm)', border: '1px solid var(--border-subtle)', flex: 1 }}>
                             <h3 style={{ margin: '0 0 16px 0', fontSize: 16, fontWeight: 600 }}>Quản lý Cơ sở dữ liệu</h3>
-                        
+
                         {/* Bảng dữ liệu được chọn */}
                         <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)', padding: '8px 12px', borderRadius: 'var(--radius-md)' }}>
                             <div>
@@ -313,7 +312,7 @@ export default function SystemAdminPage({ addToast }) {
                             <div>
                                 <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 8, display: 'block' }}>Tên đăng nhập <span style={{color: 'var(--accent-error)'}}>*</span></label>
                                 <input className="form-input" placeholder="Nhập tên đăng nhập..."
-                                    value={newUser.username} onChange={e => setNewUser({ ...newUser, username: e.target.value })} 
+                                    value={newUser.username} onChange={e => setNewUser({ ...newUser, username: e.target.value })}
                                     style={{ width: '100%', padding: '10px 14px', borderRadius: 'var(--radius-md)' }} />
                             </div>
                             <div>
@@ -332,7 +331,7 @@ export default function SystemAdminPage({ addToast }) {
                             <div>
                                 <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 8, display: 'block' }}>Tên hiển thị</label>
                                 <input className="form-input" placeholder="VD: Nguyễn Văn A"
-                                    value={newUser.displayName} onChange={e => setNewUser({ ...newUser, displayName: e.target.value })} 
+                                    value={newUser.displayName} onChange={e => setNewUser({ ...newUser, displayName: e.target.value })}
                                     style={{ width: '100%', padding: '10px 14px', borderRadius: 'var(--radius-md)' }} />
                             </div>
                             <div>
@@ -436,7 +435,7 @@ export default function SystemAdminPage({ addToast }) {
                                                     </button>
                                                     {actionMenuId === u.id && (
                                                         <div style={{ position: 'absolute', right: '50%', top: '100%', transform: 'translateX(50%)', marginTop: 4, width: 180, background: 'var(--bg-card)', borderRadius: 'var(--radius-md)', boxShadow: 'var(--shadow-lg)', border: '1px solid var(--border-subtle)', overflow: 'hidden', zIndex: 50, display: 'flex', flexDirection: 'column', padding: '4px 0' }}>
-                                                            <button 
+                                                            <button
                                                                 style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', padding: '10px 16px', fontSize: 14, fontWeight: 500, color: 'var(--text-primary)', background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' }}
                                                                 onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-hover)'; e.currentTarget.style.color = 'var(--primary)'; }}
                                                                 onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-primary)'; }}
@@ -444,7 +443,7 @@ export default function SystemAdminPage({ addToast }) {
                                                             >
                                                                 <span>✏️</span> Sửa thông tin
                                                             </button>
-                                                            <button 
+                                                            <button
                                                                 style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', padding: '10px 16px', fontSize: 14, fontWeight: 500, color: 'var(--text-primary)', background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' }}
                                                                 onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-hover)'; e.currentTarget.style.color = '#F59E0B'; }}
                                                                 onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-primary)'; }}
@@ -453,7 +452,7 @@ export default function SystemAdminPage({ addToast }) {
                                                                 <span>🔑</span> Đổi mật khẩu
                                                             </button>
                                                             <div style={{ height: 1, background: 'var(--border-subtle)', margin: '4px 12px' }}></div>
-                                                            <button 
+                                                            <button
                                                                 style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', padding: '10px 16px', fontSize: 14, fontWeight: 500, color: 'var(--accent-error)', background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' }}
                                                                 onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'; }}
                                                                 onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
@@ -573,7 +572,7 @@ export default function SystemAdminPage({ addToast }) {
                             <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 16 }}>
                                 Chọn các bảng bạn muốn sao lưu (Export) hoặc phục hồi đè lên (Import).
                             </p>
-                            
+
                             <div style={{ marginBottom: 16, display: 'flex', gap: 12 }}>
                                 <button className="btn" style={{ fontSize: 12, padding: '4px 12px' }} onClick={() => setSelectedTables(allTables)}>Chọn tất cả</button>
                                 <button className="btn" style={{ fontSize: 12, padding: '4px 12px' }} onClick={() => setSelectedTables([])}>Bỏ chọn tất cả</button>
@@ -582,8 +581,8 @@ export default function SystemAdminPage({ addToast }) {
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 16px' }}>
                                 {allTables.map(t => (
                                     <label key={t} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, cursor: 'pointer', padding: '6px 8px', borderRadius: 4, background: selectedTables.includes(t) ? 'var(--bg-hover)' : 'transparent' }}>
-                                        <input 
-                                            type="checkbox" 
+                                        <input
+                                            type="checkbox"
                                             checked={selectedTables.includes(t)}
                                             onChange={(e) => {
                                                 if (e.target.checked) setSelectedTables([...selectedTables, t]);

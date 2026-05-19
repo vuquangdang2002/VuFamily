@@ -1,3 +1,4 @@
+// Toast.jsx — Component thông báo popup (success/error/warning)
 import { useState, useEffect, useRef } from 'react';
 
 export default function Toast({ toasts }) {

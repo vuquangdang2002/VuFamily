@@ -1,188 +1,176 @@
-# Cấu trúc Dự án và Nguyên tắc Lập trình (Project Structure & Rules)
+# VuFamily — Tài Liệu Kiến Trúc & Quy Tắc Tổng Hợp
 
-Tài liệu này định nghĩa cấu trúc chuẩn và các quy tắc lập trình bắt buộc cho dự án VuFamily, đảm bảo hệ thống dễ bảo trì, mở rộng, dễ debug và hoạt động ổn định.
+> **Phiên bản**: 2.0 — Cập nhật ngày 20/05/2026
+> **Kiến trúc**: Feature-based + Service Layer (Facade Pattern)
+> **Stack**: React + Vite (Frontend) | Node.js + Express (Backend) | Supabase (Database)
 
 ---
 
-## 1. Cấu trúc Dự án (MVC Architecture)
+## Mục Lục Tài Liệu
 
-Dự án tuân thủ mô hình **MVC (Model-View-Controller)**, tách biệt rõ ràng giữa logic nghiệp vụ, giao diện và dữ liệu. Cấu trúc thư mục được chia làm 2 phần chính: `client` (View) và `server` (Controller, Model, API).
+| File | Nội dung |
+|------|----------|
+| **STRUCTURE_AND_RULES.md** | Tổng quan kiến trúc + Quy tắc tổng hợp (file này) |
+| **PROJECT_STRUCTURE.md** | Cây thư mục chi tiết + Luồng dữ liệu |
+| **RULES.md** | Bộ quy tắc lập trình Enterprise (Luật thép) |
+| **SERVICE_LAYER_API.md** | API Reference cho toàn bộ Service Layer |
+| **REMOTE_CONFIG_STANDARD.md** | Chuẩn cấu hình Firebase Remote Config |
+| **API.md** | REST API endpoints (Backend) |
+| **DATABASE.md** | Schema Database + Indexing |
+| **FEATURES.md** | Danh sách tính năng chi tiết |
+| **analytics_tracking_plan.md** | Kế hoạch theo dõi Analytics |
 
-```text
-VuFamily/
-├── client/                     # [VIEW] Ứng dụng Frontend (React + Vite)
-│   ├── src/
-│   │   ├── assets/             # Hình ảnh, icon, font tĩnh
-│   │   ├── features/           # Các tính năng chính (mỗi tính năng là 1 folder riêng)
-│   │   │   ├── auth/           # Chứa View cho Login, Register
-│   │   │   ├── chat/           # Chứa View cho ChatPage
-│   │   │   ├── ...
-│   │   ├── shared/             # Các thành phần dùng chung
-│   │   │   ├── components/     # UI Components dùng chung (Sidebar, Toast, Modal...)
-│   │   │   ├── services/       # Các service gọi API, xử lý logic dùng chung (api.js, chatCache.js)
-│   │   │   └── utils/          # Các hàm helper, tiện ích (format date, validation...)
-│   │   ├── styles/             # CSS toàn cục (index.css)
-│   │   ├── App.jsx             # Component gốc, cấu hình routing
-│   │   └── main.jsx            # Entry point của React
-│   ├── index.html
-│   └── package.json
-│
-├── server/                     # [BACKEND] Node.js + Express
-│   ├── config/                 # TẬP TRUNG CẤU HÌNH (DB, Env, Constants)
-│   │   ├── supabase.js         # Khởi tạo kết nối DB
-│   │   └── constants.js        # Các biến hằng số dùng chung
-│   ├── controllers/            # [CONTROLLER] Xử lý logic nghiệp vụ
-│   │   ├── authController.js
-│   │   ├── chatController.js
-│   │   └── ...
-│   ├── models/                 # [MODEL] Định nghĩa dữ liệu và các hàm tương tác trực tiếp với DB
-│   │   ├── User.js
-│   │   ├── ChatMessage.js
-│   │   └── ...
-│   ├── routes/                 # [API] Định nghĩa các API endpoints và route
-│   │   └── api.js              # Ánh xạ endpoint tới Controller tương ứng
-│   ├── middleware/             # Các hàm trung gian (Auth, Phân quyền, Error Handling)
-│   │   └── auth.js             # Middleware xác thực token, kiểm tra role (requireAdmin, requireEditor)
-│   ├── api/                    # Dành cho serverless function (Vercel deployment)
-│   │   └── index.js            # Entry point cho Vercel serverless
-│   ├── app.js                  # Khởi tạo Express app, cấu hình middleware tổng
-│   ├── server.js               # Entry point chạy local server
-│   └── package.json
-│
-├── database/                   # Khởi tạo và thiết kế Database
-│   ├── schema.sql              # Cấu trúc bảng và phân quyền (RLS)
-│   └── ...
-├── docs/                       # Tài liệu dự án
-└── .env                        # Các biến môi trường nhạy cảm (KHÔNG commit lên git)
-```
+---
+
+## 1. Triết Lý Kiến Trúc
+
+### 1.1. Facade Pattern — "Viết 1 nơi, gọi mọi nơi"
+
+Dự án VuFamily áp dụng triệt để mô hình **Facade** (Bức tường giả) để tách biệt hoàn toàn giao diện khỏi logic hệ thống:
 
 ```
-
+┌──────────────┐          ┌─────────────────────────┐
+│              │          │    SERVICE LAYER         │
+│  Component   │──────▸   │                         │
+│  (Feature)   │          │  api.js         → HTTP  │
+│              │          │  AuthHelper.js  → Token │
+│  Chỉ biết    │          │  TrackingHelper → Event │
+│  GỌI hàm    │          │  I18nHelper     → Text  │
+│              │          │  ConfigAPI      → Flags │
+│              │          │  myLog          → Logs  │
+└──────────────┘          └─────────────────────────┘
 ```
 
----
+**Lợi ích:**
+- Thay đổi provider (VD: đổi Firebase → Mixpanel) chỉ sửa 1 file, không sửa UI.
+- Component sạch, dễ đọc, chỉ chứa logic hiển thị.
+- Dễ test, dễ onboard developer mới.
 
-## 2. Quy trình Phát triển: Documentation-First (Viết Doc trước, Code sau)
-Đối với các hệ thống lớn, việc sửa đi sửa lại code do không thống nhất từ đầu là một thảm họa. Vì vậy, quy trình phát triển bắt buộc:
-1. **Thiết kế & Viết Document**: Trước khi code bất kỳ tính năng mới nào (API, Database schema, Logic phức tạp), phải thiết kế rõ ràng và cập nhật vào thư mục `docs/`.
-2. **Review & Chốt kiến trúc**: Đảm bảo các thành viên hiểu rõ input/output, các case lỗi (fallback) và cấu trúc dữ liệu.
-3. **Triển khai Code**: Bám sát tài liệu đã chốt. Nếu trong quá trình code có phát sinh, phải quay lại sửa document trước.
+### 1.2. Feature-based Architecture
 
----
-
-## 3. Quy tắc Đặt tên (Naming Conventions) Tường minh
-Để code dễ đọc và dễ bảo trì bởi nhiều người (hoặc chính bạn sau vài tháng), việc đặt tên phải rõ ràng, tránh viết tắt tối nghĩa:
-- **Tên Biến/Hàm (CamelCase)**: Đặt tên theo đúng hành động và đối tượng. (VD: `getUserActiveRooms()` thay vì `getRooms()`, `chatMessageList` thay vì `msgList`).
-- **Class Model (PascalCase)**: Tên Class thể hiện đúng thực thể và hậu tố `Model`. (VD: `ChatRoomModel` thay vì `Chat`, `UserAccountModel`).
-- **Cấu hình (Screaming Snake Case)**: Tên hằng số config phải viết hoa toàn bộ và thể hiện rõ ngữ cảnh. (VD: `MAX_CHAT_MESSAGES_PER_PAGE`, `CALL_UNANSWERED_TIMEOUT_MS`). Tránh các tên chung chung như `LIMIT` hay `TIMEOUT`.
+Mỗi tính năng (Auth, Chat, Tree, Calendar...) là một module **hoàn toàn độc lập**:
+- Có folder riêng trong `features/`
+- Có Component JSX + CSS riêng
+- Import Helper/Service từ `shared/` — không import chéo giữa các feature
 
 ---
 
-## 4. Thiết kế Hệ thống Lớn & Chịu tải cao (High-Availability & Scale)
+## 2. Các Layer Chính
 
-Hệ thống được thiết kế theo chuẩn của các ứng dụng lớn (như Messenger, Facebook) với các nguyên tắc sau:
+### Layer 1: Features (`features/`)
+Giao diện người dùng. Mỗi feature là 1 folder chứa Component + CSS.
 
-### 2.1. Feature Flags (Bật/Tắt tính năng động)
-Mọi tính năng lớn (Gọi điện, Chat, Lưu trữ lịch sử) cần phải được gắn cờ (Feature Toggles) trong `server/config/constants.js`. Việc này giúp hệ thống:
-- Dễ dàng tắt một tính năng bị lỗi (ví dụ: tắt gọi điện) mà không làm sập toàn bộ web.
-- Rollout dần dần tính năng mới.
-**Quy tắc:** Mọi Controller của tính năng mới phải kiểm tra cờ này đầu tiên (VD: `if (!FEATURES.ENABLE_CALL_SYSTEM) return res.status(503)...`).
+| Feature | Mô tả | Files chính |
+|---------|--------|-------------|
+| `auth/` | Đăng nhập, Đăng ký, Hồ sơ | `LoginPage.jsx`, `ProfileModal.jsx` |
+| `tree/` | Vẽ phả đồ gia phả | `TreeCanvas.jsx`, `DetailPanel.jsx` |
+| `newsfeed/` | Bảng tin gia đình | `NewsfeedPage.jsx` |
+| `calendar/` | Lịch sự kiện, Sinh nhật | `CalendarPage.jsx` |
+| `chat/` | Chat real-time + Gọi điện | `ChatPage.jsx`, `VoiceCall.jsx` |
+| `history/` | Lịch sử chỉnh sửa | `HistoryPanel.jsx` |
+| `requests/` | Duyệt yêu cầu | `RequestsPanel.jsx` |
+| `system/` | Quản trị Admin | `SystemAdminPage.jsx` |
+| `guide/` | Hướng dẫn sử dụng | `GuidePage.jsx` |
 
-### 2.2. Timeouts & Fallbacks
-Các tính năng thời gian thực hoặc phụ thuộc bên thứ 3 phải có Timeout. 
-- **Ví dụ gọi điện (Call System)**: Khi tạo cuộc gọi, nếu sau `TIMEOUTS.CALL_RINGING_TIMEOUT_MS` (ví dụ 30 giây) mà đầu kia không bắt máy, hệ thống tự động:
-  1. Hủy trạng thái `calling` -> `missed`.
-  2. Bắn một tin nhắn tự động "📞 Cuộc gọi nhỡ" vào hệ thống Chat.
+### Layer 2: Shared Services (`shared/services/`)
+Logic dùng chung. KHÔNG chứa giao diện.
 
-### 2.3. Tối ưu dữ liệu lớn (Pagination & Caching)
-- Không bao giờ trả về toàn bộ dữ liệu (như lịch sử chat) trong 1 lần. Phải có Limit và Lazy Loading (ví dụ: dùng `?since=` hoặc lấy 50-100 tin nhắn mỗi lần).
-- Cache dữ liệu tĩnh hoặc ít thay đổi ở Client (như IndexedDB cho Chat).
+| Service | Vai trò |
+|---------|---------|
+| `api.js` | HTTP Client — Mọi fetch đều qua đây |
+| `AuthHelper.js` | Quản lý Token/Session |
+| `TrackingHelper.js` | Facade Analytics (Phễu event) |
+| `TrackingFirebaseHelper.js` | Provider Firebase Analytics |
+| `i18n.js` | Đa ngôn ngữ (VI/EN) |
+| `chatCache.js` | IndexedDB cache cho Chat |
+| `firebaseMessaging.js` | Push Notification |
 
----
+### Layer 3: Shared Hooks (`shared/hooks/`)
+Custom React Hooks tái sử dụng.
 
-## 5. Tối ưu Database & Hiệu năng Query (Big Data & High Performance)
+| Hook | Vai trò |
+|------|---------|
+| `useTranslation()` | Trả về `{ t, lang, changeLanguage }` cho i18n |
+| `useRemoteConfig(key, type, fallback)` | Đọc Remote Config reactive |
 
-Hệ thống phải được thiết kế để chịu tải khi lượng dữ liệu phình to (Big Data), trả kết quả "siêu nhanh" để tránh nghẽn server.
+### Layer 4: Shared Utils (`shared/utils/`)
+Hàm tiện ích thuần (không phụ thuộc React).
 
-### 5.1. Tối ưu Indexing & Tìm kiếm
-- **Index các cột thường xuyên tìm kiếm**: Các cột dùng trong điều kiện `WHERE` (như `username`, `email`, `token`) hoặc các khóa ngoại (Foreign Keys như `user_id`, `room_id`) **bắt buộc** phải được đánh Index (`CREATE INDEX`) dưới Database. Việc này giúp việc tra cứu tài khoản mất vài mili-giây thay vì quét toàn bộ bảng.
-- **Tránh dùng `SELECT *`**: Chỉ select đúng những cột cần thiết. Tránh việc kéo dữ liệu thừa qua mạng gây chậm phản hồi.
-
-### 5.2. Chống nghẽn N+1 Queries
-- Tuyệt đối không gọi Query Database bên trong vòng lặp `for/map`. 
-- **Quy tắc**: Gom ID lại thành một mảng và gọi query bằng mệnh đề `IN` (Ví dụ: `supabase.from('users').in('id', userIds)`) để lấy dữ liệu trong 1 lần gọi (Batch Query), sau đó map dữ liệu lại bằng logic code (Javascript).
-
-### 5.3. Full-Text Search
-- Thay vì dùng `LIKE '%keyword%'` gây rớt hiệu năng nghiêm trọng trên dữ liệu lớn, hãy cấu hình tính năng **Full-Text Search** của PostgreSQL/Supabase để phục vụ tính năng tìm kiếm.
-
----
-
-## 6. Tiêu chuẩn Giao diện (UI/UX) & Responsive
-- **100% Responsive Đa màn hình**: TẤT CẢ các giao diện (màn hình chính, popup, form) bắt buộc phải hiển thị chuẩn trên mọi thiết bị (Mobile, Tablet, Desktop).
-- **Không vỡ layout**: Không được có hiện tượng đè chữ, tràn khung (overflow), nút bấm bị che khuất hoặc các thành phần UI bị lệch khi thu nhỏ màn hình (đặc biệt trên điện thoại).
-- **Kiểm thử đa thiết bị**: Bất kỳ tính năng Frontend nào mới làm ra đều phải test bằng Chrome DevTools trên các thiết bị ảo (iPhone 12/Pro, iPad) trước khi commit.
-
----
-
-## 7. Cơ chế Chống sập (Failover) & Auto-Backup cho Database/API
-Để tránh việc sập 1 server làm chết toàn bộ hệ thống, dự án thiết lập kiến trúc dự phòng:
-- **Primary & Backup Database**: Hệ thống phải có 2 chuỗi kết nối (Primary và Fallback/Backup). Khi Database chính không phản hồi (timeout) hoặc sập, luồng kết nối phải tự động chuyển hướng (failover) sang Database dự phòng.
-- **Auto-Backup**: Cơ sở dữ liệu cần có cơ chế sao lưu tự động theo lịch (Daily/Weekly) thông qua Cronjob hoặc cấu hình của nhà cung cấp (Supabase/AWS).
-- **Service/API Fallback**: Các tính năng gọi API bên thứ 3 (Ví dụ: Server Call WebRTC) phải có config chuyển đổi sang cụm Server khác nếu Server chính bị down.
+| Util | Vai trò |
+|------|---------|
+| `logger.js` | `myLog`, `myError`, `myWarning` — bật/tắt theo module |
+| `treeLayout.js` | Thuật toán sắp xếp cây gia phả |
+| `lunarCalendar.js` | Chuyển đổi Âm-Dương lịch |
 
 ---
 
-## 8. Các Nguyên tắc Lập trình (Coding Rules)
+## 3. Quy Trình Phát Triển
 
-### 8.1. Phân tách trách nhiệm (Separation of Concerns - MVC)
-- **API (Routes)**: Chỉ làm nhiệm vụ định nghĩa endpoint, middleware (xác thực) và gọi Controller. KHÔNG viết logic xử lý dữ liệu ở đây.
-- **Controller**: Xử lý logic nghiệp vụ (business logic), nhận request từ Route, gọi Model để lấy/lưu dữ liệu, xử lý kết quả và trả về response cho View (Client).
-- **Model**: Chỉ chịu trách nhiệm tương tác với Database (Supabase). Các câu query, insert, update, delete phải nằm ở đây.
-- **View (Client)**: Chỉ hiển thị dữ liệu và nhận tương tác từ người dùng. Mọi logic gọi data phải tách ra service hoặc utils.
+### 3.1. Documentation-First
+1. **Thiết kế** → Viết spec/doc trước khi code
+2. **Review** → Chốt input/output, edge cases
+3. **Code** → Bám sát tài liệu đã chốt
+4. **Update doc** → Nếu phát sinh, sửa doc trước rồi mới sửa code
 
-### 8.2. Chuẩn mực Viết Code & Fallback (Xử lý lỗi)
-Mọi tính năng quan trọng (đặc biệt là call API hoặc tương tác DB) bắt buộc phải có cơ chế xử lý lỗi và fallback.
+### 3.2. Thêm Tính Năng Mới (7 Bước)
+1. Tạo folder `features/ten_tinh_nang/`
+2. Tạo Component JSX + CSS
+3. Thêm API endpoints → `shared/services/api.js`
+4. Thêm i18n keys → `shared/services/i18n.js` (cả `vi` + `en`)
+5. Thêm tracking events → `shared/services/TrackingHelper.js`
+6. Thêm Feature Flag → `config.js`: `feature_xxx_enabled: true`
+7. Đăng ký route `App.jsx` + menu `Sidebar.jsx`
 
-- **Luôn dùng `try...catch`**: Bao bọc các thao tác bất đồng bộ (`async/await`) trong khối `try...catch`.
-- **Trả về response chuẩn**: Server luôn trả về định dạng `{ success: boolean, data: any, message: string, error: string }`.
-- **Fallback UI (Client)**: Khi API lỗi hoặc mất mạng, UI không được crash trắng trang. Phải có:
-  - Trạng thái Loading.
-  - Thông báo lỗi thân thiện (Toast / Alert).
-  - Sử dụng Cache (như IndexedDB cho Chat) để hiển thị dữ liệu offline hoặc fallback khi server phản hồi chậm.
+### 3.3. Checklist Trước Commit
+- [ ] Import đầy đủ (AuthHelper, TrackingHelper, useTranslation)
+- [ ] Không còn `fetch()` trực tiếp trong Component
+- [ ] Không còn `localStorage` trực tiếp trong Component
+- [ ] Không còn `console.log` — đã dùng `myLog`
+- [ ] Không còn text hard-code — đã dùng `t('key')`
+- [ ] `npm run build` thành công 0 lỗi
+- [ ] Test responsive Mobile viewport
 
-**Ví dụ chuẩn Controller:**
-```javascript
-// Tốt: Xử lý lỗi đầy đủ
-async function getMessages(req, res) {
-    try {
-        const data = await ChatModel.getMessages(req.params.roomId);
-        res.json({ success: true, data });
-    } catch (error) {
-        console.error(`[ChatController - getMessages] Lỗi lấy tin nhắn room ${req.params.roomId}:`, error);
-        res.status(500).json({ success: false, error: 'Không thể tải tin nhắn. Vui lòng thử lại.' });
-    }
-}
-```
+---
 
-### 8.3. Xử lý Log (Logging)
-Để dễ dàng debug và bảo trì sau này, cần thiết lập quy tắc ghi log rõ ràng:
-- **Client**: Hạn chế `console.log` bừa bãi. Chỉ log khi có `error` hoặc trong môi trường `development`.
-- **Server**: Phải log các thông tin quan trọng:
-  - Lỗi hệ thống/Database (bắt buộc dùng `console.error` với prefix rõ ràng: `[Module_Name] [Action] Error: ...`).
-  - Các hành động nhạy cảm (Đăng nhập sai nhiều lần, Xóa user, Thay đổi phân quyền).
-- Tương lai: Nên tích hợp 1 thư viện logging chuyên dụng (như Winston hoặc Morgan) để ghi log ra file hoặc service theo dõi (Sentry).
+## 4. Quy Tắc Lập Trình Chi Tiết
 
-### 8.4. Quản lý Cấu hình (Configuration)
-- **Tách biệt Config**: Tất cả các giá trị cấu hình (URL, API keys, timeout, hằng số phân quyền) **KHÔNG** được hardcode rải rác trong code.
-- **Môi trường (.env)**: Thông tin nhạy cảm (Supabase Key, JWT Secret) phải nằm trong `.env`.
-- **File Config**: Tạo file `server/config/constants.js` hoặc `client/src/shared/utils/constants.js` để chứa các hằng số dùng chung (ví dụ: `MAX_CACHE_ITEMS = 10`, `ROLE_ADMIN = 'admin'`). Khi cần đổi, chỉ sửa 1 file duy nhất.
+> Xem file **RULES.md** để đọc bộ quy tắc đầy đủ với ví dụ code.
 
-### 8.5. Bảo trì & Nâng cấp dễ dàng (Maintainability)
-- **Hàm nhỏ và tập trung (Single Responsibility Principle)**: Mỗi hàm chỉ làm 1 việc duy nhất. Nếu hàm quá dài (>100 dòng), hãy tách nhỏ thành các helper functions.
-- **Comment Code**: Viết JSDoc hoặc comment giải thích rõ ràng TẠI SAO (Why) đoạn code này tồn tại cho những logic phức tạp, thay vì mô tả NÓ LÀM GÌ (What - vì code tự mô tả).
-- **Tái sử dụng (Reusable)**: Các đoạn UI lặp lại (Button, Input, Modal) hoặc logic lặp lại (hàm format ngày, gọi API) phải được chuyển vào thư mục `shared`.
+### Tóm tắt nhanh:
+| Quy tắc | ❌ Sai | ✅ Đúng |
+|---------|-------|---------|
+| API Call | `fetch('/api/users')` | `api.getUsers()` |
+| Auth Token | `localStorage.getItem(...)` | `AuthHelper.getToken()` |
+| Analytics | `logEvent(analytics, ...)` | `TrackingHelper.trackLoginSuccess()` |
+| UI Text | `<span>Đăng xuất</span>` | `<span>{t('app.logout')}</span>` |
+| Logging | `console.log(...)` | `myLog('MODULE', ...)` |
+| CSS Color | `color: #3B6FCF` | `color: var(--primary)` |
 
-### 8.6. Quản lý Package và Dependency
-- **Sử dụng bản MỚI nhưng ỔN ĐỊNH**: Khi cài mới hoặc nâng cấp package, ưu tiên các bản phát hành ổn định (Stable/LTS), tránh các bản Alpha/Beta/RC.
-- **Ghim phiên bản**: Trong `package.json`, nên ghim cứng phiên bản (ví dụ `"react": "18.2.0"`) hoặc dùng dấu `^` một cách có kiểm soát để tránh việc tự động cập nhật lên phiên bản có breaking changes làm hỏng app.
-- **Xóa package rác**: Định kỳ kiểm tra và gỡ bỏ các thư viện không còn sử dụng để giảm dung lượng bundle và rủi ro bảo mật.
+---
+
+## 5. Thiết Kế Chịu Tải (Scalability)
+
+### 5.1. Feature Flags
+- Bật/tắt tính năng qua Firebase Remote Config mà KHÔNG cần deploy
+- Mọi tính năng có cờ `feature_xxx_enabled` trong `AppConfig`
+- Sidebar tự ẩn/hiện menu item theo Feature Flag
+
+### 5.2. Caching & Offline
+- Chat messages được cache trong IndexedDB (`chatCache.js`)
+- Remote Config có local fallback trong `AppConfig`
+- Login hỗ trợ offline mode (dùng local users)
+
+### 5.3. Database Optimization
+- Index các cột thường WHERE/JOIN: `username`, `email`, `room_id`, `token`
+- Tránh N+1 query — dùng batch query với `IN`
+- Pagination cho mọi danh sách (messages, members, posts)
+
+---
+
+## 6. Bảo Mật
+
+- JWT Token quản lý tập trung qua `AuthHelper`
+- Server middleware kiểm tra token + role (RBAC) cho mọi endpoint
+- Mật khẩu hash bằng `bcryptjs` phía server
+- Biến nhạy cảm (API keys, DB password) trong `.env` — KHÔNG commit lên git
+- Content-Security-Policy headers cho production

@@ -111,7 +111,7 @@ export default function App() {
                 myError('APP', 'Không thể xin quyền thông báo hoặc lỗi tải module:', e);
                 // Nếu lỗi do phiên bản cũ bị cache (Failed to fetch dynamically imported module)
                 if (e.name === 'TypeError' && e.message.includes('dynamically imported module')) {
-                    console.log('Phát hiện phiên bản mới, đang tải lại trang...');
+                    myLog('APP', 'Phát hiện phiên bản mới, đang tải lại trang...');
                     window.location.reload();
                 }
             }
@@ -658,36 +658,36 @@ export default function App() {
             {/* Premium Glassmorphic Bottom Navigation (Mobile Only) */}
             {isMobile && (
                 <div className="bottom-nav">
-                    <button 
-                        className={`bottom-nav-item ${activePage === 'tree' && !showMobileMenu ? 'active' : ''}`} 
+                    <button
+                        className={`bottom-nav-item ${activePage === 'tree' && !showMobileMenu ? 'active' : ''}`}
                         onClick={() => { setActivePage('tree'); setShowMobileMenu(false); }}
                     >
                         <span className="bottom-nav-item-icon">🌳</span>
                         <span>Gia phả</span>
                     </button>
-                    <button 
-                        className={`bottom-nav-item ${activePage === 'newsfeed' && !showMobileMenu ? 'active' : ''}`} 
+                    <button
+                        className={`bottom-nav-item ${activePage === 'newsfeed' && !showMobileMenu ? 'active' : ''}`}
                         onClick={() => { setActivePage('newsfeed'); setShowMobileMenu(false); }}
                     >
                         <span className="bottom-nav-item-icon">📰</span>
                         <span>Bảng tin</span>
                     </button>
-                    <button 
-                        className={`bottom-nav-item ${activePage === 'chat' && !showMobileMenu ? 'active' : ''}`} 
+                    <button
+                        className={`bottom-nav-item ${activePage === 'chat' && !showMobileMenu ? 'active' : ''}`}
                         onClick={() => { setActivePage('chat'); setShowMobileMenu(false); }}
                     >
                         <span className="bottom-nav-item-icon">💬</span>
                         <span>Trò chuyện</span>
                     </button>
-                    <button 
-                        className={`bottom-nav-item ${activePage === 'calendar' && !showMobileMenu ? 'active' : ''}`} 
+                    <button
+                        className={`bottom-nav-item ${activePage === 'calendar' && !showMobileMenu ? 'active' : ''}`}
                         onClick={() => { setActivePage('calendar'); setShowMobileMenu(false); }}
                     >
                         <span className="bottom-nav-item-icon">📅</span>
                         <span>Lịch</span>
                     </button>
-                    <button 
-                        className={`bottom-nav-item ${showMobileMenu ? 'active' : ''}`} 
+                    <button
+                        className={`bottom-nav-item ${showMobileMenu ? 'active' : ''}`}
                         onClick={() => setShowMobileMenu(!showMobileMenu)}
                     >
                         <span className="bottom-nav-item-icon">⚙️</span>
@@ -703,7 +703,7 @@ export default function App() {
                     <div className="bottom-sheet" onClick={(e) => e.stopPropagation()}>
                         <div className="bottom-sheet-drag-handle" />
                         <div className="bottom-sheet-title">DANH MỤC TIỆN ÍCH</div>
-                        
+
                         <div className="bottom-sheet-grid">
                             <div className="bottom-sheet-item" onClick={() => { setProfileModalOpen(true); setShowMobileMenu(false); }}>
                                 <span className="bottom-sheet-item-icon">👤</span>
@@ -755,10 +755,10 @@ export default function App() {
                     setUser(authData);
                 }} />
 
-            <ForceChangePasswordModal 
-                isOpen={forceChangePwd} 
-                error={forceChangeError} 
-                onSubmit={handleForceChangePassword} 
+            <ForceChangePasswordModal
+                isOpen={forceChangePwd}
+                error={forceChangeError}
+                onSubmit={handleForceChangePassword}
             />
 
             <Toast toasts={toasts} />

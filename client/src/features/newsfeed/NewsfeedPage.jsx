@@ -15,6 +15,7 @@ function generateQR(text, size = 200) {
 }
 
 import './Newsfeed.css';
+import { AuthHelper } from '../../shared/services/AuthHelper';
 
 function timeAgo(dateStr) {
     const d = new Date(dateStr);
@@ -38,7 +39,7 @@ const BrandIcon = ({ type, size = 36 }) => (
 // Helper: get auth token
 function getToken() {
     try {
-        const session = JSON.parse(localStorage.getItem('vuFamilyAuth') || '{}');
+        const session = AuthHelper.getAuthData();
         return session.token || '';
     } catch { return ''; }
 }
@@ -98,7 +99,7 @@ export default function NewsfeedPage({ user, isAdmin, addToast, members = [], on
             const json = await api.getPosts();
             if (json.success) {
                 const newPosts = json.data || [];
-                
+
                 // Nếu fetch ngầm (background) và thấy có bài đăng mới ở đầu danh sách
                 if (!force && cachedPosts && cachedPosts.length > 0) {
                     if (newPosts.length > 0 && newPosts[0].id !== cachedPosts[0].id) {
@@ -241,7 +242,7 @@ export default function NewsfeedPage({ user, isAdmin, addToast, members = [], on
     };
 
     const currentUserId = (() => {
-        try { return JSON.parse(localStorage.getItem('vuFamilyAuth') || '{}').id; }
+        try { return AuthHelper.getAuthData().id; }
         catch { return null; }
     })();
 
@@ -255,7 +256,6 @@ export default function NewsfeedPage({ user, isAdmin, addToast, members = [], on
 
     return (
         <div className="page-container">
-
 
             {/* ── Uizard-style Dashboard Header ── */}
             <div className="nf-dashboard-header">
@@ -341,7 +341,7 @@ export default function NewsfeedPage({ user, isAdmin, addToast, members = [], on
 
                                 {hasNewPostsHint && (
                                     <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
-                                        <button 
+                                        <button
                                             onClick={() => fetchPosts(true)}
                                             style={{ background: 'var(--primary)', color: '#fff', border: 'none', padding: '8px 20px', borderRadius: 24, fontSize: 13, fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 12px rgba(59,130,246,0.3)', display: 'flex', alignItems: 'center', gap: 6, transition: 'all 0.2s' }}
                                             onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}

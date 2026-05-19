@@ -5,7 +5,7 @@ import { ConfigAPI } from '../../config.js';
  * Hook tùy chỉnh theo chuẩn Remote Config mới.
  * Sử dụng ConfigAPI để lấy và ép kiểu an toàn.
  * Tự động re-render khi firebase sync thành công.
- * 
+ *
  * @param {string} key - Tên cấu hình
  * @param {string} type - 'string', 'number', 'boolean', 'json'
  * @param {any} fallback - Giá trị mặc định (Tùy chọn)

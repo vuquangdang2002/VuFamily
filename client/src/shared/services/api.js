@@ -19,7 +19,7 @@ async function request(url, options = {}) {
     try {
         const token = AuthHelper.getToken();
         if (token) headers['x-auth-token'] = token;
-    } catch (e) { console.error("Auth Token Fetch Error:", e); }
+    } catch (e) { /* Token lỗi — bỏ qua, request sẽ gửi không có auth */ }
 
     const baseUrl = getApiBase();
     const res = await fetch(`${baseUrl}${url}`, {
@@ -80,7 +80,7 @@ export const api = {
     getPendingRequests: () => request('/requests/pending'),
     approveRequest: (id) => request(`/requests/${id}/approve`, { method: 'POST' }),
     rejectRequest: (id, reason) => request(`/requests/${id}/reject`, { method: 'POST', body: JSON.stringify({ rejectReason: reason }) }),
-    
+
     // ==========================================
     // BẢNG TIN (NEWSFEED & COMMENTS)
     // ==========================================
@@ -105,12 +105,12 @@ export const api = {
     updateProfile: (data) => request('/auth/profile', { method: 'PUT', body: JSON.stringify(data) }),
     changePassword: (data) => request('/auth/change-password', { method: 'POST', body: JSON.stringify(data) }),
     uploadAvatar: (formData) => {
-        return fetch(`${getApiBase()}/auth/avatar`, { 
-            method: 'POST', body: formData, headers: { 'x-auth-token': AuthHelper.getToken() } 
+        return fetch(`${getApiBase()}/auth/avatar`, {
+            method: 'POST', body: formData, headers: { 'x-auth-token': AuthHelper.getToken() }
         }).then(res => res.json());
     },
     getPublicUsers: () => request('/users/public'),
-    
+
     // ==========================================
     // CHATS
     // ==========================================
@@ -128,8 +128,8 @@ export const api = {
     // ==========================================
     exportDatabase: (format, isEncrypted, tables) => request(`/database/export?format=${format}&isEncrypted=${isEncrypted}&tables=${tables}`),
     importDatabase: (formData) => {
-        return fetch(`${getApiBase()}/database/import`, { 
-            method: 'POST', body: formData, headers: { 'x-auth-token': AuthHelper.getToken() } 
+        return fetch(`${getApiBase()}/database/import`, {
+            method: 'POST', body: formData, headers: { 'x-auth-token': AuthHelper.getToken() }
         }).then(res => res.json());
     },
 };
@@ -158,7 +158,7 @@ const HISTORY_KEY = 'vuFamilyEditHistory';
 const REQUESTS_KEY = 'vuFamilyPendingRequests';
 
 function getLocalHistory() {
-    try { 
+    try {
         const hist = JSON.parse(localStorage.getItem(HISTORY_KEY));
         if (hist && hist.length > 0) return hist;
     } catch (e) {}
@@ -169,7 +169,7 @@ function saveLocalHistory(history) {
     localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
 }
 function getLocalRequests() {
-    try { 
+    try {
         const reqs = JSON.parse(localStorage.getItem(REQUESTS_KEY));
         if (reqs && reqs.length > 0) return reqs;
     } catch (e) {}
@@ -542,7 +542,7 @@ export const localApi = {
 
     // ════════════ NEWSFEED POSTS ════════════
     getPosts() {
-        try { 
+        try {
             const posts = JSON.parse(localStorage.getItem('vuFamilyPosts'));
             if (posts && posts.length > 0) return posts;
         } catch (e) {}

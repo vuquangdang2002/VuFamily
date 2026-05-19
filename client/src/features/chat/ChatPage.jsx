@@ -9,8 +9,6 @@ import { myLog, myError, myWarning } from '../../shared/utils/logger';
 import { TrackingHelper } from '../../shared/services/TrackingHelper';
 import './Chat.css';
 
-
-
 export default function ChatPage({ user, addToast, onStartCall }) {
     const [rooms, setRooms] = useState([]);
     const [activeRoomId, setActiveRoomId] = useState(null);

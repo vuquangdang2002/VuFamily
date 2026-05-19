@@ -26,7 +26,7 @@ export const LOG_FLAGS = {
 
 export function myLog(flag, ...args) {
     if (!ENABLE_MYLOG) return;
-    
+
     // If flag is true, or if flag doesn't exist but we want to log it anyway
     if (LOG_FLAGS[flag] !== false) {
         console.log(`[${flag}]`, ...args);

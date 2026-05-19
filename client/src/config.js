@@ -1,6 +1,6 @@
 // ============================================================================
 // CẤU HÌNH TĨNH HỆ THỐNG (STATIC CONFIGURATIONS)
-// Tự động đọc từ file .env ở thư mục gốc. 
+// Tự động đọc từ file .env ở thư mục gốc.
 // Nếu không có biến môi trường, hệ thống sẽ sử dụng các giá trị mặc định bên dưới.
 // ============================================================================
 import { myLog, myWarning } from './shared/utils/logger.js';
@@ -33,7 +33,7 @@ export const AppConfig = {
     enable_new_call_ui: true,
     maintenance_mode: false,
     newsfeed_refresh_interval_ms: 300000,
-    
+
     // Tính năng
     feature_tree_enabled: true,
     feature_newsfeed_enabled: true,
@@ -72,7 +72,7 @@ export const ConfigAPI = {
         if (val === undefined || val === null) return fallback;
         return String(val);
     },
-    
+
     /** Lấy cấu hình dạng số Number */
     getNumber: (key, fallback = 0) => {
         const val = AppConfig[key];
@@ -80,7 +80,7 @@ export const ConfigAPI = {
         const num = Number(val);
         return isNaN(num) ? fallback : num;
     },
-    
+
     /** Lấy cấu hình dạng Boolean */
     getBoolean: (key, fallback = false) => {
         const val = AppConfig[key];
@@ -89,9 +89,9 @@ export const ConfigAPI = {
         if (typeof val === 'string') return val.toLowerCase() === 'true';
         return Boolean(val);
     },
-    
-    /** 
-     * Lấy cấu hình dạng JSON Object (Struct/Class). 
+
+    /**
+     * Lấy cấu hình dạng JSON Object (Struct/Class).
      * Hỗ trợ tự động parse nếu cấu hình vẫn đang ở dạng chuỗi.
      */
     getJSON: (key, fallback = {}) => {

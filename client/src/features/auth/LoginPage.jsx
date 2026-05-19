@@ -2,6 +2,8 @@ import { useState } from 'react';
 import loginHero from '../../assets/login-hero.png';
 import { useTranslation } from '../../shared/hooks/useTranslation.js';
 import './Login.css';
+import { TrackingHelper } from '../../shared/services/TrackingHelper';
+import { myLog, myError } from '../../shared/utils/logger';
 
 export default function LoginPage({ onLogin, verifyMsg }) {
     const { t } = useTranslation();

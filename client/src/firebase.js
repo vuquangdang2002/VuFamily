@@ -30,18 +30,18 @@ remoteConfig.settings.minimumFetchIntervalMillis = 3600000; // Cache cấu hình
 remoteConfig.defaultConfig = {
   // Đường dẫn gốc của API Server (VD: localhost hoặc https://...)
   "api_base_url": API_BASE_URL,
-  
+
   // Kích hoạt giao diện gọi điện mới (Video/Voice Call)
   "enable_new_call_ui": true,
-  
+
   // Bật/tắt chế độ bảo trì toàn hệ thống
   "maintenance_mode": false,
-  
+
   // (NEWSFEED) Thời gian bộ nhớ đệm bảng tin (tính bằng milli-giây).
-  // 300000 = 5 phút. Khi người dùng quay lại Bảng tin, nếu quá thời gian này 
+  // 300000 = 5 phút. Khi người dùng quay lại Bảng tin, nếu quá thời gian này
   // hệ thống sẽ gọi API ngầm để kiểm tra có bài mới không.
   "newsfeed_refresh_interval_ms": 300000,
-  
+
   // BẬT/TẮT CÁC TÍNH NĂNG (FEATURE TOGGLES)
   "feature_tree_enabled": true,
   "feature_newsfeed_enabled": true,
@@ -64,11 +64,11 @@ export const syncRemoteConfig = async () => {
     } else {
       myLog('FIREBASE', '✅ Firebase Remote Config already up-to-date.');
     }
-    
+
     // Đọc tất cả cấu hình từ Firebase và parse tự động vào AppConfig
     const allConfigs = getAll(remoteConfig);
     updateAppConfigFromRemote(allConfigs);
-    
+
     // Báo hiệu UI cập nhật
     window.dispatchEvent(new Event('remoteConfigUpdated'));
   } catch (err) {

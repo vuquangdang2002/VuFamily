@@ -9,19 +9,19 @@ export const AuthHelper = {
             return {};
         }
     },
-    
+
     getToken: () => {
         return AuthHelper.getAuthData().token || '';
     },
-    
+
     getUser: () => {
         return AuthHelper.getAuthData(); // Thường lưu nguyên object User + token
     },
-    
+
     saveAuthData: (data) => {
         localStorage.setItem(AUTH_KEY, JSON.stringify(data));
     },
-    
+
     clearAuthData: () => {
         localStorage.removeItem(AUTH_KEY);
     }

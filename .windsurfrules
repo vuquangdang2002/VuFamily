@@ -1,17 +1,38 @@
 # VuFamily Project Rules
 
-## 1. Logging Standard
-- **Do NOT** use `console.log`, `console.warn`, or `console.error` directly in the frontend codebase.
-- **ALWAYS** use `myLog`, `myWarning`, and `myError` from `client/src/shared/utils/logger.js`.
-- Always pass a feature symbol/flag as the first argument (e.g., `myLog('CHAT', 'message')`, `myWarning('CALL', 'warn')`, `myError('CALL', err)`).
-- If you are working on a new feature, add its flag to `LOG_FLAGS` in `logger.js`.
-- The global flag `ENABLE_MYLOG` is used to toggle all logs on/off. Do not override this unless explicitly requested.
+## Architecture: Facade + Service Layer Pattern
+- ALL HTTP requests MUST go through `shared/services/api.js`. NEVER call `fetch()` directly in Components.
+- ALL authentication token access MUST use `AuthHelper.getToken()` from `shared/services/AuthHelper.js`. NEVER use `localStorage.getItem('vuFamilyAuth')` directly.
+- ALL analytics events MUST go through `TrackingHelper.TrackingEvent()` from `shared/services/TrackingHelper.js`. NEVER call Firebase Analytics directly.
+- ALL UI text strings MUST use `t('key')` from `useTranslation()` hook. NEVER hardcode Vietnamese or English text in JSX.
+- ALL config values MUST be read via `ConfigAPI.getString/getNumber/getBoolean/getJSON` from `config.js`.
 
-## 2. UI/UX & Performance (Lazy Loading)
-- **Lazy Loading (BẮT BUỘC):** Đối với các màn hình chứa dữ liệu lớn (Danh sách dài, biểu đồ, thống kê chi tiết), giao diện ban đầu (mặc định) CHỈ ĐƯỢC LOAD các con số tóm tắt hoặc thông tin quan trọng nhất để đảm bảo tốc độ phản hồi nhanh.
-- Tránh việc fetch toàn bộ dữ liệu nặng ngay khi vào trang.
-- Các dữ liệu chi tiết nặng chỉ được fetch (gọi API) khi người dùng chủ động click vào nút "Xem chi tiết" hoặc "Tải biểu đồ", đồng thời phải có giao diện Loading rõ ràng.
+## Import Rules (CRITICAL — Missing imports cause Runtime Crashes)
+- When using `AuthHelper.*`, MUST import: `import { AuthHelper } from '../../shared/services/AuthHelper';`
+- When using `TrackingHelper.*`, MUST import: `import { TrackingHelper } from '../../shared/services/TrackingHelper';`
+- When using `t()`, MUST import: `import { useTranslation } from '../../shared/hooks/useTranslation';`
+- When using `ConfigAPI.*`, MUST import: `import { ConfigAPI } from '../../config.js';`
 
-## 3. General Rules
-- Keep UI components clean and use existing CSS variables (e.g., `var(--primary)`, `var(--bg-secondary)`).
-- For data syncing, prefer the established Messenger-like cache pattern (load from IndexedDB first, then sync).
+## Logging
+- Use `myLog()`, `myError()`, `myWarning()` from `shared/utils/logger.js`. NEVER use raw `console.log`.
+
+## CSS
+- Use CSS variables from theme files: `var(--primary)`, `var(--bg-card)`, etc. NEVER hardcode hex colors.
+
+## Naming Conventions
+- Variables/Functions: camelCase
+- React Components: PascalCase
+- CSS classes: kebab-case
+- Constants: SCREAMING_SNAKE_CASE
+- i18n keys: dot.notation (e.g., `login.username`)
+
+## Adding New Features
+1. Create folder in `features/`
+2. Add API methods to `shared/services/api.js`
+3. Add i18n keys to `shared/services/i18n.js` (both `vi` and `en`)
+4. Add tracking events to `shared/services/TrackingHelper.js`
+5. Add feature flag to `config.js`: `feature_xxx_enabled: true`
+6. Register in `App.jsx` and `Sidebar.jsx`
+
+## Server API Response Format
+All endpoints MUST return: `{ success: boolean, data: any, message: string, error: string }`

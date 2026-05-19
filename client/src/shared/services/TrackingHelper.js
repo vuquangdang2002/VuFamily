@@ -15,7 +15,7 @@ export const TrackingHelper = {
     TrackingEvent: (eventName, params = {}) => {
         const finalParams = { ...params, timestamp: new Date().toISOString() };
         TrackingHelper._log(eventName, finalParams);
-        
+
         // 🔌 Cắm các provider vào đây:
         TrackingFirebaseHelper.trackEvent(eventName, finalParams);
         // Tương lai: TrackingServerBucketHelper.trackEvent(eventName, finalParams);
@@ -34,11 +34,11 @@ export const TrackingHelper = {
     trackAppOpen: (platform = 'web') => {
         TrackingHelper.TrackingEvent('app_open', { platform });
     },
-    
+
     trackLoginSuccess: (method = 'token') => {
         TrackingHelper.TrackingEvent('login_success', { method });
     },
-    
+
     trackLogout: () => {
         TrackingHelper.TrackingEvent('logout');
     },
@@ -49,19 +49,19 @@ export const TrackingHelper = {
     trackViewFamilyTree: (totalNodes) => {
         TrackingHelper.TrackingEvent('view_family_tree', { total_nodes: totalNodes });
     },
-    
+
     trackAddTreeMember: (relationship) => {
         TrackingHelper.TrackingEvent('add_tree_member', { relationship });
     },
-    
+
     trackSendChatMessage: (roomType) => {
         TrackingHelper.TrackingEvent('send_chat_message', { room_type: roomType });
     },
-    
+
     trackStartVoiceCall: (callType) => {
         TrackingHelper.TrackingEvent('start_voice_call', { call_type: callType });
     },
-    
+
     trackEndVoiceCall: (durationSeconds) => {
         TrackingHelper.TrackingEvent('end_voice_call', { duration_seconds: durationSeconds });
     },
@@ -72,11 +72,11 @@ export const TrackingHelper = {
     trackCreatePost: (hasImage) => {
         TrackingHelper.TrackingEvent('create_post', { has_image: hasImage });
     },
-    
+
     trackReactPost: (reactionType) => {
         TrackingHelper.TrackingEvent('react_post', { reaction_type: reactionType });
     },
-    
+
     trackViewCalendar: () => {
         TrackingHelper.TrackingEvent('view_calendar');
     },
@@ -87,7 +87,7 @@ export const TrackingHelper = {
     trackCreateAccount: (targetRole) => {
         TrackingHelper.TrackingEvent('create_account', { target_role: targetRole });
     },
-    
+
     trackBanAccount: (targetUserId) => {
         TrackingHelper.TrackingEvent('ban_account', { target_user_id: targetUserId });
     }

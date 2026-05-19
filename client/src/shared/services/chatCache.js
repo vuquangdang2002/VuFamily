@@ -2,7 +2,7 @@ import { myLog, myError } from '../utils/logger';
 
 /**
  * ChatCache — Messenger-style IndexedDB cache for chat history
- * 
+ *
  * Stores rooms and messages locally for instant load + offline access.
  * Caches the 10 most recent conversations and their messages.
  */

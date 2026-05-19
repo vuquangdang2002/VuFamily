@@ -1,3 +1,4 @@
+// SplashLoading.jsx — Màn hình chờ hiệu ứng loading khi app khởi động
 import React from 'react';
 import './SplashLoading.css';
 
@@ -7,11 +8,11 @@ export default function SplashLoading({ loadingProgress, loadingStatus }) {
             <div className="splash-content">
                 <div className="splash-logo">🏛️</div>
                 <h1 className="splash-title">VuFamily</h1>
-                
+
                 <div className="progress-wrapper">
                     <div className="progress-bar-container">
-                        <div 
-                            className="progress-bar-fill" 
+                        <div
+                            className="progress-bar-fill"
                             style={{ width: `${loadingProgress}%` }}
                         ></div>
                     </div>

@@ -1,3 +1,4 @@
+// TrackingFirebaseHelper.js — Provider Firebase Analytics cho TrackingHelper (Facade Pattern)
 import { analytics as firebaseAnalytics } from '../../firebase';
 import { logEvent, setUserId, setUserProperties } from 'firebase/analytics';
 import { myLog, myError } from '../utils/logger';
@@ -11,7 +12,7 @@ export const TrackingFirebaseHelper = {
             myError('ANALYTICS', "Firebase Track Error:", e);
         }
     },
-    
+
     identifyUser: (userId, props) => {
         if (!firebaseAnalytics) return;
         try {

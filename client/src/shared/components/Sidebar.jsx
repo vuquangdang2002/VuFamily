@@ -155,11 +155,11 @@ export default function Sidebar({ activePage, onNavigate, isAdmin, user, onLogou
                                 <span>🌓</span> {t('app.theme')}
                             </div>
                             <div style={{ display: 'flex', gap: '4px', background: 'var(--bg-card)', borderRadius: '6px', padding: '2px' }}>
-                                <button 
+                                <button
                                     onClick={(e) => { e.stopPropagation(); setTheme('light', e); }}
                                     style={{ border: 'none', background: theme === 'light' ? 'var(--primary)' : 'transparent', color: theme === 'light' ? '#fff' : 'var(--text-muted)', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', transition: 'all 0.2s' }}
                                 >{t('theme.light')}</button>
-                                <button 
+                                <button
                                     onClick={(e) => { e.stopPropagation(); setTheme('dark', e); }}
                                     style={{ border: 'none', background: theme === 'dark' ? 'var(--primary)' : 'transparent', color: theme === 'dark' ? '#fff' : 'var(--text-muted)', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', transition: 'all 0.2s' }}
                                 >{t('theme.dark')}</button>
@@ -173,11 +173,11 @@ export default function Sidebar({ activePage, onNavigate, isAdmin, user, onLogou
                                         <span>🌐</span> {t('app.language')}
                                     </div>
                                     <div style={{ display: 'flex', gap: '4px', background: 'var(--bg-card)', borderRadius: '6px', padding: '2px' }}>
-                                        <button 
+                                        <button
                                             onClick={(e) => { e.stopPropagation(); changeLanguage('vi'); }}
                                             style={{ border: 'none', background: lang === 'vi' ? 'var(--primary)' : 'transparent', color: lang === 'vi' ? '#fff' : 'var(--text-muted)', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', transition: 'all 0.2s' }}
                                         >VI</button>
-                                        <button 
+                                        <button
                                             onClick={(e) => { e.stopPropagation(); changeLanguage('en'); }}
                                             style={{ border: 'none', background: lang === 'en' ? 'var(--primary)' : 'transparent', color: lang === 'en' ? '#fff' : 'var(--text-muted)', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', transition: 'all 0.2s' }}
                                         >EN</button>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { myLog, myError } from '../../shared/utils/logger';
+import { AuthHelper } from '../../shared/services/AuthHelper';
 import { TrackingHelper } from '../../shared/services/TrackingHelper';
 import { io } from 'socket.io-client';
 import { HUB_URL } from '../../config';

@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { TrackingHelper } from '../../shared/services/TrackingHelper';
 
 /**
  * PhotoCropper: Facebook-style circular crop.

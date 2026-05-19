@@ -1,3 +1,4 @@
+// Toolbar.jsx — Thanh công cụ phía trên giao diện chính
 
 export default function Toolbar({ theme, setTheme }) {
     return (

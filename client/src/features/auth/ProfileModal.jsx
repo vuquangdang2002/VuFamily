@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from '../../shared/hooks/useTranslation.js';
-
-
+import { AuthHelper } from '../../shared/services/AuthHelper';
+import { TrackingHelper } from '../../shared/services/TrackingHelper';
+import { myLog, myError } from '../../shared/utils/logger';
 
 export default function ProfileModal({ isOpen, onClose, user, onUpdateUser, onAddToast, theme, setTheme }) {
     const { t } = useTranslation();
