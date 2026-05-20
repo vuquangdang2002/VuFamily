@@ -109,10 +109,10 @@ export default function App() {
                     await Notification.requestPermission();
                 }
             } catch (e) {
-                myError('APP', 'Không thể xin quyền thông báo hoặc lỗi tải module:', e);
+                myError('APP', 'Failed to request notification permission or module load error:', e);
                 // Nếu lỗi do phiên bản cũ bị cache (Failed to fetch dynamically imported module)
                 if (e.name === 'TypeError' && e.message.includes('dynamically imported module')) {
-                    myLog('APP', 'Phát hiện phiên bản mới, đang tải lại trang...');
+                    myLog('APP', 'New version detected, reloading page...');
                     window.location.reload();
                 }
             }
@@ -123,7 +123,7 @@ export default function App() {
                     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                     stream.getTracks().forEach(t => t.stop()); // Tắt mic đi luôn, chỉ lấy quyền
                 } catch (e) {
-                    myError('APP', 'Chưa có quyền Micro:', e);
+                    myError('APP', 'Microphone permission not granted:', e);
                 }
             }
         }
@@ -168,7 +168,7 @@ export default function App() {
                 setAuthChecked(true);
                 // Hide native splash screen
                 if (window.Capacitor) {
-                    SplashScreen.hide().catch(() => {});
+                    SplashScreen.hide().catch(() => { });
                 }
             }, 600);
         };
@@ -294,13 +294,13 @@ export default function App() {
                 if (isAutoReset) {
                     setTempPwd(password);
                     setForceChangePwd(true);
-                    addToast('Đăng nhập thành công từ liên kết. Vui lòng đổi mật khẩu mới.', 'success');
+                    addToast(t('app.login_success_reset'), 'success');
                 } else {
-                    addToast(`Chào mừng ${authData.displayName}! Đăng nhập thành công.`);
+                    addToast(t('app.login_welcome').replace('{name}', authData.displayName));
                 }
                 return;
             }
-            throw new Error(data.error || 'Đăng nhập thất bại');
+            throw new Error(data.error || t('app.login_failed'));
         } catch (err) {
             const isServerError = err.message === 'SERVER_UNAVAILABLE'
                 || err.name === 'TypeError'
@@ -314,13 +314,13 @@ export default function App() {
                     localStorage.setItem(AUTH_KEY, JSON.stringify(authData));
                     setUser(authData);
                     TrackingHelper.trackLoginSuccess('local');
-                    addToast(`Chào mừng ${u.displayName}! (Chế độ offline)`);
+                    addToast(t('app.login_welcome_offline').replace('{name}', u.displayName));
                     return;
                 }
-                addToast('Sai tên đăng nhập hoặc mật khẩu', 'error');
-                throw new Error('Sai tên đăng nhập hoặc mật khẩu');
+                addToast(t('app.login_wrong_credentials'), 'error');
+                throw new Error(t('app.login_wrong_credentials'));
             }
-            addToast(err.message || 'Đăng nhập thất bại', 'error');
+            addToast(err.message || t('app.login_failed'), 'error');
             throw err;
         }
     };
@@ -336,7 +336,7 @@ export default function App() {
         setSelected(null);
         setDetailOpen(false);
         TrackingHelper.trackLogout();
-        addToast('Đã đăng xuất thành công');
+        addToast(t('app.logout_success'));
 
         // Let's reset URL in case of auto-login
         window.history.replaceState({}, document.title, window.location.pathname);
@@ -344,15 +344,15 @@ export default function App() {
 
     const handleForceChangePassword = async (newPwd, confirmNewPwd) => {
         setForceChangeError('');
-        if (!newPwd || !confirmNewPwd) { setForceChangeError('Vui lòng nhập đầy đủ mật khẩu mới'); return; }
+        if (!newPwd || !confirmNewPwd) { setForceChangeError(t('app.force_pwd_empty')); return; }
 
         const strongRegex = new RegExp("^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\\$%\\^&\\*])(?=.{8,})");
         if (!strongRegex.test(newPwd)) {
-            setForceChangeError('Mật khẩu yếu, chưa đủ bảo mật. Hãy xem lại yêu cầu ở trên.');
+            setForceChangeError(t('app.force_pwd_weak'));
             return;
         }
 
-        if (newPwd !== confirmNewPwd) { setForceChangeError('Mật khẩu nhập lại không khớp'); return; }
+        if (newPwd !== confirmNewPwd) { setForceChangeError(t('app.force_pwd_mismatch')); return; }
 
         try {
             const res = await fetch(`${getApiBase()}/auth/change-password`, {
@@ -362,15 +362,15 @@ export default function App() {
             });
             const json = await res.json();
             if (json.success) {
-                addToast('Đã đổi mật khẩu bắt buộc thành công!');
+                addToast(t('app.force_pwd_success'));
                 setForceChangePwd(false);
                 setTempPwd('');
                 setForceChangeError('');
             } else {
-                setForceChangeError(json.error || 'Lỗi đổi mật khẩu');
+                setForceChangeError(json.error || t('app.force_pwd_error'));
             }
         } catch (e) {
-            setForceChangeError('Lỗi kết nối khi đổi mật khẩu');
+            setForceChangeError(t('app.force_pwd_conn_error'));
         }
     };
 
@@ -388,7 +388,7 @@ export default function App() {
                 }
             }
         } catch (e) {
-            addToast('Lỗi tải gia phả từ máy chủ', 'error');
+            addToast(t('app.load_tree_error'), 'error');
         } finally {
             setIsLoadingMembers(false);
         }
@@ -430,16 +430,16 @@ export default function App() {
                 }
 
                 if (!hasChanges) {
-                    addToast('Không có thông tin nào được thay đổi.', 'error');
+                    addToast(t('app.no_changes'), 'error');
                     closeModal();
                     return;
                 }
 
                 if (isAdmin || canEdit) {
                     if (Object.keys(actualChanges).length > 0) {
-                    const result = await api.submitRequest(data.id, actualChanges, 'Cập nhật trực tiếp bởi ' + (isAdmin ? 'Admin' : 'Editor'));
-                    await api.approveRequest(result.data.id);
-                    addToast(`Đã cập nhật thông tin "${data.name}" thành công!`);
+                        const result = await api.submitRequest(data.id, actualChanges, t('app.direct_update_by') + ' ' + (isAdmin ? 'Admin' : 'Editor'));
+                        await api.approveRequest(result.data.id);
+                        addToast(t('app.update_success').replace('{name}', data.name));
                     }
                     if (data.newAchievements?.length > 0) {
                         for (const a of data.newAchievements) {
@@ -447,11 +447,11 @@ export default function App() {
                         }
                     }
                 } else {
-                    const result = await api.submitRequest(data.id, actualChanges, 'Chỉnh sửa thành viên');
-                    addToast(result.message || 'Đã gửi yêu cầu', result.success ? 'success' : 'error');
+                    const result = await api.submitRequest(data.id, actualChanges, t('app.edit_member_label'));
+                    addToast(result.message || t('app.edit_request_sent'), result.success ? 'success' : 'error');
                 }
             } else {
-                if (!canEdit) { addToast('Chỉ Biên tập viên hoặc Admin mới có quyền thêm thành viên mới.', 'error'); return; }
+                if (!canEdit) { addToast(t('app.no_add_permission'), 'error'); return; }
                 const res = await api.createMember(data);
                 if (data.newAchievements?.length > 0 && res.data?.id) {
                     for (const a of data.newAchievements) {
@@ -460,31 +460,31 @@ export default function App() {
                 }
                 const relationship = data.parentId ? 'con' : (data.spouseId ? 'vo_chong' : 'goc');
                 TrackingHelper.trackAddTreeMember(relationship);
-                addToast(`Đã thêm thành viên "${data.name}" thành công!`);
+                addToast(t('app.add_success').replace('{name}', data.name));
             }
             await refresh();
             closeModal();
         } catch (e) {
-            addToast(e.message || 'Lỗi khi lưu thông tin', 'error');
+            addToast(e.message || t('app.save_error'), 'error');
         }
     };
 
     const handleDelete = async (id) => {
-        if (!canEdit) { addToast('Chỉ Biên tập viên hoặc Admin mới có quyền xóa thành viên.', 'error'); return; }
+        if (!canEdit) { addToast(t('app.no_delete_permission'), 'error'); return; }
         const m = members.find(x => x.id === id);
         if (!m) return;
         const children = members.filter(x => x.parentId === id);
         const msg = children.length > 0
-            ? `Xóa "${m.name}"?\n\n⚠️ ${children.length} con sẽ mất liên kết cha/mẹ.\nThao tác này là vĩnh viễn (không thể hoàn tác).`
-            : `Xóa "${m.name}"?\n\nThao tác này là vĩnh viễn (không thể hoàn tác).`;
+            ? t('app.delete_confirm_children').replace('{name}', m.name).replace('{count}', children.length)
+            : t('app.delete_confirm').replace('{name}', m.name);
         if (confirm(msg)) {
             try {
                 await api.deleteMember(id);
                 closeDetail();
                 await refresh();
-                addToast(`Đã xóa "${m.name}".`);
+                addToast(t('app.deleted').replace('{name}', m.name));
             } catch (e) {
-                addToast(e.message || 'Lỗi khi xóa', 'error');
+                addToast(e.message || t('app.delete_error'), 'error');
             }
         }
     };
@@ -492,7 +492,7 @@ export default function App() {
     const handleExport = async (format = 'json') => {
         if (format === 'csv') {
             const members = localApi.getMembers();
-            if (!members.length) { addToast('Không có dữ liệu để xuất', 'error'); return; }
+            if (!members.length) { addToast(t('app.no_data_export'), 'error'); return; }
             const headers = ['id', 'name', 'gender', 'birth_date', 'birth_time', 'death_date', 'birth_place', 'death_place', 'occupation', 'phone', 'email', 'address', 'note', 'photo', 'birth_order', 'child_type', 'parent_id', 'spouse_id', 'generation'];
             const csvRows = [headers.join(',')];
             members.forEach(m => {
@@ -509,21 +509,21 @@ export default function App() {
             const a = document.createElement('a');
             a.href = url; a.download = `gia-pha-backup-${new Date().toISOString().slice(0, 10)}.csv`;
             a.click(); URL.revokeObjectURL(url);
-            addToast('Đã xuất file backup CSV!');
+            addToast(t('app.export_csv_success'));
         } else {
             await localApi.exportJSON();
-            addToast('Đã xuất file backup JSON!');
+            addToast(t('app.export_json_success'));
         }
     };
 
     const handleImport = async (file, format = 'json') => {
-        if (!canEdit) { addToast('Chỉ Biên tập viên hoặc Admin mới có quyền nhập dữ liệu.', 'error'); return; }
-        if (!confirm('Nhập dữ liệu từ file sẽ GHI ĐÈ toàn bộ dữ liệu hiện tại.\nBạn có chắc chắn?')) return;
+        if (!canEdit) { addToast(t('app.no_import_permission'), 'error'); return; }
+        if (!confirm(t('app.import_confirm'))) return;
         try {
             if (format === 'csv') {
                 const text = await file.text();
                 const lines = text.replace(/^\uFEFF/, '').split('\n').filter(l => l.trim());
-                if (lines.length < 2) throw new Error('File CSV trống hoặc không hợp lệ');
+                if (lines.length < 2) throw new Error(t('app.csv_empty'));
                 const headers = lines[0].split(',').map(h => h.trim());
                 const members = [];
                 for (let i = 1; i < lines.length; i++) {
@@ -551,18 +551,18 @@ export default function App() {
                 // Save to localStorage (same as importJSON does)
                 localStorage.setItem('vuFamilyMembers', JSON.stringify(members));
                 refresh();
-                addToast(I18nHelper.t('admin.import_success').replace('Nhập dữ liệu', `${members.length} CSV`));
+                addToast(I18nHelper.t('admin.import_success') + ' (' + members.length + ' CSV)');
             } else {
                 await localApi.importJSON(file);
                 refresh();
                 addToast(I18nHelper.t('admin.import_success'));
             }
-        } catch (err) { addToast(`Lỗi: ${err.message}`, 'error'); }
+        } catch (err) { addToast(`${t('app.error_prefix')} ${err.message}`, 'error'); }
     };
     const handleReset = () => {
         if (!isAdmin) return;
-        if (confirm('Khôi phục dữ liệu mẫu?\n\n⚠️ Mọi thay đổi sẽ bị mất!')) {
-            localApi.resetData(); refresh(); closeDetail(); addToast('Đã khôi phục dữ liệu mẫu.');
+        if (confirm(t('app.reset_confirm'))) {
+            localApi.resetData(); refresh(); closeDetail(); addToast(t('app.reset_success'));
         }
     };
 
@@ -603,7 +603,7 @@ export default function App() {
                         {isLoadingMembers && (
                             <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-slate-900/40 backdrop-blur-sm rounded-xl m-4">
                                 <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4 shadow-lg"></div>
-                                <span className="text-white font-medium text-lg drop-shadow-md">Đang tải gia phả...</span>
+                                <span className="text-white font-medium text-lg drop-shadow-md">{t('app.loading_tree')}</span>
                             </div>
                         )}
 
@@ -692,7 +692,7 @@ export default function App() {
                         onClick={() => setShowMobileMenu(!showMobileMenu)}
                     >
                         <span className="bottom-nav-item-icon">⚙️</span>
-                        <span>+</span>
+                        <span>{I18nHelper.t('nav.others')}</span>
                         {pendingCount > 0 && <span className="bottom-nav-badge">{pendingCount}</span>}
                     </button>
                 </div>

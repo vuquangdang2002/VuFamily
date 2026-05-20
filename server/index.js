@@ -50,7 +50,7 @@ if (require.main === module) {
 
         console.log('');
         console.log('🏛️  ═══════════════════════════════════════');
-        console.log('    GIA PHẢ - Family Genealogy Server');
+        console.log('    FAMILY TREE - Genealogy Server');
         console.log('    ═══════════════════════════════════════');
         console.log(`    🌐 ${domain}`);
         console.log(`    ⚡ Realtime Hub (Chat+Call): ${wsDomain}`);
@@ -61,7 +61,7 @@ if (require.main === module) {
     });
 
     process.on('SIGTERM', () => {
-        console.log('👋 Đang tắt server...');
+        console.log('👋 Shutting down server...');
         httpServer.close(() => process.exit(0));
     });
 }

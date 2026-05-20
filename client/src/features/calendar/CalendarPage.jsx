@@ -4,11 +4,7 @@ import { Solar, Lunar } from '../../shared/utils/lunar.js';
 import { ganZhiToViet, lunarDayLabel } from '../../shared/utils/vietLunar.js';
 import './Calendar.css';
 import { TrackingHelper } from '../../shared/services/TrackingHelper';
-const WEEKDAYS = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
-const MONTH_NAMES = [
-    'Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6',
-    'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12',
-];
+import { useTranslation } from '../../shared/hooks/useTranslation';
 
 function parseMD(dateStr) {
     if (!dateStr) return null;
@@ -80,7 +76,8 @@ function getUpcomingAnniversaries(members, daysAhead = 30) {
 
             // Format Original Lunar Date with full year
             const lunarYear = deathLunar.getYear();
-            const lunarStr = `${pad2(lDay)}/${pad2(Math.abs(lMonth))} năm ${ganZhiToViet(deathLunar.getYearInGanZhi())} (${lunarYear})`;
+            const lunarStr = `${pad2(lDay)}/${pad2(Math.abs(lMonth))}`;
+            const lunarYearStr = `${ganZhiToViet(deathLunar.getYearInGanZhi())} (${lunarYear})`;
 
             // Find anniversary in current year
             let currentLunarYear = Lunar.fromYmd(thisYear, lMonth, lDay);
@@ -99,6 +96,7 @@ function getUpcomingAnniversaries(members, daysAhead = 30) {
                 results.push({
                     member: m, daysUntil: diff,
                     lunarStr,
+                    lunarYearStr,
                     solarAnniversary: `${pad2(eventDate.getDate())}/${pad2(eventDate.getMonth() + 1)}/${eventDate.getFullYear()}`,
                     deathDateDisplay: formatDateVN(m.deathDate),
                 });
@@ -149,10 +147,14 @@ function MemberAvatar({ member, size = 40 }) {
 }
 
 export default function CalendarPage({ members }) {
+    const { t } = useTranslation();
     const today = new Date();
     const [viewYear, setViewYear] = useState(today.getFullYear());
     const [viewMonth, setViewMonth] = useState(today.getMonth() + 1);
     const [selectedDay, setSelectedDay] = useState(null);
+
+    const WEEKDAYS = t('calendar.weekdays').split(',');
+    const MONTH_NAMES = t('calendar.month_names').split(',');
 
     const upcomingBirthdays = useMemo(() => getUpcomingBirthdays(members, 30), [members]);
     const upcomingAnniversaries = useMemo(() => getUpcomingAnniversaries(members, 30), [members]);
@@ -177,8 +179,8 @@ export default function CalendarPage({ members }) {
     return (
         <div className="page-container calendar-page">
             <div className="page-header">
-                <h2>📅 Lịch & Sự kiện</h2>
-                <p className="page-subtitle">Sinh nhật, ngày giỗ trong 30 ngày tới</p>
+                <h2>{t('calendar.title')}</h2>
+                <p className="page-subtitle">{t('calendar.subtitle')}</p>
             </div>
             <div className="calendar-layout">
                 {/* ──── Calendar Grid ──── */}
@@ -188,11 +190,11 @@ export default function CalendarPage({ members }) {
                             <button className="cal-nav-btn" onClick={prevMonth}>◀</button>
                             <span className="cal-nav-title">{MONTH_NAMES[viewMonth - 1]} {viewYear}</span>
                             <button className="cal-nav-btn" onClick={nextMonth}>▶</button>
-                            <button className="cal-today-btn" onClick={goToday}>Hôm nay</button>
+                            <button className="cal-today-btn" onClick={goToday}>{t('calendar.today_btn')}</button>
                         </div>
                         <div className="calendar-grid">
-                            {WEEKDAYS.map(wd => (
-                                <div key={wd} className={'cal-weekday' + (wd === 'CN' ? ' cal-weekday-sun' : '')}>{wd}</div>
+                            {WEEKDAYS.map((wd, idx) => (
+                                <div key={wd} className={'cal-weekday' + (idx === 0 ? ' cal-weekday-sun' : '')}>{wd}</div>
                             ))}
                             {weeks.map((wk, wi) =>
                                 wk.map((d, di) => {
@@ -227,14 +229,14 @@ export default function CalendarPage({ members }) {
                             )}
                         </div>
                         <div className="calendar-legend">
-                            <span className="cal-legend-item"><span className="cal-dot cal-dot-birthday" /> Sinh nhật</span>
-                            <span className="cal-legend-item"><span className="cal-dot cal-dot-anniversary" /> Ngày giỗ</span>
+                            <span className="cal-legend-item"><span className="cal-dot cal-dot-birthday" /> {t('calendar.legend_birthday')}</span>
+                            <span className="cal-legend-item"><span className="cal-dot cal-dot-anniversary" /> {t('calendar.legend_anniversary')}</span>
                         </div>
                         {selectedDay && (
                             <div className="cal-day-detail">
-                                <h4>📌 Ngày {selectedDay}/{viewMonth}/{viewYear}</h4>
+                                <h4>{t('calendar.day_detail')} {selectedDay}/{viewMonth}/{viewYear}</h4>
                                 {selectedDayEvents.length === 0 ? (
-                                    <p className="cal-no-event">Không có sự kiện</p>
+                                    <p className="cal-no-event">{t('calendar.no_event')}</p>
                                 ) : (
                                     <div className="cal-event-list">
                                         {selectedDayEvents.map((ev, i) => (
@@ -244,9 +246,9 @@ export default function CalendarPage({ members }) {
                                                     <span className="cal-event-name">{ev.member.name}</span>
                                                     <span className="cal-event-sub">
                                                         {ev.type === 'birthday'
-                                                            ? `🎂 Sinh nhật — ${calcAge(ev.member.birthDate)} tuổi`
-                                                            : '🕯️ Ngày giỗ'}
-                                                        {ev.member.generation ? ` · Đời ${ev.member.generation}` : ''}
+                                                            ? `${t('calendar.birthday_label')} — ${calcAge(ev.member.birthDate)} ${t('calendar.age_suffix')}`
+                                                            : t('calendar.anniversary_label')}
+                                                        {ev.member.generation ? ` · ${t('calendar.generation_prefix')} ${ev.member.generation}` : ''}
                                                     </span>
                                                 </div>
                                             </div>
@@ -258,66 +260,66 @@ export default function CalendarPage({ members }) {
                     </div>
                 </div>
 
-                {/* ──── Sự kiện sắp tới ──── */}
+                {/* ──── Upcoming Events ──── */}
                 <div className="calendar-sidebar">
-                    {/* ── Sinh nhật sắp tới ── */}
+                    {/* ── Upcoming Birthdays ── */}
                     <div className="cal-upcoming-card cal-upcoming-birthday">
                         <div className="cal-upcoming-header">
                             <span className="cal-upcoming-icon">🎂</span>
-                            <h3>Sinh nhật sắp tới</h3>
+                            <h3>{t('calendar.upcoming_birthday')}</h3>
                             <span className="cal-upcoming-count">{upcomingBirthdays.length}</span>
                         </div>
                         <div className="cal-upcoming-body">
                             {upcomingBirthdays.length === 0 ? (
-                                <p className="cal-no-event">Không có sinh nhật trong 30 ngày tới</p>
+                                <p className="cal-no-event">{t('calendar.no_birthday_30')}</p>
                             ) : upcomingBirthdays.map((ev, i) => (
                                 <div key={i} className={'cal-upcoming-item' + (ev.daysUntil === 0 ? ' cal-item-today' : '')}>
                                     <MemberAvatar member={ev.member} />
                                     <div className="cal-upcoming-info">
                                         <span className="cal-upcoming-name">{ev.member.name}</span>
                                         <span className="cal-upcoming-date">
-                                            Sinh: {ev.fullDate} — <strong>{ev.age} tuổi</strong>
+                                            {t('calendar.born_label')} {ev.fullDate} — <strong>{ev.age} {t('calendar.age_suffix')}</strong>
                                         </span>
                                         <span className="cal-upcoming-gen">
-                                            {ev.displayDate}{ev.member.generation ? ` · Đời ${ev.member.generation}` : ''}
+                                            {ev.displayDate}{ev.member.generation ? ` · ${t('calendar.generation_prefix')} ${ev.member.generation}` : ''}
                                         </span>
                                     </div>
                                     <div className="cal-upcoming-badge">
                                         {ev.daysUntil === 0
-                                            ? <span className="cal-badge cal-badge-today">Hôm nay!</span>
-                                            : <span className="cal-badge cal-badge-days">{ev.daysUntil} ngày</span>}
+                                            ? <span className="cal-badge cal-badge-today">{t('calendar.today_badge')}</span>
+                                            : <span className="cal-badge cal-badge-days">{ev.daysUntil} {t('calendar.days_suffix')}</span>}
                                     </div>
                                 </div>
                             ))}
                         </div>
                     </div>
 
-                    {/* ── Ngày giỗ sắp tới ── */}
+                    {/* ── Upcoming Anniversaries ── */}
                     <div className="cal-upcoming-card cal-upcoming-anniversary">
                         <div className="cal-upcoming-header">
                             <span className="cal-upcoming-icon">🕯️</span>
-                            <h3>Ngày giỗ sắp tới</h3>
+                            <h3>{t('calendar.upcoming_anniversary')}</h3>
                             <span className="cal-upcoming-count">{upcomingAnniversaries.length}</span>
                         </div>
                         <div className="cal-upcoming-body">
                             {upcomingAnniversaries.length === 0 ? (
-                                <p className="cal-no-event">Không có ngày giỗ trong 30 ngày tới</p>
+                                <p className="cal-no-event">{t('calendar.no_anniversary_30')}</p>
                             ) : upcomingAnniversaries.map((ev, i) => (
                                 <div key={i} className={'cal-upcoming-item' + (ev.daysUntil === 0 ? ' cal-item-today' : '')}>
                                     <MemberAvatar member={ev.member} />
                                     <div className="cal-upcoming-info">
                                         <span className="cal-upcoming-name">{ev.member.name}</span>
                                         <span className="cal-upcoming-lunar">
-                                            🌙 {ev.lunarStr} <em>(Âm lịch)</em>
+                                            🌙 {ev.lunarStr} {t('calendar.year_label')} {ev.lunarYearStr} <em>{t('calendar.lunar_label')}</em>
                                         </span>
                                         <span className="cal-upcoming-date">
-                                            📅 Dương lịch: {ev.solarAnniversary} · Mất {ev.deathDateDisplay}
+                                            📅 {t('calendar.solar_label')} {ev.solarAnniversary} · {t('calendar.death_label')} {ev.deathDateDisplay}
                                         </span>
                                     </div>
                                     <div className="cal-upcoming-badge">
                                         {ev.daysUntil === 0
-                                            ? <span className="cal-badge cal-badge-today">Hôm nay!</span>
-                                            : <span className="cal-badge cal-badge-memorial">{ev.daysUntil} ngày</span>}
+                                            ? <span className="cal-badge cal-badge-today">{t('calendar.today_badge')}</span>
+                                            : <span className="cal-badge cal-badge-memorial">{ev.daysUntil} {t('calendar.days_suffix')}</span>}
                                     </div>
                                 </div>
                             ))}

@@ -380,7 +380,7 @@ export default function NewsfeedPage({ user, isAdmin, addToast, members = [], on
                                                         </div>
                                                     </div>
                                                     {isAdmin && (
-                                                        <button className="nf-post-delete" onClick={() => handleDeletePost(post.id)} title="Xóa bài đăng">
+                                                        <button className="nf-post-delete" onClick={() => handleDeletePost(post.id)} title={t('newsfeed.delete_post_title')}>
                                                             🗑️
                                                         </button>
                                                     )}
@@ -401,7 +401,7 @@ export default function NewsfeedPage({ user, isAdmin, addToast, members = [], on
                                                     </div>
                                                     <div style={{ display: 'flex', gap: 12 }}>
                                                         <span style={{ cursor: 'pointer' }} onClick={() => toggleComments(post.id)}>
-                                                            {post.comment_count || 0} {t('newsfeed.tab_posts') === 'Posts' ? 'comments' : 'bình luận'}
+                                                            {post.comment_count || 0} {t('newsfeed.comments_count')}
                                                         </span>
                                                     </div>
                                                 </div>
@@ -413,7 +413,7 @@ export default function NewsfeedPage({ user, isAdmin, addToast, members = [], on
                                                                 <button
                                                                     key={emoji}
                                                                     className="nf-reaction-picker-btn"
-                                                                    data-label={emoji === '👍' ? 'Thích' : emoji === '❤️' ? 'Yêu thích' : emoji === '😂' ? 'Haha' : emoji === '😮' ? 'Hahaha' : 'Buồn'}
+                                                                    data-label={emoji === '👍' ? t('newsfeed.like') : emoji === '❤️' ? t('newsfeed.love') : emoji === '😂' ? t('newsfeed.haha') : emoji === '😮' ? t('newsfeed.wow') : t('newsfeed.sad')}
                                                                     onClick={() => handleReaction(post.id, emoji)}
                                                                 >
                                                                     {emoji}
@@ -422,25 +422,25 @@ export default function NewsfeedPage({ user, isAdmin, addToast, members = [], on
                                                         </div>
                                                         {(() => {
                                                             const userReaction = EMOJIS.find(e => post.reactions?.[e]?.users?.includes(currentUserId));
-                                                            const LABEL_MAP = { '👍': 'Thích', '❤️': 'Yêu thích', '😂': 'Haha', '😮': 'Wow', '😢': 'Buồn' };
+                                                            const LABEL_MAP = { '👍': t('newsfeed.like'), '❤️': t('newsfeed.love'), '😂': t('newsfeed.haha'), '😮': t('newsfeed.wow'), '😢': t('newsfeed.sad') };
                                                             return (
                                                                 <button
                                                                     className={`nf-action-btn ${userReaction ? 'reacted-' + userReaction : ''}`}
                                                                     onClick={() => handleReaction(post.id, userReaction ? userReaction : '👍')}
                                                                 >
                                                                     <span style={{ fontSize: 18 }}>{userReaction ? userReaction : <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path></svg>}</span>
-                                                                    <span>{userReaction ? LABEL_MAP[userReaction] : 'Thích'}</span>
+                                                                    <span>{userReaction ? LABEL_MAP[userReaction] : t('newsfeed.like')}</span>
                                                                 </button>
                                                             );
                                                         })()}
                                                     </div>
                                                     <button className="nf-action-btn" onClick={() => toggleComments(post.id)}>
                                                         <span style={{ fontSize: 18 }}><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg></span>
-                                                        <span>Bình luận</span>
+                                                        <span>{t('newsfeed.comment')}</span>
                                                     </button>
                                                     <button className="nf-action-btn" onClick={() => addToast(t('newsfeed.share_coming'))}>
                                                         <span style={{ fontSize: 18 }}><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><polyline points="16 6 12 2 8 6"></polyline><line x1="12" y1="2" x2="12" y2="15"></line></svg></span>
-                                                        <span>Chia sẻ</span>
+                                                        <span>{t('newsfeed.share')}</span>
                                                     </button>
                                                 </div>
 
@@ -456,7 +456,7 @@ export default function NewsfeedPage({ user, isAdmin, addToast, members = [], on
                                                                     <span className="nf-comment-author">{c.author}</span>
                                                                     <span className="nf-comment-time">{timeAgo(c.created_at)}</span>
                                                                     {isAdmin && (
-                                                                        <button className="nf-comment-del" onClick={() => handleDeleteComment(c.id, post.id)} title="Xóa">✕</button>
+                                                                        <button className="nf-comment-del" onClick={() => handleDeleteComment(c.id, post.id)} title={t('newsfeed.delete_comment_title')}>✕</button>
                                                                     )}
                                                                 </div>
                                                                 <div className="nf-comment-text">{c.content}</div>
@@ -505,13 +505,13 @@ export default function NewsfeedPage({ user, isAdmin, addToast, members = [], on
                                                             className="form-input"
                                                             value={editUrl}
                                                             onChange={e => setEditUrl(e.target.value)}
-                                                            placeholder="Nhập link..."
+                                                            placeholder={t('newsfeed.enter_link')}
                                                             autoFocus
                                                             style={{ fontSize: 12, padding: '4px 8px', marginTop: 4 }}
                                                         />
                                                         <div style={{ display: 'flex', gap: 4, marginTop: 4 }}>
-                                                            <button className="btn btn-primary btn-sm" onClick={() => handleSaveUrl(c)}>Lưu</button>
-                                                            <button className="btn btn-sm" onClick={() => setEditingContact(null)}>Hủy</button>
+                                                            <button className="btn btn-primary btn-sm" onClick={() => handleSaveUrl(c)}>{t('newsfeed.save')}</button>
+                                                            <button className="btn btn-sm" onClick={() => setEditingContact(null)}>{t('newsfeed.cancel')}</button>
                                                         </div>
                                                     </div>
                                                 ) : (
@@ -522,17 +522,17 @@ export default function NewsfeedPage({ user, isAdmin, addToast, members = [], on
                                                 {c.url ? (
                                                     <>
                                                         <a href={c.url} target="_blank" rel="noopener noreferrer" className="btn btn-sm">
-                                                            🔗 Mở
+                                                            {t('newsfeed.open')}
                                                         </a>
                                                         <button className="btn btn-sm" onClick={() => setQrModal(c)}>
-                                                            📱 QR
+                                                            {t('newsfeed.qr')}
                                                         </button>
                                                     </>
                                                 ) : (
                                                     <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{t('newsfeed.no_contacts')}</span>
                                                 )}
                                                 {isAdmin && editingContact !== c.id && (
-                                                    <button className="btn btn-sm" onClick={() => handleStartEdit(c)}>✏️ Sửa link</button>
+                                                    <button className="btn btn-sm" onClick={() => handleStartEdit(c)}>{t('newsfeed.edit_link_btn')}</button>
                                                 )}
                                             </div>
                                         </div>
@@ -569,7 +569,7 @@ export default function NewsfeedPage({ user, isAdmin, addToast, members = [], on
 
                     {/* Quick Actions */}
                     <div className="nf-panel-card">
-                        <p className="nf-panel-title">⚡ Truy cập nhanh</p>
+                        <p className="nf-panel-title">⚡ {t('newsfeed.quick_access')}</p>
                         <div className="nf-quick-actions">
                             <button className="nf-quick-btn" onClick={() => onNavigate && onNavigate('tree')}>
                                 <span className="nf-quick-btn-icon" style={{ background: 'rgba(245,158,11,0.1)' }}>🌳</span>
@@ -605,7 +605,7 @@ export default function NewsfeedPage({ user, isAdmin, addToast, members = [], on
                             <img src={generateQR(qrModal.url)} alt="QR Code"
                                 style={{ width: 200, height: 200, borderRadius: 12, border: '1px solid var(--border-subtle)' }} />
                             <p style={{ fontSize: 13, color: 'var(--text-muted)', wordBreak: 'break-all' }}>{qrModal.url}</p>
-                            <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>Quét mã QR để mở liên kết</p>
+                            <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>{t('newsfeed.scan_qr')}</p>
                         </div>
                     </div>
                 </div>

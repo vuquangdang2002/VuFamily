@@ -7,9 +7,11 @@ import {
 } from '../../shared/services/chatCache';
 import { myLog, myError, myWarning } from '../../shared/utils/logger';
 import { TrackingHelper } from '../../shared/services/TrackingHelper';
+import { useTranslation } from '../../shared/hooks/useTranslation';
 import './Chat.css';
 
 export default function ChatPage({ user, addToast, onStartCall }) {
+    const { t } = useTranslation();
     const [rooms, setRooms] = useState([]);
     const [activeRoomId, setActiveRoomId] = useState(null);
     const [messages, setMessages] = useState([]);
@@ -210,10 +212,10 @@ export default function ChatPage({ user, addToast, onStartCall }) {
                 scrollToBottom();
                 fetchRooms(); // to update read/last msg time
             } else {
-                addToast(json.error || 'Lỗi gửi tin', 'error');
+                addToast(json.error || t('chat.send_fail'), 'error');
             }
         } catch (e) {
-            addToast('Lỗi kết nối mạng', 'error');
+            addToast(t('chat.network_error'), 'error');
         }
     };
 
@@ -236,10 +238,10 @@ export default function ChatPage({ user, addToast, onStartCall }) {
                 setShowNewChat(false);
                 setSelectedUserIds([]);
             } else {
-                addToast(json.error || 'Lỗi tạo nhóm chat', 'error');
+                addToast(json.error || t('chat.create_fail'), 'error');
             }
         } catch (e) {
-            addToast('Lỗi kết nối', 'error');
+            addToast(t('chat.connection_error'), 'error');
         }
     };
 
@@ -251,7 +253,7 @@ export default function ChatPage({ user, addToast, onStartCall }) {
         const activeRoom = rooms.find(r => r.id === activeRoomId);
         if (activeRoom?.type !== 'group') return;
 
-        const newName = prompt('Nhập tên nhóm mới:', activeRoom.display_name || '');
+        const newName = prompt(t('chat.enter_group_name'), activeRoom.display_name || '');
         if (!newName || newName.trim() === '' || newName.trim() === activeRoom.display_name) return;
 
         try {
@@ -263,16 +265,16 @@ export default function ChatPage({ user, addToast, onStartCall }) {
             const json = await res.json();
             if (json.success) {
                 fetchRooms();
-                addToast('Đã đổi tên nhóm thành công');
+                addToast(t('chat.rename_success'));
             } else {
-                addToast(json.error || 'Lỗi đổi tên nhóm', 'error');
+                addToast(json.error || t('chat.rename_fail'), 'error');
             }
         } catch (e) {
-            addToast('Lỗi kết nối mạng', 'error');
+            addToast(t('chat.network_error'), 'error');
         }
     };
     const handleLeaveGroup = async () => {
-        if (!window.confirm("Bạn có chắc muốn rời khỏi nhóm này?")) return;
+        if (!window.confirm(t('chat.leave_confirm'))) return;
         try {
             const res = await fetch(`${getApiBase()}/chats/${activeRoomId}/leave`, {
                 method: 'POST',
@@ -283,17 +285,17 @@ export default function ChatPage({ user, addToast, onStartCall }) {
                 setActiveRoomId(null);
                 setShowGroupInfo(false);
                 fetchRooms();
-                addToast("Đã rời khỏi nhóm");
+                addToast(t('chat.left_group'));
             } else {
-                addToast(json.error || "Lỗi rời nhóm", "error");
+                addToast(json.error || t('chat.leave_fail'), 'error');
             }
         } catch (e) {
-            addToast("Lỗi kết nối mạng", "error");
+            addToast(t('chat.network_error'), 'error');
         }
     };
 
     const handleKickMember = async (userId, memberName) => {
-        if (!window.confirm(`Bạn có chắc muốn đuổi ${memberName} khỏi nhóm?`)) return;
+        if (!window.confirm(t('chat.kick_confirm').replace('{name}', memberName))) return;
         try {
             const res = await fetch(`${getApiBase()}/chats/${activeRoomId}/kick/${userId}`, {
                 method: 'POST',
@@ -303,12 +305,12 @@ export default function ChatPage({ user, addToast, onStartCall }) {
             if (json.success) {
                 fetchRooms();
                 fetchMessagesFull(activeRoomId);
-                addToast(`Đã mời ${memberName} rời nhóm`);
+                addToast(t('chat.kicked_member').replace('{name}', memberName));
             } else {
-                addToast(json.error || "Lỗi thao tác", "error");
+                addToast(json.error || t('chat.kick_fail'), 'error');
             }
         } catch (e) {
-            addToast("Lỗi kết nối", "error");
+            addToast(t('chat.connection_error'), 'error');
         }
     };
 
@@ -323,18 +325,18 @@ export default function ChatPage({ user, addToast, onStartCall }) {
                 {/* INBOX PANEL */}
                 <div className="chat-inbox-panel">
                     <div style={{ padding: '16px', borderBottom: '1px solid var(--border-subtle)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <h2 style={{ fontSize: 18, margin: 0 }}>💬 Tin nhắn</h2>
+                        <h2 style={{ fontSize: 18, margin: 0 }}>{t('chat.messages_title')}</h2>
                         <button className="btn btn-primary" style={{ padding: '6px 12px', fontSize: 13 }} onClick={() => setShowNewChat(true)}>
-                            + Chat mới
+                            {t('chat.new_chat_btn')}
                         </button>
                     </div>
 
                     <div style={{ flex: 1, overflowY: 'auto' }}>
-                        {loadingRooms ? <div style={{ padding: 16, textAlign: 'center', color: 'var(--text-muted)' }}>Đang tải...</div> : null}
+                        {loadingRooms ? <div style={{ padding: 16, textAlign: 'center', color: 'var(--text-muted)' }}>{t('common.loading')}</div> : null}
                         {!loadingRooms && rooms.length === 0 && (
                             <div style={{ padding: 32, textAlign: 'center', color: 'var(--text-muted)' }}>
-                                Chưa có cuộc trò chuyện nào.<br /><br />
-                                <button className="btn" onClick={() => setShowNewChat(true)}>Bắt đầu nhắn tin</button>
+                                {t('chat.no_rooms')}<br /><br />
+                                <button className="btn" onClick={() => setShowNewChat(true)}>{t('chat.start_messaging')}</button>
                             </div>
                         )}
                         {rooms.map(room => (
@@ -360,9 +362,9 @@ export default function ChatPage({ user, addToast, onStartCall }) {
                                     )}
                                 </div>
                                 <div>
-                                    <div style={{ fontWeight: 600, fontSize: 14 }}>{room.display_name || (room.type === 'group' ? 'Nhóm không tên' : 'Người dùng')}</div>
+                                    <div style={{ fontWeight: 600, fontSize: 14 }}>{room.display_name || (room.type === 'group' ? t('chat.unnamed_group') : t('chat.user_label'))}</div>
                                     <div style={{ fontSize: 12, color: 'var(--text-muted)', display: 'flex', gap: 4 }}>
-                                        {room.type === 'group' ? `${room.members?.length || 0} thành viên` : (room.is_online ? 'Hoạt động' : 'Ngoại tuyến')}
+                                        {room.type === 'group' ? `${room.members?.length || 0} ${t('chat.members_count')}` : (room.is_online ? t('chat.active') : t('chat.offline_status'))}
                                     </div>
                                 </div>
                             </div>
@@ -384,32 +386,32 @@ export default function ChatPage({ user, addToast, onStartCall }) {
                                 </div>
                                 <div style={{ flex: 1, minWidth: 0 }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                                        <h3 style={{ margin: 0, fontSize: 16, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{activeRoom?.display_name || 'Nhóm'}</h3>
+                                        <h3 style={{ margin: 0, fontSize: 16, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{activeRoom?.display_name || t('chat.group_label')}</h3>
                                         {activeRoom?.type === 'group' && (
-                                            <button className="btn" title="Đổi tên nhóm" style={{ padding: '2px 6px', fontSize: 12, background: 'transparent', border: '1px solid var(--border-subtle)', borderRadius: 4, flexShrink: 0 }} onClick={handleRenameGroup}>✏️</button>
+                                            <button className="btn" title={t('chat.rename_group')} style={{ padding: '2px 6px', fontSize: 12, background: 'transparent', border: '1px solid var(--border-subtle)', borderRadius: 4, flexShrink: 0 }} onClick={handleRenameGroup}>✏️</button>
                                         )}
                                     </div>
                                     {activeRoom?.type === 'direct' && (
                                         <span style={{ fontSize: 12, color: activeRoom.is_online ? '#10b981' : 'var(--text-muted)', whiteSpace: 'nowrap', display: 'block' }}>
-                                            {activeRoom.is_online ? '🟢 Đang trực tuyến' : '⚪ Ngoại tuyến'}
+                                            {activeRoom.is_online ? t('chat.online_status') : t('chat.offline_status')}
                                         </span>
                                     )}
                                 </div>
                                 <div style={{ marginLeft: 'auto', display: 'flex', gap: 4, flexShrink: 0 }}>
-                                    <button className="btn call-btn-mobile" title="Gọi thoại" style={{ padding: '6px 10px' }} onClick={() => onStartCall({ ...activeRoom, requestVideo: false })}>
-                                        📞 <span className="hide-on-mobile">Gọi</span>
+                                    <button className="btn call-btn-mobile" title={t('chat.call_voice')} style={{ padding: '6px 10px' }} onClick={() => onStartCall({ ...activeRoom, requestVideo: false })}>
+                                        📞 <span className="hide-on-mobile">{t('chat.call_voice')}</span>
                                     </button>
-                                    <button className="btn btn-primary call-btn-mobile" title="Gọi video" style={{ padding: '6px 10px' }} onClick={() => onStartCall({ ...activeRoom, requestVideo: true })}>
-                                        📹 <span className="hide-on-mobile">Video</span>
+                                    <button className="btn btn-primary call-btn-mobile" title={t('chat.call_video')} style={{ padding: '6px 10px' }} onClick={() => onStartCall({ ...activeRoom, requestVideo: true })}>
+                                        📹 <span className="hide-on-mobile">{t('chat.call_video')}</span>
                                     </button>
-                                    <button className="btn btn-icon" title="Chi tiết nhóm" style={{ fontSize: 18, padding: '4px' }} onClick={() => setShowGroupInfo(true)}>ℹ️</button>
+                                    <button className="btn btn-icon" title={t('chat.group_detail')} style={{ fontSize: 18, padding: '4px' }} onClick={() => setShowGroupInfo(true)}>ℹ️</button>
                                 </div>
                             </div>
 
                             {/* Messages Container */}
                             <div style={{ flex: 1, overflowY: 'auto', padding: '24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
                                 {messages.length === 0 && (
-                                    <div style={{ margin: 'auto', color: 'var(--text-muted)' }}>Hãy là người nhắn tin đầu tiên!</div>
+                                    <div style={{ margin: 'auto', color: 'var(--text-muted)' }}>{t('chat.first_message')}</div>
                                 )}
                                 {messages.map((msg, idx) => {
                                     const isMe = msg.sender_id === user.id;
@@ -454,19 +456,19 @@ export default function ChatPage({ user, addToast, onStartCall }) {
                                     <input
                                         className="form-input"
                                         style={{ flex: 1, borderRadius: 24, padding: '12px 20px', background: 'var(--bg-secondary)', border: '1px solid var(--border-subtle)' }}
-                                        placeholder="Nhắn tin..."
+                                        placeholder={t('chat.input_msg')}
                                         value={inputText}
                                         onChange={e => setInputText(e.target.value)}
                                     />
                                     <button type="submit" disabled={!inputText.trim()} className="btn btn-primary" style={{ borderRadius: 24, padding: '0 24px' }}>
-                                        Gửi ➢
+                                        {t('chat.send_btn')}
                                     </button>
                                 </form>
                             </div>
                         </>
                     ) : (
                         <div style={{ m: 'auto', flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
-                            Chọn một phòng chat hoặc bấm + Chat mới
+                            {t('chat.select_room')}
                         </div>
                     )}
                 </div>
@@ -477,11 +479,11 @@ export default function ChatPage({ user, addToast, onStartCall }) {
                 <div className="modal-overlay open" onClick={e => e.target === e.currentTarget && setShowNewChat(false)}>
                     <div className="modal" style={{ width: 440 }}>
                         <div className="modal-header">
-                            <h2>Bắt đầu trò chuyện</h2>
+                            <h2>{t('chat.start_chat_title')}</h2>
                             <button className="detail-close" onClick={() => setShowNewChat(false)}>✕</button>
                         </div>
                         <div className="modal-body" style={{ maxHeight: '60vh', overflowY: 'auto' }}>
-                            <p style={{ color: 'var(--text-muted)', marginBottom: 16 }}>Chọn người dùng (nhiều người sẽ tạo nhóm):</p>
+                            <p style={{ color: 'var(--text-muted)', marginBottom: 16 }}>{t('chat.select_users_hint')}</p>
 
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                                 {allUsers.map(u => (
@@ -512,7 +514,7 @@ export default function ChatPage({ user, addToast, onStartCall }) {
 
                             {selectedUserIds.length > 0 && (
                                 <button className="btn btn-primary" style={{ width: '100%', marginTop: 24, justifyContent: 'center' }} onClick={handleCreateRoom}>
-                                    Bắt đầu Chat ({selectedUserIds.length})
+                                    {t('chat.start_chat_btn')} ({selectedUserIds.length})
                                 </button>
                             )}
                         </div>
@@ -525,7 +527,7 @@ export default function ChatPage({ user, addToast, onStartCall }) {
                 <div className="modal-overlay open" onClick={e => e.target === e.currentTarget && setShowGroupInfo(false)}>
                     <div className="modal" style={{ width: 440 }}>
                         <div className="modal-header">
-                            <h2>Chi tiết {activeRoom.type === 'group' ? 'nhóm' : 'trò chuyện'}</h2>
+                            <h2>{t('chat.group_detail_title')} {activeRoom.type === 'group' ? t('chat.group_label') : t('chat.conversation_label')}</h2>
                             <button className="detail-close" onClick={() => setShowGroupInfo(false)}>✕</button>
                         </div>
                         <div className="modal-body" style={{ maxHeight: '70vh', overflowY: 'auto' }}>
@@ -535,13 +537,13 @@ export default function ChatPage({ user, addToast, onStartCall }) {
                                 </div>
                                 <h3 style={{ margin: 0, fontSize: 20 }}>{activeRoom.display_name}</h3>
                                 {activeRoom.type === 'group' && (
-                                    <div style={{ color: 'var(--text-muted)', fontSize: 14, marginTop: 4 }}>{activeRoom.members?.length || 0} thành viên</div>
+                                    <div style={{ color: 'var(--text-muted)', fontSize: 14, marginTop: 4 }}>{activeRoom.members?.length || 0} {t('chat.members_count')}</div>
                                 )}
                             </div>
 
                             {activeRoom.type === 'group' && (
                                 <>
-                                    <h4 style={{ fontSize: 15, borderBottom: '1px solid var(--border-subtle)', paddingBottom: 8, marginBottom: 16 }}>Thành viên nhóm</h4>
+                                    <h4 style={{ fontSize: 15, borderBottom: '1px solid var(--border-subtle)', paddingBottom: 8, marginBottom: 16 }}>{t('chat.group_members')}</h4>
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 24 }}>
                                         {activeRoom.members?.map(m => (
                                             <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -550,14 +552,14 @@ export default function ChatPage({ user, addToast, onStartCall }) {
                                                 </div>
                                                 <div style={{ flex: 1 }}>
                                                     <div style={{ fontWeight: 500, display: 'flex', alignItems: 'center', gap: 6 }}>
-                                                        {m.id === user.id ? 'Bạn' : (m.display_name || m.username)}
-                                                        {m.role === 'admin' && <span style={{ fontSize: 10, background: 'var(--primary)', color: '#fff', padding: '2px 6px', borderRadius: 10 }}>Quản trị viên</span>}
+                                                        {m.id === user.id ? t('chat.you') : (m.display_name || m.username)}
+                                                        {m.role === 'admin' && <span style={{ fontSize: 10, background: 'var(--primary)', color: '#fff', padding: '2px 6px', borderRadius: 10 }}>{t('chat.admin_role')}</span>}
                                                     </div>
-                                                    <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{m.is_online ? '🟢 Đang Online' : '⚪ Ngoại tuyến'}</div>
+                                                    <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{m.is_online ? t('chat.online_label') : t('chat.offline_label')}</div>
                                                 </div>
                                                 {currentUserRole === 'admin' && m.id !== user.id && m.role !== 'admin' && (
                                                     <button className="btn btn-danger" style={{ padding: '4px 8px', fontSize: 12 }} onClick={() => handleKickMember(m.id, m.display_name || m.username)}>
-                                                        Xóa
+                                                        {t('chat.remove_member')}
                                                     </button>
                                                 )}
                                             </div>
@@ -565,7 +567,7 @@ export default function ChatPage({ user, addToast, onStartCall }) {
                                     </div>
                                     <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: 16 }}>
                                         <button className="btn btn-danger" style={{ width: '100%', justifyContent: 'center', padding: '10px' }} onClick={handleLeaveGroup}>
-                                            👋 Rời khỏi nhóm
+                                            {t('chat.leave_group')}
                                         </button>
                                     </div>
                                 </>

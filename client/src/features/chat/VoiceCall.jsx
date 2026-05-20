@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { myLog, myError } from '../../shared/utils/logger';
 import { AuthHelper } from '../../shared/services/AuthHelper';
 import { TrackingHelper } from '../../shared/services/TrackingHelper';
+import { useTranslation } from '../../shared/hooks/useTranslation';
 import { io } from 'socket.io-client';
 import { HUB_URL } from '../../config';
 import './VoiceCall.css';
@@ -72,16 +73,17 @@ async function measurePeerQuality(pc) {
 
 // ─── SignalBars component ─────────────────────────────────────────────────────
 const QUALITY_META = {
-    good: { bars: 3, color: '#10b981', label: 'Tốt' },
-    medium: { bars: 2, color: '#f59e0b', label: 'TB' },
-    poor: { bars: 1, color: '#ef4444', label: 'Yếu' },
-    unknown: { bars: 0, color: '#64748b', label: '?' },
+    good: { bars: 3, color: '#10b981', labelKey: 'call.quality_good' },
+    medium: { bars: 2, color: '#f59e0b', labelKey: 'call.quality_medium' },
+    poor: { bars: 1, color: '#ef4444', labelKey: 'call.quality_poor' },
+    unknown: { bars: 0, color: '#64748b', labelKey: null },
 };
 
-function SignalBars({ quality }) {
+function SignalBars({ quality, t }) {
     const meta = QUALITY_META[quality?.level || 'unknown'];
+    const label = meta.labelKey ? t(meta.labelKey) : '?';
     return (
-        <div title={quality?.rtt != null ? `RTT: ${quality.rtt}ms · Loss: ${quality.loss}%` : 'Đang đo...'}
+        <div title={quality?.rtt != null ? `RTT: ${quality.rtt}ms · Loss: ${quality.loss}%` : t('call.measuring')}
             style={{ display: 'flex', alignItems: 'flex-end', gap: 2, cursor: 'default' }}>
             {[1, 2, 3].map(i => (
                 <div key={i} style={{
@@ -93,7 +95,7 @@ function SignalBars({ quality }) {
                 }} />
             ))}
             <span style={{ fontSize: 10, color: meta.color, marginLeft: 3, lineHeight: 1 }}>
-                {quality?.rtt != null ? `${quality.rtt}ms` : meta.label}
+                {quality?.rtt != null ? `${quality.rtt}ms` : label}
             </span>
         </div>
     );
@@ -172,12 +174,12 @@ function VideoCell({ stream, muted = false, label, isLocal = false, noVideo = fa
                     }}>
                         {isLocal ? '🎤' : '🔊'}
                     </div>
-                    <small>{isLocal ? 'Micro của bạn' : 'Đang nghe...'}</small>
+                    <small>{isLocal ? t('call.your_mic') : t('call.listening')}</small>
                 </div>
             )}
             <div className="vc-cell-footer">
                 <span className="vc-cell-label" style={{ position: 'static', background: 'none', padding: 0 }}>{label}</span>
-                {quality && <SignalBars quality={quality} />}
+                {quality && <SignalBars quality={quality} t={t} />}
             </div>
         </div>
     );
@@ -194,6 +196,7 @@ function Btn({ icon, label, active, cls = '', onClick }) {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom, addToast }) {
+    const { t } = useTranslation();
     const [phase, setPhase] = useState('IDLE'); // IDLE | RINGING | CALLING | CONNECTED
     const [callMeta, setCallMeta] = useState(null); // { callId, roomId, callType, caller, iceConfig }
     const [callType, setCallType] = useState('voice');
@@ -687,7 +690,7 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
     // ─── Render ────────────────────────────────────────────────────────────────
     if (phase === 'IDLE') return null;
 
-    const callerName = callMeta?.caller?.displayName || callMeta?.room?.display_name || 'Cuộc gọi';
+    const callerName = callMeta?.caller?.displayName || callMeta?.room?.display_name || t('call.call_label');
     const remoteIds = Object.keys(remoteStreams);
 
     return (
@@ -700,10 +703,10 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
 
                 {phase === 'CONNECTED' ? (
                     <div className="vc-grid" style={{ gridTemplateColumns: remoteIds.length === 0 ? '1fr' : '1fr 1fr' }}>
-                        <VideoCell stream={localStream} muted label={`Bạn${muted ? ' 🔇' : ''}`} isLocal noVideo={callType === 'voice' || camOff} />
+                        <VideoCell stream={localStream} muted label={`${t('call.you_label')}${muted ? ' 🔇' : ''}`} isLocal noVideo={callType === 'voice' || camOff} t={t} />
                         {remoteIds.map(uid => (
                             <VideoCell key={uid} stream={remoteStreams[uid]}
-                                label="Thành viên" quality={netQuality[uid]} />
+                                label={t('call.member_label')} quality={netQuality[uid]} t={t} />
                         ))}
                     </div>
                 ) : (
@@ -713,8 +716,8 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
                         </div>
                         <h2 className="vc-name">{callerName}</h2>
                         <p className="vc-status">
-                            {phase === 'RINGING' && `Đang gọi ${callMeta?.callType === 'video' ? 'video ' : ''}cho bạn...`}
-                            {phase === 'CALLING' && 'Đang đổ chuông...'}
+                            {phase === 'RINGING' && (callMeta?.callType === 'video' ? t('call.incoming_video') : t('call.incoming_voice'))}
+                            {phase === 'CALLING' && t('call.dialing')}
                         </p>
                     </div>
                 )}
@@ -722,28 +725,28 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
                 <div className="vc-controls">
                     {phase === 'RINGING' ? (
                         <>
-                            <Btn icon="📵" label="Từ chối" cls="reject" onClick={rejectCall} />
-                            <Btn icon={callMeta?.callType === 'video' ? '📹' : '📞'} label="Nghe" cls="accept pulse-btn" onClick={acceptCall} />
+                            <Btn icon="📵" label={t('call.reject_btn')} cls="reject" onClick={rejectCall} />
+                            <Btn icon={callMeta?.callType === 'video' ? '📹' : '📞'} label={t('call.accept_btn')} cls="accept pulse-btn" onClick={acceptCall} />
                         </>
                     ) : (
                         <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
                             <div style={{ display: 'flex', justifyContent: 'center', gap: 16, padding: '16px 0' }}>
-                                <Btn icon={muted ? '🔇' : '🎤'} label={muted ? 'Bật micro' : 'Tắt micro'} active={muted} onClick={toggleMute} />
-                                {callType === 'video' && <Btn icon={camOff ? '📷' : '📹'} label={camOff ? 'Bật cam' : 'Tắt cam'} active={camOff} onClick={toggleCam} />}
-                                <Btn icon="📞" label="Kết thúc" cls="reject rot135" onClick={endCall} />
-                                <Btn icon={speakerMode === 'speaker' ? '🔊' : '🔉'} label={speakerMode === 'speaker' ? 'Loa ngoài' : 'Loa trong'} active={speakerMode === 'speaker'} onClick={toggleSpeaker} />
-                                <Btn icon="⚙️" label="Âm thanh" active={showSettings} onClick={() => setShowSettings(!showSettings)} />
+                                <Btn icon={muted ? '🔇' : '🎤'} label={muted ? t('call.mute_on') : t('call.mute_off')} active={muted} onClick={toggleMute} />
+                                {callType === 'video' && <Btn icon={camOff ? '📷' : '📹'} label={camOff ? t('call.cam_on') : t('call.cam_off')} active={camOff} onClick={toggleCam} />}
+                                <Btn icon="📞" label={t('call.end_btn')} cls="reject rot135" onClick={endCall} />
+                                <Btn icon={speakerMode === 'speaker' ? '🔊' : '🔉'} label={speakerMode === 'speaker' ? t('call.speaker') : t('call.earpiece')} active={speakerMode === 'speaker'} onClick={toggleSpeaker} />
+                                <Btn icon="⚙️" label={t('call.audio_settings_btn')} active={showSettings} onClick={() => setShowSettings(!showSettings)} />
                             </div>
 
                             {/* Bảng Cài đặt Âm thanh (Discord Style) */}
                             {showSettings && (
                                 <div className="vc-dsp-panel">
-                                    <div className="dsp-title">Cài đặt Âm thanh & Giọng nói</div>
+                                    <div className="dsp-title">{t('call.audio_settings_title')}</div>
 
                                     {/* Chặn tiếng vọng (Noise Gate) */}
                                     <div className="dsp-group">
-                                        <label>Ngưỡng thu âm thanh (Noise Gate)</label>
-                                        <div className="dsp-desc">Thanh màu nhảy vượt qua mốc trắng thì Mic mới mở. Hãy kéo mốc trắng lên cao hơn dải màu vàng lúc bạn ĐANG KHÔNG NÓI để chặn sạch tiếng ồn nền/tiếng vọng.</div>
+                                        <label>{t('call.noise_gate_label')}</label>
+                                        <div className="dsp-desc">{t('call.noise_gate_desc')}</div>
                                         <div className="vu-meter-container">
                                             <div ref={vuMeterRef} className="vu-meter-fill" />
                                             <input type="range" min="0" max="100" value={noiseGate} onChange={e => setNoiseGate(Number(e.target.value))} className="dsp-slider gate-slider" />
@@ -752,15 +755,15 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
 
                                     {/* Độ nhạy Mic */}
                                     <div className="dsp-group">
-                                        <label>Khuếch đại Mic (Gain): {micSensitivity}%</label>
-                                        <div className="dsp-desc">Tăng nếu bạn nói nhỏ hoặc điện thoại ở xa. Giảm nếu tiếng quá chói.</div>
+                                        <label>{t('call.mic_gain_label')} {micSensitivity}%</label>
+                                        <div className="dsp-desc">{t('call.mic_gain_desc')}</div>
                                         <input type="range" min="10" max="200" value={micSensitivity} onChange={e => setMicSensitivity(Number(e.target.value))} className="dsp-slider blue" />
                                     </div>
 
                                     {/* Lọc tiếng gió (Highpass) */}
                                     <div className="dsp-group">
-                                        <label>Khử tiếng ù ù (Wind/Rumble): {noiseLevel}%</label>
-                                        <div className="dsp-desc">Cắt bỏ âm thanh trầm của gió tạt hoặc động cơ xe máy ngoài đường.</div>
+                                        <label>{t('call.wind_filter_label')} {noiseLevel}%</label>
+                                        <div className="dsp-desc">{t('call.wind_filter_desc')}</div>
                                         <input type="range" min="0" max="100" value={noiseLevel} onChange={e => setNoiseLevel(Number(e.target.value))} className="dsp-slider green" />
                                     </div>
                                 </div>

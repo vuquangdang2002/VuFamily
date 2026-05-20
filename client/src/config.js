@@ -51,14 +51,14 @@ export const AppConfig = {
  * Khi lấy ra, sử dụng ConfigAPI.getNumber/getBoolean/getJSON để tự động Parse (tránh Duplicate Code).
  */
 export const updateAppConfigFromRemote = (remoteConfigsMap) => {
-    myLog('CONFIG', '📥 Đang đồng bộ Remote Config vào bộ nhớ (AppConfig)...');
+    myLog('CONFIG', '📥 Syncing Remote Config into memory (AppConfig)...');
     const fetchedDetails = {};
     for (const [key, valueObj] of Object.entries(remoteConfigsMap)) {
         const valStr = valueObj.asString();
         AppConfig[key] = valStr;
         fetchedDetails[key] = valStr;
     }
-    myLog('CONFIG', '✅ Đã ghi đè cấu hình thành công. Danh sách Configs đã nhận:', fetchedDetails);
+    myLog('CONFIG', '✅ Successfully overwrote config. Received Configs list:', fetchedDetails);
 };
 
 // ============================================================================

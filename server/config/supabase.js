@@ -19,7 +19,7 @@ let activeKey = primaryKey;
 
 // Manual Failover Toggle (via Constants)
 if (FEATURES.USE_BACKUP_DATABASE && backupUrl && backupKey) {
-    console.log('🔄 Manual Failover: Đang kết nối tới Backup Database...');
+    console.log('🔄 Manual Failover: Connecting to Backup Database...');
     activeUrl = backupUrl;
     activeKey = backupKey;
 }
@@ -67,7 +67,7 @@ try {
     console.log('✅ Supabase connected');
 } catch (e) {
     console.error('❌ Supabase init failed:', e.message);
-    console.error('   → Set SUPABASE_URL và SUPABASE_SERVICE_KEY trong environment variables');
+    console.error('   → Set SUPABASE_URL and SUPABASE_SERVICE_KEY in environment variables');
     // Tạo proxy object — trả error rõ ràng thay vì crash toàn bộ server
     const handler = {
         get: (_, prop) => {

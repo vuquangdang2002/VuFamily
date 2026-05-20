@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
+import { useTranslation } from '../hooks/useTranslation';
 
 export default function Header({ stats, onSearch, searchResults, onSelectResult, onAddRoot, onExport, onExportCSV, onImport, onReset, isAdmin }) {
+    const { t } = useTranslation();
     const [query, setQuery] = useState('');
     const [showResults, setShowResults] = useState(false);
     const [showExportMenu, setShowExportMenu] = useState(false);
@@ -32,12 +34,12 @@ export default function Header({ stats, onSearch, searchResults, onSelectResult,
                 <div className="search-container" onClick={e => e.stopPropagation()}>
                     <div className="search-wrapper">
                         <span className="search-icon">🔍</span>
-                        <input className="search-input" placeholder="Tìm kiếm thành viên..." value={query}
+                        <input className="search-input" placeholder={t('header.search_placeholder')} value={query}
                             onChange={e => handleSearch(e.target.value)} onFocus={() => query && setShowResults(true)} />
                         {query && <button className="btn-clear-search" onClick={clearSearch}>✕</button>}
                     </div>
                     <div className={`search-results ${showResults && query ? 'open' : ''}`}>
-                        {searchResults.length === 0 && <div className="search-empty">Không tìm thấy</div>}
+                        {searchResults.length === 0 && <div className="search-empty">{t('header.no_results')}</div>}
                         {searchResults.map(m => (
                             <div key={m.id} className="search-item" onClick={() => handleResultClick(m)}>
                                 <span className="search-item-icon">{m.gender === 1 ? '👨' : '👩'}</span>
@@ -52,26 +54,26 @@ export default function Header({ stats, onSearch, searchResults, onSelectResult,
             </div>
 
             <div className="header-center">
-                <div className="stat-badge">👥 <span className="stat-value">{stats.totalMembers}</span> thành viên</div>
-                <div className="stat-badge">📊 <span className="stat-value">{stats.totalGenerations}</span> thế hệ</div>
+                <div className="stat-badge">👥 <span className="stat-value">{stats.totalMembers}</span> {t('header.members_label')}</div>
+                <div className="stat-badge">📊 <span className="stat-value">{stats.totalGenerations}</span> {t('header.generations_label')}</div>
             </div>
 
             <div className="header-right">
-                {isAdmin && onAddRoot && <button className="btn btn-primary" onClick={onAddRoot}>＋ Thêm gốc</button>}
+                {isAdmin && onAddRoot && <button className="btn btn-primary" onClick={onAddRoot}>{t('header.add_root')}</button>}
 
                 {/* ── Export Dropdown ── */}
                 {isAdmin && onExport && (
                     <div className="header-dropdown" ref={exportMenuRef} onClick={e => e.stopPropagation()}>
-                        <button className="btn" onClick={() => { setShowExportMenu(!showExportMenu); setShowImportMenu(false); }} title="Xuất dữ liệu">
-                            📥 Xuất
+                        <button className="btn" onClick={() => { setShowExportMenu(!showExportMenu); setShowImportMenu(false); }} title={t('header.export')}>
+                            {t('header.export')}
                         </button>
                         {showExportMenu && (
                             <div className="header-dropdown-menu">
                                 <button className="header-dropdown-item" onClick={() => { onExport('json'); setShowExportMenu(false); }}>
-                                    📄 Xuất JSON
+                                    {t('header.export_json')}
                                 </button>
                                 <button className="header-dropdown-item" onClick={() => { onExport('csv'); setShowExportMenu(false); }}>
-                                    📊 Xuất CSV
+                                    {t('header.export_csv')}
                                 </button>
                             </div>
                         )}
@@ -81,23 +83,23 @@ export default function Header({ stats, onSearch, searchResults, onSelectResult,
                 {/* ── Import Dropdown ── */}
                 {isAdmin && onImport && (
                     <div className="header-dropdown" ref={importMenuRef} onClick={e => e.stopPropagation()}>
-                        <button className="btn" onClick={() => { setShowImportMenu(!showImportMenu); setShowExportMenu(false); }} title="Nhập dữ liệu">
-                            📤 Nhập
+                        <button className="btn" onClick={() => { setShowImportMenu(!showImportMenu); setShowExportMenu(false); }} title={t('header.import')}>
+                            {t('header.import')}
                         </button>
                         {showImportMenu && (
                             <div className="header-dropdown-menu">
                                 <button className="header-dropdown-item" onClick={() => fileJsonRef.current?.click()}>
-                                    📄 Nhập từ JSON
+                                    {t('header.import_json')}
                                 </button>
                                 <button className="header-dropdown-item" onClick={() => fileCsvRef.current?.click()}>
-                                    📊 Nhập từ CSV
+                                    {t('header.import_csv')}
                                 </button>
                             </div>
                         )}
                     </div>
                 )}
 
-                {isAdmin && onReset && <button className="btn btn-danger" onClick={onReset} title="Khôi phục dữ liệu mẫu">🔄</button>}
+                {isAdmin && onReset && <button className="btn btn-danger" onClick={onReset} title={t('header.reset_title')}>🔄</button>}
                 <input ref={fileJsonRef} type="file" accept=".json" style={{ display: 'none' }} onChange={handleImportJson} />
                 <input ref={fileCsvRef} type="file" accept=".csv" style={{ display: 'none' }} onChange={handleImportCsv} />
             </div>

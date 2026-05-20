@@ -22,7 +22,7 @@ function encryptText(text) {
         // Format: iv:authTag:encryptedText
         return `${iv.toString('hex')}:${authTag}:${encrypted}`;
     } catch (error) {
-        console.error('[Crypto] Lỗi mã hóa:', error);
+        console.error('[Crypto] Encryption error:', error);
         return text; // Return plain text if encryption fails
     }
 }
@@ -47,7 +47,7 @@ function decryptText(encryptedText) {
         decrypted += decipher.final('utf8');
         return decrypted;
     } catch (error) {
-        console.error('[Crypto] Lỗi giải mã:', error);
+        console.error('[Crypto] Decryption error:', error);
         return 'Tin nhắn không thể giải mã.';
     }
 }

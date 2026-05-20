@@ -11,7 +11,7 @@ class MemberController {
             const data = await MemberModel.getAll();
             cache.set('members_all', data);
             res.json({ success: true, data });
-        } catch (e) { console.error('[MemberController - getAll] Error:', e.message); res.status(500).json({ success: false, error: e.message || 'Lỗi server' }); }
+        } catch (e) { console.error('[MemberController - getAll] Error:', e.message); res.status(500).json({ success: false, error: e.message || 'Server error' }); }
     }
 
     static async getById(req, res) {
@@ -24,7 +24,7 @@ class MemberController {
             
             cache.set(`member_${req.params.id}`, member);
             res.json({ success: true, data: member });
-        } catch (e) { console.error(`[MemberController - getById] Error:`, e.message); res.status(500).json({ success: false, error: e.message || 'Lỗi server' }); }
+        } catch (e) { console.error(`[MemberController - getById] Error:`, e.message); res.status(500).json({ success: false, error: e.message || 'Server error' }); }
     }
 
     static async search(req, res) {
@@ -48,12 +48,12 @@ class MemberController {
 
             res.json({ success: true, data: results, cached: true }); 
         }
-        catch (e) { console.error('[MemberController - search] Error:', e.message); res.status(500).json({ success: false, error: e.message || 'Lỗi server' }); }
+        catch (e) { console.error('[MemberController - search] Error:', e.message); res.status(500).json({ success: false, error: e.message || 'Server error' }); }
     }
 
     static async getChildren(req, res) {
         try { res.json({ success: true, data: await MemberModel.getChildren(req.params.id) }); }
-        catch (e) { console.error(`[MemberController - getChildren] Error:`, e.message); res.status(500).json({ success: false, error: e.message || 'Lỗi server' }); }
+        catch (e) { console.error(`[MemberController - getChildren] Error:`, e.message); res.status(500).json({ success: false, error: e.message || 'Server error' }); }
     }
 
     static async create(req, res) {
@@ -62,7 +62,7 @@ class MemberController {
             const data = await MemberModel.create(req.body);
             cache.clear(); // Invalidate cache
             res.status(201).json({ success: true, data });
-        } catch (e) { console.error('[MemberController - create] Error:', e.message); res.status(500).json({ success: false, error: e.message || 'Lỗi server' }); }
+        } catch (e) { console.error('[MemberController - create] Error:', e.message); res.status(500).json({ success: false, error: e.message || 'Server error' }); }
     }
 
     static async update(req, res) {
@@ -71,7 +71,7 @@ class MemberController {
             if (!member) return res.status(404).json({ success: false, error: 'Không tìm thấy' });
             cache.clear(); // Invalidate cache
             res.json({ success: true, data: member });
-        } catch (e) { console.error(`[MemberController - update] Error:`, e.message); res.status(500).json({ success: false, error: e.message || 'Lỗi server' }); }
+        } catch (e) { console.error(`[MemberController - update] Error:`, e.message); res.status(500).json({ success: false, error: e.message || 'Server error' }); }
     }
 
     static async delete(req, res) {
@@ -80,7 +80,7 @@ class MemberController {
             if (!ok) return res.status(404).json({ success: false, error: 'Không tìm thấy' });
             cache.clear(); // Invalidate cache
             res.json({ success: true, message: 'Đã xóa' });
-        } catch (e) { console.error(`[MemberController - delete] Error:`, e.message); res.status(500).json({ success: false, error: e.message || 'Lỗi server' }); }
+        } catch (e) { console.error(`[MemberController - delete] Error:`, e.message); res.status(500).json({ success: false, error: e.message || 'Server error' }); }
     }
 
     static async getStats(req, res) {
@@ -91,13 +91,13 @@ class MemberController {
             const data = await MemberModel.getStats();
             cache.set('members_stats', data);
             res.json({ success: true, data });
-        } catch (e) { console.error('[MemberController - getStats] Error:', e.message); res.status(500).json({ success: false, error: e.message || 'Lỗi server' }); }
+        } catch (e) { console.error('[MemberController - getStats] Error:', e.message); res.status(500).json({ success: false, error: e.message || 'Server error' }); }
     }
 
     // Achievements
     static async getAchievements(req, res) {
         try { res.json({ success: true, data: await MemberModel.getAchievements(req.params.id) }); }
-        catch (e) { console.error(`[MemberController - getAchievements] Error:`, e.message); res.status(500).json({ success: false, error: e.message || 'Lỗi server' }); }
+        catch (e) { console.error(`[MemberController - getAchievements] Error:`, e.message); res.status(500).json({ success: false, error: e.message || 'Server error' }); }
     }
 
     static async addAchievement(req, res) {
@@ -105,14 +105,14 @@ class MemberController {
             if (!req.body.title) return res.status(400).json({ success: false, error: 'Tên thành tích là bắt buộc' });
             const id = await MemberModel.addAchievement(req.body);
             res.status(201).json({ success: true, data: { id } });
-        } catch (e) { console.error('[MemberController - addAchievement] Error:', e.message); res.status(500).json({ success: false, error: e.message || 'Lỗi server' }); }
+        } catch (e) { console.error('[MemberController - addAchievement] Error:', e.message); res.status(500).json({ success: false, error: e.message || 'Server error' }); }
     }
 
     static async deleteAchievement(req, res) {
         try {
             await MemberModel.deleteAchievement(req.params.id);
             res.json({ success: true, message: 'Đã xóa' });
-        } catch (e) { console.error(`[MemberController - deleteAchievement] Error:`, e.message); res.status(500).json({ success: false, error: e.message || 'Lỗi server' }); }
+        } catch (e) { console.error(`[MemberController - deleteAchievement] Error:`, e.message); res.status(500).json({ success: false, error: e.message || 'Server error' }); }
     }
 }
 
