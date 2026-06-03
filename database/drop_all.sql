@@ -4,6 +4,8 @@
 -- CẢNH BÁO: Lệnh này sẽ xoá VĨNH VIỄN toàn bộ dữ liệu hiện có trong các bảng!
 -- =========================================================================
 
+DROP TABLE IF EXISTS "funds_audit_logs" CASCADE;
+DROP TABLE IF EXISTS "funds_transactions" CASCADE;
 DROP TABLE IF EXISTS "call_signals" CASCADE;
 DROP TABLE IF EXISTS "call_ice_candidates" CASCADE;
 DROP TABLE IF EXISTS "calls" CASCADE;

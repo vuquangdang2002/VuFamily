@@ -19,7 +19,9 @@ TRUNCATE TABLE
   chat_messages, 
   calls, 
   call_ice_candidates, 
-  call_signals 
+  call_signals,
+  funds_transactions,
+  funds_audit_logs
 RESTART IDENTITY CASCADE;
 
 -- ═══════════════════════════════════════════
