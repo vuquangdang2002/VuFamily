@@ -112,6 +112,7 @@
     "app.force_pwd_error": "Lỗi đổi mật khẩu",
     "app.force_pwd_conn_error": "Lỗi kết nối khi đổi mật khẩu",
     "app.load_tree_error": "Lỗi tải gia phả từ máy chủ",
+    "app.offline_warning": "Mất kết nối máy chủ. Đang sử dụng gia phả ngoại tuyến. Vui lòng kiểm tra lại kết nối mạng.",
     "app.no_changes": "Không có thông tin nào được thay đổi.",
     "app.direct_update_by": "Cập nhật trực tiếp bởi",
     "app.update_success": "Đã cập nhật thông tin \"{name}\" thành công!",

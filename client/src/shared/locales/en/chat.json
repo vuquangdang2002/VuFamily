@@ -63,5 +63,7 @@
     "chat.send_fail": "Failed to send message",
     "chat.network_error": "Network error",
     "chat.create_fail": "Failed to create chat",
-    "chat.connection_error": "Connection error"
+    "chat.connection_error": "Connection error",
+    "chat.offline_rooms_warning": "Cannot connect to server to update chat room list. Please check your network connection.",
+    "chat.offline_messages_warning": "Cannot fetch new messages due to connection loss. Please check your network connection."
 }

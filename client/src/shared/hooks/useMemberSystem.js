@@ -61,7 +61,7 @@ export default function useMemberSystem(user, addToast) {
                         const decrypted = await decryptAndDecompress(cachedBytes, token);
                         if (decrypted && Array.isArray(decrypted)) {
                             setMembers(decrypted);
-                            addToast(I18nHelper.t('app.offline_mode_active') || 'Hoạt động ngoại tuyến (đọc dữ liệu đã mã hóa)', 'info');
+                            addToast(I18nHelper.t('app.offline_warning') || 'Mất kết nối máy chủ. Đang sử dụng gia phả ngoại tuyến. Vui lòng kiểm tra lại kết nối mạng.', 'warning');
                             
                             // Schedule local alerts from offline cache
                             scheduleOfflineNotifications(decrypted);
@@ -78,7 +78,7 @@ export default function useMemberSystem(user, addToast) {
                     myError('OFFLINE', 'Failed to load offline cache:', err);
                 }
             }
-            addToast(I18nHelper.t('app.load_tree_error'), 'error');
+            addToast((I18nHelper.t('app.load_tree_error') || 'Lỗi tải gia phả từ máy chủ') + '. Vui lòng kiểm tra kết nối mạng.', 'error');
         } finally {
             setIsLoadingMembers(false);
         }

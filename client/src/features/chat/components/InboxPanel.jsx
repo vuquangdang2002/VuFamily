@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from '../../../shared/hooks/useTranslation';
 
 export default function InboxPanel({
@@ -9,14 +9,39 @@ export default function InboxPanel({
     setShowNewChat
 }) {
     const { t } = useTranslation();
+    const [searchQuery, setSearchQuery] = useState('');
+
+    const filteredRooms = rooms.filter(room => 
+        (room.display_name || '').toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
     return (
         <div className="chat-inbox-panel">
-            <div style={{ padding: '16px', borderBottom: '1px solid var(--border-subtle)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ padding: '16px 16px 12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <h2 style={{ fontSize: 18, margin: 0 }}>{t('chat.messages_title')}</h2>
                 <button className="btn btn-primary" style={{ padding: '6px 12px', fontSize: 13 }} onClick={() => setShowNewChat(true)}>
                     {t('chat.new_chat_btn')}
                 </button>
+            </div>
+
+            {/* Search Input for Active Rooms */}
+            <div style={{ padding: '0 16px 12px 16px', borderBottom: '1px solid var(--border-subtle)' }}>
+                <input
+                    type="text"
+                    className="form-input"
+                    placeholder={t('chat.search_rooms_placeholder') || "Tìm kiếm hội thoại..."}
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    style={{ 
+                        width: '100%', 
+                        borderRadius: 20, 
+                        padding: '8px 16px', 
+                        fontSize: 13, 
+                        background: 'var(--bg-secondary)', 
+                        border: '1px solid var(--border-subtle)',
+                        boxSizing: 'border-box'
+                    }}
+                />
             </div>
 
             <div style={{ flex: 1, overflowY: 'auto' }}>
@@ -27,7 +52,12 @@ export default function InboxPanel({
                         <button className="btn" onClick={() => setShowNewChat(true)}>{t('chat.start_messaging')}</button>
                     </div>
                 )}
-                {rooms.map(room => (
+                {!loadingRooms && rooms.length > 0 && filteredRooms.length === 0 && (
+                    <div style={{ padding: 24, textAlign: 'center', color: 'var(--text-muted)', fontSize: 13 }}>
+                        Không tìm thấy cuộc trò chuyện nào
+                    </div>
+                )}
+                {filteredRooms.map(room => (
                     <div
                         key={room.id}
                         onClick={() => setActiveRoomId(room.id)}

@@ -55,8 +55,12 @@ export async function cacheRooms(rooms) {
         const tx = db.transaction('rooms', 'readwrite');
         const store = tx.objectStore('rooms');
 
-        // Write all incoming rooms
-        for (const room of rooms) {
+        // Clear all existing cached rooms first to stay synchronized with the server
+        store.clear();
+
+        // Write all incoming rooms (up to MAX_CACHED_ROOMS)
+        const toCache = rooms.slice(0, MAX_CACHED_ROOMS);
+        for (const room of toCache) {
             await new Promise((resolve, reject) => {
                 const req = store.put({
                     ...room,
@@ -65,24 +69,6 @@ export async function cacheRooms(rooms) {
                 req.onsuccess = resolve;
                 req.onerror = () => reject(req.error);
             });
-        }
-
-        // Prune: keep only MAX_CACHED_ROOMS newest
-        const allRooms = await new Promise((resolve, reject) => {
-            const req = store.getAll();
-            req.onsuccess = () => resolve(req.result);
-            req.onerror = () => reject(req.error);
-        });
-
-        if (allRooms.length > MAX_CACHED_ROOMS) {
-            // Sort by updated_at descending
-            allRooms.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
-            const toRemove = allRooms.slice(MAX_CACHED_ROOMS);
-            for (const room of toRemove) {
-                store.delete(room.id);
-                // Also clear messages for pruned rooms
-                await clearMessagesForRoom(db, room.id);
-            }
         }
 
         await new Promise((resolve, reject) => {
@@ -133,9 +119,21 @@ export async function cacheMessages(roomId, messages) {
         const db = await openDB();
         const tx = db.transaction('messages', 'readwrite');
         const store = tx.objectStore('messages');
+        const index = store.index('room_id');
 
-        // Write all messages
-        for (const msg of messages) {
+        // 1. Clear all old cached messages for this specific room
+        const oldRoomMessages = await new Promise((resolve, reject) => {
+            const req = index.getAll(roomId);
+            req.onsuccess = () => resolve(req.result);
+            req.onerror = () => reject(req.error);
+        });
+        for (const msg of oldRoomMessages) {
+            store.delete(msg.id);
+        }
+
+        // 2. Write incoming messages (up to MESSAGES_PER_ROOM)
+        const toCache = messages.slice(-MESSAGES_PER_ROOM);
+        for (const msg of toCache) {
             await new Promise((resolve, reject) => {
                 const req = store.put({
                     ...msg,
@@ -145,22 +143,6 @@ export async function cacheMessages(roomId, messages) {
                 req.onsuccess = resolve;
                 req.onerror = () => reject(req.error);
             });
-        }
-
-        // Prune: keep only MESSAGES_PER_ROOM newest per room
-        const index = store.index('room_id');
-        const roomMessages = await new Promise((resolve, reject) => {
-            const req = index.getAll(roomId);
-            req.onsuccess = () => resolve(req.result);
-            req.onerror = () => reject(req.error);
-        });
-
-        if (roomMessages.length > MESSAGES_PER_ROOM) {
-            roomMessages.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-            const toRemove = roomMessages.slice(MESSAGES_PER_ROOM);
-            for (const msg of toRemove) {
-                store.delete(msg.id);
-            }
         }
 
         await new Promise((resolve, reject) => {

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from '../../../shared/hooks/useTranslation';
 
 export default function ChatModals({
@@ -17,6 +17,12 @@ export default function ChatModals({
     handleLeaveGroup
 }) {
     const { t } = useTranslation();
+    const [userSearchQuery, setUserSearchQuery] = useState('');
+
+    const filteredUsers = allUsers.filter(u => 
+        (u.display_name || '').toLowerCase().includes(userSearchQuery.toLowerCase()) ||
+        (u.username || '').toLowerCase().includes(userSearchQuery.toLowerCase())
+    );
 
     return (
         <>
@@ -26,36 +32,62 @@ export default function ChatModals({
                     <div className="modal" style={{ width: 440 }}>
                         <div className="modal-header">
                             <h2>{t('chat.start_chat_title')}</h2>
-                            <button className="detail-close" onClick={() => setShowNewChat(false)}>✕</button>
+                            <button className="detail-close" onClick={() => { setShowNewChat(false); setUserSearchQuery(''); }}>✕</button>
                         </div>
                         <div className="modal-body" style={{ maxHeight: '60vh', overflowY: 'auto' }}>
-                            <p style={{ color: 'var(--text-muted)', marginBottom: 16 }}>{t('chat.select_users_hint')}</p>
+                            <p style={{ color: 'var(--text-muted)', marginBottom: 12 }}>{t('chat.select_users_hint')}</p>
+
+                            {/* User Search Input */}
+                            <div style={{ marginBottom: 16 }}>
+                                <input
+                                    type="text"
+                                    className="form-input"
+                                    placeholder={t('chat.search_users_placeholder') || "Tìm kiếm thành viên..."}
+                                    value={userSearchQuery}
+                                    onChange={e => setUserSearchQuery(e.target.value)}
+                                    style={{
+                                        width: '100%',
+                                        borderRadius: 8,
+                                        padding: '8px 12px',
+                                        fontSize: 13,
+                                        background: 'var(--bg-secondary)',
+                                        border: '1px solid var(--border-subtle)',
+                                        boxSizing: 'border-box'
+                                    }}
+                                />
+                            </div>
 
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                                {allUsers.map(u => (
-                                    <div key={u.id}
-                                        onClick={() => toggleSelectUser(u.id)}
-                                        style={{
-                                            padding: '10px 12px', border: '1px solid',
-                                            borderColor: selectedUserIds.includes(u.id) ? 'var(--primary)' : 'var(--border-subtle)',
-                                            background: selectedUserIds.includes(u.id) ? 'rgba(37,99,235,0.05)' : 'transparent',
-                                            borderRadius: 8, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12
-                                        }}
-                                    >
-                                        <div style={{ width: 18, height: 18, borderRadius: '50%', border: '2px solid', borderColor: selectedUserIds.includes(u.id) ? 'var(--primary)' : '#cbd5e1', background: selectedUserIds.includes(u.id) ? 'var(--primary)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                            {selectedUserIds.includes(u.id) && <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#fff' }}></span>}
-                                        </div>
-                                        <div style={{ width: 32, height: 32, minWidth: 32, minHeight: 32, flexShrink: 0, borderRadius: '50%', background: 'var(--gold)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12 }}>
-                                            {u.avatar ? <img src={u.avatar} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} alt="avatar" /> : u.display_name?.substring(0, 2).toUpperCase()}
-                                        </div>
-                                        <div style={{ flex: 1 }}>
-                                            <div style={{ fontWeight: 500 }}>{u.display_name || u.username}</div>
-                                            <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                                                {u.is_online ? '🟢 Online' : '⚪ Offline'}
+                                {filteredUsers.length === 0 ? (
+                                    <div style={{ padding: 16, textAlign: 'center', color: 'var(--text-muted)', fontSize: 13 }}>
+                                        Không tìm thấy thành viên nào
+                                    </div>
+                                ) : (
+                                    filteredUsers.map(u => (
+                                        <div key={u.id}
+                                            onClick={() => toggleSelectUser(u.id)}
+                                            style={{
+                                                padding: '10px 12px', border: '1px solid',
+                                                borderColor: selectedUserIds.includes(u.id) ? 'var(--primary)' : 'var(--border-subtle)',
+                                                background: selectedUserIds.includes(u.id) ? 'rgba(37,99,235,0.05)' : 'transparent',
+                                                borderRadius: 8, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12
+                                            }}
+                                        >
+                                            <div style={{ width: 18, height: 18, borderRadius: '50%', border: '2px solid', borderColor: selectedUserIds.includes(u.id) ? 'var(--primary)' : '#cbd5e1', background: selectedUserIds.includes(u.id) ? 'var(--primary)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                {selectedUserIds.includes(u.id) && <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#fff' }}></span>}
+                                            </div>
+                                            <div style={{ width: 32, height: 32, minWidth: 32, minHeight: 32, flexShrink: 0, borderRadius: '50%', background: 'var(--gold)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12 }}>
+                                                {u.avatar ? <img src={u.avatar} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} alt="avatar" /> : u.display_name?.substring(0, 2).toUpperCase()}
+                                            </div>
+                                            <div style={{ flex: 1 }}>
+                                                <div style={{ fontWeight: 500 }}>{u.display_name || u.username}</div>
+                                                <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                                                    {u.is_online ? '🟢 Online' : '⚪ Offline'}
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                ))}
+                                    ))
+                                )}
                             </div>
 
                             {selectedUserIds.length > 0 && (

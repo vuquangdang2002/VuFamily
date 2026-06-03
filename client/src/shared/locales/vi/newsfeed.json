@@ -12,6 +12,7 @@
     "newsfeed.posting": "Đang đăng...",
     "newsfeed.empty": "Chưa có bài viết nào.",
     "newsfeed.load_error": "Không tải được bảng tin",
+    "newsfeed.offline_alert": "Không thể kết nối máy chủ. Đang hiển thị bản tin ngoại tuyến. Vui lòng kiểm tra lại kết nối mạng.",
     "newsfeed.post_success": "Đã đăng bài thành công!",
     "newsfeed.post_fail": "Đăng bài thất bại",
     "newsfeed.delete_confirm": "Xóa bài viết này?",

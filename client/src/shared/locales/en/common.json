@@ -112,6 +112,7 @@
     "app.force_pwd_error": "Password change failed",
     "app.force_pwd_conn_error": "Connection error during password change",
     "app.load_tree_error": "Error loading family tree from server",
+    "app.offline_warning": "Cannot connect to server. Displaying offline family tree. Please check your network connection.",
     "app.no_changes": "No information has been changed.",
     "app.direct_update_by": "Direct update by",
     "app.update_success": "Updated \"{name}\" successfully!",

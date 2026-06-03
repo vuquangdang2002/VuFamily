@@ -29,6 +29,8 @@ export default function ChatPage({ user, addToast, onStartCall }) {
 
     const isFirstLoadRef = useRef(true);
     const latestMsgTimeRef = useRef(null);
+    const hasShownRoomsOfflineRef = useRef(false);
+    const hasShownMessagesOfflineRef = useRef(false);
 
     const fetchRooms = async () => {
         myLog('CHAT', '[ChatPage - fetchRooms] Syncing room list from Server...');
@@ -36,15 +38,18 @@ export default function ChatPage({ user, addToast, onStartCall }) {
             const res = await fetch(`${getApiBase()}/chats`, { headers: { 'x-auth-token': AuthHelper.getToken() } });
             const json = await res.json();
             if (json.success) {
+                hasShownRoomsOfflineRef.current = false;
                 const serverRooms = json.data || [];
                 setRooms(serverRooms);
-                cacheRooms(serverRooms).catch((e) => { 
-                    myError('CHAT', "[ChatPage] Error caching rooms:", e); 
-                });
+                cacheRooms(serverRooms).catch(e => myError('CHAT', "[ChatPage] Error caching rooms:", e));
                 myLog('CHAT', `[ChatPage - fetchRooms] Synced ${serverRooms.length} rooms successfully.`);
             }
         } catch (e) {
             myWarning('CHAT', '[ChatPage - fetchRooms] Offline or weak network, using cached rooms.', e);
+            if (!hasShownRoomsOfflineRef.current) {
+                addToast(t('chat.offline_rooms_warning') || 'Không thể kết nối máy chủ để cập nhật danh sách hội thoại. Vui lòng kiểm tra kết nối mạng.', 'warning');
+                hasShownRoomsOfflineRef.current = true;
+            }
         } finally {
             setLoadingRooms(false);
         }
@@ -54,9 +59,7 @@ export default function ChatPage({ user, addToast, onStartCall }) {
         try {
             const res = await fetch(`${getApiBase()}/users/public`, { headers: { 'x-auth-token': AuthHelper.getToken() } });
             const json = await res.json();
-            if (json.success) {
-                setAllUsers(json.data.filter(u => u.id !== user.id));
-            }
+            if (json.success) setAllUsers(json.data.filter(u => u.id !== user.id));
         } catch (e) {
             myError('CHAT', e);
         }
@@ -68,27 +71,26 @@ export default function ChatPage({ user, addToast, onStartCall }) {
             const res = await fetch(`${getApiBase()}/chats/${roomId}/messages`, { headers: { 'x-auth-token': AuthHelper.getToken() } });
             const json = await res.json();
             if (json.success) {
+                hasShownMessagesOfflineRef.current = false;
                 const serverMsgs = json.data || [];
                 setMessages(serverMsgs);
-                cacheMessages(roomId, serverMsgs).catch((e) => { 
-                    myError('CHAT', "[ChatPage] Error caching messages:", e); 
-                });
+                cacheMessages(roomId, serverMsgs).catch(e => myError('CHAT', "[ChatPage] Error caching messages:", e));
                 myLog('CHAT', `[ChatPage - fetchMessagesFull] Loaded ${serverMsgs.length} messages successfully.`);
 
-                if (serverMsgs.length > 0) {
-                    latestMsgTimeRef.current = serverMsgs[serverMsgs.length - 1].created_at;
-                }
+                if (serverMsgs.length > 0) latestMsgTimeRef.current = serverMsgs[serverMsgs.length - 1].created_at;
                 isFirstLoadRef.current = false;
             }
         } catch (e) {
             myError('CHAT', e);
+            if (!hasShownMessagesOfflineRef.current) {
+                addToast(t('chat.offline_messages_warning') || 'Không thể tải tin nhắn mới do mất kết nối. Vui lòng kiểm tra mạng.', 'warning');
+                hasShownMessagesOfflineRef.current = true;
+            }
         }
     };
 
     const fetchMessagesIncremental = async (roomId) => {
-        if (!latestMsgTimeRef.current) {
-            return fetchMessagesFull(roomId);
-        }
+        if (!latestMsgTimeRef.current) return fetchMessagesFull(roomId);
         try {
             const since = encodeURIComponent(latestMsgTimeRef.current);
             const res = await fetch(`${getApiBase()}/chats/${roomId}/messages?since=${since}`, {
@@ -96,6 +98,7 @@ export default function ChatPage({ user, addToast, onStartCall }) {
             });
             const json = await res.json();
             if (json.success && json.data && json.data.length > 0) {
+                hasShownMessagesOfflineRef.current = false;
                 const newMsgs = json.data;
                 myLog('CHAT', `[ChatPage - fetchMessagesIncremental] Found ${newMsgs.length} new messages.`);
                 setMessages(prev => {
@@ -103,15 +106,16 @@ export default function ChatPage({ user, addToast, onStartCall }) {
                     const unique = newMsgs.filter(m => !existingIds.has(m.id));
                     if (unique.length === 0) return prev;
                     const merged = [...prev, ...unique];
-                    cacheMessages(roomId, merged).catch((e) => { 
-                        myError('CHAT', "[ChatPage] Error caching new messages:", e); 
-                    });
+                    cacheMessages(roomId, merged).catch(e => myError('CHAT', "[ChatPage] Error caching new messages:", e));
                     return merged;
                 });
                 latestMsgTimeRef.current = newMsgs[newMsgs.length - 1].created_at;
             }
         } catch (e) {
-            // Offline
+            if (!hasShownMessagesOfflineRef.current) {
+                addToast(t('chat.offline_messages_warning') || 'Không thể tải tin nhắn mới do mất kết nối. Vui lòng kiểm tra mạng.', 'warning');
+                hasShownMessagesOfflineRef.current = true;
+            }
         }
     };
 
@@ -186,17 +190,13 @@ export default function ChatPage({ user, addToast, onStartCall }) {
         }
     };
 
-    const toggleSelectUser = (id) => {
-        setSelectedUserIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
-    };
+    const toggleSelectUser = (id) => setSelectedUserIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
 
     const handleRenameGroup = async () => {
         const activeRoom = rooms.find(r => r.id === activeRoomId);
         if (activeRoom?.type !== 'group') return;
-
         const newName = prompt(t('chat.enter_group_name'), activeRoom.display_name || '');
-        if (!newName || newName.trim() === '' || newName.trim() === activeRoom.display_name) return;
-
+        if (!newName || !newName.trim() || newName.trim() === activeRoom.display_name) return;
         try {
             const res = await fetch(`${getApiBase()}/chats/${activeRoomId}/name`, {
                 method: 'PUT',
@@ -204,15 +204,9 @@ export default function ChatPage({ user, addToast, onStartCall }) {
                 body: JSON.stringify({ name: newName.trim() })
             });
             const json = await res.json();
-            if (json.success) {
-                fetchRooms();
-                addToast(t('chat.rename_success'));
-            } else {
-                addToast(json.error || t('chat.rename_fail'), 'error');
-            }
-        } catch (e) {
-            addToast(t('chat.network_error'), 'error');
-        }
+            if (json.success) { fetchRooms(); addToast(t('chat.rename_success')); }
+            else addToast(json.error || t('chat.rename_fail'), 'error');
+        } catch (e) { addToast(t('chat.network_error'), 'error'); }
     };
 
     const handleLeaveGroup = async () => {
@@ -224,16 +218,9 @@ export default function ChatPage({ user, addToast, onStartCall }) {
             });
             const json = await res.json();
             if (json.success) {
-                setActiveRoomId(null);
-                setShowGroupInfo(false);
-                fetchRooms();
-                addToast(t('chat.left_group'));
-            } else {
-                addToast(json.error || t('chat.leave_fail'), 'error');
-            }
-        } catch (e) {
-            addToast(t('chat.network_error'), 'error');
-        }
+                setActiveRoomId(null); setShowGroupInfo(false); fetchRooms(); addToast(t('chat.left_group'));
+            } else addToast(json.error || t('chat.leave_fail'), 'error');
+        } catch (e) { addToast(t('chat.network_error'), 'error'); }
     };
 
     const handleKickMember = async (userId, memberName) => {
@@ -245,15 +232,9 @@ export default function ChatPage({ user, addToast, onStartCall }) {
             });
             const json = await res.json();
             if (json.success) {
-                fetchRooms();
-                fetchMessagesFull(activeRoomId);
-                addToast(t('chat.kicked_member').replace('{name}', memberName));
-            } else {
-                addToast(json.error || t('chat.kick_fail'), 'error');
-            }
-        } catch (e) {
-            addToast(t('chat.connection_error'), 'error');
-        }
+                fetchRooms(); fetchMessagesFull(activeRoomId); addToast(t('chat.kicked_member').replace('{name}', memberName));
+            } else addToast(json.error || t('chat.kick_fail'), 'error');
+        } catch (e) { addToast(t('chat.connection_error'), 'error'); }
     };
 
     const activeRoom = rooms.find(r => r.id === activeRoomId);

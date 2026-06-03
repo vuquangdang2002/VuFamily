@@ -6,6 +6,7 @@ import './Finance.css';
 export default function FinancePage({ user, addToast }) {
     const { t } = useTranslation();
     const [transactions, setTransactions] = useState([]);
+    const [financeSearchQuery, setFinanceSearchQuery] = useState('');
     const [auditLogs, setAuditLogs] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showAddModal, setShowAddModal] = useState(false);
@@ -33,7 +34,7 @@ export default function FinancePage({ user, addToast }) {
                 if (logRes.success) setAuditLogs(logRes.data || []);
             }
         } catch (e) {
-            addToast('Không thể kết nối dữ liệu tài chính.', 'error');
+            addToast('Không thể kết nối máy chủ để cập nhật dữ liệu tài chính mới nhất. Vui lòng kiểm tra lại kết nối mạng.', 'warning');
         } finally {
             setLoading(false);
         }
@@ -115,6 +116,12 @@ export default function FinancePage({ user, addToast }) {
         else cat.amount -= t.amount;
     });
 
+    const filteredTransactions = transactions.filter(tx => 
+        (tx.description || '').toLowerCase().includes(financeSearchQuery.toLowerCase()) ||
+        (tx.created_by_user?.display_name || '').toLowerCase().includes(financeSearchQuery.toLowerCase()) ||
+        (categories[tx.category]?.label || '').toLowerCase().includes(financeSearchQuery.toLowerCase())
+    );
+
     const formatCurrency = (val) => {
         return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val);
     };
@@ -168,10 +175,36 @@ export default function FinancePage({ user, addToast }) {
                 {/* Left: transactions list */}
                 <div className="finance-card-block list-block">
                     <h3>Hoạt động gần đây</h3>
+                    
+                    {transactions.length > 0 && (
+                        <div style={{ marginBottom: 12 }}>
+                            <input
+                                type="text"
+                                className="form-input"
+                                placeholder="Tìm giao dịch (mô tả, người tạo, danh mục)..."
+                                value={financeSearchQuery}
+                                onChange={e => setFinanceSearchQuery(e.target.value)}
+                                style={{
+                                    width: '100%',
+                                    borderRadius: 20,
+                                    padding: '6px 14px',
+                                    fontSize: 13,
+                                    background: 'var(--bg-secondary)',
+                                    border: '1px solid var(--border-subtle)',
+                                    boxSizing: 'border-box'
+                                }}
+                            />
+                        </div>
+                    )}
+
                     {loading ? (
                         <div className="finance-loading">{t('common.loading')}</div>
                     ) : transactions.length === 0 ? (
                         <div className="finance-empty">Chưa có giao dịch tài chính nào được ghi lại.</div>
+                    ) : filteredTransactions.length === 0 ? (
+                        <div style={{ padding: 24, textAlign: 'center', color: 'var(--text-muted)', fontSize: 13 }}>
+                            Không tìm thấy giao dịch nào phù hợp
+                        </div>
                     ) : (
                         <div className="table-responsive">
                             <table className="finance-table">
@@ -185,7 +218,7 @@ export default function FinancePage({ user, addToast }) {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {transactions.map(tx => (
+                                    {filteredTransactions.map(tx => (
                                         <tr key={tx.id}>
                                             <td>{new Date(tx.created_at).toLocaleDateString('vi-VN')}</td>
                                             <td>

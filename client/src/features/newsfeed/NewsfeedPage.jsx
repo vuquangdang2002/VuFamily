@@ -1,5 +1,5 @@
 // NewsfeedPage.jsx — Bảng tin & Liên hệ dòng họ (đã localize & tách nhỏ)
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { myError } from '../../shared/utils/logger';
 import { api } from '../../shared/services/api';
 import { ConfigAPI } from '../../config.js';
@@ -24,11 +24,18 @@ function getTodayLabel() {
 
 export default function NewsfeedPage({ user, isAdmin, addToast, members = [], onNavigate }) {
     const { t } = useTranslation();
+    const hasShownOfflineToastRef = useRef(false);
     const [posts, setPosts] = useState(cachedPosts || []);
+    const [postSearchQuery, setPostSearchQuery] = useState('');
     const [hasNewPostsHint, setHasNewPostsHint] = useState(false);
     const [newPost, setNewPost] = useState('');
     const [tab, setTab] = useState('posts');
     const [loading, setLoading] = useState(false);
+
+    const filteredPosts = posts.filter(post => 
+        (post.content || '').toLowerCase().includes(postSearchQuery.toLowerCase()) ||
+        (post.author || '').toLowerCase().includes(postSearchQuery.toLowerCase())
+    );
 
     // Stats derived from members prop
     const totalMembers = members.length;
@@ -51,6 +58,7 @@ export default function NewsfeedPage({ user, isAdmin, addToast, members = [], on
         try {
             const json = await api.getPosts();
             if (json.success) {
+                hasShownOfflineToastRef.current = false;
                 const newPosts = json.data || [];
                 offlineCache.saveRecentPosts(newPosts).catch(err => myError('OFFLINE', 'Error caching posts:', err));
 
@@ -69,6 +77,10 @@ export default function NewsfeedPage({ user, isAdmin, addToast, members = [], on
             }
         } catch (e) {
             myError('NEWSFEED', 'Error fetching posts, loading offline cache:', e);
+            if (!hasShownOfflineToastRef.current) {
+                addToast(t('newsfeed.offline_alert') || 'Không thể kết nối máy chủ. Đang hiển thị bản tin ngoại tuyến. Vui lòng kiểm tra lại kết nối mạng.', 'warning');
+                hasShownOfflineToastRef.current = true;
+            }
             try {
                 const cached = await offlineCache.getRecentPosts();
                 if (cached && cached.length > 0) {
@@ -82,9 +94,7 @@ export default function NewsfeedPage({ user, isAdmin, addToast, members = [], on
         setLoading(false);
     };
 
-    useEffect(() => {
-        fetchPosts();
-    }, []);
+    useEffect(() => { fetchPosts(); }, []);
 
     const switchTab = (selectedTab) => {
         setTab(selectedTab);
@@ -112,13 +122,8 @@ export default function NewsfeedPage({ user, isAdmin, addToast, members = [], on
         if (!confirm(t('newsfeed.delete_confirm'))) return;
         try {
             const json = await api.deletePost(id);
-            if (json.success) {
-                addToast(t('newsfeed.delete_success'));
-                fetchPosts(true);
-            }
-        } catch (e) {
-            addToast(t('newsfeed.delete_post_err'));
-        }
+            if (json.success) { addToast(t('newsfeed.delete_success')); fetchPosts(true); }
+        } catch (e) { addToast(t('newsfeed.delete_post_err')); }
     };
 
     return (
@@ -220,6 +225,27 @@ export default function NewsfeedPage({ user, isAdmin, addToast, members = [], on
                                     </div>
                                 )}
 
+                                {posts.length > 0 && (
+                                    <div style={{ marginBottom: 16 }}>
+                                        <input
+                                            type="text"
+                                            className="form-input"
+                                            placeholder={t('newsfeed.search_posts_placeholder') || "Tìm kiếm bài viết..."}
+                                            value={postSearchQuery}
+                                            onChange={e => setPostSearchQuery(e.target.value)}
+                                            style={{
+                                                width: '100%',
+                                                borderRadius: 24,
+                                                padding: '10px 18px',
+                                                fontSize: 13,
+                                                background: 'var(--bg-secondary)',
+                                                border: '1px solid var(--border-subtle)',
+                                                boxSizing: 'border-box'
+                                            }}
+                                        />
+                                    </div>
+                                )}
+
                                 {loading && posts.length === 0 ? (
                                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 0' }}>
                                         <div className="nf-spinner"></div>
@@ -230,9 +256,13 @@ export default function NewsfeedPage({ user, isAdmin, addToast, members = [], on
                                         <span style={{ fontSize: 48 }}>📭</span>
                                         <h3>{t('newsfeed.empty')}</h3>
                                     </div>
+                                ) : filteredPosts.length === 0 ? (
+                                    <div style={{ padding: 32, textAlign: 'center', color: 'var(--text-muted)', fontSize: 14 }}>
+                                        Không tìm thấy bài viết nào phù hợp
+                                    </div>
                                 ) : (
                                     <div className="nf-posts-list">
-                                        {posts.map(post => (
+                                        {filteredPosts.map(post => (
                                             <PostCard
                                                 key={post.id}
                                                 post={post}

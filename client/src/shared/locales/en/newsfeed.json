@@ -12,6 +12,7 @@
     "newsfeed.posting": "Posting...",
     "newsfeed.empty": "No posts yet.",
     "newsfeed.load_error": "Failed to load newsfeed",
+    "newsfeed.offline_alert": "Cannot connect to server. Displaying offline newsfeed. Please check your network connection.",
     "newsfeed.post_success": "Post published successfully!",
     "newsfeed.post_fail": "Failed to publish post",
     "newsfeed.delete_confirm": "Delete this post?",

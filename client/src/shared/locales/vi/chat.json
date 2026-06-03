@@ -63,5 +63,7 @@
     "chat.send_fail": "Lỗi gửi tin",
     "chat.network_error": "Lỗi kết nối mạng",
     "chat.create_fail": "Lỗi tạo nhóm chat",
-    "chat.connection_error": "Lỗi kết nối"
+    "chat.connection_error": "Lỗi kết nối",
+    "chat.offline_rooms_warning": "Không thể kết nối máy chủ để cập nhật danh sách hội thoại. Vui lòng kiểm tra kết nối mạng.",
+    "chat.offline_messages_warning": "Không thể tải tin nhắn mới do mất kết nối. Vui lòng kiểm tra mạng."
 }
