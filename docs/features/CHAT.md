@@ -1,62 +1,82 @@
-# Tính năng: Trò chuyện Trực tuyến (Real-time Chat)
+# Feature: Real-time Chat & Calling
 
-## 1. Tổng quan
-Module xử lý hệ thống nhắn tin nội bộ của ứng dụng, hoạt động hoàn toàn độc lập, không phụ thuộc vào nền tảng thứ ba (Zalo, Messenger, v.v.).
-
----
-
-## 2. Frontend (UI / HTML / JS / CSS)
-- **Component chính:** `client/src/features/chat/ChatPage.jsx` và `client/src/shared/services/chatCache.js`
-- **Nhiệm vụ:**
-  - Hiển thị danh sách các phòng chat (Bên trái) và luồng tin nhắn chi tiết (Bên phải).
-  - Quản lý trạng thái nhập văn bản, hiển thị bong bóng tin nhắn (Message Bubbles).
-- **State & Cache Management:**
-  - Sử dụng IndexedDB (`chatCache.js`) để lưu trữ tin nhắn cũ vào bộ nhớ cục bộ của trình duyệt. 
-  - Khi người dùng mở ứng dụng, giao diện sẽ render ngay lập tức tin nhắn từ Cache (giúp tải trang siêu tốc), sau đó Background Sync (đồng bộ ngầm) để kéo tin nhắn mới từ Server về.
-- **Tiêu chuẩn UI:** Layout Flexbox, sử dụng các biến CSS chuẩn của dự án để tự động hỗ trợ Light/Dark mode.
+## 1. Overview
+The Real-time Chat module handles direct and group messaging, offline message caching using IndexedDB, and WebRTC voice/video signaling. It functions entirely in-house without relying on third-party messaging services.
 
 ---
 
-## 3. Backend (API & Routes)
-- **File định tuyến:** `server/routes/api.js` (Phần Chats)
-- **Nhiệm vụ:** Định nghĩa các đường dẫn (Endpoints) xử lý việc tạo phòng, lấy tin nhắn, gửi tin nhắn.
-- **Các API chính:**
-  - `GET /api/chats`: Lấy danh sách các phòng chat của người dùng.
-  - `GET /api/chats/:id/messages?since=ISO_DATE`: Lấy lịch sử tin nhắn của một phòng. Hỗ trợ tham số `since` để chỉ lấy các tin nhắn mới (Incremental Fetch).
-  - `POST /api/chats/:id/messages`: Gửi một tin nhắn mới.
-  - `POST /api/chats`: Tạo phòng chat mới (Group hoặc Direct 1-1).
+## 2. Directory Structure
+- **Frontend Components**: `client/src/features/chat/`
+    - `ChatPage.jsx` (Chat room layouts and message bubbles)
+    - `VoiceCall.jsx` (Voice & video call overlay component using WebRTC signaling)
+- **Shared Helpers**:
+    - `client/src/shared/services/chatCache.js` (IndexedDB schema & message cache operations)
+- **Server Logic**:
+    - `server/controllers/chatController.js` (Business rules and membership validation)
+    - `server/utils/realtimeHub.js` (Socket.io event broadcaster)
+- **API Routes**: `/api/chats/*`
 
 ---
 
-## 4. Controller & Kết nối (Logic & Realtime Hub)
-- **File xử lý:** `server/controllers/chatController.js` và `server/utils/realtimeHub.js`.
-- **Nhiệm vụ:**
-  - **Controller (`chatController.js`):** Xử lý nghiệp vụ phân quyền (Membership Check). Đảm bảo người dùng phải ở trong phòng chat mới được phép gửi/nhận tin nhắn. Ghi dữ liệu vào Supabase.
-  - **Realtime Hub (`realtimeHub.js`):** Xử lý WebSockets. Khi có một tin nhắn mới được lưu vào Database thành công, Hub sẽ phát tín hiệu (Broadcast) sự kiện `chat:message` kèm theo dữ liệu tin nhắn tới tất cả thành viên (members) đang online trong phòng đó, giúp giao diện Frontend tự động hiển thị tin nhắn ngay lập tức mà không cần F5.
+## 3. Core Features
+1. **Incremental Fetching**:
+   - UI instantly renders old messages from IndexedDB cache (`chatCache.js`) for instant loading.
+   - Client sends background query `GET /api/chats/:id/messages?since=[last_cached_date]` to fetch only incremental updates and updates local cache.
+2. **Real-time Broadcaster**:
+   - Server-side Socket.io hub broadcasts incoming messages immediately to online room members.
 
 ---
 
-## 5. Tiêu chuẩn Debug, Log và Comment (BẮT BUỘC)
+## 4. Flow & Architecture Diagrams
 
-Để bảo trì tính năng này, mã nguồn cần tuân thủ:
+### 4.1. Real-time Message Lifecycle
+The diagram below describes the sequence of sending a message, broadcasting it over WebSockets, and updating local browser caches.
 
-### 5.1. Comment Tiếng Việt
-Trong `ChatPage.jsx` và `chatController.js`:
-```javascript
-// Step 1: Hiển thị ngay lập tức tin nhắn từ IndexedDB cache để tối ưu trải nghiệm (UX)
-getCachedMessages(activeRoomId).then(cached => { ... });
+```mermaid
+sequenceDiagram
+    autonumber
+    actor A as User Alice
+    participant CA as Alice Client
+    participant DB_C as IndexedDB Cache
+    participant Hub as Socket.io (realtimeHub)
+    participant Server as chatController.js
+    participant DB as Supabase DB
+    actor B as User Bob
+    participant CB as Bob Client
 
-// Kiểm tra quyền của người dùng trước khi lấy tin nhắn
-const membership = await ChatModel.getMembership(roomId, userId);
-if (!membership) return res.status(403).json({ error: 'Bạn không có quyền xem nhóm chat này' });
+    A->>CA: Types & Sends message
+    CA->>DB_C: Store pending message (Status: sending)
+    CA->>Server: HTTP POST /api/chats/:id/messages
+    Server->>Server: Validate Alice is member of Room
+    alt Alice is member
+        Server->>DB: Save Message details
+        DB-->>Server: Returns saved message object
+        Server->>Hub: Triggers broadcast event
+        Hub->>CB: Socket Emit `chat:message` (Payload)
+        CB->>DB_C: Save incoming message to Bob's cache
+        CB-->>B: Render new bubble (Alice: Hello)
+        Server-->>CA: Return HTTP 200 { success: true, message }
+        CA->>DB_C: Update Alice's cache (Status: sent)
+        CA-->>A: Render sent status checkmark
+    else Alice is not member
+        Server-->>CA: Return HTTP 403 Forbidden
+        CA->>DB_C: Mark message in Alice's cache (Status: failed)
+        CA-->>A: Render exclamation error icon
+    end
 ```
 
-### 5.2. Hệ thống Log đầy đủ
-- **Server Controller (`chatController.js`):**
-  - Khi có lỗi, bắt buộc log kèm ID phòng để dễ truy vết: 
-  - `console.error('[ChatController - getMessages] Lỗi room ' + req.params.id + ':', e);`
-- **Frontend (`ChatPage.jsx`):**
-  - Ghi nhận trạng thái đồng bộ: 
-  - `console.log('[ChatPage] Background Sync thành công cho phòng:', roomId);`
-  - Bắt lỗi nếu Cache thất bại: 
-  - `console.error('[ChatPage] Background Sync Error:', e);`
+### 4.2. Chat Synchronization Protocol
+Flowchart representing how the client updates messages efficiently on startup.
+
+```mermaid
+flowchart TD
+    A[Open Chat Room] --> B[Fetch messages from local IndexedDB cache]
+    B --> C[Render cached messages immediately on UI]
+    C --> D[Identify date of most recent cached message]
+    D --> E[Call API: GET /api/chats/:id/messages?since=last_date]
+    E --> F{Has new messages?}
+    F -->|No| G[Stop - Sync completed]
+    F -->|Yes| H[Save new messages to local IndexedDB]
+    H --> I[Append new messages to UI chat bubble list]
+    I --> G
+```
