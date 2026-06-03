@@ -1,4 +1,11 @@
-# VuFamily Project Rules
+# AI Developer Rules (CRITICAL)
+- Refer to and strictly follow the **Core AI Developer Standard** defined in `.agents/skills/ai_standard_en.md` (English) and `.agents/skills/ai_standard_vi.md` (Vietnamese). You MUST strictly adhere to the **Core Programming Rules (Section 7)**, the **Feature Discovery Protocol (Section 3)**, and the **Feature Development Lifecycle & Progress Tracking (Section 4)**.
+- Since this is a Web/App project, refer to and follow the **Web & App Extensions** defined in `.agents/skills/web_app_standard_en.md` and `.agents/skills/web_app_standard_vi.md`.
+- BEFORE starting any task or refactoring, you MUST read the project's `docs/overview.md` (or equivalent master document). Look up the target module in the **Core Module Registry** to find its specific code entries and documentation spec.
+- You MUST create and maintain `task.md` (using `[ ]`/`[/]`/`[x]`) to track real-time progress and generate `walkthrough.md` with links to source code upon task completion.
+- Keep all source code files under a strict budget of **300 lines of code** per file. Decompose large modules, components, classes, and hooks immediately if they approach this limit.
+- Document system flow using Mermaid diagrams inside specifications.
+- Follow the 4-step workflow: Context Absorption -> Modular Decomposition -> Standard-Compliant Execution -> Alignment & Documentation Update.
 
 ## Architecture: Facade + Service Layer Pattern
 - ALL HTTP requests MUST go through `shared/services/api.js`. NEVER call `fetch()` directly in Components.
