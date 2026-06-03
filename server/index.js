@@ -44,6 +44,14 @@ initRealtimeHub(httpServer);
 
 // Start server only if running directly
 if (require.main === module) {
+    // Start background email reminder checker
+    try {
+        const { startReminderInterval } = require('./utils/reminderCron');
+        startReminderInterval();
+    } catch (err) {
+        console.error('❌ Failed to initialize reminder cron:', err.message);
+    }
+
     httpServer.listen(config.port, () => {
         const domain = process.env.RAILWAY_PUBLIC_DOMAIN ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` : `http://localhost:${config.port}`;
         const wsDomain = process.env.RAILWAY_PUBLIC_DOMAIN ? `wss://${process.env.RAILWAY_PUBLIC_DOMAIN}/hub` : `ws://localhost:${config.port}/hub`;

@@ -185,6 +185,29 @@ CREATE TABLE IF NOT EXISTS call_signals (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- 16. FINANCE TRANSACTIONS
+CREATE TABLE IF NOT EXISTS funds_transactions (
+  id SERIAL PRIMARY KEY,
+  type TEXT CHECK(type IN ('INCOME', 'EXPENSE')) NOT NULL,
+  amount_encrypted TEXT NOT NULL,
+  description TEXT NOT NULL,
+  category TEXT CHECK(category IN ('education', 'death_anniversary', 'travel', 'construction', 'award', 'other')) DEFAULT 'other',
+  created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 17. FINANCE AUDIT LOGS
+CREATE TABLE IF NOT EXISTS funds_audit_logs (
+  id SERIAL PRIMARY KEY,
+  transaction_id INTEGER REFERENCES funds_transactions(id) ON DELETE CASCADE,
+  action TEXT CHECK(action IN ('CREATED', 'UPDATED', 'DELETED')) NOT NULL,
+  old_amount_encrypted TEXT,
+  new_amount_encrypted TEXT,
+  modified_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  modified_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- ═══════════════════════════════════════════
 -- INDEXES & OPTIMIZATIONS
 -- ═══════════════════════════════════════════
@@ -227,6 +250,8 @@ ALTER TABLE chat_messages ENABLE ROW LEVEL SECURITY; DROP POLICY IF EXISTS "Serv
 ALTER TABLE calls ENABLE ROW LEVEL SECURITY; DROP POLICY IF EXISTS "Service role full access" ON calls; CREATE POLICY "Service role full access" ON calls FOR ALL USING (true) WITH CHECK (true);
 ALTER TABLE call_ice_candidates ENABLE ROW LEVEL SECURITY; DROP POLICY IF EXISTS "Service role full access" ON call_ice_candidates; CREATE POLICY "Service role full access" ON call_ice_candidates FOR ALL USING (true) WITH CHECK (true);
 ALTER TABLE call_signals ENABLE ROW LEVEL SECURITY; DROP POLICY IF EXISTS "Service role full access" ON call_signals; CREATE POLICY "Service role full access" ON call_signals FOR ALL USING (true) WITH CHECK (true);
+ALTER TABLE funds_transactions ENABLE ROW LEVEL SECURITY; DROP POLICY IF EXISTS "Service role full access" ON funds_transactions; CREATE POLICY "Service role full access" ON funds_transactions FOR ALL USING (true) WITH CHECK (true);
+ALTER TABLE funds_audit_logs ENABLE ROW LEVEL SECURITY; DROP POLICY IF EXISTS "Service role full access" ON funds_audit_logs; CREATE POLICY "Service role full access" ON funds_audit_logs FOR ALL USING (true) WITH CHECK (true);
 
 -- Force Supabase to reload schema cache
 NOTIFY pgrst, 'reload schema';

@@ -1,10 +1,10 @@
 // i18n.js — Hệ thống đa ngôn ngữ (Localization Service)
-// Dữ liệu bản dịch nằm tách riêng trong thư mục locales/ (vi.json, en.json)
-// Thêm ngôn ngữ mới: tạo file locales/xx.json rồi import vào đây.
+// Dữ liệu bản dịch nằm tách riêng trong thư mục locales/ (vi, en)
+// Thêm ngôn ngữ mới: tạo thư mục locales/xx rồi import vào đây.
 import { myLog } from '../utils/logger';
 import { ConfigAPI } from '../../config.js';
-import vi from '../locales/vi.json';
-import en from '../locales/en.json';
+import vi from '../locales/vi';
+import en from '../locales/en';
 
 // Registry ngôn ngữ — Thêm ngôn ngữ mới chỉ cần thêm 1 dòng ở đây
 const translations = { vi, en };

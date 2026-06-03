@@ -20,6 +20,7 @@ const ADMIN_ITEMS = [
 
 const COMMON_ITEMS = [
     { id: 'chat', icon: '💬', label: 'Trò chuyện' },
+    { id: 'finance', icon: '💰', label: 'Tài chính' },
     { id: 'history', icon: '📜', label: 'Lịch sử' },
 ];
 

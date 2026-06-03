@@ -202,6 +202,36 @@ async function init() {
     )
   `);
 
+  // Finance Transactions Table
+  accountsDb.run(`
+    CREATE TABLE IF NOT EXISTS funds_transactions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      type TEXT CHECK(type IN ('INCOME', 'EXPENSE')) NOT NULL,
+      amount_encrypted TEXT NOT NULL,
+      description TEXT NOT NULL,
+      category TEXT CHECK(category IN ('education', 'death_anniversary', 'travel', 'construction', 'award', 'other')) DEFAULT 'other',
+      created_by INTEGER,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
+    )
+  `);
+
+  // Finance Audit Logs Table
+  accountsDb.run(`
+    CREATE TABLE IF NOT EXISTS funds_audit_logs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      transaction_id INTEGER,
+      action TEXT CHECK(action IN ('CREATED', 'UPDATED', 'DELETED')) NOT NULL,
+      old_amount_encrypted TEXT,
+      new_amount_encrypted TEXT,
+      modified_by INTEGER,
+      modified_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (transaction_id) REFERENCES funds_transactions(id) ON DELETE CASCADE,
+      FOREIGN KEY (modified_by) REFERENCES users(id) ON DELETE SET NULL
+    )
+  `);
+
   // Update requests table
   accountsDb.run(`
     CREATE TABLE IF NOT EXISTS update_requests (

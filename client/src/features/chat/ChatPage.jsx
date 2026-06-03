@@ -3,11 +3,14 @@ import { getApiBase } from '../../shared/services/api';
 import { AuthHelper } from '../../shared/services/AuthHelper';
 import {
     cacheRooms, getCachedRooms,
-    cacheMessages, getCachedMessages, getLatestMessageTime, cacheSingleMessage
+    cacheMessages, getCachedMessages
 } from '../../shared/services/chatCache';
 import { myLog, myError, myWarning } from '../../shared/utils/logger';
-import { TrackingHelper } from '../../shared/services/TrackingHelper';
 import { useTranslation } from '../../shared/hooks/useTranslation';
+
+import InboxPanel from './components/InboxPanel';
+import MessagePanel from './components/MessagePanel';
+import ChatModals from './components/ChatModals';
 import './Chat.css';
 
 export default function ChatPage({ user, addToast, onStartCall }) {
@@ -15,26 +18,18 @@ export default function ChatPage({ user, addToast, onStartCall }) {
     const [rooms, setRooms] = useState([]);
     const [activeRoomId, setActiveRoomId] = useState(null);
     const [messages, setMessages] = useState([]);
-    const [inputText, setInputText] = useState('');
     const [loadingRooms, setLoadingRooms] = useState(true);
-    const [isCacheLoaded, setIsCacheLoaded] = useState(false);
+    const [, setIsCacheLoaded] = useState(false);
 
-    // Select participants for new chat
+    // Modals & Users states
     const [showNewChat, setShowNewChat] = useState(false);
     const [showGroupInfo, setShowGroupInfo] = useState(false);
     const [allUsers, setAllUsers] = useState([]);
     const [selectedUserIds, setSelectedUserIds] = useState([]);
 
-    const messagesEndRef = useRef(null);
     const isFirstLoadRef = useRef(true);
     const latestMsgTimeRef = useRef(null);
 
-    // ── Giao thức Messenger: Tải từ Cache nội bộ trước, sau đó đồng bộ (Sync) với Server ──
-
-    /**
-     * Tải danh sách phòng chat từ Server.
-     * Cập nhật IndexedDB để dùng cho lần mở app tiếp theo.
-     */
     const fetchRooms = async () => {
         myLog('CHAT', '[ChatPage - fetchRooms] Syncing room list from Server...');
         try {
@@ -43,13 +38,13 @@ export default function ChatPage({ user, addToast, onStartCall }) {
             if (json.success) {
                 const serverRooms = json.data || [];
                 setRooms(serverRooms);
-                // Lưu vào IndexedDB cache (chạy ngầm)
-                cacheRooms(serverRooms).catch((e) => { myError('CHAT', "[ChatPage] Error caching rooms:", e); });
+                cacheRooms(serverRooms).catch((e) => { 
+                    myError('CHAT', "[ChatPage] Error caching rooms:", e); 
+                });
                 myLog('CHAT', `[ChatPage - fetchRooms] Synced ${serverRooms.length} rooms successfully.`);
             }
         } catch (e) {
             myWarning('CHAT', '[ChatPage - fetchRooms] Offline or weak network, using cached rooms.', e);
-            // Offline: keep using cached rooms
         } finally {
             setLoadingRooms(false);
         }
@@ -62,12 +57,11 @@ export default function ChatPage({ user, addToast, onStartCall }) {
             if (json.success) {
                 setAllUsers(json.data.filter(u => u.id !== user.id));
             }
-        } catch (e) { }
+        } catch (e) {
+            myError('CHAT', e);
+        }
     };
 
-    /**
-     * Tải toàn bộ tin nhắn của một phòng (Dùng khi mới chuyển phòng).
-     */
     const fetchMessagesFull = async (roomId) => {
         myLog('CHAT', `[ChatPage - fetchMessagesFull] Loading full message history for Room ID: ${roomId}`);
         try {
@@ -76,30 +70,21 @@ export default function ChatPage({ user, addToast, onStartCall }) {
             if (json.success) {
                 const serverMsgs = json.data || [];
                 setMessages(serverMsgs);
-
-                // Cập nhật Cache cục bộ
-                cacheMessages(roomId, serverMsgs).catch((e) => { myError('CHAT', "[ChatPage] Error caching messages:", e); });
+                cacheMessages(roomId, serverMsgs).catch((e) => { 
+                    myError('CHAT', "[ChatPage] Error caching messages:", e); 
+                });
                 myLog('CHAT', `[ChatPage - fetchMessagesFull] Loaded ${serverMsgs.length} messages successfully.`);
 
-                // Ghi nhớ mốc thời gian của tin nhắn cuối cùng để phục vụ cho Incremental Polling
                 if (serverMsgs.length > 0) {
                     latestMsgTimeRef.current = serverMsgs[serverMsgs.length - 1].created_at;
                 }
-                if (isFirstLoadRef.current) {
-                    scrollToBottom();
-                    isFirstLoadRef.current = false;
-                }
+                isFirstLoadRef.current = false;
             }
         } catch (e) {
             myError('CHAT', e);
-            // Offline: keep cached messages
         }
     };
 
-    /**
-     * Tải tin nhắn gia tăng (Incremental Fetch): Chỉ lấy những tin nhắn MỚI NHẤT
-     * từ mốc thời gian đã biết cuối cùng để tiết kiệm dữ liệu mạng.
-     */
     const fetchMessagesIncremental = async (roomId) => {
         if (!latestMsgTimeRef.current) {
             return fetchMessagesFull(roomId);
@@ -114,68 +99,61 @@ export default function ChatPage({ user, addToast, onStartCall }) {
                 const newMsgs = json.data;
                 myLog('CHAT', `[ChatPage - fetchMessagesIncremental] Found ${newMsgs.length} new messages.`);
                 setMessages(prev => {
-                    // Loại bỏ trùng lặp (Deduplicate) dựa trên ID tin nhắn
                     const existingIds = new Set(prev.map(m => m.id));
                     const unique = newMsgs.filter(m => !existingIds.has(m.id));
                     if (unique.length === 0) return prev;
                     const merged = [...prev, ...unique];
-
-                    // Lưu tin nhắn mới vào Cache
-                    cacheMessages(roomId, merged).catch((e) => { myError('CHAT', "[ChatPage] Error caching new messages:", e); });
+                    cacheMessages(roomId, merged).catch((e) => { 
+                        myError('CHAT', "[ChatPage] Error caching new messages:", e); 
+                    });
                     return merged;
                 });
                 latestMsgTimeRef.current = newMsgs[newMsgs.length - 1].created_at;
-                scrollToBottom();
             }
         } catch (e) {
-            // Offline — keep cached
+            // Offline
         }
     };
 
-    // ── Mount: Load cached data instantly, then background sync ──
+    // Mount: Load cached data instantly, then background sync
     useEffect(() => {
-        // Step 1: Load rooms from IndexedDB cache (instant)
         getCachedRooms().then(cached => {
             if (cached.length > 0) {
                 setRooms(cached);
                 setLoadingRooms(false);
                 setIsCacheLoaded(true);
             }
-        }).catch((e) => { myError('CHAT', "ChatPage Background Sync Error:", e); });
+        }).catch((e) => { 
+            myError('CHAT', "ChatPage Background Sync Error:", e); 
+        });
 
-        // Step 2: Background sync from server
         fetchRooms();
         fetchPublicUsers();
 
-        // Polling rooms for updates
         const interval = setInterval(() => {
             fetchRooms();
         }, 15000);
         return () => clearInterval(interval);
     }, []);
 
-    // ── Room switch: Load cached messages first, then full fetch ──
+    // Room switch: Load cached messages first, then full fetch
     useEffect(() => {
         if (!activeRoomId) return;
         isFirstLoadRef.current = true;
         latestMsgTimeRef.current = null;
 
-        // Step 1: Show cached messages immediately
         getCachedMessages(activeRoomId).then(cached => {
             if (cached.length > 0) {
                 setMessages(cached);
-                if (cached.length > 0) {
-                    latestMsgTimeRef.current = cached[cached.length - 1].created_at;
-                }
-                scrollToBottom();
+                latestMsgTimeRef.current = cached[cached.length - 1].created_at;
                 isFirstLoadRef.current = false;
             }
-        }).catch((e) => { myError('CHAT', "ChatPage Background Sync Error:", e); });
+        }).catch((e) => { 
+            myError('CHAT', "ChatPage Background Sync-Cache Error:", e); 
+        });
 
-        // Step 2: Full fetch from server (to get latest)
         fetchMessagesFull(activeRoomId);
 
-        // Polling: incremental only (just new messages)
         const interval = setInterval(() => {
             fetchMessagesIncremental(activeRoomId);
         }, 5000);
@@ -183,45 +161,8 @@ export default function ChatPage({ user, addToast, onStartCall }) {
         return () => clearInterval(interval);
     }, [activeRoomId]);
 
-    const scrollToBottom = () => {
-        setTimeout(() => {
-            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-        }, 100);
-    };
-
-    const handleSendMessage = async (e) => {
-        e.preventDefault();
-        if (!inputText.trim() || !activeRoomId) return;
-
-        const content = inputText;
-        setInputText(''); // optimistic clear
-
-        try {
-            const res = await fetch(`${getApiBase()}/chats/${activeRoomId}/messages`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'x-auth-token': AuthHelper.getToken() },
-                body: JSON.stringify({ content })
-            });
-            const json = await res.json();
-            if (json.success) {
-                // Immediately append + cache
-                setMessages(prev => [...prev, json.data]);
-                TrackingHelper.trackSendChatMessage(activeRoom?.type || 'direct');
-                cacheSingleMessage(activeRoomId, json.data).catch((e) => { myError('CHAT', "ChatPage Background Sync Error:", e); });
-                latestMsgTimeRef.current = json.data.created_at;
-                scrollToBottom();
-                fetchRooms(); // to update read/last msg time
-            } else {
-                addToast(json.error || t('chat.send_fail'), 'error');
-            }
-        } catch (e) {
-            addToast(t('chat.network_error'), 'error');
-        }
-    };
-
     const handleCreateRoom = async () => {
         if (selectedUserIds.length === 0) return;
-
         try {
             const res = await fetch(`${getApiBase()}/chats`, {
                 method: 'POST',
@@ -273,6 +214,7 @@ export default function ChatPage({ user, addToast, onStartCall }) {
             addToast(t('chat.network_error'), 'error');
         }
     };
+
     const handleLeaveGroup = async () => {
         if (!window.confirm(t('chat.leave_confirm'))) return;
         try {
@@ -315,270 +257,52 @@ export default function ChatPage({ user, addToast, onStartCall }) {
     };
 
     const activeRoom = rooms.find(r => r.id === activeRoomId);
-
-    // Determine current user role in the active group
     const currentUserRole = activeRoom?.type === 'group' ? (activeRoom.members?.find(m => m.id === user.id)?.role || 'member') : 'member';
 
     return (
         <div className="page-container no-mobile-padding" style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: 0 }}>
             <div className={`chat-layout ${activeRoomId ? 'room-active' : ''}`}>
-                {/* INBOX PANEL */}
-                <div className="chat-inbox-panel">
-                    <div style={{ padding: '16px', borderBottom: '1px solid var(--border-subtle)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <h2 style={{ fontSize: 18, margin: 0 }}>{t('chat.messages_title')}</h2>
-                        <button className="btn btn-primary" style={{ padding: '6px 12px', fontSize: 13 }} onClick={() => setShowNewChat(true)}>
-                            {t('chat.new_chat_btn')}
-                        </button>
-                    </div>
+                <InboxPanel
+                    rooms={rooms}
+                    loadingRooms={loadingRooms}
+                    activeRoomId={activeRoomId}
+                    setActiveRoomId={setActiveRoomId}
+                    setShowNewChat={setShowNewChat}
+                />
 
-                    <div style={{ flex: 1, overflowY: 'auto' }}>
-                        {loadingRooms ? <div style={{ padding: 16, textAlign: 'center', color: 'var(--text-muted)' }}>{t('common.loading')}</div> : null}
-                        {!loadingRooms && rooms.length === 0 && (
-                            <div style={{ padding: 32, textAlign: 'center', color: 'var(--text-muted)' }}>
-                                {t('chat.no_rooms')}<br /><br />
-                                <button className="btn" onClick={() => setShowNewChat(true)}>{t('chat.start_messaging')}</button>
-                            </div>
-                        )}
-                        {rooms.map(room => (
-                            <div
-                                key={room.id}
-                                onClick={() => setActiveRoomId(room.id)}
-                                style={{
-                                    padding: '12px 16px', borderBottom: '1px solid var(--border-subtle)', cursor: 'pointer',
-                                    background: activeRoomId === room.id ? 'var(--bg-hover)' : 'transparent',
-                                    display: 'flex', alignItems: 'center', gap: 12
-                                }}
-                            >
-                                <div style={{ position: 'relative', width: 40, height: 40, minWidth: 40, minHeight: 40, flexShrink: 0 }}>
-                                    {room.avatar ? (
-                                        <img src={room.avatar} alt="avatar" style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover' }} />
-                                    ) : (
-                                        <div style={{ width: 40, height: 40, borderRadius: '50%', background: room.type === 'group' ? 'linear-gradient(135deg, #10b981, #047857)' : 'linear-gradient(135deg, var(--gold), var(--gold-dark))', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 'bold' }}>
-                                            {room.type === 'group' ? '👥' : (room.display_name?.substring(0, 2).toUpperCase() || 'U')}
-                                        </div>
-                                    )}
-                                    {room.type === 'direct' && room.is_online && (
-                                        <span style={{ position: 'absolute', bottom: 1, right: 1, width: 14, height: 14, borderRadius: '50%', background: '#10b981', border: '2.5px solid var(--bg-secondary)', zIndex: 1 }}></span>
-                                    )}
-                                </div>
-                                <div>
-                                    <div style={{ fontWeight: 600, fontSize: 14 }}>{room.display_name || (room.type === 'group' ? t('chat.unnamed_group') : t('chat.user_label'))}</div>
-                                    <div style={{ fontSize: 12, color: 'var(--text-muted)', display: 'flex', gap: 4 }}>
-                                        {room.type === 'group' ? `${room.members?.length || 0} ${t('chat.members_count')}` : (room.is_online ? t('chat.active') : t('chat.offline_status'))}
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-
-                {/* MESSAGES PANEL */}
-                <div className="chat-messages-panel">
-                    {activeRoomId ? (
-                        <>
-                            {/* Chat header */}
-                            <div className="chat-msg-header" style={{ padding: '12px 16px', borderBottom: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', gap: 8, background: 'var(--bg-secondary)' }}>
-                                <button className="btn" style={{ padding: '4px 8px', borderRadius: '50%', border: 'none', background: 'transparent', fontSize: '20px' }} onClick={() => setActiveRoomId(null)}>
-                                    ‹
-                                </button>
-                                <div style={{ width: 36, height: 36, minWidth: 36, minHeight: 36, flexShrink: 0, borderRadius: '50%', background: activeRoom?.type === 'group' ? 'linear-gradient(135deg, #10b981, #047857)' : 'linear-gradient(135deg, var(--gold), var(--gold-dark))', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 'bold' }}>
-                                    {activeRoom?.avatar ? <img src={activeRoom.avatar} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} /> : (activeRoom?.type === 'group' ? '👥' : activeRoom?.display_name?.substring(0, 2).toUpperCase())}
-                                </div>
-                                <div style={{ flex: 1, minWidth: 0 }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                                        <h3 style={{ margin: 0, fontSize: 16, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{activeRoom?.display_name || t('chat.group_label')}</h3>
-                                        {activeRoom?.type === 'group' && (
-                                            <button className="btn" title={t('chat.rename_group')} style={{ padding: '2px 6px', fontSize: 12, background: 'transparent', border: '1px solid var(--border-subtle)', borderRadius: 4, flexShrink: 0 }} onClick={handleRenameGroup}>✏️</button>
-                                        )}
-                                    </div>
-                                    {activeRoom?.type === 'direct' && (
-                                        <span style={{ fontSize: 12, color: activeRoom.is_online ? '#10b981' : 'var(--text-muted)', whiteSpace: 'nowrap', display: 'block' }}>
-                                            {activeRoom.is_online ? t('chat.online_status') : t('chat.offline_status')}
-                                        </span>
-                                    )}
-                                </div>
-                                <div style={{ marginLeft: 'auto', display: 'flex', gap: 4, flexShrink: 0 }}>
-                                    <button className="btn call-btn-mobile" title={t('chat.call_voice')} style={{ padding: '6px 10px' }} onClick={() => onStartCall({ ...activeRoom, requestVideo: false })}>
-                                        📞 <span className="hide-on-mobile">{t('chat.call_voice')}</span>
-                                    </button>
-                                    <button className="btn btn-primary call-btn-mobile" title={t('chat.call_video')} style={{ padding: '6px 10px' }} onClick={() => onStartCall({ ...activeRoom, requestVideo: true })}>
-                                        📹 <span className="hide-on-mobile">{t('chat.call_video')}</span>
-                                    </button>
-                                    <button className="btn btn-icon" title={t('chat.group_detail')} style={{ fontSize: 18, padding: '4px' }} onClick={() => setShowGroupInfo(true)}>ℹ️</button>
-                                </div>
-                            </div>
-
-                            {/* Messages Container */}
-                            <div style={{ flex: 1, overflowY: 'auto', padding: '24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
-                                {messages.length === 0 && (
-                                    <div style={{ margin: 'auto', color: 'var(--text-muted)' }}>{t('chat.first_message')}</div>
-                                )}
-                                {messages.map((msg, idx) => {
-                                    const isMe = msg.sender_id === user.id;
-                                    const sender = msg.users || {};
-                                    return (
-                                        <div key={msg.id} style={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start' }}>
-                                            {!isMe && activeRoom?.type === 'group' && (
-                                                <span style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4, marginLeft: 44 }}>
-                                                    {sender.display_name || sender.username}
-                                                </span>
-                                            )}
-                                            <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end', flexDirection: isMe ? 'row-reverse' : 'row' }}>
-                                                {!isMe && (
-                                                    <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--gold)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12 }}>
-                                                        {sender.avatar ? <img src={sender.avatar} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} /> : sender.display_name?.substring(0, 2).toUpperCase()}
-                                                    </div>
-                                                )}
-                                                <div style={{
-                                                    background: isMe ? 'var(--primary)' : 'var(--bg-secondary)',
-                                                    color: isMe ? '#fff' : 'var(--text-primary)',
-                                                    padding: '10px 14px', borderRadius: 16,
-                                                    borderBottomRightRadius: isMe ? 4 : 16,
-                                                    borderBottomLeftRadius: !isMe ? 4 : 16,
-                                                    maxWidth: '400px', wordBreak: 'break-word',
-                                                    border: isMe ? 'none' : '1px solid var(--border-subtle)'
-                                                }}>
-                                                    {msg.content}
-                                                </div>
-                                            </div>
-                                            <span style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 4 }}>
-                                                {new Date(msg.created_at).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
-                                            </span>
-                                        </div>
-                                    );
-                                })}
-                                <div ref={messagesEndRef} />
-                            </div>
-
-                            {/* Chat input */}
-                            <div style={{ padding: '16px', borderTop: '1px solid var(--border-subtle)', background: 'var(--bg-primary)' }}>
-                                <form onSubmit={handleSendMessage} style={{ display: 'flex', gap: 8 }}>
-                                    <input
-                                        className="form-input"
-                                        style={{ flex: 1, borderRadius: 24, padding: '12px 20px', background: 'var(--bg-secondary)', border: '1px solid var(--border-subtle)' }}
-                                        placeholder={t('chat.input_msg')}
-                                        value={inputText}
-                                        onChange={e => setInputText(e.target.value)}
-                                    />
-                                    <button type="submit" disabled={!inputText.trim()} className="btn btn-primary" style={{ borderRadius: 24, padding: '0 24px' }}>
-                                        {t('chat.send_btn')}
-                                    </button>
-                                </form>
-                            </div>
-                        </>
-                    ) : (
-                        <div style={{ m: 'auto', flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
-                            {t('chat.select_room')}
-                        </div>
-                    )}
-                </div>
+                <MessagePanel
+                    activeRoomId={activeRoomId}
+                    activeRoom={activeRoom}
+                    messages={messages}
+                    setMessages={setMessages}
+                    user={user}
+                    onStartCall={onStartCall}
+                    setShowGroupInfo={setShowGroupInfo}
+                    handleRenameGroup={handleRenameGroup}
+                    addToast={addToast}
+                    fetchRooms={fetchRooms}
+                    latestMsgTimeRef={latestMsgTimeRef}
+                />
             </div>
 
-            {/* NEW CHAT MODAL */}
-            {showNewChat && (
-                <div className="modal-overlay open" onClick={e => e.target === e.currentTarget && setShowNewChat(false)}>
-                    <div className="modal" style={{ width: 440 }}>
-                        <div className="modal-header">
-                            <h2>{t('chat.start_chat_title')}</h2>
-                            <button className="detail-close" onClick={() => setShowNewChat(false)}>✕</button>
-                        </div>
-                        <div className="modal-body" style={{ maxHeight: '60vh', overflowY: 'auto' }}>
-                            <p style={{ color: 'var(--text-muted)', marginBottom: 16 }}>{t('chat.select_users_hint')}</p>
+            <ChatModals
+                showNewChat={showNewChat}
+                setShowNewChat={setShowNewChat}
+                showGroupInfo={showGroupInfo}
+                setShowGroupInfo={setShowGroupInfo}
+                activeRoom={activeRoom}
+                user={user}
+                allUsers={allUsers}
+                selectedUserIds={selectedUserIds}
+                toggleSelectUser={toggleSelectUser}
+                handleCreateRoom={handleCreateRoom}
+                currentUserRole={currentUserRole}
+                handleKickMember={handleKickMember}
+                handleLeaveGroup={handleLeaveGroup}
+            />
 
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                                {allUsers.map(u => (
-                                    <div key={u.id}
-                                        onClick={() => toggleSelectUser(u.id)}
-                                        style={{
-                                            padding: '10px 12px', border: '1px solid',
-                                            borderColor: selectedUserIds.includes(u.id) ? 'var(--primary)' : 'var(--border-subtle)',
-                                            background: selectedUserIds.includes(u.id) ? 'rgba(37,99,235,0.05)' : 'transparent',
-                                            borderRadius: 8, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12
-                                        }}
-                                    >
-                                        <div style={{ width: 18, height: 18, borderRadius: '50%', border: '2px solid', borderColor: selectedUserIds.includes(u.id) ? 'var(--primary)' : '#cbd5e1', background: selectedUserIds.includes(u.id) ? 'var(--primary)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                            {selectedUserIds.includes(u.id) && <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#fff' }}></span>}
-                                        </div>
-                                        <div style={{ width: 32, height: 32, minWidth: 32, minHeight: 32, flexShrink: 0, borderRadius: '50%', background: 'var(--gold)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12 }}>
-                                            {u.avatar ? <img src={u.avatar} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} /> : u.display_name?.substring(0, 2).toUpperCase()}
-                                        </div>
-                                        <div style={{ flex: 1 }}>
-                                            <div style={{ fontWeight: 500 }}>{u.display_name || u.username}</div>
-                                            <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                                                {u.is_online ? '🟢 Online' : '⚪ Offline'}
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-
-                            {selectedUserIds.length > 0 && (
-                                <button className="btn btn-primary" style={{ width: '100%', marginTop: 24, justifyContent: 'center' }} onClick={handleCreateRoom}>
-                                    {t('chat.start_chat_btn')} ({selectedUserIds.length})
-                                </button>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* GROUP INFO MODAL */}
-            {showGroupInfo && activeRoom && (
-                <div className="modal-overlay open" onClick={e => e.target === e.currentTarget && setShowGroupInfo(false)}>
-                    <div className="modal" style={{ width: 440 }}>
-                        <div className="modal-header">
-                            <h2>{t('chat.group_detail_title')} {activeRoom.type === 'group' ? t('chat.group_label') : t('chat.conversation_label')}</h2>
-                            <button className="detail-close" onClick={() => setShowGroupInfo(false)}>✕</button>
-                        </div>
-                        <div className="modal-body" style={{ maxHeight: '70vh', overflowY: 'auto' }}>
-                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 24 }}>
-                                <div style={{ width: 80, height: 80, borderRadius: '50%', background: activeRoom.type === 'group' ? 'linear-gradient(135deg, #10b981, #047857)' : 'linear-gradient(135deg, var(--gold), var(--gold-dark))', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, fontWeight: 'bold', marginBottom: 12 }}>
-                                    {activeRoom?.avatar ? <img src={activeRoom.avatar} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} /> : (activeRoom.type === 'group' ? '👥' : activeRoom.display_name?.substring(0, 2).toUpperCase())}
-                                </div>
-                                <h3 style={{ margin: 0, fontSize: 20 }}>{activeRoom.display_name}</h3>
-                                {activeRoom.type === 'group' && (
-                                    <div style={{ color: 'var(--text-muted)', fontSize: 14, marginTop: 4 }}>{activeRoom.members?.length || 0} {t('chat.members_count')}</div>
-                                )}
-                            </div>
-
-                            {activeRoom.type === 'group' && (
-                                <>
-                                    <h4 style={{ fontSize: 15, borderBottom: '1px solid var(--border-subtle)', paddingBottom: 8, marginBottom: 16 }}>{t('chat.group_members')}</h4>
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 24 }}>
-                                        {activeRoom.members?.map(m => (
-                                            <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                                                <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--gold)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }}>
-                                                    {m.avatar ? <img src={m.avatar} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} /> : m.display_name?.substring(0, 2).toUpperCase()}
-                                                </div>
-                                                <div style={{ flex: 1 }}>
-                                                    <div style={{ fontWeight: 500, display: 'flex', alignItems: 'center', gap: 6 }}>
-                                                        {m.id === user.id ? t('chat.you') : (m.display_name || m.username)}
-                                                        {m.role === 'admin' && <span style={{ fontSize: 10, background: 'var(--primary)', color: '#fff', padding: '2px 6px', borderRadius: 10 }}>{t('chat.admin_role')}</span>}
-                                                    </div>
-                                                    <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{m.is_online ? t('chat.online_label') : t('chat.offline_label')}</div>
-                                                </div>
-                                                {currentUserRole === 'admin' && m.id !== user.id && m.role !== 'admin' && (
-                                                    <button className="btn btn-danger" style={{ padding: '4px 8px', fontSize: 12 }} onClick={() => handleKickMember(m.id, m.display_name || m.username)}>
-                                                        {t('chat.remove_member')}
-                                                    </button>
-                                                )}
-                                            </div>
-                                        ))}
-                                    </div>
-                                    <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: 16 }}>
-                                        <button className="btn btn-danger" style={{ width: '100%', justifyContent: 'center', padding: '10px' }} onClick={handleLeaveGroup}>
-                                            {t('chat.leave_group')}
-                                        </button>
-                                    </div>
-                                </>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            )}
             <style>
                 {`
-                /* Some flex utilities inside component */
                 .form-input:focus { border-color: var(--primary); outline: none; }
                 @media (max-width: 768px) {
                     .hide-on-mobile { display: none; }

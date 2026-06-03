@@ -138,4 +138,23 @@ const upload = multer({ storage: multer.memoryStorage() });
 router.get('/database/export', authenticate, requireAdmin, DbController.exportData);
 router.post('/database/import', authenticate, requireAdmin, upload.single('file'), DbController.importData);
 
+// ─── Finance Module ───
+const financeController = require('../controllers/financeController');
+router.get('/finance/transactions', authenticate, financeController.getTransactions);
+router.post('/finance/transactions', authenticate, requireEditorOrAdmin, financeController.createTransaction);
+router.put('/finance/transactions/:id', authenticate, requireAdmin, financeController.updateTransaction);
+router.delete('/finance/transactions/:id', authenticate, requireAdmin, financeController.deleteTransaction);
+router.get('/finance/audit-logs', authenticate, requireAdmin, financeController.getAuditLogs);
+
+// ─── Cron Scheduler Route ───
+router.get('/cron/reminders', async (req, res, next) => {
+    try {
+        const { checkAndSendReminders } = require('../utils/reminderCron');
+        const result = await checkAndSendReminders();
+        res.json({ success: true, message: 'Cron job execution completed.', result });
+    } catch (err) {
+        next(err);
+    }
+});
+
 module.exports = router;

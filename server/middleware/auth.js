@@ -496,7 +496,11 @@ async function changePassword(req, res) {
         const newHash = await hashPassword(newPassword);
         await supabase
             .from('users')
-            .update({ password: newHash, updated_at: new Date().toISOString() })
+            .update({
+                password: newHash,
+                token: null, // Force log out of all sessions on password change
+                updated_at: new Date().toISOString()
+            })
             .eq('id', req.user.id);
 
         res.json({ success: true, message: 'Đã đổi mật khẩu' });
@@ -517,7 +521,11 @@ async function resetPassword(req, res) {
         const newHash = await hashPassword(newPassword);
         const { error } = await supabase
             .from('users')
-            .update({ password: newHash, updated_at: new Date().toISOString() })
+            .update({
+                password: newHash,
+                token: null, // Force log out of all sessions on password reset
+                updated_at: new Date().toISOString()
+            })
             .eq('id', userId);
         if (error) throw error;
         res.json({ success: true, message: 'Đã đặt lại mật khẩu' });
