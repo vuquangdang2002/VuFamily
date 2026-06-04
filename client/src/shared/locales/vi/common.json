@@ -111,7 +111,7 @@
     "app.force_pwd_success": "Đã đổi mật khẩu bắt buộc thành công!",
     "app.force_pwd_error": "Lỗi đổi mật khẩu",
     "app.force_pwd_conn_error": "Lỗi kết nối khi đổi mật khẩu",
-    "app.load_tree_error": "Lỗi tải gia phả từ máy chủ",
+    "app.load_tree_error": "Lỗi tải gia phả từ máy chủ. Vui lòng kiểm tra kết nối mạng.",
     "app.offline_warning": "Mất kết nối máy chủ. Đang sử dụng gia phả ngoại tuyến. Vui lòng kiểm tra lại kết nối mạng.",
     "app.no_changes": "Không có thông tin nào được thay đổi.",
     "app.direct_update_by": "Cập nhật trực tiếp bởi",
@@ -147,5 +147,8 @@
     "header.import": "📤 Nhập",
     "header.import_json": "📄 Nhập từ JSON",
     "header.import_csv": "📊 Nhập từ CSV",
-    "header.reset_title": "Khôi phục dữ liệu mẫu"
+    "header.reset_title": "Khôi phục dữ liệu mẫu",
+    "common.you": "Bạn",
+    "theme.system": "Theo hệ thống",
+    "theme.select_title": "Chọn giao diện"
 }

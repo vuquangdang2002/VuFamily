@@ -187,7 +187,7 @@ export default function App() {
             case 'newsfeed':
                 return <NewsfeedPage user={user} isAdmin={isAdmin} addToast={addToast} members={members} onNavigate={setActivePage} />;
             case 'calendar':
-                return <CalendarPage members={members} />;
+                return <CalendarPage members={members} user={user} addToast={addToast} />;
             case 'history':
                 return <HistoryPage isAdmin={isAdmin} user={user} onRefresh={refresh} addToast={addToast} members={members} />;
             case 'chat':

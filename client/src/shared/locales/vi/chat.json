@@ -65,5 +65,10 @@
     "chat.create_fail": "Lỗi tạo nhóm chat",
     "chat.connection_error": "Lỗi kết nối",
     "chat.offline_rooms_warning": "Không thể kết nối máy chủ để cập nhật danh sách hội thoại. Vui lòng kiểm tra kết nối mạng.",
-    "chat.offline_messages_warning": "Không thể tải tin nhắn mới do mất kết nối. Vui lòng kiểm tra mạng."
+    "chat.offline_messages_warning": "Không thể tải tin nhắn mới do mất kết nối. Vui lòng kiểm tra mạng.",
+    "chat.no_search_result": "Không tìm thấy cuộc trò chuyện nào",
+    "chat.no_member_found": "Không tìm thấy thành viên nào",
+    "chat.search_rooms_placeholder": "Tìm kiếm hội thoại...",
+    "chat.search_members_placeholder": "Tìm thành viên...",
+    "chat.hub_unavailable": "⚠️ Không thể kết nối Hub — tính năng gọi điện tạm thời không khả dụng"
 }

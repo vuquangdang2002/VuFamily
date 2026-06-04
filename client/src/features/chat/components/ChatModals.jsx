@@ -42,7 +42,7 @@ export default function ChatModals({
                                 <input
                                     type="text"
                                     className="form-input"
-                                    placeholder={t('chat.search_users_placeholder') || "Tìm kiếm thành viên..."}
+                                    placeholder={t('chat.search_members_placeholder')}
                                     value={userSearchQuery}
                                     onChange={e => setUserSearchQuery(e.target.value)}
                                     style={{
@@ -60,7 +60,7 @@ export default function ChatModals({
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                                 {filteredUsers.length === 0 ? (
                                     <div style={{ padding: 16, textAlign: 'center', color: 'var(--text-muted)', fontSize: 13 }}>
-                                        Không tìm thấy thành viên nào
+                                        {t('chat.no_member_found')}
                                     </div>
                                 ) : (
                                     filteredUsers.map(u => (
@@ -82,7 +82,7 @@ export default function ChatModals({
                                             <div style={{ flex: 1 }}>
                                                 <div style={{ fontWeight: 500 }}>{u.display_name || u.username}</div>
                                                 <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                                                    {u.is_online ? '🟢 Online' : '⚪ Offline'}
+                                                    {u.is_online ? t('chat.online_label') : t('chat.offline_label')}
                                                 </div>
                                             </div>
                                         </div>

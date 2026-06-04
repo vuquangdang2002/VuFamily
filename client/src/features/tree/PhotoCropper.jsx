@@ -1,11 +1,13 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { TrackingHelper } from '../../shared/services/TrackingHelper';
+import { useTranslation } from '../../shared/hooks/useTranslation.js';
 
 /**
  * PhotoCropper: Facebook-style circular crop.
  * Image is fixed, user drags the circle to choose crop area.
  */
 export default function PhotoCropper({ imageSrc, onCrop, onCancel }) {
+    const { t } = useTranslation();
     const canvasRef = useRef(null);
     const [img, setImg] = useState(null);
     const [circlePos, setCirclePos] = useState({ x: 0, y: 0 });
@@ -206,10 +208,10 @@ export default function PhotoCropper({ imageSrc, onCrop, onCancel }) {
         <div className="photo-cropper-overlay" onClick={e => e.target === e.currentTarget && onCancel()}>
             <div className="photo-cropper-modal">
                 <div className="photo-cropper-header">
-                    <h3>Cắt ảnh đại diện</h3>
+                    <h3>{t('cropper.title')}</h3>
                     <button className="detail-close" onClick={onCancel}>✕</button>
                 </div>
-                <div className="photo-cropper-hint">Kéo vòng tròn để chọn vùng cắt · Kéo góc ⤡ để thay đổi kích thước</div>
+                <div className="photo-cropper-hint">{t('cropper.hint')}</div>
                 <canvas
                     ref={canvasRef}
                     width={CANVAS_W} height={CANVAS_H}
@@ -220,8 +222,8 @@ export default function PhotoCropper({ imageSrc, onCrop, onCancel }) {
                     onPointerLeave={onPointerUp}
                 />
                 <div className="photo-cropper-actions">
-                    <button type="button" className="btn" onClick={onCancel}>Hủy</button>
-                    <button type="button" className="btn btn-primary" onClick={handleCrop}>✅ Xác nhận</button>
+                    <button type="button" className="btn" onClick={onCancel}>{t('action.cancel')}</button>
+                    <button type="button" className="btn btn-primary" onClick={handleCrop}>{t('cropper.confirm')}</button>
                 </div>
             </div>
         </div>

@@ -6,6 +6,7 @@ import { authApi } from './api/authApi';
 import { chatApi } from './api/chatApi';
 import { dbApi } from './api/dbApi';
 import { financeApi } from './api/financeApi';
+import { eventApi } from './api/eventApi';
 
 export const api = {
     ...memberApi,
@@ -15,6 +16,7 @@ export const api = {
     ...chatApi,
     ...dbApi,
     ...financeApi,
+    ...eventApi,
 };
 
 export { getApiBase, mapToCamelCase } from './api/request';

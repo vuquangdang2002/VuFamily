@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from '../hooks/useTranslation.js';
 
 const THEME_KEY = 'vuFamilyTheme';
 
@@ -73,6 +74,8 @@ export function useTheme() {
 }
 
 export default function ThemeToggle({ theme, setTheme }) {
+    const { t } = useTranslation();
+
     return (
         <div className="theme-select-wrapper">
             <span className="theme-select-icon">
@@ -82,11 +85,11 @@ export default function ThemeToggle({ theme, setTheme }) {
                 className="theme-select"
                 value={theme}
                 onChange={e => setTheme(e.target.value)}
-                title="Chọn giao diện"
+                title={t('theme.select_title')}
             >
-                <option value="system">Theo hệ thống</option>
-                <option value="light">Sáng</option>
-                <option value="dark">Tối</option>
+                <option value="system">{t('theme.system')}</option>
+                <option value="light">{t('theme.light')}</option>
+                <option value="dark">{t('theme.dark')}</option>
             </select>
         </div>
     );

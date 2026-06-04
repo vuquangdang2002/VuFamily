@@ -103,6 +103,15 @@ router.delete('/comments/:id', authenticate, requireAdmin, PostController.delete
 // ─── Reactions (cảm xúc bài đăng) ───
 router.post('/posts/:id/reactions', authenticate, PostController.toggleReaction);
 
+// ─── Events (Sự kiện / Lịch họp dòng họ) ───
+const EventController = require('../controllers/eventController');
+
+router.get('/events', authenticate, EventController.getAll);
+router.post('/events', authenticate, requireEditorOrAdmin, EventController.create);
+router.delete('/events/:id', authenticate, requireAdmin, EventController.delete);
+router.post('/events/:id/register', authenticate, EventController.register);
+router.post('/events/:id/unregister', authenticate, EventController.unregister);
+
 // ─── Chat System ───
 const { getRooms, getMessages, sendMessage, createRoom, updateRoomName, leaveRoom, kickMember } = require('../controllers/chatController');
 

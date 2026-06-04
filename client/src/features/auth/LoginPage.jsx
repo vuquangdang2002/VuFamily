@@ -54,7 +54,7 @@ export default function LoginPage({ onLogin, verifyMsg }) {
                     setError('');
                     setRegisterSuccess(json.message);
                 } else {
-                    setError(json.error || 'Đăng ký thất bại');
+                    setError(json.error || t('login.error_register_fail'));
                 }
             } catch (err) {
                 setError(t('login.error_connection'));
@@ -73,14 +73,14 @@ export default function LoginPage({ onLogin, verifyMsg }) {
         try {
             await onLogin(username.trim(), password);
         } catch (err) {
-            setError(err.message || 'Đăng nhập thất bại. Vui lòng kiểm tra lại.');
+            setError(err.message || t('login.error_login_fail'));
         } finally {
             setLoading(false);
         }
     };
 
     const handleForgotPassword = async () => {
-        if (!forgotUser.trim()) { setForgotMsg('Vui lòng nhập tên đăng nhập'); return; }
+        if (!forgotUser.trim()) { setForgotMsg(t('login.error_forgot_username')); return; }
         setForgotLoading(true);
         setForgotMsg('');
         try {
@@ -90,7 +90,7 @@ export default function LoginPage({ onLogin, verifyMsg }) {
                 body: JSON.stringify({ username: forgotUser.trim() })
             });
             const json = await res.json();
-            setForgotMsg(json.message || json.error || 'Đã xử lý yêu cầu');
+            setForgotMsg(json.message || json.error || t('login.forgot_processed'));
         } catch (e) { setForgotMsg(t('login.error_connection')); }
         setForgotLoading(false);
     };
@@ -222,8 +222,8 @@ export default function LoginPage({ onLogin, verifyMsg }) {
 
                     <button className="lp-btn-primary" type="submit" disabled={loading}>
                         {loading
-                            ? <><div className="spinner spinner-sm" style={{ borderTopColor: '#fff', borderColor: 'rgba(255,255,255,0.3)' }}></div> {isRegisterMode ? 'Đang đăng ký...' : 'Đang đăng nhập...'}</>
-                            : (isRegisterMode ? 'Đăng ký' : 'Đăng nhập')
+                            ? <><div className="spinner spinner-sm" style={{ borderTopColor: '#fff', borderColor: 'rgba(255,255,255,0.3)' }}></div> {isRegisterMode ? t('login.signing_up') : t('login.signing_in')}</>
+                            : (isRegisterMode ? t('login.sign_up') : t('login.sign_in'))
                         }
                     </button>
                 </form>

@@ -87,7 +87,7 @@ export default function PostCard({ post, user, isAdmin, currentUserId, addToast,
         const tempComment = {
             id: `temp-${Date.now()}`,
             content: text,
-            author: user?.displayName || 'Bạn',
+            author: user?.displayName || t('common.you') || 'Bạn',
             author_role: user?.role || 'viewer',
             created_at: new Date().toISOString()
         };

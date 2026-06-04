@@ -8,6 +8,7 @@ import calendar from './calendar.json';
 import requests from './requests.json';
 import system from './system.json';
 import call from './call.json';
+import finance from './finance.json';
 
 export default {
     ...common,
@@ -18,5 +19,6 @@ export default {
     ...calendar,
     ...requests,
     ...system,
-    ...call
+    ...call,
+    ...finance
 };

@@ -47,7 +47,7 @@ export default function ChatPage({ user, addToast, onStartCall }) {
         } catch (e) {
             myWarning('CHAT', '[ChatPage - fetchRooms] Offline or weak network, using cached rooms.', e);
             if (!hasShownRoomsOfflineRef.current) {
-                addToast(t('chat.offline_rooms_warning') || 'Không thể kết nối máy chủ để cập nhật danh sách hội thoại. Vui lòng kiểm tra kết nối mạng.', 'warning');
+                addToast(t('chat.offline_rooms_warning'), 'warning');
                 hasShownRoomsOfflineRef.current = true;
             }
         } finally {
@@ -83,7 +83,7 @@ export default function ChatPage({ user, addToast, onStartCall }) {
         } catch (e) {
             myError('CHAT', e);
             if (!hasShownMessagesOfflineRef.current) {
-                addToast(t('chat.offline_messages_warning') || 'Không thể tải tin nhắn mới do mất kết nối. Vui lòng kiểm tra mạng.', 'warning');
+                addToast(t('chat.offline_messages_warning'), 'warning');
                 hasShownMessagesOfflineRef.current = true;
             }
         }
@@ -113,7 +113,7 @@ export default function ChatPage({ user, addToast, onStartCall }) {
             }
         } catch (e) {
             if (!hasShownMessagesOfflineRef.current) {
-                addToast(t('chat.offline_messages_warning') || 'Không thể tải tin nhắn mới do mất kết nối. Vui lòng kiểm tra mạng.', 'warning');
+                addToast(t('chat.offline_messages_warning'), 'warning');
                 hasShownMessagesOfflineRef.current = true;
             }
         }

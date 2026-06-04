@@ -107,5 +107,19 @@
     "field.generation": "Đời thứ",
     "field.birthOrder": "Con thứ",
     "field.childType": "Loại",
-    "field.photo": "Ảnh"
+    "field.photo": "Ảnh",
+    "tree.founder": "Người Sáng Lập",
+    "tree.patriarch": "Thủy Tổ Ông (Sáng lập)",
+    "tree.matriarch": "Thủy Tổ Bà",
+    "tree.son_gen": "Con Trai (Đời thứ {gen})",
+    "tree.daughter_gen": "Con Gái (Đời thứ {gen})",
+    "detail.at": "lúc",
+    "cropper.title": "Cắt ảnh đại diện",
+    "cropper.hint": "Kéo vòng tròn để chọn vùng cắt · Kéo góc ⤡ để thay đổi kích thước",
+    "cropper.confirm": "✅ Xác nhận",
+    "toolbar.zoom_in": "Phóng to",
+    "toolbar.zoom_out": "Thu nhỏ",
+    "toolbar.fit_view": "Xem toàn bộ",
+    "toolbar.fit_text": "📐 Vừa màn hình",
+    "toolbar.hint": "Kéo để di chuyển · Cuộn để zoom"
 }

@@ -61,7 +61,7 @@ export default function useMemberSystem(user, addToast) {
                         const decrypted = await decryptAndDecompress(cachedBytes, token);
                         if (decrypted && Array.isArray(decrypted)) {
                             setMembers(decrypted);
-                            addToast(I18nHelper.t('app.offline_warning') || 'Mất kết nối máy chủ. Đang sử dụng gia phả ngoại tuyến. Vui lòng kiểm tra lại kết nối mạng.', 'warning');
+                            addToast(I18nHelper.t('app.offline_warning'), 'warning');
                             
                             // Schedule local alerts from offline cache
                             scheduleOfflineNotifications(decrypted);
@@ -78,7 +78,7 @@ export default function useMemberSystem(user, addToast) {
                     myError('OFFLINE', 'Failed to load offline cache:', err);
                 }
             }
-            addToast((I18nHelper.t('app.load_tree_error') || 'Lỗi tải gia phả từ máy chủ') + '. Vui lòng kiểm tra kết nối mạng.', 'error');
+            addToast(I18nHelper.t('app.load_tree_error'), 'error');
         } finally {
             setIsLoadingMembers(false);
         }
@@ -160,7 +160,7 @@ export default function useMemberSystem(user, addToast) {
 
                 if (isAdmin || canEdit) {
                     if (Object.keys(actualChanges).length > 0) {
-                        const result = await api.submitRequest(data.id, actualChanges, I18nHelper.t('app.direct_update_by') + ' ' + (isAdmin ? 'Admin' : 'Editor'));
+                        const result = await api.submitRequest(data.id, actualChanges, I18nHelper.t('app.direct_update_by') + ' ' + (isAdmin ? I18nHelper.t('role.admin') : I18nHelper.t('role.editor')));
                         await api.approveRequest(result.data.id);
                         addToast(I18nHelper.t('app.update_success').replace('{name}', data.name));
                     }

@@ -27,7 +27,7 @@ export default function DetailPanel({ member, members, isOpen, onClose, onEdit, 
     const parent = member.parentId ? members.find(m => m.id === member.parentId) : null;
 
     const birthDisplay = member.birthDate ? formatDate(member.birthDate) : t('detail.unknown');
-    const birthTimeDisplay = member.birthTime ? ` lúc ${member.birthTime}` : '';
+    const birthTimeDisplay = member.birthTime ? ` ${t('detail.at')} ${member.birthTime}` : '';
     let deathDisplay = '';
     if (member.deathDate) {
         deathDisplay = formatDate(member.deathDate);

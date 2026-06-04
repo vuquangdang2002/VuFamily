@@ -101,7 +101,7 @@ export function getUpcomingAnniversaries(members, daysAhead = 30) {
     return results;
 }
 
-export function getEventsForDate(members, year, month, day) {
+export function getEventsForDate(members, year, month, day, serverEvents = []) {
     const events = [];
     members.forEach(m => {
         const bd = parseMD(m.birthDate);
@@ -123,5 +123,80 @@ export function getEventsForDate(members, year, month, day) {
             }
         }
     });
+
+    // Add server events (with recurrence support)
+    serverEvents.forEach(ev => {
+        if (doesEventOccurOn(ev, year, month, day)) {
+            events.push({ type: 'event', event: ev });
+        }
+    });
+
     return events;
+}
+
+/**
+ * Check if a server event occurs on a specific date, considering recurrence.
+ */
+export function doesEventOccurOn(event, year, month, day) {
+    const evDate = parseMD(event.event_date);
+    if (!evDate) return false;
+
+    const targetDate = new Date(year, month - 1, day);
+    const eventDate = new Date(evDate.year, evDate.month - 1, evDate.day);
+    
+    // Don't show events before they started
+    if (targetDate < eventDate) return false;
+
+    const recurrence = event.recurrence || 'none';
+
+    if (recurrence === 'none') {
+        return evDate.year === year && evDate.month === month && evDate.day === day;
+    }
+
+    if (recurrence === 'weekly') {
+        return targetDate.getDay() === eventDate.getDay();
+    }
+
+    if (recurrence === 'monthly') {
+        return day === evDate.day;
+    }
+
+    if (recurrence === 'yearly') {
+        return month === evDate.month && day === evDate.day;
+    }
+
+    return false;
+}
+
+/**
+ * Get upcoming server events within daysAhead, considering recurrence.
+ */
+export function getUpcomingServerEvents(serverEvents, daysAhead = 30) {
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const results = [];
+
+    serverEvents.forEach(ev => {
+        const evDate = parseMD(ev.event_date);
+        if (!evDate) return;
+        const recurrence = ev.recurrence || 'none';
+        const eventStart = new Date(evDate.year, evDate.month - 1, evDate.day);
+
+        // Check each day within daysAhead
+        for (let d = 0; d <= daysAhead; d++) {
+            const checkDate = new Date(today.getTime() + d * 86400000);
+            if (checkDate < eventStart) continue;
+
+            if (doesEventOccurOn(ev, checkDate.getFullYear(), checkDate.getMonth() + 1, checkDate.getDate())) {
+                results.push({
+                    event: ev,
+                    daysUntil: d,
+                    displayDate: `${pad2(checkDate.getDate())}/${pad2(checkDate.getMonth() + 1)}/${checkDate.getFullYear()}`
+                });
+                break; // Only show the next upcoming occurrence
+            }
+        }
+    });
+
+    results.sort((a, b) => a.daysUntil - b.daysUntil);
+    return results;
 }

@@ -1,8 +1,8 @@
-import './Tree.css';
 import { useRef, useEffect, useCallback } from 'react';
 import './Tree.css';
 import { buildHierarchy, calculateLayout } from '../../shared/utils/treeLayout';
 import { TrackingHelper } from '../../shared/services/TrackingHelper';
+import { useTranslation } from '../../shared/hooks/useTranslation.js';
 
 // ─── Read canvas colors from CSS custom properties (cached) ───
 let _cachedColors = null;
@@ -35,6 +35,7 @@ function getThemeColors() {
 function invalidateThemeColors() { _cachedColors = null; }
 
 export default function TreeCanvas({ members, selectedId, searchResultIds, onSelectMember, onDeselect }) {
+    const { t } = useTranslation();
     const canvasRef = useRef(null);
     const stateRef = useRef({ panX: 0, panY: 0, scale: 1, isPanning: false, lastPt: null });
     const imgCacheRef = useRef(new Map()); // Cache for member photo Image objects
@@ -97,9 +98,9 @@ export default function TreeCanvas({ members, selectedId, searchResultIds, onSel
         if (!hierarchy) { ctx.restore(); return; }
         const positions = calculateLayout(hierarchy);
         drawConnections(ctx, hierarchy, positions, colors);
-        positions.forEach(p => drawNode(ctx, p, selectedId, searchResultIds || [], imgCacheRef.current, colors));
+        positions.forEach(p => drawNode(ctx, p, selectedId, searchResultIds || [], imgCacheRef.current, colors, t));
         ctx.restore();
-    }, [members, selectedId, searchResultIds]);
+    }, [members, selectedId, searchResultIds, t]);
 
     // ─── Observe theme changes and redraw ───
     useEffect(() => {
@@ -195,7 +196,7 @@ export default function TreeCanvas({ members, selectedId, searchResultIds, onSel
         return isNaN(y) ? null : y;
     }
 
-    function drawNode(ctx, nodePos, selId, searchIds, imgCache, colors) {
+    function drawNode(ctx, nodePos, selId, searchIds, imgCache, colors, t) {
         const { member, x, y, width: w, height: h } = nodePos;
         const isSel = selId === member.id;
         const isSearch = searchIds.includes(member.id);
@@ -277,21 +278,21 @@ export default function TreeCanvas({ members, selectedId, searchResultIds, onSel
         if (dn !== member.name) dn += '…';
         ctx.fillText(dn, x + w / 2, y + 98);
 
-        // Sub-label (Role/Relationship in 100% Vietnamese)
+        // Sub-label (Role/Relationship in localized string)
         ctx.fillStyle = isGoldRing ? '#D4AF37' : '#00F0FF';
         ctx.font = '600 12px "Inter", sans-serif';
         let roleLabel = '';
         if (member.role && member.role.toLowerCase() === 'admin') {
-            roleLabel = 'Người Sáng Lập';
+            roleLabel = t('tree.founder');
         } else if (member.generation === 1) {
-            roleLabel = isMale ? 'Thủy Tổ Ông (Sáng lập)' : 'Thủy Tổ Bà';
+            roleLabel = isMale ? t('tree.patriarch') : t('tree.matriarch');
         } else {
-            roleLabel = isMale ? `Con Trai (Đời thứ ${member.generation})` : `Con Gái (Đời thứ ${member.generation})`;
+            roleLabel = isMale ? t('tree.son_gen').replace('{gen}', member.generation) : t('tree.daughter_gen').replace('{gen}', member.generation);
         }
         ctx.fillText(roleLabel, x + w / 2, y + 118);
 
         // Timeline Years
-        const yt = deathYear ? `${birthYear || '?'} - ${deathYear}` : birthYear ? `${birthYear} - nay` : '';
+        const yt = deathYear ? `${birthYear || '?'} - ${deathYear}` : birthYear ? `${birthYear} - ${t('detail.present')}` : '';
         if (yt) {
             ctx.fillStyle = '#64748B';
             ctx.font = '500 11px "Inter", sans-serif';

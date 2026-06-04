@@ -261,11 +261,11 @@ export default function ProfileModal({ isOpen, onClose, user, onUpdateUser, onAd
                                 <span style={{ fontSize: 24 }}>📷</span>
                                 <div>
                                     <div style={{ fontSize: 13, fontWeight: 600 }}>
-                                        {avatarFile ? `Đã chọn: ${avatarFile.name}` : t('profile.avatar_choose')}
+                                        {avatarFile ? t('profile.avatar_selected').replace('{name}', avatarFile.name) : t('profile.avatar_choose')}
                                     </div>
                                     <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
                                         {avatarFile
-                                            ? `${(avatarFile.size / 1024).toFixed(0)}KB — Nhấp để chọn file khác`
+                                            ? t('profile.avatar_selected_hint').replace('{size}', (avatarFile.size / 1024).toFixed(0))
                                             : t('profile.avatar_choose_hint')}
                                     </div>
                                 </div>
@@ -295,7 +295,7 @@ export default function ProfileModal({ isOpen, onClose, user, onUpdateUser, onAd
                                 <label className="form-label">{t('profile.current_password')}</label>
                                 <input className="form-input" type={showPwds ? 'text' : 'password'}
                                     value={currentPwd} onChange={e => setCurrentPwd(e.target.value)}
-                                    placeholder="Nhập mật khẩu hiện tại..." />
+                                    placeholder={t('profile.current_password_placeholder')} />
                             </div>
                             <div className="form-group">
                                 <label className="form-label">{t('profile.new_password')}</label>
@@ -307,7 +307,7 @@ export default function ProfileModal({ isOpen, onClose, user, onUpdateUser, onAd
                                 <label className="form-label">{t('profile.confirm_password')}</label>
                                 <input className="form-input" type={showPwds ? 'text' : 'password'}
                                     value={confirmNewPwd} onChange={e => setConfirmNewPwd(e.target.value)}
-                                    placeholder="Nhập lại mật khẩu mới..."
+                                    placeholder={t('profile.confirm_password_placeholder')}
                                     onKeyDown={e => e.key === 'Enter' && handleChangePassword()} />
                             </div>
                             <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, cursor: 'pointer', color: 'var(--text-muted)' }}>
@@ -318,7 +318,7 @@ export default function ProfileModal({ isOpen, onClose, user, onUpdateUser, onAd
                                 {t('profile.password_strength_warning')}
                             </div>
                             <div style={{ marginTop: 4, display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-                                <button className="btn" onClick={onClose}>Hủy</button>
+                                <button className="btn" onClick={onClose}>{t('action.cancel')}</button>
                                 <button className="btn btn-primary" onClick={handleChangePassword} disabled={loadingPwd}>
                                     {loadingPwd ? t('profile.changing_password') : t('profile.change_password_btn')}
                                 </button>

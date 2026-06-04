@@ -29,7 +29,7 @@ export default function InboxPanel({
                 <input
                     type="text"
                     className="form-input"
-                    placeholder={t('chat.search_rooms_placeholder') || "Tìm kiếm hội thoại..."}
+                    placeholder={t('chat.search_rooms_placeholder')}
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
                     style={{ 
@@ -54,7 +54,7 @@ export default function InboxPanel({
                 )}
                 {!loadingRooms && rooms.length > 0 && filteredRooms.length === 0 && (
                     <div style={{ padding: 24, textAlign: 'center', color: 'var(--text-muted)', fontSize: 13 }}>
-                        Không tìm thấy cuộc trò chuyện nào
+                        {t('chat.no_search_result')}
                     </div>
                 )}
                 {filteredRooms.map(room => (

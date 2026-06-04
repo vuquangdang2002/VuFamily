@@ -107,5 +107,19 @@
     "field.generation": "Generation",
     "field.birthOrder": "Birth Order",
     "field.childType": "Type",
-    "field.photo": "Photo"
+    "field.photo": "Photo",
+    "tree.founder": "Founder",
+    "tree.patriarch": "Patriarch (Founder)",
+    "tree.matriarch": "Matriarch",
+    "tree.son_gen": "Son (Gen {gen})",
+    "tree.daughter_gen": "Daughter (Gen {gen})",
+    "detail.at": "at",
+    "cropper.title": "Crop Profile Photo",
+    "cropper.hint": "Drag circle to select crop area · Drag ⤡ corner to resize",
+    "cropper.confirm": "✅ Confirm",
+    "toolbar.zoom_in": "Zoom In",
+    "toolbar.zoom_out": "Zoom Out",
+    "toolbar.fit_view": "Fit View",
+    "toolbar.fit_text": "📐 Fit Screen",
+    "toolbar.hint": "Drag to pan · Scroll to zoom"
 }

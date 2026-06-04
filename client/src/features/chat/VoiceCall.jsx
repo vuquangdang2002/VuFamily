@@ -282,7 +282,7 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
         socket.on('reconnect_failed', () => {
             // Im lặng sau khi thử hết — không spam thêm
             myError('CALL', '[VoiceCall] Hub offline. Call feature will not work.');
-            addToast?.('⚠️ Cannot connect to Hub — call feature is temporarily unavailable', 'warning');
+            addToast?.(t('chat.hub_unavailable'), 'warning');
         });
 
         socket.on('call:incoming', (data) => {
@@ -299,8 +299,8 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
             setPhase(p => p === 'CALLING' ? 'CONNECTED' : p);
         });
 
-        socket.on('call:rejected', () => { cleanup(); addToast('Call was rejected.', 'info'); });
-        socket.on('call:ended', () => { if (phaseRef.current !== 'IDLE') { cleanup(); addToast('Call ended.', 'info'); } });
+        socket.on('call:rejected', () => { cleanup(); addToast(t('call.rejected'), 'info'); });
+        socket.on('call:ended', () => { if (phaseRef.current !== 'IDLE') { cleanup(); addToast(t('call.ended'), 'info'); } });
 
         socket.on('call:signal', async ({ fromUserId, signal }) => {
             if (phaseRef.current === 'RINGING') {
@@ -326,7 +326,7 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
             });
         } catch (e) {
             if (finalType === 'video') {
-                addToast('Cannot open camera. Switching to voice call...', 'warning');
+                addToast(t('call.no_camera'), 'warning');
                 try {
                     stream = await navigator.mediaDevices.getUserMedia({
                         audio: AUDIO_CONSTRAINTS,
@@ -334,11 +334,11 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
                     });
                     finalType = 'voice';
                 } catch (err2) {
-                    addToast('Cannot access microphone: ' + err2.message, 'error');
+                    addToast(t('call.no_mic') + ' ' + err2.message, 'error');
                     return null;
                 }
             } else {
-                addToast('Cannot access microphone: ' + e.message, 'error');
+                addToast(t('call.no_mic') + ' ' + e.message, 'error');
                 return null;
             }
         }
@@ -429,7 +429,7 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
             setCamOff(finalType === 'voice');
             return processedStream;
         } catch (e) {
-            addToast('Audio processing error: ' + e.message, 'error');
+            addToast(t('call.audio_error') + ' ' + e.message, 'error');
             return null;
         }
     }, [addToast, noiseLevel, micSensitivity]);
@@ -478,7 +478,7 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
 
                 // Nếu không còn ai trong cuộc gọi (1-1), tự động kết thúc luôn
                 if (Object.keys(pcsRef.current).length === 0) {
-                    addToast('The other party has left the call.', 'info');
+                    addToast(t('call.peer_left'), 'info');
                     cleanupRef.current?.();
                 }
             }
@@ -589,7 +589,7 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
         TrackingHelper.trackStartVoiceCall(room.type === 'group' || room.members?.length > 2 ? 'group' : '1-1');
 
         socketRef.current?.emit('call:start', { roomId: room.id, callType: type }, async (res) => {
-            if (!res?.success) { cleanup(); addToast(res?.error || 'Error starting call', 'error'); return; }
+            if (!res?.success) { cleanup(); addToast(res?.error || t('call.start_error'), 'error'); return; }
             const { call, iceConfig } = res;
             setCallMeta(p => ({ ...p, callId: call.id, iceConfig }));
 
@@ -648,7 +648,7 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
 
     const toggleMute = () => { localRef.current?.getAudioTracks().forEach(t => { t.enabled = !t.enabled; }); setMuted(m => !m); };
     const toggleCam = () => {
-        if (callType !== 'video') { addToast('Voice call does not have camera.', 'info'); return; }
+        if (callType !== 'video') { addToast(t('call.no_camera_voice'), 'info'); return; }
         localRef.current?.getVideoTracks().forEach(t => { t.enabled = !t.enabled; });
         setCamOff(c => !c);
     };
@@ -665,7 +665,7 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
 
         // 2. Logic dành cho Web (Chrome)
         if (!navigator.mediaDevices?.enumerateDevices) {
-            addToast('Browser does not support speaker switching.', 'info');
+            addToast(t('call.no_speaker_switch'), 'info');
             return;
         }
 
@@ -675,15 +675,15 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
 
             if (audioOutputs.length <= 1) {
                 // Đa số trình duyệt Web (nhất là iOS Safari) không cho phép tự chọn loa đầu ra (API bị khóa)
-                addToast('Current browser only supports default audio output.', 'warning');
+                addToast(t('call.single_output'), 'warning');
                 return;
             }
 
             // Nếu có nhiều ngõ ra, cập nhật state (cần tích hợp logic setSinkId vào VideoCell nếu muốn chạy thật trên Web)
             setSpeakerMode(nextMode);
-            addToast(`Switched to ${nextMode === 'speaker' ? 'Speaker' : 'Earpiece'}`, 'success');
+            addToast(nextMode === 'speaker' ? t('call.switched_speaker') : t('call.switched_earpiece'), 'success');
         } catch (e) {
-            addToast('Error switching speaker: ' + e.message, 'error');
+            addToast(t('call.switch_error') + ' ' + e.message, 'error');
         }
     };
 
