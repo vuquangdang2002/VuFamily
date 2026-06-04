@@ -16,7 +16,7 @@ export default function InboxPanel({
     );
 
     return (
-        <div className="chat-inbox-panel">
+        <div className="chat-inbox chat-inbox-panel">
             <div style={{ padding: '16px 16px 12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <h2 style={{ fontSize: 18, margin: 0 }}>{t('chat.messages_title')}</h2>
                 <button className="btn btn-primary" style={{ padding: '6px 12px', fontSize: 13 }} onClick={() => setShowNewChat(true)}>
