@@ -123,7 +123,8 @@ const {
     kickMember,
     addMember,
     joinRoomByInviteCode,
-    updateRoomSettings
+    updateRoomSettings,
+    changeMemberRole
 } = require('../controllers/chatController');
 
 router.get('/chats', authenticate, getRooms);
@@ -134,6 +135,7 @@ router.post('/chats/:id/messages', authenticate, sendMessage);
 router.put('/chats/:id/name', authenticate, updateRoomName);
 router.put('/chats/:id/settings', authenticate, updateRoomSettings);
 router.post('/chats/:id/members', authenticate, addMember);
+router.put('/chats/:id/members/:userId/role', authenticate, changeMemberRole);
 router.post('/chats/:id/leave', authenticate, leaveRoom);
 router.post('/chats/:id/kick/:userId', authenticate, kickMember);
 

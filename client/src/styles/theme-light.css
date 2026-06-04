@@ -117,3 +117,35 @@ html.light .sidebar-user-name   { color: #111827; }
 html.light .sidebar-user-role   { color: #6B7280; }
 html.light .sidebar-user-expand { color: #6B7280; }
 html.light .main-content        { background: #EEF0F5; box-shadow: none; }
+
+/* ── Mobile Bottom Sheet Light Mode overrides ── */
+html.light .bottom-sheet {
+    background: #FFFFFF;
+    border-top-color: #E5E7EB;
+    box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.06);
+}
+html.light .bottom-sheet-drag-handle {
+    background: rgba(0, 0, 0, 0.15);
+}
+html.light .bottom-sheet-item {
+    background: #F9FAFB;
+    border-color: #E5E7EB;
+    color: #374151;
+}
+html.light .bottom-sheet-item:active {
+    background: #EEF2FF;
+    border-color: #C7D2FE;
+    color: #4338CA;
+}
+html.light .bottom-sheet-setting-control {
+    background: #F3F4F6;
+    border-color: #E5E7EB;
+}
+html.light .bottom-sheet-setting-btn {
+    color: #6B7280;
+}
+html.light .bottom-sheet-setting-btn.active {
+    background: #4338CA;
+    color: #FFFFFF;
+    box-shadow: 0 2px 8px rgba(67, 56, 202, 0.25);
+}

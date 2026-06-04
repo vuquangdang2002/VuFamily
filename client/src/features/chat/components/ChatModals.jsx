@@ -16,7 +16,8 @@ export default function ChatModals({
     handleKickMember,
     handleLeaveGroup,
     handleUpdateSettings,
-    handleAddMember
+    handleAddMember,
+    handleUpdateMemberRole
 }) {
     const { t } = useTranslation();
     const [userSearchQuery, setUserSearchQuery] = useState('');
@@ -417,6 +418,56 @@ export default function ChatModals({
                                                             style={{ width: 120, height: 120, display: 'block' }} 
                                                         />
                                                     </div>
+
+                                                    {/* Download QR Button */}
+                                                    <button 
+                                                        className="btn" 
+                                                        style={{ 
+                                                            marginTop: 4, 
+                                                            padding: '10px 14px', 
+                                                            fontSize: 12, 
+                                                            fontWeight: 600,
+                                                            justifyContent: 'center',
+                                                            background: 'rgba(212, 175, 55, 0.12)',
+                                                            border: '1px solid rgba(212, 175, 55, 0.3)',
+                                                            color: 'var(--gold)',
+                                                            borderRadius: 8,
+                                                            transition: 'all 0.2s ease',
+                                                            cursor: 'pointer',
+                                                            width: '100%',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            gap: 6
+                                                        }}
+                                                        onClick={async () => {
+                                                            try {
+                                                                const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(`${window.location.origin}/chat?invite=${activeRoom.inviteCode}`)}`;
+                                                                const res = await fetch(qrUrl);
+                                                                const blob = await res.blob();
+                                                                const url = window.URL.createObjectURL(blob);
+                                                                const a = document.createElement('a');
+                                                                a.href = url;
+                                                                a.download = `QR_Invite_${activeRoom.inviteCode}.png`;
+                                                                document.body.appendChild(a);
+                                                                a.click();
+                                                                document.body.removeChild(a);
+                                                                window.URL.revokeObjectURL(url);
+                                                            } catch (err) {
+                                                                const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(`${window.location.origin}/chat?invite=${activeRoom.inviteCode}`)}`;
+                                                                window.open(qrUrl, '_blank');
+                                                            }
+                                                        }}
+                                                        onMouseEnter={(e) => {
+                                                            e.currentTarget.style.background = 'rgba(212, 175, 55, 0.2)';
+                                                            e.currentTarget.style.transform = 'translateY(-1px)';
+                                                        }}
+                                                        onMouseLeave={(e) => {
+                                                            e.currentTarget.style.background = 'rgba(212, 175, 55, 0.12)';
+                                                            e.currentTarget.style.transform = 'none';
+                                                        }}
+                                                    >
+                                                        📥 {t('chat.download_qr')}
+                                                    </button>
                                                 </div>
                                             )}
 
@@ -464,17 +515,61 @@ export default function ChatModals({
                                                         <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--gold)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }}>
                                                             {m.avatar ? <img src={m.avatar} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} alt="avatar" /> : m.display_name?.substring(0, 2).toUpperCase()}
                                                         </div>
-                                                        <div style={{ flex: 1 }}>
-                                                            <div style={{ fontWeight: 500, display: 'flex', alignItems: 'center', gap: 6 }}>
-                                                                {m.id === user.id ? t('chat.you') : (m.display_name || m.username)}
+                                                        <div style={{ flex: 1, minWidth: 0 }}>
+                                                            <div style={{ fontWeight: 500, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                                                                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '140px' }}>
+                                                                    {m.display_name || m.username}
+                                                                </span>
+                                                                {m.id === user.id && <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>(Bạn)</span>}
                                                                 {m.role === 'admin' && <span style={{ fontSize: 10, background: 'var(--primary)', color: '#fff', padding: '2px 6px', borderRadius: 10 }}>{t('chat.admin_role')}</span>}
                                                             </div>
                                                             <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{m.is_online ? t('chat.online_label') : t('chat.offline_label')}</div>
                                                         </div>
-                                                        {currentUserRole === 'admin' && m.id !== user.id && m.role !== 'admin' && (
-                                                            <button className="btn btn-danger" style={{ padding: '4px 8px', fontSize: 12 }} onClick={() => handleKickMember(m.id, m.display_name || m.username)}>
-                                                                {t('chat.remove_member')}
-                                                            </button>
+                                                        {currentUserRole === 'admin' && m.id !== user.id && (
+                                                            <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                                                                {m.role === 'admin' ? (
+                                                                    <button 
+                                                                        className="btn" 
+                                                                        style={{ 
+                                                                            padding: '4px 8px', 
+                                                                            fontSize: 12,
+                                                                            background: 'rgba(239, 68, 68, 0.1)',
+                                                                            border: '1px solid rgba(239, 68, 68, 0.3)',
+                                                                            color: '#ef4444',
+                                                                            borderRadius: 6,
+                                                                            cursor: 'pointer'
+                                                                        }} 
+                                                                        onClick={() => handleUpdateMemberRole(m.id, 'member')}
+                                                                    >
+                                                                        Gỡ QTV
+                                                                    </button>
+                                                                ) : (
+                                                                    <>
+                                                                        <button 
+                                                                            className="btn" 
+                                                                            style={{ 
+                                                                                padding: '4px 8px', 
+                                                                                fontSize: 12,
+                                                                                background: 'rgba(212, 175, 55, 0.1)',
+                                                                                border: '1px solid rgba(212, 175, 55, 0.3)',
+                                                                                color: 'var(--gold)',
+                                                                                borderRadius: 6,
+                                                                                cursor: 'pointer'
+                                                                            }} 
+                                                                            onClick={() => handleUpdateMemberRole(m.id, 'admin')}
+                                                                        >
+                                                                            Bổ nhiệm
+                                                                        </button>
+                                                                        <button 
+                                                                            className="btn btn-danger" 
+                                                                            style={{ padding: '4px 8px', fontSize: 12, cursor: 'pointer' }} 
+                                                                            onClick={() => handleKickMember(m.id, m.display_name || m.username)}
+                                                                        >
+                                                                            {t('chat.remove_member')}
+                                                                        </button>
+                                                                    </>
+                                                                )}
+                                                            </div>
                                                         )}
                                                     </div>
                                                 ))}

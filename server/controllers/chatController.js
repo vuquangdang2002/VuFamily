@@ -273,7 +273,41 @@ async function leaveRoom(req, res) {
         const roomId = parseInt(req.params.id);
         const userId = req.user.id;
 
+        // Check leaving user's membership to see if they are an admin
+        const membership = await ChatModel.getMembership(roomId, userId);
+        if (!membership) {
+            return res.status(404).json({ success: false, error: 'Bạn không phải thành viên của nhóm này' });
+        }
+
+        const wasAdmin = membership.role === 'admin';
+
+        // Remove the member from the room
         await ChatModel.removeMember(roomId, userId);
+
+        // Send a system message that the member left
+        const userDisplay = req.user.display_name || req.user.username || 'Thành viên';
+        await ChatModel.saveMessage(roomId, userId, `=== ${userDisplay} đã rời khỏi nhóm ===`);
+
+        // If the leaving member was an admin, handle role transfer
+        if (wasAdmin) {
+            const remainingMembers = await ChatModel.getRoomMembers(roomId);
+            if (remainingMembers.length > 0) {
+                // Check if there is another admin remaining
+                const hasOtherAdmin = remainingMembers.some(m => m.role === 'admin');
+                if (!hasOtherAdmin) {
+                    // No other admin remaining, pick a random member to promote
+                    const randomIndex = Math.floor(Math.random() * remainingMembers.length);
+                    const promotedMember = remainingMembers[randomIndex];
+                    
+                    await ChatModel.updateMemberRole(roomId, promotedMember.user_id, 'admin');
+
+                    // Send a system message that they were promoted to admin
+                    const promotedUser = promotedMember.users || {};
+                    const promotedDisplay = promotedUser.display_name || promotedUser.username || 'Thành viên';
+                    await ChatModel.saveMessage(roomId, userId, `=== ${promotedDisplay} đã được chọn làm Quản trị viên mới của nhóm ===`);
+                }
+            }
+        }
 
         res.json({ success: true, message: 'Đã rời phòng' });
     } catch (e) {
@@ -494,6 +528,60 @@ async function updateRoomSettings(req, res) {
     }
 }
 
+// Update member role (promote/demote)
+async function changeMemberRole(req, res) {
+    try {
+        const roomId = parseInt(req.params.id);
+        const targetUserId = parseInt(req.params.userId);
+        const { role } = req.body;
+        const myId = req.user.id;
+
+        if (!role || (role !== 'admin' && role !== 'member')) {
+            return res.status(400).json({ success: false, error: 'Vai trò không hợp lệ' });
+        }
+
+        // Verify my membership & admin role
+        const myMembership = await ChatModel.getMembership(roomId, myId);
+        if (!myMembership || myMembership.role !== 'admin') {
+            return res.status(403).json({ success: false, error: 'Chỉ quản trị viên nhóm mới có quyền này' });
+        }
+
+        // Check target membership
+        const targetMembership = await ChatModel.getMembership(roomId, targetUserId);
+        if (!targetMembership) {
+            return res.status(404).json({ success: false, error: 'Người dùng không phải thành viên nhóm này' });
+        }
+
+        if (targetMembership.role === role) {
+            return res.json({ success: true, message: 'Vai trò không thay đổi' });
+        }
+
+        // Prevent self demotion if it would leave the group with no admin
+        if (targetUserId === myId && role === 'member') {
+            const adminCount = await ChatModel.countAdmins(roomId);
+            if (adminCount <= 1) {
+                return res.status(400).json({ success: false, error: 'Nhóm phải có ít nhất một quản trị viên' });
+            }
+        }
+
+        await ChatModel.updateMemberRole(roomId, targetUserId, role);
+
+        // Send system message indicating role change
+        const targetUser = await ChatModel.getUserInfo(targetUserId);
+        const targetDisplay = targetUser ? (targetUser.display_name || targetUser.username) : 'Thành viên';
+        const myDisplay = req.user.display_name || req.user.username || 'Quản trị';
+
+        const actionText = role === 'admin' ? 'đã bổ nhiệm làm Quản trị viên' : 'đã gỡ quyền Quản trị viên';
+        await ChatModel.saveMessage(roomId, myId, `=== ${myDisplay} ${actionText} của ${targetDisplay} ===`);
+        await ChatModel.updateRoomTimestamp(roomId);
+
+        res.json({ success: true });
+    } catch (e) {
+        console.error('[ChatController - changeMemberRole] Error:', e);
+        res.status(500).json({ success: false, error: e.message || 'Lỗi server' });
+    }
+}
+
 module.exports = {
     getRooms,
     getMessages,
@@ -504,5 +592,6 @@ module.exports = {
     kickMember,
     addMember,
     joinRoomByInviteCode,
-    updateRoomSettings
+    updateRoomSettings,
+    changeMemberRole
 };

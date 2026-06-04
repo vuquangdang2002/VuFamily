@@ -82,5 +82,6 @@
     "chat.add_member_btn": "➕ Thêm thành viên",
     "chat.add_member_modal_title": "Thêm thành viên vào nhóm",
     "chat.add_member_success": "Đã thêm thành viên vào nhóm thành công!",
-    "chat.add_member_fail": "Lỗi khi thêm thành viên: {error}"
+    "chat.add_member_fail": "Lỗi khi thêm thành viên: {error}",
+    "chat.download_qr": "Tải xuống mã QR"
 }

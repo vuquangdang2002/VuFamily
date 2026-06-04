@@ -276,4 +276,58 @@
     .bottom-sheet-logout:active {
         background: rgba(244, 67, 54, 0.15);
     }
+
+    .bottom-sheet-settings {
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+        padding-top: 16px;
+        margin-bottom: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .bottom-sheet-setting-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 4px 0;
+    }
+
+    .bottom-sheet-setting-label {
+        font-family: var(--font-body);
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .bottom-sheet-setting-control {
+        display: flex;
+        gap: 4px;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 8px;
+        padding: 3px;
+    }
+
+    .bottom-sheet-setting-btn {
+        border: none;
+        background: transparent;
+        color: var(--text-muted);
+        font-family: var(--font-body);
+        font-size: 12px;
+        font-weight: 600;
+        padding: 6px 14px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .bottom-sheet-setting-btn.active {
+        background: var(--primary);
+        color: #fff;
+        box-shadow: 0 2px 8px var(--primary-glow);
+    }
 }

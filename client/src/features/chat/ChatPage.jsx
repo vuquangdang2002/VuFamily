@@ -304,6 +304,25 @@ export default function ChatPage({ user, addToast, onStartCall }) {
         }
     };
 
+    const handleUpdateMemberRole = async (targetUserId, role) => {
+        try {
+            const res = await fetch(`${getApiBase()}/chats/${activeRoomId}/members/${targetUserId}/role`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'x-auth-token': AuthHelper.getToken() },
+                body: JSON.stringify({ role })
+            });
+            const json = await res.json();
+            if (json.success) {
+                await fetchRooms();
+                addToast(role === 'admin' ? "Đã bổ nhiệm Quản trị viên thành công!" : "Đã gỡ quyền Quản trị viên thành công!");
+            } else {
+                addToast(json.error || t('chat.connection_error'), 'error');
+            }
+        } catch (e) {
+            addToast(t('chat.connection_error'), 'error');
+        }
+    };
+
     // Parse invite code from URL query parameter on mount
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
@@ -363,6 +382,7 @@ export default function ChatPage({ user, addToast, onStartCall }) {
                 handleLeaveGroup={handleLeaveGroup}
                 handleUpdateSettings={handleUpdateSettings}
                 handleAddMember={handleAddMember}
+                handleUpdateMemberRole={handleUpdateMemberRole}
             />
 
             <style>

@@ -3,6 +3,8 @@ import { useTheme } from './shared/components/ThemeToggle';
 import { localApi } from './shared/services/api';
 import { I18nHelper } from './shared/services/i18n.js';
 import { TrackingHelper } from './shared/services/TrackingHelper';
+import { ConfigAPI } from './config.js';
+import { useTranslation } from './shared/hooks/useTranslation';
 
 // ── Custom Hooks ──
 import useAuthSystem from './shared/hooks/useAuthSystem';
@@ -34,6 +36,7 @@ import ForceChangePasswordModal from './features/auth/ForceChangePasswordModal';
 
 export default function App() {
     const { theme, setTheme } = useTheme();
+    const { t, lang, changeLanguage } = useTranslation();
 
     // ── Auth System Hook ──
     const {
@@ -157,7 +160,7 @@ export default function App() {
                         {isLoadingMembers && (
                             <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-slate-900/40 backdrop-blur-sm rounded-xl m-4">
                                 <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4 shadow-lg"></div>
-                                <span className="text-white font-medium text-lg drop-shadow-md">{I18nHelper.t('app.loading_tree')}</span>
+                                <span className="text-white font-medium text-lg drop-shadow-md">{t('app.loading_tree')}</span>
                             </div>
                         )}
 
@@ -247,35 +250,35 @@ export default function App() {
                         onClick={() => { setActivePage('tree'); setShowMobileMenu(false); }}
                     >
                         <span className="bottom-nav-item-icon">🌳</span>
-                        <span>{I18nHelper.t('nav.tree')}</span>
+                        <span>{t('nav.tree')}</span>
                     </button>
                     <button
                         className={`bottom-nav-item ${activePage === 'newsfeed' && !showMobileMenu ? 'active' : ''}`}
                         onClick={() => { setActivePage('newsfeed'); setShowMobileMenu(false); }}
                     >
                         <span className="bottom-nav-item-icon">📰</span>
-                        <span>{I18nHelper.t('nav.newsfeed')}</span>
+                        <span>{t('nav.newsfeed')}</span>
                     </button>
                     <button
                         className={`bottom-nav-item ${activePage === 'chat' && !showMobileMenu ? 'active' : ''}`}
                         onClick={() => { setActivePage('chat'); setShowMobileMenu(false); }}
                     >
                         <span className="bottom-nav-item-icon">💬</span>
-                        <span>{I18nHelper.t('nav.chat')}</span>
+                        <span>{t('nav.chat')}</span>
                     </button>
                     <button
                         className={`bottom-nav-item ${activePage === 'calendar' && !showMobileMenu ? 'active' : ''}`}
                         onClick={() => { setActivePage('calendar'); setShowMobileMenu(false); }}
                     >
                         <span className="bottom-nav-item-icon">📅</span>
-                        <span>{I18nHelper.t('nav.calendar')}</span>
+                        <span>{t('nav.calendar')}</span>
                     </button>
                     <button
                         className={`bottom-nav-item ${showMobileMenu ? 'active' : ''}`}
                         onClick={() => setShowMobileMenu(!showMobileMenu)}
                     >
                         <span className="bottom-nav-item-icon">⚙️</span>
-                        <span>{I18nHelper.t('nav.others')}</span>
+                        <span>{t('nav.others')}</span>
                         {pendingCount > 0 && <span className="bottom-nav-badge">{pendingCount}</span>}
                     </button>
                 </div>
@@ -286,18 +289,18 @@ export default function App() {
                 <div className="bottom-sheet-overlay" onClick={() => setShowMobileMenu(false)}>
                     <div className="bottom-sheet" onClick={(e) => e.stopPropagation()}>
                         <div className="bottom-sheet-drag-handle" />
-                        <div className="bottom-sheet-title">{I18nHelper.t('sidebar.admin_section')}</div>
+                        <div className="bottom-sheet-title">{t('sidebar.admin_section')}</div>
 
                         <div className="bottom-sheet-grid">
                             <div className="bottom-sheet-item" onClick={() => { setProfileModalOpen(true); setShowMobileMenu(false); }}>
                                 <span className="bottom-sheet-item-icon">👤</span>
-                                <span>{I18nHelper.t('sidebar.profile_password')}</span>
+                                <span>{t('sidebar.profile_password')}</span>
                             </div>
 
                             {(user?.role === 'admin' || user?.role === 'editor') && (
                                 <div className="bottom-sheet-item" onClick={() => { setActivePage('requests'); setShowMobileMenu(false); }}>
                                     <span className="bottom-sheet-item-icon">📋</span>
-                                    <span>{I18nHelper.t('nav.requests')}</span>
+                                    <span>{t('nav.requests')}</span>
                                     {pendingCount > 0 && <span className="bottom-nav-badge">{pendingCount}</span>}
                                 </div>
                             )}
@@ -305,28 +308,73 @@ export default function App() {
                             {isAdmin && (
                                 <div className="bottom-sheet-item" onClick={() => { setActivePage('system'); setShowMobileMenu(false); }}>
                                     <span className="bottom-sheet-item-icon">⚙️</span>
-                                    <span>{I18nHelper.t('nav.system')}</span>
+                                    <span>{t('nav.system')}</span>
                                 </div>
                             )}
 
                             <div className="bottom-sheet-item" onClick={() => { setActivePage('history'); setShowMobileMenu(false); }}>
                                 <span className="bottom-sheet-item-icon">📜</span>
-                                <span>{I18nHelper.t('nav.history')}</span>
+                                <span>{t('nav.history')}</span>
                             </div>
 
                             <div className="bottom-sheet-item" onClick={() => { setActivePage('finance'); setShowMobileMenu(false); }}>
                                 <span className="bottom-sheet-item-icon">💰</span>
-                                <span>{I18nHelper.t('nav.finance')}</span>
+                                <span>{t('nav.finance')}</span>
                             </div>
 
                             <div className="bottom-sheet-item" onClick={() => { setActivePage('guide'); setShowMobileMenu(false); }}>
                                 <span className="bottom-sheet-item-icon">❓</span>
-                                <span>{I18nHelper.t('sidebar.user_guide')}</span>
+                                <span>{t('sidebar.user_guide')}</span>
                             </div>
                         </div>
 
+                        {/* Theme and Language Settings */}
+                        <div className="bottom-sheet-settings">
+                            <div className="bottom-sheet-setting-row">
+                                <div className="bottom-sheet-setting-label">
+                                    <span>🌓</span> {t('app.theme')}
+                                </div>
+                                <div className="bottom-sheet-setting-control">
+                                    <button
+                                        className={`bottom-sheet-setting-btn ${theme === 'light' ? 'active' : ''}`}
+                                        onClick={(e) => { e.stopPropagation(); setTheme('light', e); }}
+                                    >
+                                        {t('theme.light')}
+                                    </button>
+                                    <button
+                                        className={`bottom-sheet-setting-btn ${theme === 'dark' ? 'active' : ''}`}
+                                        onClick={(e) => { e.stopPropagation(); setTheme('dark', e); }}
+                                    >
+                                        {t('theme.dark')}
+                                    </button>
+                                </div>
+                            </div>
+
+                            {ConfigAPI.getBoolean('feature_localize_enabled', true) && (
+                                <div className="bottom-sheet-setting-row">
+                                    <div className="bottom-sheet-setting-label">
+                                        <span>🌐</span> {t('app.language')}
+                                    </div>
+                                    <div className="bottom-sheet-setting-control">
+                                        <button
+                                            className={`bottom-sheet-setting-btn ${lang === 'vi' ? 'active' : ''}`}
+                                            onClick={(e) => { e.stopPropagation(); changeLanguage('vi'); }}
+                                        >
+                                            VI
+                                        </button>
+                                        <button
+                                            className={`bottom-sheet-setting-btn ${lang === 'en' ? 'active' : ''}`}
+                                            onClick={(e) => { e.stopPropagation(); changeLanguage('en'); }}
+                                        >
+                                            EN
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
                         <button className="bottom-sheet-logout" onClick={() => { handleLogout(); setShowMobileMenu(false); }}>
-                            🚪 {I18nHelper.t('app.logout')}
+                            🚪 {t('app.logout')}
                         </button>
                     </div>
                 </div>

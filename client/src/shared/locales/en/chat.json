@@ -82,5 +82,6 @@
     "chat.add_member_btn": "➕ Add member",
     "chat.add_member_modal_title": "Add Member to Group",
     "chat.add_member_success": "Successfully added member to group!",
-    "chat.add_member_fail": "Error adding member: {error}"
+    "chat.add_member_fail": "Error adding member: {error}",
+    "chat.download_qr": "Download QR Code"
 }

@@ -172,6 +172,16 @@ class ChatModel {
         if (error) throw error;
     }
 
+    static async updateMemberRole(roomId, userId, role) {
+        const { error } = await supabase
+            .from('chat_members')
+            .update({ role })
+            .eq('room_id', roomId)
+            .eq('user_id', userId);
+            
+        if (error) throw error;
+    }
+
     static async getRoomById(roomId) {
         const { data, error } = await supabase
             .from('chat_rooms')
@@ -187,6 +197,15 @@ class ChatModel {
             .from('chat_rooms')
             .select('*')
             .eq('type', 'group');
+        if (error) throw error;
+        return data;
+    }
+
+    static async getRoomMembers(roomId) {
+        const { data, error } = await supabase
+            .from('chat_members')
+            .select('user_id, role, users(id, username, display_name)')
+            .eq('room_id', roomId);
         if (error) throw error;
         return data;
     }
@@ -208,6 +227,16 @@ class ChatModel {
             .in('id', userIds);
         if (error) throw error;
         return data;
+    }
+
+    static async countAdmins(roomId) {
+        const { count, error } = await supabase
+            .from('chat_members')
+            .select('*', { count: 'exact', head: true })
+            .eq('room_id', roomId)
+            .eq('role', 'admin');
+        if (error) throw error;
+        return count || 0;
     }
 }
 
