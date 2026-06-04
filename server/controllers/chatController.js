@@ -308,10 +308,12 @@ async function kickMember(req, res) {
 async function addMember(req, res) {
     try {
         const roomId = parseInt(req.params.id);
-        const { userId } = req.body;
+        const { userId, userIds } = req.body;
         const myId = req.user.id;
 
-        if (!userId) {
+        const targetUserIds = userIds ? userIds : (userId ? [userId] : []);
+
+        if (targetUserIds.length === 0) {
             return res.status(400).json({ success: false, error: 'Thiếu thông tin người cần thêm' });
         }
 
@@ -347,22 +349,31 @@ async function addMember(req, res) {
             return res.status(403).json({ success: false, error: 'Chỉ quản trị viên mới có quyền thêm thành viên vào nhóm này' });
         }
 
-        // Check if target user is already a member
-        const existingMembership = await ChatModel.getMembership(roomId, userId);
-        if (existingMembership) {
-            return res.status(400).json({ success: false, error: 'Người này đã là thành viên của nhóm' });
+        // Filter out users who are already members
+        const idsToAdd = [];
+        for (const id of targetUserIds) {
+            const existingMembership = await ChatModel.getMembership(roomId, id);
+            if (!existingMembership) {
+                idsToAdd.push(id);
+            }
         }
 
-        // Add member
-        await ChatModel.addMembers([{
+        if (idsToAdd.length === 0) {
+            return res.status(400).json({ success: false, error: 'Tất cả người chọn đều đã là thành viên của nhóm' });
+        }
+
+        // Add members
+        const newMembersData = idsToAdd.map(id => ({
             room_id: roomId,
-            user_id: userId,
+            user_id: id,
             role: 'member'
-        }]);
+        }));
+        await ChatModel.addMembers(newMembersData);
 
         // Send a system message indicating they were added
-        const targetUser = await ChatModel.getUserInfo(userId);
-        const targetDisplay = targetUser?.display_name || targetUser?.username || 'Thành viên mới';
+        const usersInfo = await ChatModel.getUsersInfo(idsToAdd);
+        const targetNames = usersInfo ? usersInfo.map(u => u.display_name || u.username) : [];
+        const targetDisplay = targetNames.join(', ');
         const myDisplay = req.user.display_name || req.user.username || 'Thành viên';
         
         await ChatModel.saveMessage(roomId, myId, `=== ${myDisplay} đã thêm ${targetDisplay} vào nhóm ===`);

@@ -2,6 +2,13 @@
    RESPONSIVE LAYOUT FIXES (PHASE 3)
    ============================================ */
 @media (max-width: 768px) {
+    /* App Layout Flex Column Configuration */
+    .app-layout {
+        flex-direction: column !important;
+        height: 100dvh !important;
+        width: 100vw !important;
+        overflow: hidden !important;
+    }
 
     /* 1. Fix Header overlapping stats and buttons */
     .header {
@@ -32,22 +39,21 @@
         font-size: 14px !important;
     }
 
-    /* 2. Chat UI — full height minus bottom nav */
+    /* 2. Chat UI — occupy 100% height of main-content flex container */
     .chat-layout {
         flex-direction: column;
-        height: calc(100dvh - 86px) !important;
+        height: 100% !important;
     }
 
     .chat-inbox-panel {
         width: 100%;
-        height: 40vh;
-        /* split screen on mobile */
+        height: 100%;
         border-right: none;
         border-bottom: 1px solid var(--border-subtle);
     }
 
     .chat-messages-panel {
-        height: 60vh;
+        height: 100% !important;
     }
 
     /* 3. Detail Panel overlapping on mobile */
@@ -81,27 +87,30 @@
     }
 }
 
-/* ─── Premium Glassmorphic Bottom Navigation Bar (Mobile Viewports Only) ─── */
+/* ─── Premium Solid Bottom Navigation Bar (Mobile Viewports Only) ─── */
 @media (max-width: 768px) {
     .bottom-nav {
-        position: fixed;
-        bottom: 16px;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 90%;
-        max-width: 480px;
+        position: relative;
+        bottom: 0;
+        left: 0;
+        transform: none;
+        width: 100%;
+        max-width: none;
         height: 62px;
-        background: rgba(10, 16, 28, 0.85);
-        backdrop-filter: blur(20px) saturate(180%);
-        -webkit-backdrop-filter: blur(20px) saturate(180%);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        border-radius: 30px;
+        background: var(--sidebar-bg);
+        border-top: 1px solid var(--border-subtle);
+        border-bottom: none;
+        border-left: none;
+        border-right: none;
+        border-radius: 0;
         display: flex;
         justify-content: space-around;
         align-items: center;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 16px rgba(0, 240, 255, 0.15);
+        box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.15);
         z-index: 1000;
         padding: 0 12px;
+        margin: 0;
+        flex-shrink: 0;
     }
 
     .bottom-nav-item {

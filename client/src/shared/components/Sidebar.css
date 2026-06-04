@@ -428,23 +428,20 @@
     }
 
     .page-container:not(.no-mobile-padding) {
-        padding: 16px 16px 110px 16px !important;
+        padding: 16px 16px 24px 16px !important;
     }
     
     .page-container:not(.no-mobile-padding)::after {
-        content: "";
-        display: block;
-        min-height: 110px;
-        flex-shrink: 0;
+        display: none !important;
     }
     
     .page-container.no-mobile-padding {
-        padding: 0 0 86px 0 !important;
+        padding: 0 !important;
     }
     
     /* Move floating theme toggle above bottom navigation bar */
     .theme-toggle-float {
-        bottom: 90px !important;
+        bottom: 78px !important;
         right: 16px !important;
         width: 44px !important;
         height: 44px !important;
@@ -469,9 +466,9 @@
         font-size: 12px !important;
     }
 
-    /* Fix chat input bar hidden behind bottom nav */
+    /* Fix chat input bar padding */
     .chat-input-bar {
-        padding-bottom: calc(12px + 86px) !important;
+        padding-bottom: 12px !important;
     }
 
     /* Fix calendar page overflow hidden cutting content */

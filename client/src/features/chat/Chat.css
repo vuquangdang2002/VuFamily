@@ -471,9 +471,9 @@ html.light .chat-input-bar input {
         display: flex !important;
     }
 
-    /* Ensure chat messages panel fills available space above bottom nav */
+    /* Ensure chat messages panel fills available space */
     .chat-messages-panel {
-        height: calc(100dvh - 86px) !important;
+        height: 100% !important;
     }
 
     /* Ensure chat message body scrolls above the input bar */

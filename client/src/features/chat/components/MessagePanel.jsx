@@ -123,6 +123,30 @@ export default function MessagePanel({
                     <div style={{ margin: 'auto', color: 'var(--text-muted)' }}>{t('chat.first_message')}</div>
                 )}
                 {messages.map((msg) => {
+                    const trimmedContent = (msg.content || '').trim();
+                    const isSystem = trimmedContent.startsWith('===') && trimmedContent.endsWith('===');
+                    
+                    if (isSystem) {
+                        return (
+                            <div key={msg.id} style={{ display: 'flex', justifyContent: 'center', margin: '8px 0', width: '100%' }}>
+                                <div style={{
+                                    background: 'var(--bg-secondary)',
+                                    color: 'var(--text-muted)',
+                                    fontSize: 12,
+                                    padding: '6px 16px',
+                                    borderRadius: 20,
+                                    border: '1px solid var(--border-subtle)',
+                                    textAlign: 'center',
+                                    maxWidth: '85%',
+                                    boxShadow: '0 2px 6px rgba(0,0,0,0.02)',
+                                    lineHeight: '1.4'
+                                }}>
+                                    {trimmedContent.replace(/===/g, '').trim()}
+                                </div>
+                            </div>
+                        );
+                    }
+
                     const isMe = msg.sender_id === user.id;
                     const sender = msg.users || {};
                     return (

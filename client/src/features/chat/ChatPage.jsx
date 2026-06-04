@@ -258,6 +258,9 @@ export default function ChatPage({ user, addToast, onStartCall }) {
     };
 
     const handleUpdateSettings = async (allowAdd) => {
+        // Optimistic update for instant visual feedback
+        setRooms(prev => prev.map(r => r.id === activeRoomId ? { ...r, allowAdd } : r));
+
         try {
             const res = await fetch(`${getApiBase()}/chats/${activeRoomId}/settings`, {
                 method: 'PUT',
@@ -265,23 +268,28 @@ export default function ChatPage({ user, addToast, onStartCall }) {
                 body: JSON.stringify({ allowAdd })
             });
             const json = await res.json();
-            if (json.success) {
-                await fetchRooms();
-                addToast(t('chat.rename_success'));
-            } else {
+            if (!json.success) {
+                // Rollback on failure
+                setRooms(prev => prev.map(r => r.id === activeRoomId ? { ...r, allowAdd: !allowAdd } : r));
                 addToast(json.error || t('chat.rename_fail'), 'error');
+            } else {
+                // Silently refresh rooms in background
+                fetchRooms();
             }
         } catch (e) {
+            // Rollback on connection error
+            setRooms(prev => prev.map(r => r.id === activeRoomId ? { ...r, allowAdd: !allowAdd } : r));
             addToast(t('chat.network_error'), 'error');
         }
     };
 
-    const handleAddMember = async (targetUserId) => {
+    const handleAddMember = async (targetUserIds) => {
+        const ids = Array.isArray(targetUserIds) ? targetUserIds : [targetUserIds];
         try {
             const res = await fetch(`${getApiBase()}/chats/${activeRoomId}/members`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'x-auth-token': AuthHelper.getToken() },
-                body: JSON.stringify({ userId: targetUserId })
+                body: JSON.stringify({ userIds: ids })
             });
             const json = await res.json();
             if (json.success) {
