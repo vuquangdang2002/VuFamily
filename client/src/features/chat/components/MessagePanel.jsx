@@ -6,6 +6,32 @@ import { cacheSingleMessage } from '../../../shared/services/chatCache';
 import { TrackingHelper } from '../../../shared/services/TrackingHelper';
 import { myError } from '../../../shared/utils/logger';
 
+function formatMessageContent(content) {
+    if (!content) return '';
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    const parts = content.split(urlRegex);
+    return parts.map((part, index) => {
+        if (part.match(urlRegex)) {
+            return (
+                <a
+                    key={index}
+                    href={part}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                        color: 'inherit',
+                        textDecoration: 'underline',
+                        wordBreak: 'break-all'
+                    }}
+                >
+                    {part}
+                </a>
+            );
+        }
+        return part;
+    });
+}
+
 export default function MessagePanel({
     activeRoomId,
     activeRoom,
@@ -167,15 +193,15 @@ export default function MessagePanel({
                                     </div>
                                 )}
                                 <div style={{
-                                    background: isMe ? 'var(--primary)' : 'var(--bg-secondary)',
-                                    color: isMe ? '#fff' : 'var(--text-primary)',
+                                    background: isMe ? 'var(--chat-msg-me-bg)' : 'var(--chat-msg-them-bg)',
+                                    color: isMe ? 'var(--chat-msg-me-color)' : 'var(--chat-msg-them-color)',
                                     padding: '10px 14px', borderRadius: 16,
                                     borderBottomRightRadius: isMe ? 4 : 16,
                                     borderBottomLeftRadius: !isMe ? 4 : 16,
                                     maxWidth: '400px', wordBreak: 'break-word',
-                                    border: isMe ? 'none' : '1px solid var(--border-subtle)'
+                                    border: isMe ? 'none' : '1px solid var(--chat-msg-them-border)'
                                 }}>
-                                    {msg.content}
+                                    {formatMessageContent(msg.content)}
                                 </div>
                             </div>
                             <span style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 4 }}>

@@ -9,7 +9,6 @@ import { offlineCache } from '../../shared/utils/offlineCache';
 import { AuthHelper } from '../../shared/services/AuthHelper';
 
 import PostCard from './components/PostCard';
-import EventCard from './components/EventCard';
 import ContactsTab from './components/ContactsTab';
 import SidebarPanel from './components/SidebarPanel';
 import './Newsfeed.css';
@@ -27,16 +26,11 @@ export default function NewsfeedPage({ user, isAdmin, addToast, members = [], on
     const { t } = useTranslation();
     const hasShownOfflineToastRef = useRef(false);
     const [posts, setPosts] = useState(cachedPosts || []);
-    const [events, setEvents] = useState([]);
     const [postSearchQuery, setPostSearchQuery] = useState('');
     const [hasNewPostsHint, setHasNewPostsHint] = useState(false);
     const [newPost, setNewPost] = useState('');
     const [tab, setTab] = useState('posts');
     const [loading, setLoading] = useState(false);
-    const [showEventForm, setShowEventForm] = useState(false);
-    const [eventForm, setEventForm] = useState({
-        title: '', event_date: '', time: '', location: '', recurrence: 'none', note: ''
-    });
 
     const canEdit = user?.role === 'admin' || user?.role === 'editor';
 
@@ -102,24 +96,11 @@ export default function NewsfeedPage({ user, isAdmin, addToast, members = [], on
         setLoading(false);
     };
 
-    // Fetch events from API
-    const fetchEvents = async () => {
-        try {
-            const json = await api.getEvents();
-            if (json.success) {
-                setEvents(json.data || []);
-            }
-        } catch (e) {
-            myError('EVENTS', 'Error fetching events:', e);
-        }
-    };
-
-    useEffect(() => { fetchPosts(); fetchEvents(); }, []);
+    useEffect(() => { fetchPosts(); }, []);
 
     const switchTab = (selectedTab) => {
         setTab(selectedTab);
         if (selectedTab === 'posts') fetchPosts();
-        if (selectedTab === 'events') fetchEvents();
     };
 
     const handleCreatePost = async () => {
@@ -145,34 +126,6 @@ export default function NewsfeedPage({ user, isAdmin, addToast, members = [], on
             const json = await api.deletePost(id);
             if (json.success) { addToast(t('newsfeed.delete_success')); fetchPosts(true); }
         } catch (e) { addToast(t('newsfeed.delete_post_err')); }
-    };
-
-    const handleCreateEvent = async () => {
-        if (!eventForm.title.trim() || !eventForm.event_date) {
-            addToast(t('newsfeed.event_fail'), 'error');
-            return;
-        }
-        try {
-            const json = await api.createEvent({
-                title: eventForm.title.trim(),
-                event_date: eventForm.event_date,
-                event_type: 'meeting',
-                location: eventForm.location,
-                time: eventForm.time,
-                recurrence: eventForm.recurrence,
-                note: eventForm.note
-            });
-            if (json.success) {
-                addToast(t('newsfeed.event_success'));
-                setEventForm({ title: '', event_date: '', time: '', location: '', recurrence: 'none', note: '' });
-                setShowEventForm(false);
-                fetchEvents();
-            } else {
-                addToast(json.error || t('newsfeed.event_fail'), 'error');
-            }
-        } catch (e) {
-            addToast(t('newsfeed.event_fail'), 'error');
-        }
     };
 
     return (
@@ -231,9 +184,6 @@ export default function NewsfeedPage({ user, isAdmin, addToast, members = [], on
                     <div className="nf-tabs">
                         <button className={`nf-tab ${tab === 'posts' ? 'active' : ''}`} onClick={() => switchTab('posts')}>
                             📝 {t('newsfeed.tab_posts')}
-                        </button>
-                        <button className={`nf-tab ${tab === 'events' ? 'active' : ''}`} onClick={() => switchTab('events')}>
-                            📅 {t('newsfeed.tab_events')} {events.length > 0 && <span className="nf-tab-badge">{events.length}</span>}
                         </button>
                         <button className={`nf-tab ${tab === 'contacts' ? 'active' : ''}`} onClick={() => switchTab('contacts')}>
                             📱 {t('newsfeed.tab_contacts')}
@@ -331,106 +281,7 @@ export default function NewsfeedPage({ user, isAdmin, addToast, members = [], on
                             </div>
                         )}
 
-                        {/* EVENTS TAB */}
-                        {tab === 'events' && (
-                            <div className="nf-events-section">
-                                {/* Event Creation Form (editor/admin only) */}
-                                {canEdit && (
-                                    <div className="nf-create-post">
-                                        {!showEventForm ? (
-                                            <button
-                                                className="nf-event-create-toggle"
-                                                onClick={() => setShowEventForm(true)}
-                                            >
-                                                ➕ {t('newsfeed.create_event_btn')}
-                                            </button>
-                                        ) : (
-                                            <div className="nf-event-form">
-                                                <h4 className="nf-event-form-title">{t('newsfeed.create_event_btn')}</h4>
-                                                <input
-                                                    type="text"
-                                                    className="form-input"
-                                                    placeholder={t('newsfeed.event_title')}
-                                                    value={eventForm.title}
-                                                    onChange={e => setEventForm({ ...eventForm, title: e.target.value })}
-                                                />
-                                                <div className="nf-event-form-row">
-                                                    <input
-                                                        type="date"
-                                                        className="form-input"
-                                                        value={eventForm.event_date}
-                                                        onChange={e => setEventForm({ ...eventForm, event_date: e.target.value })}
-                                                    />
-                                                    <input
-                                                        type="time"
-                                                        className="form-input"
-                                                        value={eventForm.time}
-                                                        onChange={e => setEventForm({ ...eventForm, time: e.target.value })}
-                                                    />
-                                                </div>
-                                                <input
-                                                    type="text"
-                                                    className="form-input"
-                                                    placeholder={t('newsfeed.event_location')}
-                                                    value={eventForm.location}
-                                                    onChange={e => setEventForm({ ...eventForm, location: e.target.value })}
-                                                />
-                                                <select
-                                                    className="form-input"
-                                                    value={eventForm.recurrence}
-                                                    onChange={e => setEventForm({ ...eventForm, recurrence: e.target.value })}
-                                                >
-                                                    <option value="none">{t('newsfeed.recurrence_none')}</option>
-                                                    <option value="weekly">{t('newsfeed.recurrence_weekly')}</option>
-                                                    <option value="monthly">{t('newsfeed.recurrence_monthly')}</option>
-                                                    <option value="yearly">{t('newsfeed.recurrence_yearly')}</option>
-                                                </select>
-                                                <textarea
-                                                    className="form-input"
-                                                    placeholder={t('newsfeed.event_note')}
-                                                    value={eventForm.note}
-                                                    onChange={e => setEventForm({ ...eventForm, note: e.target.value })}
-                                                    rows={2}
-                                                />
-                                                <div className="nf-event-form-actions">
-                                                    <button className="btn btn-secondary" onClick={() => setShowEventForm(false)}>
-                                                        {t('newsfeed.event_cancel')}
-                                                    </button>
-                                                    <button
-                                                        className="btn btn-primary"
-                                                        onClick={handleCreateEvent}
-                                                        disabled={!eventForm.title.trim() || !eventForm.event_date}
-                                                    >
-                                                        {t('newsfeed.event_submit')}
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
 
-                                {events.length === 0 ? (
-                                    <div className="empty-state">
-                                        <span style={{ fontSize: 48 }}>📅</span>
-                                        <h3>{t('newsfeed.no_events')}</h3>
-                                    </div>
-                                ) : (
-                                    <div className="nf-events-list">
-                                        {events.map(event => (
-                                            <EventCard
-                                                key={event.id}
-                                                event={event}
-                                                currentUserId={currentUserId}
-                                                isAdmin={isAdmin}
-                                                canEdit={canEdit}
-                                                addToast={addToast}
-                                                onRefresh={fetchEvents}
-                                            />
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        )}
 
                         {/* CONTACTS TAB */}
                         {tab === 'contacts' && (

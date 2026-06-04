@@ -142,26 +142,37 @@ export function doesEventOccurOn(event, year, month, day) {
     if (!evDate) return false;
 
     const targetDate = new Date(year, month - 1, day);
+    targetDate.setHours(0, 0, 0, 0);
     const eventDate = new Date(evDate.year, evDate.month - 1, evDate.day);
+    eventDate.setHours(0, 0, 0, 0);
     
     // Don't show events before they started
     if (targetDate < eventDate) return false;
 
     const recurrence = event.recurrence || 'none';
+    const endEvDate = event.end_date ? parseMD(event.end_date) : null;
+    const endDate = endEvDate ? new Date(endEvDate.year, endEvDate.month - 1, endEvDate.day) : null;
+    if (endDate) endDate.setHours(23, 59, 59, 999);
 
     if (recurrence === 'none') {
+        if (endDate) {
+            return targetDate >= eventDate && targetDate <= endDate;
+        }
         return evDate.year === year && evDate.month === month && evDate.day === day;
     }
 
     if (recurrence === 'weekly') {
+        if (endDate && targetDate > endDate) return false;
         return targetDate.getDay() === eventDate.getDay();
     }
 
     if (recurrence === 'monthly') {
+        if (endDate && targetDate > endDate) return false;
         return day === evDate.day;
     }
 
     if (recurrence === 'yearly') {
+        if (endDate && targetDate > endDate) return false;
         return month === evDate.month && day === evDate.day;
     }
 

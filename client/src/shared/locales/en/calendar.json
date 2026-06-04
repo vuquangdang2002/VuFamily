@@ -32,5 +32,12 @@
     "calendar.recurrence_yearly": "Yearly",
     "calendar.event_register": "Register",
     "calendar.event_unregister": "Unregister",
-    "calendar.event_participants": "participants"
+    "calendar.event_participants": "participants",
+    "calendar.tab_calendar": "Monthly Calendar",
+    "calendar.tab_events": "Events List",
+    "calendar.filter_all": "All",
+    "calendar.filter_week": "This Week",
+    "calendar.filter_month": "This Month",
+    "calendar.filter_quarter": "This Quarter",
+    "calendar.filter_year": "This Year"
 }

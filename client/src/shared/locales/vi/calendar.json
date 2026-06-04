@@ -32,5 +32,12 @@
     "calendar.recurrence_yearly": "Hàng năm",
     "calendar.event_register": "Đăng ký",
     "calendar.event_unregister": "Hủy đăng ký",
-    "calendar.event_participants": "người tham gia"
+    "calendar.event_participants": "người tham gia",
+    "calendar.tab_calendar": "Lịch tháng",
+    "calendar.tab_events": "Danh sách sự kiện",
+    "calendar.filter_all": "Tất cả",
+    "calendar.filter_week": "Tuần này",
+    "calendar.filter_month": "Tháng này",
+    "calendar.filter_quarter": "Quý này",
+    "calendar.filter_year": "Năm nay"
 }

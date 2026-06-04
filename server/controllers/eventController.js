@@ -26,6 +26,8 @@ class EventController {
                     ...ev,
                     location: meta.location || '',
                     time: meta.time || '',
+                    end_date: meta.end_date || '',
+                    end_time: meta.end_time || '',
                     recurrence: meta.recurrence || 'none',
                     note: meta.note || '',
                     subscribers: meta.subscribers || [],
@@ -46,7 +48,7 @@ class EventController {
      */
     static async create(req, res) {
         try {
-            const { title, event_date, event_type, location, time, recurrence, note } = req.body;
+            const { title, event_date, event_type, location, time, recurrence, note, end_date, end_time } = req.body;
             if (!title || !title.trim()) {
                 return res.status(400).json({ success: false, error: 'Tiêu đề sự kiện không được trống' });
             }
@@ -58,6 +60,8 @@ class EventController {
             const description = JSON.stringify({
                 location: location || '',
                 time: time || '',
+                end_date: end_date || '',
+                end_time: end_time || '',
                 recurrence: recurrence || 'none',
                 note: note || '',
                 subscribers: [],
@@ -89,6 +93,8 @@ class EventController {
                     ...data,
                     location: meta.location || '',
                     time: meta.time || '',
+                    end_date: meta.end_date || '',
+                    end_time: meta.end_time || '',
                     recurrence: meta.recurrence || 'none',
                     note: meta.note || '',
                     subscribers: meta.subscribers || [],

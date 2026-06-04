@@ -1,0 +1,35 @@
+/* ── Finance Analytics SVG Charts & Import/Export ── */
+.finance-analytics-container { margin-bottom: 24px; }
+.finance-analytics-card { background: var(--bg-secondary); border: 1px solid var(--border-subtle); border-radius: 16px; padding: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.02); }
+.finance-analytics-card h3 { margin: 0 0 20px 0; font-size: 18px; font-weight: 600; }
+.charts-flex-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px; }
+.chart-wrapper { background: var(--bg-primary); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; align-items: center; position: relative; min-height: 280px; box-sizing: border-box; }
+.chart-wrapper h4 { margin: 0 0 16px 0; font-size: 14px; font-weight: 600; color: var(--text-primary); display: flex; justify-content: space-between; width: 100%; align-items: center; }
+.chart-toggle-group { display: flex; background: var(--bg-secondary); padding: 2px; border-radius: 6px; border: 1px solid var(--border-subtle); }
+.chart-toggle-btn { border: none; background: transparent; color: var(--text-muted); font-size: 11px; font-weight: 600; padding: 4px 8px; border-radius: 4px; cursor: pointer; transition: all 0.2s; }
+.chart-toggle-btn.active { background: var(--primary); color: #fff; }
+.donut-slice { transition: stroke-width 0.2s, stroke-dashoffset 0.3s ease; cursor: pointer; }
+.donut-slice:hover { stroke-width: 24; }
+.bar-rect { transition: y 0.3s ease, height 0.3s ease, fill-opacity 0.2s; cursor: pointer; }
+.bar-rect:hover { fill-opacity: 0.85; }
+.chart-tooltip { position: absolute; background: rgba(10,15,30,0.9); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 8px 12px; color: #fff; font-size: 11px; pointer-events: none; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 10; line-height: 1.4; transition: opacity 0.15s ease; }
+.chart-legend-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; width: 100%; margin-top: 16px; font-size: 11px; }
+.chart-legend-item { display: flex; align-items: center; gap: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-secondary); }
+
+/* ── Import Modal zones ── */
+.import-upload-zone { border: 2px dashed var(--border-subtle); border-radius: 12px; padding: 30px; text-align: center; background: var(--bg-primary); cursor: pointer; transition: border-color 0.2s, background-color 0.2s; margin-bottom: 16px; }
+.import-upload-zone:hover { border-color: var(--primary); background: var(--bg-hover); }
+.import-sheet-zone { margin-bottom: 20px; }
+.preview-table-container { max-height: 250px; overflow-y: auto; border: 1px solid var(--border-subtle); border-radius: 8px; margin-top: 12px; background: var(--bg-primary); }
+.preview-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.preview-table th { position: sticky; top: 0; background: var(--bg-secondary); z-index: 2; padding: 8px 10px; font-weight: 600; border-bottom: 1px solid var(--border-subtle); }
+.preview-table td { padding: 6px 10px; border-bottom: 1px solid var(--border-subtle); vertical-align: middle; }
+.preview-table tr.invalid-row { background: rgba(239,68,68,0.06) !important; }
+.preview-table tr.invalid-row td { border-bottom: 1px solid rgba(239,68,68,0.15); }
+.preview-table .form-input { font-size: 12px; padding: 4px 8px; border-radius: 4px; height: auto; width: 100%; box-sizing: border-box; }
+.preview-table .form-input.invalid-field { border-color: #ef4444 !important; background-color: rgba(239,68,68,0.05); }
+
+/* ── Progress Overlay ── */
+.progress-overlay { position: absolute; inset: 0; background: rgba(10,15,30,0.85); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; border-radius: 16px; color: #fff; backdrop-filter: blur(4px); }
+.progress-spinner { border: 3px solid rgba(255,255,255,0.1); border-radius: 50%; border-top: 3px solid var(--primary); width: 32px; height: 32px; animation: spin 1s linear infinite; margin-bottom: 16px; }
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }

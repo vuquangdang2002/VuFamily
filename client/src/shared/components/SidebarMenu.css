@@ -1,0 +1,32 @@
+/* ─── Sidebar Footer & User Menu ─── */
+.sidebar-footer { padding: 12px; border-top: 1px solid rgba(255,255,255,0.12); position: relative; margin-top: auto; }
+.sidebar-user { display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 8px; background: rgba(255,255,255,0.1); }
+.sidebar-user-avatar { font-size: 20px; flex-shrink: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: rgba(255,255,255,0.15); }
+.sidebar-user-info { flex: 1; min-width: 0; overflow: hidden; }
+.sidebar-user-name { font-size: 13px; color: #fff; font-weight: 500; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sidebar-user-role { font-size: 10px; color: rgba(255,255,255,0.5); display: block; }
+.sidebar-logout { width: 28px; height: 28px; border: none; border-radius: 6px; background: transparent; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; transition: background 0.2s; flex-shrink: 0; }
+.sidebar-logout:hover { background: rgba(248,113,113,0.15); }
+.sidebar.collapsed .sidebar-user { justify-content: center; padding: 8px 4px; }
+.sidebar-user-expand { font-size: 10px; color: rgba(255,255,255,0.5); margin-left: auto; }
+
+/* ─── Sidebar User Popup Menu ─── */
+.sidebar-user-menu { position: absolute; bottom: calc(100% + 8px); left: 8px; right: 8px; background: var(--bg-secondary); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); box-shadow: var(--shadow-lg); z-index: 500; overflow: hidden; animation: slideUpFade 200ms ease; min-width: 200px; }
+
+@keyframes slideUpFade {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.sidebar-user-menu-header { display: flex; align-items: center; gap: 10px; padding: 14px 16px; }
+.sidebar-user-menu-avatar { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), var(--primary-light)); display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+.sidebar-user-menu-name { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+.sidebar-user-menu-role { font-size: 11px; color: var(--text-muted); }
+.sidebar-user-menu-divider { height: 1px; background: var(--border-subtle); margin: 0; }
+.sidebar-user-menu-item { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 16px; border: none; background: transparent; color: var(--text-primary); font-family: var(--font-body); font-size: 13px; cursor: pointer; transition: background 150ms; text-align: left; }
+.sidebar-user-menu-item:hover { background: var(--primary-glow); }
+.sidebar-user-menu-item.logout { color: var(--accent-error); font-weight: 600; }
+.sidebar-user-menu-item.logout:hover { background: rgba(232,84,84,0.08); }
+
+/* Collapsed sidebar: popup positioned to the right */
+.sidebar.collapsed .sidebar-user-menu { left: calc(100% + 8px); bottom: 0; right: auto; min-width: 220px; }
