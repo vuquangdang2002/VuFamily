@@ -237,6 +237,78 @@ export default function ChatPage({ user, addToast, onStartCall }) {
         } catch (e) { addToast(t('chat.connection_error'), 'error'); }
     };
 
+    const handleJoinRoom = async (inviteCode) => {
+        try {
+            const res = await fetch(`${getApiBase()}/chats/join`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'x-auth-token': AuthHelper.getToken() },
+                body: JSON.stringify({ inviteCode })
+            });
+            const json = await res.json();
+            if (json.success) {
+                await fetchRooms();
+                setActiveRoomId(json.data.id);
+                addToast(t('chat.rename_success'));
+            } else {
+                addToast(json.error || t('chat.connection_error'), 'error');
+            }
+        } catch (e) {
+            addToast(t('chat.connection_error'), 'error');
+        }
+    };
+
+    const handleUpdateSettings = async (allowAdd) => {
+        try {
+            const res = await fetch(`${getApiBase()}/chats/${activeRoomId}/settings`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'x-auth-token': AuthHelper.getToken() },
+                body: JSON.stringify({ allowAdd })
+            });
+            const json = await res.json();
+            if (json.success) {
+                await fetchRooms();
+                addToast(t('chat.rename_success'));
+            } else {
+                addToast(json.error || t('chat.rename_fail'), 'error');
+            }
+        } catch (e) {
+            addToast(t('chat.network_error'), 'error');
+        }
+    };
+
+    const handleAddMember = async (targetUserId) => {
+        try {
+            const res = await fetch(`${getApiBase()}/chats/${activeRoomId}/members`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'x-auth-token': AuthHelper.getToken() },
+                body: JSON.stringify({ userId: targetUserId })
+            });
+            const json = await res.json();
+            if (json.success) {
+                await fetchRooms();
+                await fetchMessagesFull(activeRoomId);
+                addToast(t('chat.add_member_success'));
+            } else {
+                addToast(t('chat.add_member_fail').replace('{error}', json.error), 'error');
+            }
+        } catch (e) {
+            addToast(t('chat.connection_error'), 'error');
+        }
+    };
+
+    // Parse invite code from URL query parameter on mount
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const inviteCode = params.get('invite');
+        if (inviteCode && inviteCode.trim()) {
+            window.history.replaceState({}, document.title, window.location.pathname);
+            // Delay slightly to wait for auth/rooms load
+            setTimeout(() => {
+                handleJoinRoom(inviteCode.trim());
+            }, 500);
+        }
+    }, []);
+
     const activeRoom = rooms.find(r => r.id === activeRoomId);
     const currentUserRole = activeRoom?.type === 'group' ? (activeRoom.members?.find(m => m.id === user.id)?.role || 'member') : 'member';
 
@@ -249,6 +321,7 @@ export default function ChatPage({ user, addToast, onStartCall }) {
                     activeRoomId={activeRoomId}
                     setActiveRoomId={setActiveRoomId}
                     setShowNewChat={setShowNewChat}
+                    handleJoinRoom={handleJoinRoom}
                 />
 
                 <MessagePanel
@@ -280,6 +353,8 @@ export default function ChatPage({ user, addToast, onStartCall }) {
                 currentUserRole={currentUserRole}
                 handleKickMember={handleKickMember}
                 handleLeaveGroup={handleLeaveGroup}
+                handleUpdateSettings={handleUpdateSettings}
+                handleAddMember={handleAddMember}
             />
 
             <style>

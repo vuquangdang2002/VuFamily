@@ -171,6 +171,44 @@ class ChatModel {
             
         if (error) throw error;
     }
+
+    static async getRoomById(roomId) {
+        const { data, error } = await supabase
+            .from('chat_rooms')
+            .select('*')
+            .eq('id', roomId)
+            .single();
+        if (error && error.code !== 'PGRST116') throw error;
+        return data;
+    }
+
+    static async getAllGroupRooms() {
+        const { data, error } = await supabase
+            .from('chat_rooms')
+            .select('*')
+            .eq('type', 'group');
+        if (error) throw error;
+        return data;
+    }
+
+    static async getUserInfo(userId) {
+        const { data, error } = await supabase
+            .from('users')
+            .select('id, username, display_name, avatar')
+            .eq('id', userId)
+            .single();
+        if (error && error.code !== 'PGRST116') throw error;
+        return data;
+    }
+
+    static async getUsersInfo(userIds) {
+        const { data, error } = await supabase
+            .from('users')
+            .select('id, username, display_name, avatar')
+            .in('id', userIds);
+        if (error) throw error;
+        return data;
+    }
 }
 
 module.exports = ChatModel;

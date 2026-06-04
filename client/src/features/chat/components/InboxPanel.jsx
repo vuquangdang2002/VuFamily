@@ -6,7 +6,8 @@ export default function InboxPanel({
     loadingRooms,
     activeRoomId,
     setActiveRoomId,
-    setShowNewChat
+    setShowNewChat,
+    handleJoinRoom
 }) {
     const { t } = useTranslation();
     const [searchQuery, setSearchQuery] = useState('');
@@ -17,11 +18,26 @@ export default function InboxPanel({
 
     return (
         <div className="chat-inbox chat-inbox-panel">
-            <div style={{ padding: '16px 16px 12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ padding: '16px 16px 12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
                 <h2 style={{ fontSize: 18, margin: 0 }}>{t('chat.messages_title')}</h2>
-                <button className="btn btn-primary" style={{ padding: '6px 12px', fontSize: 13 }} onClick={() => setShowNewChat(true)}>
-                    {t('chat.new_chat_btn')}
-                </button>
+                <div style={{ display: 'flex', gap: 6 }}>
+                    <button 
+                        className="btn" 
+                        style={{ padding: '6px 10px', fontSize: 13 }} 
+                        title={t('chat.join_by_code_title')} 
+                        onClick={() => {
+                            const code = prompt(t('chat.enter_invite_code_prompt'));
+                            if (code && code.trim()) {
+                                handleJoinRoom(code.trim());
+                            }
+                        }}
+                    >
+                        🔑
+                    </button>
+                    <button className="btn btn-primary" style={{ padding: '6px 12px', fontSize: 13 }} onClick={() => setShowNewChat(true)}>
+                        {t('chat.new_chat_btn')}
+                    </button>
+                </div>
             </div>
 
             {/* Search Input for Active Rooms */}

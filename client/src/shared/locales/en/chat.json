@@ -70,5 +70,17 @@
     "chat.no_member_found": "No members found",
     "chat.search_rooms_placeholder": "Search conversations...",
     "chat.search_members_placeholder": "Search members...",
-    "chat.hub_unavailable": "⚠️ Cannot connect to Hub — call feature is temporarily unavailable"
+    "chat.hub_unavailable": "⚠️ Cannot connect to Hub — call feature is temporarily unavailable",
+    "chat.join_by_code_title": "Enter invite code",
+    "chat.enter_invite_code_prompt": "Enter group invite code to join:",
+    "chat.invite_code_label": "Group Invite Code",
+    "chat.invite_link_copied": "Group invite link copied!",
+    "chat.invite_code_copied": "Group invite code copied!",
+    "chat.copy_invite_code": "Copy code",
+    "chat.copy_invite_link": "Copy link",
+    "chat.member_add_permission": "Members can add others",
+    "chat.add_member_btn": "➕ Add member",
+    "chat.add_member_modal_title": "Add Member to Group",
+    "chat.add_member_success": "Successfully added member to group!",
+    "chat.add_member_fail": "Error adding member: {error}"
 }

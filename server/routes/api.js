@@ -113,13 +113,27 @@ router.post('/events/:id/register', authenticate, EventController.register);
 router.post('/events/:id/unregister', authenticate, EventController.unregister);
 
 // ─── Chat System ───
-const { getRooms, getMessages, sendMessage, createRoom, updateRoomName, leaveRoom, kickMember } = require('../controllers/chatController');
+const { 
+    getRooms, 
+    getMessages, 
+    sendMessage, 
+    createRoom, 
+    updateRoomName, 
+    leaveRoom, 
+    kickMember,
+    addMember,
+    joinRoomByInviteCode,
+    updateRoomSettings
+} = require('../controllers/chatController');
 
 router.get('/chats', authenticate, getRooms);
 router.post('/chats', authenticate, createRoom);
+router.post('/chats/join', authenticate, joinRoomByInviteCode);
 router.get('/chats/:id/messages', authenticate, getMessages);
 router.post('/chats/:id/messages', authenticate, sendMessage);
 router.put('/chats/:id/name', authenticate, updateRoomName);
+router.put('/chats/:id/settings', authenticate, updateRoomSettings);
+router.post('/chats/:id/members', authenticate, addMember);
 router.post('/chats/:id/leave', authenticate, leaveRoom);
 router.post('/chats/:id/kick/:userId', authenticate, kickMember);
 

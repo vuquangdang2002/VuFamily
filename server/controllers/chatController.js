@@ -24,6 +24,8 @@ async function getRooms(req, res) {
             let display_name = room.name;
             let avatar = null;
             let is_online = false;
+            let inviteCode = '';
+            let allowAdd = false;
 
             // If direct chat, name is the OTHER person's name
             if (room.type === 'direct') {
@@ -34,6 +36,15 @@ async function getRooms(req, res) {
                     // Check if they are actually online (pinged in last 5 mins)
                     is_online = other.users.is_online && (new Date() - new Date(other.users.last_active)) < 5 * 60000;
                 }
+            } else if (room.type === 'group' && room.name && room.name.startsWith('{') && room.name.endsWith('}')) {
+                try {
+                    const parsed = JSON.parse(room.name);
+                    display_name = parsed.n || 'Nhóm';
+                    inviteCode = parsed.ic || '';
+                    allowAdd = !!parsed.aa;
+                } catch (e) {
+                    // ignore
+                }
             }
 
             return {
@@ -41,6 +52,8 @@ async function getRooms(req, res) {
                 display_name,
                 avatar,
                 is_online,
+                inviteCode,
+                allowAdd,
                 members: roomMembers.map(m => ({ ...m.users, role: m.role || 'member' }))
             };
         });
@@ -148,8 +161,23 @@ async function createRoom(req, res) {
             }
         }
 
+        // Determine group name and serialize settings
+        let finalName = name;
+        if (isGroup) {
+            const inviteCode = Math.random().toString(36).substring(2, 10).toUpperCase();
+            if (!finalName || !finalName.trim()) {
+                const allMemberIds = [userId, ...participantIds];
+                const usersInfo = await ChatModel.getUsersInfo(allMemberIds);
+                const names = usersInfo ? usersInfo.map(u => u.display_name || u.username) : [];
+                const generatedTitle = `Nhóm ${names.join(', ')}`.substring(0, 80);
+                finalName = JSON.stringify({ n: generatedTitle, ic: inviteCode, aa: false });
+            } else {
+                finalName = JSON.stringify({ n: finalName.trim(), ic: inviteCode, aa: false });
+            }
+        }
+
         // Create room
-        const newRoom = await ChatModel.createRoom(actualType, name);
+        const newRoom = await ChatModel.createRoom(actualType, finalName);
 
         // Add members
         const allMemberIds = [userId, ...participantIds];
@@ -161,7 +189,31 @@ async function createRoom(req, res) {
 
         await ChatModel.addMembers(memberData);
 
-        res.json({ success: true, data: newRoom });
+        // Parse and enrich newRoom object to return it correctly
+        let display_name = newRoom.name;
+        let inviteCode = '';
+        let allowAdd = false;
+
+        if (newRoom.type === 'group' && newRoom.name && newRoom.name.startsWith('{') && newRoom.name.endsWith('}')) {
+            try {
+                const parsed = JSON.parse(newRoom.name);
+                display_name = parsed.n || 'Nhóm';
+                inviteCode = parsed.ic || '';
+                allowAdd = !!parsed.aa;
+            } catch (e) {
+                // ignore
+            }
+        }
+
+        res.json({ 
+            success: true, 
+            data: { 
+                ...newRoom, 
+                display_name, 
+                inviteCode, 
+                allowAdd 
+            } 
+        });
     } catch (e) {
         console.error('[ChatController - createRoom] Error:', e);
         res.status(500).json({ success: false, error: e.message || 'Lỗi server' });
@@ -184,7 +236,28 @@ async function updateRoomName(req, res) {
             return res.status(403).json({ success: false, error: 'Không có quyền truy cập' });
         }
 
-        await ChatModel.updateRoomName(roomId, name.trim());
+        const room = await ChatModel.getRoomById(roomId);
+        if (!room) {
+            return res.status(404).json({ success: false, error: 'Không tìm thấy phòng' });
+        }
+
+        let finalName = name.trim();
+        if (room.type === 'group') {
+            let inviteCode = Math.random().toString(36).substring(2, 10).toUpperCase();
+            let allowAdd = false;
+            if (room.name && room.name.startsWith('{') && room.name.endsWith('}')) {
+                try {
+                    const parsed = JSON.parse(room.name);
+                    if (parsed.ic) inviteCode = parsed.ic;
+                    if (parsed.aa !== undefined) allowAdd = parsed.aa;
+                } catch (e) {
+                    // ignore
+                }
+            }
+            finalName = JSON.stringify({ n: finalName, ic: inviteCode, aa: allowAdd });
+        }
+
+        await ChatModel.updateRoomName(roomId, finalName);
         await ChatModel.updateRoomTimestamp(roomId);
 
         res.json({ success: true });
@@ -231,6 +304,185 @@ async function kickMember(req, res) {
     }
 }
 
+// Add member to group
+async function addMember(req, res) {
+    try {
+        const roomId = parseInt(req.params.id);
+        const { userId } = req.body;
+        const myId = req.user.id;
+
+        if (!userId) {
+            return res.status(400).json({ success: false, error: 'Thiếu thông tin người cần thêm' });
+        }
+
+        const room = await ChatModel.getRoomById(roomId);
+        if (!room) {
+            return res.status(404).json({ success: false, error: 'Không tìm thấy nhóm' });
+        }
+
+        if (room.type !== 'group') {
+            return res.status(400).json({ success: false, error: 'Chỉ có thể thêm thành viên vào nhóm chat' });
+        }
+
+        // Verify my membership & role
+        const myMembership = await ChatModel.getMembership(roomId, myId);
+        if (!myMembership) {
+            return res.status(403).json({ success: false, error: 'Bạn không có quyền truy cập nhóm này' });
+        }
+
+        // Check permission: must be admin OR room must allow members to add
+        let canAdd = myMembership.role === 'admin';
+        if (!canAdd && room.name && room.name.startsWith('{') && room.name.endsWith('}')) {
+            try {
+                const parsed = JSON.parse(room.name);
+                if (parsed.aa) { // aa = allowAdd
+                    canAdd = true;
+                }
+            } catch (e) {
+                // ignore
+            }
+        }
+
+        if (!canAdd) {
+            return res.status(403).json({ success: false, error: 'Chỉ quản trị viên mới có quyền thêm thành viên vào nhóm này' });
+        }
+
+        // Check if target user is already a member
+        const existingMembership = await ChatModel.getMembership(roomId, userId);
+        if (existingMembership) {
+            return res.status(400).json({ success: false, error: 'Người này đã là thành viên của nhóm' });
+        }
+
+        // Add member
+        await ChatModel.addMembers([{
+            room_id: roomId,
+            user_id: userId,
+            role: 'member'
+        }]);
+
+        // Send a system message indicating they were added
+        const targetUser = await ChatModel.getUserInfo(userId);
+        const targetDisplay = targetUser?.display_name || targetUser?.username || 'Thành viên mới';
+        const myDisplay = req.user.display_name || req.user.username || 'Thành viên';
+        
+        await ChatModel.saveMessage(roomId, myId, `=== ${myDisplay} đã thêm ${targetDisplay} vào nhóm ===`);
+        await ChatModel.updateRoomTimestamp(roomId);
+
+        res.json({ success: true });
+    } catch (e) {
+        console.error('[ChatController - addMember] Error:', e);
+        res.status(500).json({ success: false, error: e.message || 'Lỗi server' });
+    }
+}
+
+// Join room by invite code
+async function joinRoomByInviteCode(req, res) {
+    try {
+        const userId = req.user.id;
+        const { inviteCode } = req.body;
+
+        if (!inviteCode || inviteCode.trim() === '') {
+            return res.status(400).json({ success: false, error: 'Mã mời không hợp lệ' });
+        }
+
+        // Fetch all group rooms
+        const rooms = await ChatModel.getAllGroupRooms();
+
+        // Find the room with the matching invite code in its JSON name
+        let targetRoom = null;
+        for (const room of rooms) {
+            if (room.name && room.name.startsWith('{') && room.name.endsWith('}')) {
+                try {
+                    const parsed = JSON.parse(room.name);
+                    if (parsed.ic && parsed.ic.toUpperCase() === inviteCode.trim().toUpperCase()) {
+                        targetRoom = room;
+                        break;
+                    }
+                } catch (e) {
+                    // ignore parse error
+                }
+            }
+        }
+
+        if (!targetRoom) {
+            return res.status(404).json({ success: false, error: 'Không tìm thấy nhóm với mã mời này' });
+        }
+
+        // Check if user is already a member
+        const existingMembership = await ChatModel.getMembership(targetRoom.id, userId);
+        if (existingMembership) {
+            return res.json({ success: true, data: { id: targetRoom.id } });
+        }
+
+        // Add user as member
+        await ChatModel.addMembers([{
+            room_id: targetRoom.id,
+            user_id: userId,
+            role: 'member'
+        }]);
+
+        // Send a system message indicating they joined
+        const userDisplay = req.user.display_name || req.user.username || 'Thành viên';
+        await ChatModel.saveMessage(targetRoom.id, userId, `=== ${userDisplay} đã tham gia nhóm bằng mã mời ===`);
+        await ChatModel.updateRoomTimestamp(targetRoom.id);
+
+        res.json({ success: true, data: { id: targetRoom.id } });
+    } catch (e) {
+        console.error('[ChatController - joinRoomByInviteCode] Error:', e);
+        res.status(500).json({ success: false, error: e.message || 'Lỗi server' });
+    }
+}
+
+// Update room settings (allowAdd)
+async function updateRoomSettings(req, res) {
+    try {
+        const roomId = parseInt(req.params.id);
+        const { allowAdd } = req.body;
+
+        if (allowAdd === undefined) {
+            return res.status(400).json({ success: false, error: 'Thiếu thông tin cài đặt' });
+        }
+
+        // Verify membership & admin role
+        const membership = await ChatModel.getMembership(roomId, req.user.id);
+        if (!membership || membership.role !== 'admin') {
+            return res.status(403).json({ success: false, error: 'Chỉ quản trị viên mới có quyền thay đổi cài đặt' });
+        }
+
+        const room = await ChatModel.getRoomById(roomId);
+        if (!room) {
+            return res.status(404).json({ success: false, error: 'Không tìm thấy phòng' });
+        }
+
+        if (room.type !== 'group') {
+            return res.status(400).json({ success: false, error: 'Phòng không phải là nhóm chat' });
+        }
+
+        let title = room.name || 'Nhóm';
+        let inviteCode = Math.random().toString(36).substring(2, 10).toUpperCase();
+
+        if (room.name && room.name.startsWith('{') && room.name.endsWith('}')) {
+            try {
+                const parsed = JSON.parse(room.name);
+                if (parsed.n) title = parsed.n;
+                if (parsed.ic) inviteCode = parsed.ic;
+            } catch (e) {
+                // ignore
+            }
+        }
+
+        const finalName = JSON.stringify({ n: title, ic: inviteCode, aa: !!allowAdd });
+
+        await ChatModel.updateRoomName(roomId, finalName);
+        await ChatModel.updateRoomTimestamp(roomId);
+
+        res.json({ success: true });
+    } catch (e) {
+        console.error('[ChatController - updateRoomSettings] Error:', e);
+        res.status(500).json({ success: false, error: e.message || 'Lỗi server' });
+    }
+}
+
 module.exports = {
     getRooms,
     getMessages,
@@ -238,5 +490,8 @@ module.exports = {
     createRoom,
     updateRoomName,
     leaveRoom,
-    kickMember
+    kickMember,
+    addMember,
+    joinRoomByInviteCode,
+    updateRoomSettings
 };
