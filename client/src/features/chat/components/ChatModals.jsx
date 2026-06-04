@@ -29,16 +29,18 @@ export default function ChatModals({
             {/* NEW CHAT MODAL */}
             {showNewChat && (
                 <div className="modal-overlay open" onClick={e => e.target === e.currentTarget && setShowNewChat(false)}>
-                    <div className="modal" style={{ width: 440 }}>
+                    <div className="modal" style={{ width: 440, display: 'flex', flexDirection: 'column', maxHeight: '85vh', overflow: 'hidden' }}>
                         <div className="modal-header">
                             <h2>{t('chat.start_chat_title')}</h2>
                             <button className="detail-close" onClick={() => { setShowNewChat(false); setUserSearchQuery(''); }}>✕</button>
                         </div>
-                        <div className="modal-body" style={{ maxHeight: '60vh', overflowY: 'auto' }}>
-                            <p style={{ color: 'var(--text-muted)', marginBottom: 12 }}>{t('chat.select_users_hint')}</p>
+                        
+                        {/* Search and Selected Users Area (Fixed below Header) */}
+                        <div style={{ padding: '16px 24px 12px 24px', background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border-subtle)' }}>
+                            <p style={{ color: 'var(--text-muted)', fontSize: 13, marginBottom: 12 }}>{t('chat.select_users_hint')}</p>
 
                             {/* User Search Input */}
-                            <div style={{ marginBottom: 16 }}>
+                            <div style={{ marginBottom: 12 }}>
                                 <input
                                     type="text"
                                     className="form-input"
@@ -57,6 +59,33 @@ export default function ChatModals({
                                 />
                             </div>
 
+                            {/* Selected User Chips */}
+                            {selectedUserIds.length > 0 && (
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 4, maxHeight: '90px', overflowY: 'auto' }}>
+                                    {selectedUserIds.map(id => {
+                                        const u = allUsers.find(member => member.id === id);
+                                        if (!u) return null;
+                                        return (
+                                            <div key={u.id} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 10px', background: 'var(--bg-primary)', border: '1px solid var(--border-subtle)', borderRadius: 20, fontSize: 12 }}>
+                                                <div style={{ width: 18, height: 18, borderRadius: '50%', background: 'var(--gold)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 8 }}>
+                                                    {u.avatar ? <img src={u.avatar} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} alt="avatar" /> : u.display_name?.substring(0, 2).toUpperCase()}
+                                                </div>
+                                                <span style={{ maxWidth: 100, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{u.display_name || u.username}</span>
+                                                <button 
+                                                    onClick={() => toggleSelectUser(u.id)}
+                                                    style={{ border: 'none', background: 'transparent', padding: '0 2px', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 10, fontWeight: 'bold' }}
+                                                >
+                                                    ✕
+                                                </button>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Scrollable Members List */}
+                        <div className="modal-body" style={{ flex: 1, overflowY: 'auto', padding: '16px 24px' }}>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                                 {filteredUsers.length === 0 ? (
                                     <div style={{ padding: 16, textAlign: 'center', color: 'var(--text-muted)', fontSize: 13 }}>
@@ -70,7 +99,8 @@ export default function ChatModals({
                                                 padding: '10px 12px', border: '1px solid',
                                                 borderColor: selectedUserIds.includes(u.id) ? 'var(--primary)' : 'var(--border-subtle)',
                                                 background: selectedUserIds.includes(u.id) ? 'rgba(37,99,235,0.05)' : 'transparent',
-                                                borderRadius: 8, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12
+                                                borderRadius: 8, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12,
+                                                transition: 'all 0.15s ease'
                                             }}
                                         >
                                             <div style={{ width: 18, height: 18, borderRadius: '50%', border: '2px solid', borderColor: selectedUserIds.includes(u.id) ? 'var(--primary)' : '#cbd5e1', background: selectedUserIds.includes(u.id) ? 'var(--primary)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -89,12 +119,24 @@ export default function ChatModals({
                                     ))
                                 )}
                             </div>
+                        </div>
 
-                            {selectedUserIds.length > 0 && (
-                                <button className="btn btn-primary" style={{ width: '100%', marginTop: 24, justifyContent: 'center' }} onClick={handleCreateRoom}>
-                                    {t('chat.start_chat_btn')} ({selectedUserIds.length})
-                                </button>
-                            )}
+                        {/* Fixed Footer at the bottom */}
+                        <div className="modal-footer" style={{ borderTop: '1px solid var(--border-subtle)', padding: '16px 24px', background: 'var(--bg-secondary)', display: 'flex', justifyContent: 'center' }}>
+                            <button 
+                                className="btn btn-primary" 
+                                style={{ 
+                                    width: '100%', 
+                                    justifyContent: 'center',
+                                    opacity: selectedUserIds.length === 0 ? 0.55 : 1,
+                                    pointerEvents: selectedUserIds.length === 0 ? 'none' : 'auto',
+                                    cursor: selectedUserIds.length === 0 ? 'not-allowed' : 'pointer'
+                                }} 
+                                onClick={handleCreateRoom}
+                                disabled={selectedUserIds.length === 0}
+                            >
+                                {t('chat.start_chat_btn')} {selectedUserIds.length > 0 ? `(${selectedUserIds.length})` : ''}
+                            </button>
                         </div>
                     </div>
                 </div>
