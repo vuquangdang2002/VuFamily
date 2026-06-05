@@ -2,7 +2,8 @@
 const express = require('express');
 const router = express.Router();
 const MemberController = require('../controllers/memberController');
-const { authenticate, requireAdmin, requireEditorOrAdmin, getUsers, createUser, updateUser, deleteUser, changePassword, resetPassword, forgotPassword, updateProfile, register, verifyEmail } = require('../middleware/auth');
+const { authenticate, requireAdmin, requireEditorOrAdmin } = require('../middleware/auth');
+const { getUsers, getPublicUsers, createUser, updateUser, deleteUser, changePassword, resetPassword, forgotPassword, updateProfile, register, verifyEmail } = require('../controllers/userController');
 const UpdateRequestModel = require('../models/UpdateRequest');
 const AuthController = require('../controllers/authController');
 
@@ -53,7 +54,7 @@ router.post('/auth/avatar', authenticate, require('express').raw({ type: 'image/
 
 
 // ─── User Management (admin only) ───
-router.get('/users/public', authenticate, require('../middleware/auth').getPublicUsers);
+router.get('/users/public', authenticate, getPublicUsers);
 router.get('/users', authenticate, requireAdmin, getUsers);
 router.post('/users', authenticate, requireAdmin, createUser);
 router.put('/users/:id', authenticate, requireAdmin, updateUser);

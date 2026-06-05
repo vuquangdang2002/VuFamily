@@ -19,6 +19,11 @@ export default function CalendarPage({ members, user, addToast }) {
     const [tab, setTab] = useState('calendar'); // 'calendar' or 'events'
     const [showEventForm, setShowEventForm] = useState(false);
     const [eventFilter, setEventFilter] = useState('all');
+    const [eventSearch, setEventSearch] = useState('');
+    const [sortOrder, setSortOrder] = useState('asc'); // 'asc' | 'desc'
+    const [customFrom, setCustomFrom] = useState('');
+    const [customTo, setCustomTo] = useState('');
+    const [showCustomRange, setShowCustomRange] = useState(false);
     const [eventForm, setEventForm] = useState({
         title: '', event_date: '', time: '', end_date: '', end_time: '', location: '', recurrence: 'none', note: ''
     });
@@ -76,52 +81,117 @@ export default function CalendarPage({ members, user, addToast }) {
         }
     };
 
-    // Week / Month / Quarter / Year event list filter calculation
-    const getFilteredEvents = () => {
+    // ─── Event list filtering ───
+    const getFilterBounds = () => {
         const now = new Date();
         const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        
-        return serverEvents.filter(ev => {
-            if (!ev.event_date) return false;
-            const evDate = new Date(ev.event_date);
-            const evDateNormalized = new Date(evDate.getFullYear(), evDate.getMonth(), evDate.getDate());
-            
-            if (eventFilter === 'all') return true;
-            
-            if (eventFilter === 'week') {
-                const currentDay = now.getDay();
-                const distanceToMonday = currentDay === 0 ? -6 : 1 - currentDay;
-                const monday = new Date(startOfToday);
-                monday.setDate(startOfToday.getDate() + distanceToMonday);
-                
-                const sunday = new Date(monday);
-                sunday.setDate(monday.getDate() + 6);
-                
-                monday.setHours(0,0,0,0);
-                sunday.setHours(23,59,59,999);
-                
-                return evDateNormalized >= monday && evDateNormalized <= sunday;
-            }
-            
-            if (eventFilter === 'month') {
-                return evDate.getFullYear() === now.getFullYear() && evDate.getMonth() === now.getMonth();
-            }
-            
-            if (eventFilter === 'quarter') {
-                const currentQuarter = Math.floor(now.getMonth() / 3);
-                const evQuarter = Math.floor(evDate.getMonth() / 3);
-                return evDate.getFullYear() === now.getFullYear() && evQuarter === currentQuarter;
-            }
-            
-            if (eventFilter === 'year') {
-                return evDate.getFullYear() === now.getFullYear();
-            }
-            
-            return true;
-        });
+        const endOfToday = new Date(startOfToday); endOfToday.setHours(23, 59, 59, 999);
+
+        if (eventFilter === 'today') return [startOfToday, endOfToday];
+
+        if (eventFilter === 'week') {
+            const day = now.getDay();
+            const monday = new Date(startOfToday);
+            monday.setDate(startOfToday.getDate() + (day === 0 ? -6 : 1 - day));
+            const sunday = new Date(monday); sunday.setDate(monday.getDate() + 6); sunday.setHours(23, 59, 59, 999);
+            return [monday, sunday];
+        }
+        if (eventFilter === 'next7') {
+            const end = new Date(startOfToday); end.setDate(startOfToday.getDate() + 6); end.setHours(23, 59, 59, 999);
+            return [startOfToday, end];
+        }
+        if (eventFilter === 'next30') {
+            const end = new Date(startOfToday); end.setDate(startOfToday.getDate() + 29); end.setHours(23, 59, 59, 999);
+            return [startOfToday, end];
+        }
+        if (eventFilter === 'month') {
+            const start = new Date(now.getFullYear(), now.getMonth(), 1);
+            const end = new Date(now.getFullYear(), now.getMonth() + 1, 0); end.setHours(23, 59, 59, 999);
+            return [start, end];
+        }
+        if (eventFilter === 'quarter') {
+            const q = Math.floor(now.getMonth() / 3);
+            const start = new Date(now.getFullYear(), q * 3, 1);
+            const end = new Date(now.getFullYear(), q * 3 + 3, 0); end.setHours(23, 59, 59, 999);
+            return [start, end];
+        }
+        if (eventFilter === 'year') {
+            const start = new Date(now.getFullYear(), 0, 1);
+            const end = new Date(now.getFullYear(), 11, 31); end.setHours(23, 59, 59, 999);
+            return [start, end];
+        }
+        if (eventFilter === 'past') {
+            return [null, new Date(startOfToday.getTime() - 1)];
+        }
+        if (eventFilter === 'custom') {
+            const from = customFrom ? new Date(customFrom) : null;
+            const to = customTo ? new Date(customTo + 'T23:59:59') : null;
+            return [from, to];
+        }
+        return [null, null]; // 'all'
     };
 
-    const filteredEvents = getFilteredEvents();
+    const getFilteredAndSortedEvents = () => {
+        const [from, to] = getFilterBounds();
+
+        let result = serverEvents.filter(ev => {
+            if (!ev.event_date) return false;
+            const evDate = new Date(ev.event_date);
+
+            // date range check
+            if (from && evDate < from) return false;
+            if (to && evDate > to) return false;
+
+            // search filter
+            if (eventSearch.trim()) {
+                const q = eventSearch.toLowerCase();
+                const titleMatch = (ev.title || '').toLowerCase().includes(q);
+                const locMatch = (ev.location || '').toLowerCase().includes(q);
+                const noteMatch = (ev.note || '').toLowerCase().includes(q);
+                if (!titleMatch && !locMatch && !noteMatch) return false;
+            }
+            return true;
+        });
+
+        result.sort((a, b) => {
+            const da = new Date(a.event_date + (a.time ? 'T' + a.time : ''));
+            const db = new Date(b.event_date + (b.time ? 'T' + b.time : ''));
+            return sortOrder === 'asc' ? da - db : db - da;
+        });
+
+        return result;
+    };
+
+    const filteredEvents = getFilteredAndSortedEvents();
+
+    // Group events by month-year label
+    const groupEventsByMonth = (events) => {
+        const groups = [];
+        let lastKey = null;
+        events.forEach(ev => {
+            const d = new Date(ev.event_date);
+            const key = `${d.getFullYear()}-${d.getMonth()}`;
+            const label = d.toLocaleDateString('vi-VN', { month: 'long', year: 'numeric' });
+            if (key !== lastKey) { groups.push({ key, label, events: [] }); lastKey = key; }
+            groups[groups.length - 1].events.push(ev);
+        });
+        return groups;
+    };
+
+    const groupedEvents = groupEventsByMonth(filteredEvents);
+
+    const QUICK_FILTERS = [
+        { key: 'all',     label: t('calendar.filter_all') || 'Tất cả' },
+        { key: 'today',   label: t('calendar.filter_today') || 'Hôm nay' },
+        { key: 'next7',   label: t('calendar.filter_next7') || '7 ngày tới' },
+        { key: 'next30',  label: t('calendar.filter_next30') || '30 ngày tới' },
+        { key: 'week',    label: t('calendar.filter_week') || 'Tuần này' },
+        { key: 'month',   label: t('calendar.filter_month') || 'Tháng này' },
+        { key: 'quarter', label: t('calendar.filter_quarter') || 'Quý này' },
+        { key: 'year',    label: t('calendar.filter_year') || 'Năm nay' },
+        { key: 'past',    label: t('calendar.filter_past') || 'Đã qua' },
+        { key: 'custom',  label: t('calendar.filter_custom') || '⚙ Tùy chỉnh' },
+    ];
 
     return (
         <div className="page-container calendar-page">
@@ -130,7 +200,6 @@ export default function CalendarPage({ members, user, addToast }) {
                 <p className="page-subtitle">{t('calendar.subtitle')}</p>
             </div>
 
-            {/* Tab Navigation */}
             <div className="calendar-tabs">
                 <button 
                     className={`calendar-tab-btn ${tab === 'calendar' ? 'active' : ''}`}
@@ -169,13 +238,81 @@ export default function CalendarPage({ members, user, addToast }) {
                 </div>
             ) : (
                 <div className="calendar-events-tab">
-                    {/* Filters */}
+
+                    {/* ── Search bar ── */}
+                    <div className="cal-search-bar">
+                        <span className="cal-search-icon">🔍</span>
+                        <input
+                            type="text"
+                            className="cal-search-input"
+                            placeholder={t('calendar.search_placeholder') || 'Tìm kiếm sự kiện...'}
+                            value={eventSearch}
+                            onChange={e => setEventSearch(e.target.value)}
+                        />
+                        {eventSearch && (
+                            <button className="cal-search-clear" onClick={() => setEventSearch('')}>✕</button>
+                        )}
+                    </div>
+
+                    {/* ── Quick filters ── */}
                     <div className="calendar-event-filters">
-                        <button className={`calendar-filter-btn ${eventFilter === 'all' ? 'active' : ''}`} onClick={() => setEventFilter('all')}>{t('calendar.filter_all') || 'Tất cả'}</button>
-                        <button className={`calendar-filter-btn ${eventFilter === 'week' ? 'active' : ''}`} onClick={() => setEventFilter('week')}>{t('calendar.filter_week') || 'Tuần này'}</button>
-                        <button className={`calendar-filter-btn ${eventFilter === 'month' ? 'active' : ''}`} onClick={() => setEventFilter('month')}>{t('calendar.filter_month') || 'Tháng này'}</button>
-                        <button className={`calendar-filter-btn ${eventFilter === 'quarter' ? 'active' : ''}`} onClick={() => setEventFilter('quarter')}>{t('calendar.filter_quarter') || 'Quý này'}</button>
-                        <button className={`calendar-filter-btn ${eventFilter === 'year' ? 'active' : ''}`} onClick={() => setEventFilter('year')}>{t('calendar.filter_year') || 'Năm nay'}</button>
+                        {QUICK_FILTERS.map(f => (
+                            <button
+                                key={f.key}
+                                className={`calendar-filter-btn ${eventFilter === f.key ? 'active' : ''} ${f.key === 'custom' ? 'custom-btn' : ''}`}
+                                onClick={() => {
+                                    setEventFilter(f.key);
+                                    if (f.key === 'custom') setShowCustomRange(true);
+                                    else setShowCustomRange(false);
+                                }}
+                            >
+                                {f.label}
+                            </button>
+                        ))}
+                    </div>
+
+                    {/* ── Custom date range picker ── */}
+                    {(eventFilter === 'custom' || showCustomRange) && (
+                        <div className="cal-custom-range">
+                            <div className="cal-range-group">
+                                <label className="cal-range-label">📅 {t('calendar.range_from') || 'Từ ngày'}</label>
+                                <input type="date" className="form-input cal-range-input" value={customFrom} onChange={e => setCustomFrom(e.target.value)} />
+                            </div>
+                            <span className="cal-range-sep">→</span>
+                            <div className="cal-range-group">
+                                <label className="cal-range-label">📅 {t('calendar.range_to') || 'Đến ngày'}</label>
+                                <input type="date" className="form-input cal-range-input" value={customTo} min={customFrom} onChange={e => setCustomTo(e.target.value)} />
+                            </div>
+                            {(customFrom || customTo) && (
+                                <button className="cal-range-clear" onClick={() => { setCustomFrom(''); setCustomTo(''); }}>✕ Xóa</button>
+                            )}
+                        </div>
+                    )}
+
+                    {/* ── Sort & stats bar ── */}
+                    <div className="cal-list-meta">
+                        <span className="cal-list-count">
+                            {filteredEvents.length === serverEvents.length
+                                ? `${serverEvents.length} sự kiện`
+                                : `${filteredEvents.length} / ${serverEvents.length} sự kiện`}
+                        </span>
+                        <div className="cal-sort-group">
+                            <span className="cal-sort-label">Sắp xếp:</span>
+                            <button
+                                className={`cal-sort-btn ${sortOrder === 'asc' ? 'active' : ''}`}
+                                onClick={() => setSortOrder('asc')}
+                                title="Sắp xếp gần nhất trước"
+                            >
+                                ↑ Gần nhất
+                            </button>
+                            <button
+                                className={`cal-sort-btn ${sortOrder === 'desc' ? 'active' : ''}`}
+                                onClick={() => setSortOrder('desc')}
+                                title="Sắp xếp xa nhất trước"
+                            >
+                                ↓ Xa nhất
+                            </button>
+                        </div>
                     </div>
 
                     {/* Event Creation Form (editor/admin only) */}
@@ -288,23 +425,40 @@ export default function CalendarPage({ members, user, addToast }) {
                         </div>
                     )}
 
+                    {/* ── Event list (grouped by month) ── */}
                     {filteredEvents.length === 0 ? (
-                        <div className="empty-state" style={{ padding: 40, textAlign: 'center', background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-lg)' }}>
-                            <span style={{ fontSize: 48 }}>📅</span>
-                            <h3 style={{ marginTop: 12, fontSize: 16 }}>{t('newsfeed.no_events') || 'Không có sự kiện nào'}</h3>
+                        <div className="cal-empty-state">
+                            <span>📅</span>
+                            <h3>{t('newsfeed.no_events') || 'Không có sự kiện nào'}</h3>
+                            <p style={{ color: 'var(--text-muted)', fontSize: 13, margin: 0 }}>
+                                {eventSearch || eventFilter !== 'all'
+                                    ? 'Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm'
+                                    : 'Chưa có sự kiện nào được tạo'}
+                            </p>
                         </div>
                     ) : (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                            {filteredEvents.map(event => (
-                                <EventCard
-                                    key={event.id}
-                                    event={event}
-                                    currentUserId={currentUserId}
-                                    isAdmin={isAdmin}
-                                    canEdit={canEdit}
-                                    addToast={addToast}
-                                    onRefresh={fetchEvents}
-                                />
+                        <div className="cal-grouped-list">
+                            {groupedEvents.map(group => (
+                                <div key={group.key} className="cal-month-group">
+                                    <div className="cal-month-label">
+                                        <span className="cal-month-dot" />
+                                        {group.label}
+                                        <span className="cal-month-count">{group.events.length} sự kiện</span>
+                                    </div>
+                                    <div className="cal-month-events">
+                                        {group.events.map(event => (
+                                            <EventCard
+                                                key={event.id}
+                                                event={event}
+                                                currentUserId={currentUserId}
+                                                isAdmin={isAdmin}
+                                                canEdit={canEdit}
+                                                addToast={addToast}
+                                                onRefresh={fetchEvents}
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
                             ))}
                         </div>
                     )}
