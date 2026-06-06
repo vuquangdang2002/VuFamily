@@ -161,7 +161,7 @@ export default function GroupInfoModal({
                                             <div style={{ flex: 1, minWidth: 0 }}>
                                                 <div style={{ fontWeight: 500, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                                                     <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '140px' }}>{m.display_name || m.username}</span>
-                                                    {m.id === user.id && <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>({t('chat.you_label') || 'Bạn'})</span>}
+                                                    {m.id === user.id && <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>({t('chat.you') || 'Bạn'})</span>}
                                                     {m.role === 'admin' && <span style={{ fontSize: 10, background: 'var(--primary)', color: '#fff', padding: '2px 6px', borderRadius: 10 }}>{t('chat.admin_role')}</span>}
                                                 </div>
                                                 <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{m.is_online ? t('chat.online_label') : t('chat.offline_label')}</div>

@@ -25,6 +25,7 @@ import ChatPage from './features/chat/ChatPage';
 import VoiceCall from './features/chat/VoiceCall';
 import GuidePage from './features/guide/GuidePage';
 import FinancePage from './features/finance/FinancePage';
+import HomePage from './features/home/HomePage';
 
 // ── Shared Layout Components ──
 import Sidebar from './shared/components/Sidebar';
@@ -33,6 +34,38 @@ import Toolbar from './shared/components/Toolbar';
 import Toast from './shared/components/Toast';
 import SplashLoading from './shared/components/SplashLoading';
 import ForceChangePasswordModal from './features/auth/ForceChangePasswordModal';
+import MobileNavigation from './shared/components/MobileNavigation';
+import MobileBottomSheet from './shared/components/MobileBottomSheet';
+
+// ── Routing Constants & Helper ──
+const PAGE_TO_PATH = {
+    home: '/',
+    tree: '/tree',
+    newsfeed: '/feed',
+    calendar: '/calendar',
+    requests: '/requests',
+    system: '/system',
+    history: '/history',
+    chat: '/chat',
+    finance: '/finance',
+    guide: '/guide',
+};
+
+const PATH_TO_PAGE = {
+    '/': 'home',
+    '/index.html': 'home',
+    '/home': 'home',
+    '/tree': 'tree',
+    '/feed': 'newsfeed',
+    '/newsfeed': 'newsfeed',
+    '/calendar': 'calendar',
+    '/requests': 'requests',
+    '/system': 'system',
+    '/history': 'history',
+    '/chat': 'chat',
+    '/finance': 'finance',
+    '/guide': 'guide',
+};
 
 export default function App() {
     const { theme, setTheme } = useTheme();
@@ -86,11 +119,41 @@ export default function App() {
     } = useMemberSystem(user, addToast);
 
     // ── Routing & Call State ──
-    const [activePage, setActivePage] = useState('tree');
+    const [activePage, setActivePage] = useState(() => {
+        let path = window.location.pathname;
+        if (path.length > 1 && path.endsWith('/')) {
+            path = path.slice(0, -1);
+        }
+        return PATH_TO_PAGE[path] || 'tree';
+    });
     const [activeCallRoom, setActiveCallRoom] = useState(null);
     const [sidebarCollapsed, setSidebarCollapsed] = useState(() => window.innerWidth <= 768);
     const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 768);
     const [showMobileMenu, setShowMobileMenu] = useState(false);
+
+    // Sync activePage state with window.location.pathname on popstate (browser navigation)
+    useEffect(() => {
+        const handlePopState = () => {
+            let path = window.location.pathname;
+            if (path.length > 1 && path.endsWith('/')) {
+                path = path.slice(0, -1);
+            }
+            const page = PATH_TO_PAGE[path] || 'tree';
+            setActivePage(page);
+        };
+        window.addEventListener('popstate', handlePopState);
+        return () => window.removeEventListener('popstate', handlePopState);
+    }, []);
+
+    // Sync window.location.pathname when activePage changes
+    useEffect(() => {
+        const currentPath = window.location.pathname;
+        const targetPath = PAGE_TO_PATH[activePage] || '/';
+        if (currentPath !== targetPath) {
+            const query = targetPath === '/chat' ? window.location.search : '';
+            window.history.pushState({}, '', targetPath + query);
+        }
+    }, [activePage]);
 
     // Track analytics app open
     useEffect(() => {
@@ -140,6 +203,8 @@ export default function App() {
 
     const renderPage = () => {
         switch (activePage) {
+            case 'home':
+                return <HomePage user={user} members={members} onNavigate={setActivePage} addToast={addToast} />;
             case 'tree':
                 return (
                     <div className="tree-page relative">
@@ -244,140 +309,29 @@ export default function App() {
 
             {/* Mobile Navigation */}
             {isMobile && (
-                <div className="bottom-nav">
-                    <button
-                        className={`bottom-nav-item ${activePage === 'tree' && !showMobileMenu ? 'active' : ''}`}
-                        onClick={() => { setActivePage('tree'); setShowMobileMenu(false); }}
-                    >
-                        <span className="bottom-nav-item-icon">🌳</span>
-                        <span>{t('nav.tree')}</span>
-                    </button>
-                    <button
-                        className={`bottom-nav-item ${activePage === 'newsfeed' && !showMobileMenu ? 'active' : ''}`}
-                        onClick={() => { setActivePage('newsfeed'); setShowMobileMenu(false); }}
-                    >
-                        <span className="bottom-nav-item-icon">📰</span>
-                        <span>{t('nav.newsfeed')}</span>
-                    </button>
-                    <button
-                        className={`bottom-nav-item ${activePage === 'chat' && !showMobileMenu ? 'active' : ''}`}
-                        onClick={() => { setActivePage('chat'); setShowMobileMenu(false); }}
-                    >
-                        <span className="bottom-nav-item-icon">💬</span>
-                        <span>{t('nav.chat')}</span>
-                    </button>
-                    <button
-                        className={`bottom-nav-item ${activePage === 'calendar' && !showMobileMenu ? 'active' : ''}`}
-                        onClick={() => { setActivePage('calendar'); setShowMobileMenu(false); }}
-                    >
-                        <span className="bottom-nav-item-icon">📅</span>
-                        <span>{t('nav.calendar')}</span>
-                    </button>
-                    <button
-                        className={`bottom-nav-item ${showMobileMenu ? 'active' : ''}`}
-                        onClick={() => setShowMobileMenu(!showMobileMenu)}
-                    >
-                        <span className="bottom-nav-item-icon">⚙️</span>
-                        <span>{t('nav.others')}</span>
-                        {pendingCount > 0 && <span className="bottom-nav-badge">{pendingCount}</span>}
-                    </button>
-                </div>
+                <MobileNavigation
+                    activePage={activePage}
+                    setActivePage={setActivePage}
+                    showMobileMenu={showMobileMenu}
+                    setShowMobileMenu={setShowMobileMenu}
+                    pendingCount={pendingCount}
+                />
             )}
 
             {/* Mobile Bottom Sheet Menu */}
-            {isMobile && showMobileMenu && (
-                <div className="bottom-sheet-overlay" onClick={() => setShowMobileMenu(false)}>
-                    <div className="bottom-sheet" onClick={(e) => e.stopPropagation()}>
-                        <div className="bottom-sheet-drag-handle" />
-                        <div className="bottom-sheet-title">{t('sidebar.admin_section')}</div>
-
-                        <div className="bottom-sheet-grid">
-                            <div className="bottom-sheet-item" onClick={() => { setProfileModalOpen(true); setShowMobileMenu(false); }}>
-                                <span className="bottom-sheet-item-icon">👤</span>
-                                <span>{t('sidebar.profile_password')}</span>
-                            </div>
-
-                            {(user?.role === 'admin' || user?.role === 'editor') && (
-                                <div className="bottom-sheet-item" onClick={() => { setActivePage('requests'); setShowMobileMenu(false); }}>
-                                    <span className="bottom-sheet-item-icon">📋</span>
-                                    <span>{t('nav.requests')}</span>
-                                    {pendingCount > 0 && <span className="bottom-nav-badge">{pendingCount}</span>}
-                                </div>
-                            )}
-
-                            {isAdmin && (
-                                <div className="bottom-sheet-item" onClick={() => { setActivePage('system'); setShowMobileMenu(false); }}>
-                                    <span className="bottom-sheet-item-icon">⚙️</span>
-                                    <span>{t('nav.system')}</span>
-                                </div>
-                            )}
-
-                            <div className="bottom-sheet-item" onClick={() => { setActivePage('history'); setShowMobileMenu(false); }}>
-                                <span className="bottom-sheet-item-icon">📜</span>
-                                <span>{t('nav.history')}</span>
-                            </div>
-
-                            <div className="bottom-sheet-item" onClick={() => { setActivePage('finance'); setShowMobileMenu(false); }}>
-                                <span className="bottom-sheet-item-icon">💰</span>
-                                <span>{t('nav.finance')}</span>
-                            </div>
-
-                            <div className="bottom-sheet-item" onClick={() => { setActivePage('guide'); setShowMobileMenu(false); }}>
-                                <span className="bottom-sheet-item-icon">❓</span>
-                                <span>{t('sidebar.user_guide')}</span>
-                            </div>
-                        </div>
-
-                        {/* Theme and Language Settings */}
-                        <div className="bottom-sheet-settings">
-                            <div className="bottom-sheet-setting-row">
-                                <div className="bottom-sheet-setting-label">
-                                    <span>🌓</span> {t('app.theme')}
-                                </div>
-                                <div className="bottom-sheet-setting-control">
-                                    <button
-                                        className={`bottom-sheet-setting-btn ${theme === 'light' ? 'active' : ''}`}
-                                        onClick={(e) => { e.stopPropagation(); setTheme('light', e); }}
-                                    >
-                                        {t('theme.light')}
-                                    </button>
-                                    <button
-                                        className={`bottom-sheet-setting-btn ${theme === 'dark' ? 'active' : ''}`}
-                                        onClick={(e) => { e.stopPropagation(); setTheme('dark', e); }}
-                                    >
-                                        {t('theme.dark')}
-                                    </button>
-                                </div>
-                            </div>
-
-                            {ConfigAPI.getBoolean('feature_localize_enabled', true) && (
-                                <div className="bottom-sheet-setting-row">
-                                    <div className="bottom-sheet-setting-label">
-                                        <span>🌐</span> {t('app.language')}
-                                    </div>
-                                    <div className="bottom-sheet-setting-control">
-                                        <button
-                                            className={`bottom-sheet-setting-btn ${lang === 'vi' ? 'active' : ''}`}
-                                            onClick={(e) => { e.stopPropagation(); changeLanguage('vi'); }}
-                                        >
-                                            VI
-                                        </button>
-                                        <button
-                                            className={`bottom-sheet-setting-btn ${lang === 'en' ? 'active' : ''}`}
-                                            onClick={(e) => { e.stopPropagation(); changeLanguage('en'); }}
-                                        >
-                                            EN
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-
-                        <button className="bottom-sheet-logout" onClick={() => { handleLogout(); setShowMobileMenu(false); }}>
-                            🚪 {t('app.logout')}
-                        </button>
-                    </div>
-                </div>
+            {isMobile && (
+                <MobileBottomSheet
+                    showMobileMenu={showMobileMenu}
+                    setShowMobileMenu={setShowMobileMenu}
+                    setActivePage={setActivePage}
+                    setProfileModalOpen={setProfileModalOpen}
+                    user={user}
+                    isAdmin={isAdmin}
+                    pendingCount={pendingCount}
+                    theme={theme}
+                    setTheme={setTheme}
+                    handleLogout={handleLogout}
+                />
             )}
 
             {/* Modals */}

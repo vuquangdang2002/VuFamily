@@ -3,6 +3,7 @@ import { ConfigAPI } from '../../config.js';
 import { useTranslation } from '../hooks/useTranslation.js';
 
 const MENU_ITEMS = [
+    { id: 'home', icon: '🏠', label: 'Trang chủ' },
     { id: 'tree', icon: '🌳', label: 'Gia phả' },
     { id: 'newsfeed', icon: '📰', label: 'Bảng tin' },
     { id: 'calendar', icon: '📅', label: 'Lịch & Sự kiện' },
