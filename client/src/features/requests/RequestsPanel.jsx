@@ -50,8 +50,41 @@ function ChangesView({ before, changes, t }) {
 export default function RequestsPage({ user, onRefresh, addToast, members = [] }) {
     const { t } = useTranslation();
     const isAdmin = user?.role === 'admin';
-    const [filter, setFilter] = useState('pending');
+    const [filter, setFilter] = useState(() => {
+        const path = window.location.pathname;
+        if (path === '/requests/approved') return 'approved';
+        if (path === '/requests/rejected') return 'rejected';
+        if (path === '/requests/all') return 'all';
+        return 'pending';
+    });
     const [requests, setRequests] = useState([]);
+
+    // Sync URL with filter changes
+    useEffect(() => {
+        const currentPath = window.location.pathname;
+        const targetPath = `/requests/${filter}`;
+        if (currentPath !== targetPath) {
+            window.history.pushState({}, '', targetPath);
+        }
+    }, [filter]);
+
+    // Handle popstate for request filter transitions
+    useEffect(() => {
+        const handlePopState = () => {
+            const path = window.location.pathname;
+            if (path === '/requests/approved') {
+                setFilter('approved');
+            } else if (path === '/requests/rejected') {
+                setFilter('rejected');
+            } else if (path === '/requests/all') {
+                setFilter('all');
+            } else if (path === '/requests/pending' || path === '/requests') {
+                setFilter('pending');
+            }
+        };
+        window.addEventListener('popstate', handlePopState);
+        return () => window.removeEventListener('popstate', handlePopState);
+    }, []);
     const [isLoading, setIsLoading] = useState(true);
 
     const STATUS_LABELS = {

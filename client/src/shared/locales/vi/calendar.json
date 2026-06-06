@@ -39,5 +39,13 @@
     "calendar.filter_week": "Tuần này",
     "calendar.filter_month": "Tháng này",
     "calendar.filter_quarter": "Quý này",
-    "calendar.filter_year": "Năm nay"
+    "calendar.filter_year": "Năm nay",
+    "calendar.filter_today": "Hôm nay",
+    "calendar.filter_next7": "7 ngày tới",
+    "calendar.filter_next30": "30 ngày tới",
+    "calendar.filter_past": "Đã qua",
+    "calendar.filter_custom": "Tùy chỉnh",
+    "calendar.search_placeholder": "Tìm kiếm sự kiện...",
+    "calendar.range_from": "Từ ngày",
+    "calendar.range_to": "Đến ngày"
 }

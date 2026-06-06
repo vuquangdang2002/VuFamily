@@ -10,7 +10,13 @@ export default function SystemAdminPage({ addToast }) {
     const { t } = useTranslation();
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(false);
-    const [activeTab, setActiveTab] = useState('data');
+    const [activeTab, setActiveTab] = useState(() => {
+        const path = window.location.pathname;
+        if (path === '/system/accounts' || path === '/system/account') {
+            return 'accounts';
+        }
+        return 'data';
+    });
 
     const fetchUsers = async () => {
         setLoading(true);
@@ -28,6 +34,29 @@ export default function SystemAdminPage({ addToast }) {
 
     useEffect(() => {
         fetchUsers();
+    }, []);
+
+    // Sync URL with activeTab changes
+    useEffect(() => {
+        const currentPath = window.location.pathname;
+        const targetPath = activeTab === 'accounts' ? '/system/accounts' : '/system/data';
+        if (currentPath !== targetPath) {
+            window.history.pushState({}, '', targetPath);
+        }
+    }, [activeTab]);
+
+    // Handle popstate for system admin tab transitions
+    useEffect(() => {
+        const handlePopState = () => {
+            const path = window.location.pathname;
+            if (path === '/system/accounts' || path === '/system/account') {
+                setActiveTab('accounts');
+            } else if (path === '/system/data' || path === '/system') {
+                setActiveTab('data');
+            }
+        };
+        window.addEventListener('popstate', handlePopState);
+        return () => window.removeEventListener('popstate', handlePopState);
     }, []);
 
     return (

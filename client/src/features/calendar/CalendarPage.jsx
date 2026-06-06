@@ -16,8 +16,37 @@ export default function CalendarPage({ members, user, addToast }) {
     const [serverEvents, setServerEvents] = useState([]);
     
     // Tabs & Event Form State
-    const [tab, setTab] = useState('calendar'); // 'calendar' or 'events'
+    const [tab, setTab] = useState(() => {
+        const path = window.location.pathname;
+        if (path === '/calendar/events') {
+            return 'events';
+        }
+        return 'calendar';
+    });
     const [showEventForm, setShowEventForm] = useState(false);
+
+    // Sync URL with tab changes
+    useEffect(() => {
+        const currentPath = window.location.pathname;
+        const targetPath = tab === 'events' ? '/calendar/events' : '/calendar/grid';
+        if (currentPath !== targetPath) {
+            window.history.pushState({}, '', targetPath);
+        }
+    }, [tab]);
+
+    // Handle popstate for calendar tab transitions
+    useEffect(() => {
+        const handlePopState = () => {
+            const path = window.location.pathname;
+            if (path === '/calendar/events') {
+                setTab('events');
+            } else if (path === '/calendar/grid' || path === '/calendar') {
+                setTab('calendar');
+            }
+        };
+        window.addEventListener('popstate', handlePopState);
+        return () => window.removeEventListener('popstate', handlePopState);
+    }, []);
     const [eventFilter, setEventFilter] = useState('all');
     const [eventSearch, setEventSearch] = useState('');
     const [sortOrder, setSortOrder] = useState('asc'); // 'asc' | 'desc'

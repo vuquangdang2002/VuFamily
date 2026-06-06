@@ -124,36 +124,119 @@ export default function App() {
         if (path.length > 1 && path.endsWith('/')) {
             path = path.slice(0, -1);
         }
-        return PATH_TO_PAGE[path] || 'tree';
+        
+        // Match exact or prefix
+        if (path === '/' || path === '/index.html' || path === '/home') return 'home';
+        if (path.startsWith('/tree')) return 'tree';
+        if (path.startsWith('/feed') || path.startsWith('/newsfeed')) return 'newsfeed';
+        if (path.startsWith('/calendar')) return 'calendar';
+        if (path.startsWith('/requests')) return 'requests';
+        if (path.startsWith('/system')) return 'system';
+        if (path.startsWith('/history')) return 'history';
+        if (path.startsWith('/chat')) return 'chat';
+        if (path.startsWith('/finance')) return 'finance';
+        if (path.startsWith('/guide')) return 'guide';
+        
+        return 'home';
     });
     const [activeCallRoom, setActiveCallRoom] = useState(null);
     const [sidebarCollapsed, setSidebarCollapsed] = useState(() => window.innerWidth <= 768);
     const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 768);
     const [showMobileMenu, setShowMobileMenu] = useState(false);
 
-    // Sync activePage state with window.location.pathname on popstate (browser navigation)
+    // Sync activePage and sub-resource selections from window.location.pathname on popstate (browser navigation)
     useEffect(() => {
         const handlePopState = () => {
             let path = window.location.pathname;
             if (path.length > 1 && path.endsWith('/')) {
                 path = path.slice(0, -1);
             }
-            const page = PATH_TO_PAGE[path] || 'tree';
+            
+            let page = 'home';
+            if (path === '/' || path === '/index.html' || path === '/home') page = 'home';
+            else if (path.startsWith('/tree')) page = 'tree';
+            else if (path.startsWith('/feed') || path.startsWith('/newsfeed')) page = 'newsfeed';
+            else if (path.startsWith('/calendar')) page = 'calendar';
+            else if (path.startsWith('/requests')) page = 'requests';
+            else if (path.startsWith('/system')) page = 'system';
+            else if (path.startsWith('/history')) page = 'history';
+            else if (path.startsWith('/chat')) page = 'chat';
+            else if (path.startsWith('/finance')) page = 'finance';
+            else if (path.startsWith('/guide')) page = 'guide';
+            
             setActivePage(page);
+
+            // Handle tree subpath selection on popstate
+            if (page === 'tree') {
+                const pathParts = path.split('/');
+                if (pathParts[1] === 'tree' && pathParts[2]) {
+                    const memberId = pathParts[2];
+                    const member = members.find(m => String(m.id) === memberId);
+                    if (member) {
+                        handleSelect(member);
+                    }
+                } else {
+                    closeDetail();
+                }
+            }
         };
         window.addEventListener('popstate', handlePopState);
         return () => window.removeEventListener('popstate', handlePopState);
-    }, []);
+    }, [members, handleSelect, closeDetail]);
 
     // Sync window.location.pathname when activePage changes
     useEffect(() => {
         const currentPath = window.location.pathname;
         const targetPath = PAGE_TO_PATH[activePage] || '/';
-        if (currentPath !== targetPath) {
+        
+        let isMatching = currentPath === targetPath;
+        if (!isMatching) {
+            if (targetPath === '/' && (currentPath === '/' || currentPath === '/home')) {
+                isMatching = true;
+            } else if (targetPath !== '/') {
+                isMatching = currentPath.startsWith(targetPath + '/') || currentPath === targetPath;
+            }
+        }
+        
+        if (!isMatching) {
             const query = targetPath === '/chat' ? window.location.search : '';
             window.history.pushState({}, '', targetPath + query);
         }
     }, [activePage]);
+
+    // Sync tree selection from URL on members load
+    useEffect(() => {
+        if (activePage === 'tree' && members.length > 0) {
+            const pathParts = window.location.pathname.split('/');
+            if (pathParts[1] === 'tree' && pathParts[2]) {
+                const memberId = pathParts[2];
+                if (String(selected?.id) !== memberId) {
+                    const member = members.find(m => String(m.id) === memberId);
+                    if (member) {
+                        handleSelect(member);
+                    }
+                }
+            }
+        }
+    }, [activePage, members, selected, handleSelect]);
+
+    // Sync URL with tree selection changes
+    useEffect(() => {
+        if (activePage === 'tree') {
+            const currentPath = window.location.pathname;
+            if (selected) {
+                const targetPath = `/tree/${selected.id}`;
+                if (currentPath !== targetPath) {
+                    window.history.pushState({}, '', targetPath);
+                }
+            } else {
+                const targetPath = '/tree';
+                if (currentPath.startsWith('/tree/') && currentPath !== targetPath) {
+                    window.history.pushState({}, '', targetPath);
+                }
+            }
+        }
+    }, [activePage, selected]);
 
     // Track analytics app open
     useEffect(() => {

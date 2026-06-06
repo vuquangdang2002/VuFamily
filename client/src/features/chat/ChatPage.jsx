@@ -336,6 +336,43 @@ export default function ChatPage({ user, addToast, onStartCall }) {
         }
     }, []);
 
+    // Parse room ID from path if present (e.g. /chat/123) on mount
+    useEffect(() => {
+        const pathParts = window.location.pathname.split('/');
+        if (pathParts[1] === 'chat' && pathParts[2]) {
+            const rId = isNaN(pathParts[2]) ? pathParts[2] : Number(pathParts[2]);
+            setActiveRoomId(rId);
+        }
+    }, []);
+
+    // Sync window.location.pathname when activeRoomId changes
+    useEffect(() => {
+        const currentPath = window.location.pathname;
+        if (activeRoomId) {
+            const targetPath = `/chat/${activeRoomId}`;
+            if (currentPath !== targetPath) {
+                window.history.pushState({}, '', targetPath);
+            }
+        } else {
+            if (currentPath.startsWith('/chat/') && currentPath !== '/chat') {
+                window.history.pushState({}, '', '/chat');
+            }
+        }
+    }, [activeRoomId]);
+
+    // Listen to popstate specifically for Chat room transitions
+    useEffect(() => {
+        const handlePopState = () => {
+            const pathParts = window.location.pathname.split('/');
+            if (pathParts[1] === 'chat') {
+                const rId = pathParts[2] ? (isNaN(pathParts[2]) ? pathParts[2] : Number(pathParts[2])) : null;
+                setActiveRoomId(rId);
+            }
+        };
+        window.addEventListener('popstate', handlePopState);
+        return () => window.removeEventListener('popstate', handlePopState);
+    }, []);
+
     const activeRoom = rooms.find(r => r.id === activeRoomId);
     const currentUserRole = activeRoom?.type === 'group' ? (activeRoom.members?.find(m => m.id === user.id)?.role || 'member') : 'member';
 

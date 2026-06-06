@@ -1,5 +1,8 @@
 {
     "nav.home": "Trang chủ",
+    "home.greeting_morning": "Chào buổi sáng",
+    "home.greeting_afternoon": "Chào buổi chiều",
+    "home.greeting_evening": "Chào buổi tối",
     "nav.tree": "Phả đồ",
     "nav.newsfeed": "Bản tin",
     "nav.calendar": "Lịch sự kiện",

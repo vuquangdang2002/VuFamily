@@ -8,7 +8,36 @@ import { GUIDE_SECTIONS } from './guideData';
 export default function GuidePage({ user, onNavigate }) {
     const { t } = useTranslation();
     const isAdminOrEditor = user?.role === 'admin' || user?.role === 'editor';
-    const [activeSection, setActiveSection] = useState('tree');
+    const [activeSection, setActiveSection] = useState(() => {
+        const path = window.location.pathname;
+        const pathParts = path.split('/');
+        if (pathParts[1] === 'guide' && pathParts[2]) {
+            return pathParts[2];
+        }
+        return 'tree';
+    });
+
+    // Sync URL with activeSection changes
+    React.useEffect(() => {
+        const currentPath = window.location.pathname;
+        const targetPath = `/guide/${activeSection}`;
+        if (currentPath !== targetPath) {
+            window.history.pushState({}, '', targetPath);
+        }
+    }, [activeSection]);
+
+    // Handle popstate for guide section transitions
+    React.useEffect(() => {
+        const handlePopState = () => {
+            const path = window.location.pathname;
+            const pathParts = path.split('/');
+            if (pathParts[1] === 'guide') {
+                setActiveSection(pathParts[2] || 'tree');
+            }
+        };
+        window.addEventListener('popstate', handlePopState);
+        return () => window.removeEventListener('popstate', handlePopState);
+    }, []);
 
     return (
         <div className="page-container">

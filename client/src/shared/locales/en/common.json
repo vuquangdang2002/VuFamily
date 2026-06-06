@@ -1,5 +1,8 @@
 {
     "nav.home": "Home",
+    "home.greeting_morning": "Good morning",
+    "home.greeting_afternoon": "Good afternoon",
+    "home.greeting_evening": "Good evening",
     "nav.tree": "Family Tree",
     "nav.newsfeed": "Newsfeed",
     "nav.calendar": "Calendar",

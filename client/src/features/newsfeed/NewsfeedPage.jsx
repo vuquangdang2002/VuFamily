@@ -29,8 +29,37 @@ export default function NewsfeedPage({ user, isAdmin, addToast, members = [], on
     const [postSearchQuery, setPostSearchQuery] = useState('');
     const [hasNewPostsHint, setHasNewPostsHint] = useState(false);
     const [newPost, setNewPost] = useState('');
-    const [tab, setTab] = useState('posts');
+    const [tab, setTab] = useState(() => {
+        const path = window.location.pathname;
+        if (path === '/feed/contacts') {
+            return 'contacts';
+        }
+        return 'posts';
+    });
     const [loading, setLoading] = useState(false);
+
+    // Sync URL with tab changes
+    useEffect(() => {
+        const currentPath = window.location.pathname;
+        const targetPath = tab === 'contacts' ? '/feed/contacts' : '/feed/posts';
+        if (currentPath !== targetPath) {
+            window.history.pushState({}, '', targetPath);
+        }
+    }, [tab]);
+
+    // Handle popstate for newsfeed tab transitions
+    useEffect(() => {
+        const handlePopState = () => {
+            const path = window.location.pathname;
+            if (path === '/feed/contacts') {
+                setTab('contacts');
+            } else if (path === '/feed/posts' || path === '/feed') {
+                setTab('posts');
+            }
+        };
+        window.addEventListener('popstate', handlePopState);
+        return () => window.removeEventListener('popstate', handlePopState);
+    }, []);
 
     const canEdit = user?.role === 'admin' || user?.role === 'editor';
 

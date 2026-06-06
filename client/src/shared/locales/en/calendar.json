@@ -39,5 +39,13 @@
     "calendar.filter_week": "This Week",
     "calendar.filter_month": "This Month",
     "calendar.filter_quarter": "This Quarter",
-    "calendar.filter_year": "This Year"
+    "calendar.filter_year": "This Year",
+    "calendar.filter_today": "Today",
+    "calendar.filter_next7": "Next 7 Days",
+    "calendar.filter_next30": "Next 30 Days",
+    "calendar.filter_past": "Past Events",
+    "calendar.filter_custom": "Custom",
+    "calendar.search_placeholder": "Search events...",
+    "calendar.range_from": "From Date",
+    "calendar.range_to": "To Date"
 }
