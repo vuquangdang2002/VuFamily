@@ -14,6 +14,14 @@ const mockIconvPlugin = {
 };
 
 const bannerJs = `
+if (typeof globalThis.process === 'undefined') {
+  globalThis.process = { versions: { node: '18.0.0' }, version: 'v18.0.0', env: {} };
+} else {
+  if (!globalThis.process.versions) globalThis.process.versions = {};
+  if (!globalThis.process.versions.node) globalThis.process.versions.node = '18.0.0';
+  if (!globalThis.process.version) globalThis.process.version = 'v18.0.0';
+}
+
 import nodeHttp from 'node:http';
 import nodePath from 'node:path';
 import nodeCrypto from 'node:crypto';
