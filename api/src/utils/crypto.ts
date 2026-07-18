@@ -41,7 +41,23 @@ export function decryptText(encryptedText: string, env: Env): string {
     decrypted += decipher.final('utf8');
     return decrypted;
   } catch (error) {
-    console.error('[Crypto] Decryption error:', error);
-    return 'Lỗi giải mã';
+    // Try fallback decryption using legacy default key
+    try {
+      const parts = encryptedText.split(':');
+      const iv = Buffer.from(parts[0], 'hex');
+      const authTag = Buffer.from(parts[1], 'hex');
+      const encrypted = parts[2];
+      const fallbackKey = Buffer.from('vufamily_default_secret_key_1234'.padEnd(32, '0').slice(0, 32));
+
+      const decipher = crypto.createDecipheriv(ALGORITHM, fallbackKey, iv);
+      decipher.setAuthTag(authTag);
+
+      let decrypted = decipher.update(encrypted, 'hex', 'utf8');
+      decrypted += decipher.final('utf8');
+      return decrypted;
+    } catch (fallbackError) {
+      console.error('[Crypto] Decryption error:', error);
+      return 'Lỗi giải mã';
+    }
   }
 }

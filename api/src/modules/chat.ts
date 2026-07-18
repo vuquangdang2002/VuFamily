@@ -205,8 +205,16 @@ chatRouter.get('/:id/messages', authenticate, async (c) => {
 
     // Reverse to chronological order and decrypt
     const decryptedMessages = data.reverse().map(m => ({
-      ...m,
-      content: tryDecrypt(m.content, c.env)
+      id: m.id,
+      room_id: m.roomId,
+      sender_id: m.userId,
+      content: tryDecrypt(m.content, c.env),
+      created_at: m.createdAt,
+      users: {
+        display_name: m.displayName,
+        username: m.username,
+        avatar: m.avatar
+      }
     }));
 
     return c.json({ success: true, data: decryptedMessages });
@@ -239,11 +247,16 @@ chatRouter.post('/:id/messages', authenticate, async (c) => {
     await db.update(chatRooms).set({ updatedAt: new Date().toISOString() }).where(eq(chatRooms.id, roomId));
 
     return c.json({ success: true, data: {
-      ...newMessage,
+      id: newMessage.id,
+      room_id: newMessage.roomId,
+      sender_id: newMessage.senderId,
       content: content.trim(),
-      displayName: currentUser.displayName,
-      username: currentUser.username,
-      avatar: currentUser.avatar
+      created_at: newMessage.createdAt,
+      users: {
+        display_name: currentUser.displayName,
+        username: currentUser.username,
+        avatar: currentUser.avatar
+      }
     } });
   } catch (err: any) {
     return c.json({ success: false, error: err.message }, 500);

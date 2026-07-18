@@ -21,18 +21,13 @@
   "author": "Vũ Family",
   "license": "MIT",
   "dependencies": {
-    "@supabase/supabase-js": "^2.102.1",
     "adm-zip": "^0.5.17",
     "bcryptjs": "^3.0.3",
-    "compression": "^1.8.1",
     "dotenv": "^16.3.1",
     "drizzle-orm": "^0.45.2",
     "drizzle-zod": "^0.8.3",
     "hono": "^4.12.30",
-    "morgan": "^1.10.0",
     "resend": "^6.10.0",
-    "serverless-http": "^4.0.0",
-    "sql.js": "^1.14.1",
     "zod": "^4.4.3"
   },
   "devDependencies": {
