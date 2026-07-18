@@ -241,6 +241,13 @@ export default function App() {
         );
     }, []);
 
+    // Redirect to home if logged in but stuck on login/register page
+    useEffect(() => {
+        if (user && (activePage === 'login' || activePage === 'register')) {
+            setActivePage('home');
+        }
+    }, [user, activePage]);
+
     // Responsive design resize handler
     useEffect(() => {
         const handleResize = () => {
@@ -284,7 +291,7 @@ export default function App() {
                 return <HomePage user={user} members={members} onNavigate={setActivePage} addToast={addToast} />;
             case 'tree':
                 return (
-                    <div className="tree-page relative">
+                    <div className="w-full h-full relative overflow-hidden bg-[#F2F2F7] dark:bg-black">
                         <Header 
                             stats={stats} 
                             onSearch={handleSearch} 
@@ -300,19 +307,23 @@ export default function App() {
                         <Toolbar theme={theme} setTheme={setTheme} />
 
                         {isLoadingMembers && (
-                            <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-slate-900/40 backdrop-blur-sm rounded-xl m-4">
+                            <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-white/40 dark:bg-black/40 backdrop-blur-md">
                                 <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4 shadow-lg"></div>
-                                <span className="text-white font-medium text-lg drop-shadow-md">{t('app.loading_tree')}</span>
+                                <span className="text-zinc-800 dark:text-zinc-200 font-medium text-lg drop-shadow-md">{t('app.loading_tree') || 'Đang tải gia phả...'}</span>
                             </div>
                         )}
 
-                        <TreeCanvas 
-                            members={members} 
-                            selectedId={selected?.id}
-                            searchResultIds={searchResults.map(r => r.id)}
-                            onSelectMember={handleSelect} 
-                            onDeselect={closeDetail} 
-                        />
+                        <div className="w-full h-full absolute inset-0 z-0 bg-black">
+                            <div className="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] bg-[#fe6e00]/20 rounded-full blur-[120px] mix-blend-screen pointer-events-none"></div>
+                            <div className="absolute bottom-[-10%] left-[-5%] w-[600px] h-[600px] bg-blue-500/10 rounded-full blur-[120px] mix-blend-screen pointer-events-none"></div>
+                            <TreeCanvas 
+                                members={members} 
+                                selectedId={selected?.id}
+                                searchResultIds={searchResults.map(r => r.id)}
+                                onSelectMember={handleSelect} 
+                                onDeselect={closeDetail} 
+                            />
+                        </div>
                         <DetailPanel 
                             member={selected} 
                             members={members} 
@@ -377,7 +388,12 @@ export default function App() {
         return (
             <>
                 <LoginPage 
-                    onLogin={handleLogin} 
+                    onLogin={async (u, p, a) => {
+                        await handleLogin(u, p, a);
+                        if (activePage === 'login' || activePage === 'register') {
+                            setActivePage('home');
+                        }
+                    }} 
                     verifyMsg={verifyMsg} 
                     initialRegisterMode={activePage === 'register'}
                     onGoBack={() => setActivePage('home')}
@@ -388,7 +404,7 @@ export default function App() {
     }
 
     return (
-        <div className={`app-layout ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
+        <div className="flex h-[100dvh] w-screen bg-zinc-50 dark:bg-black overflow-hidden font-sans text-zinc-900 dark:text-zinc-100 transition-colors duration-300">
             <Sidebar
                 activePage={activePage}
                 onNavigate={setActivePage}
@@ -402,7 +418,7 @@ export default function App() {
                 theme={theme}
                 setTheme={setTheme}
             />
-            <main className="main-content">
+            <main className="flex-1 flex flex-col h-full overflow-hidden relative">
                 {renderPage()}
             </main>
 

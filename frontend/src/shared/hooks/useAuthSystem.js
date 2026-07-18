@@ -127,7 +127,22 @@ export default function useAuthSystem() {
         setLoadingStatus(I18nHelper.t('splash.checking_session'));
         setLoadingProgress(20);
         const stored = getStoredAuth();
-        if (!stored || !stored.token) {
+        if (!stored) {
+            setLoadingProgress(100);
+            setUser(null);
+            finishLoading();
+            return;
+        }
+
+        // Always allow local offline sessions
+        if (stored.source === 'local') {
+            setLoadingProgress(100);
+            setUser(stored);
+            finishLoading();
+            return;
+        }
+
+        if (!stored.token) {
             setLoadingProgress(100);
             setUser(null);
             finishLoading();
@@ -139,17 +154,21 @@ export default function useAuthSystem() {
         fetch(`${getApiBase()}/auth/me`, {
             headers: { 'x-auth-token': stored.token }
         })
-            .then(res => res.json())
-            .then(data => {
+            .then(async (res) => {
+                const data = await res.json().catch(() => ({}));
                 setLoadingProgress(80);
-                if (data.success && data.data) {
+                if (res.ok && data.success && data.data) {
                     setLoadingStatus(I18nHelper.t('splash.loading_profile'));
                     const freshUser = { ...stored, ...data.data };
                     localStorage.setItem(AUTH_KEY, JSON.stringify(freshUser));
                     setUser(freshUser);
-                } else {
+                } else if (res.status === 401 || res.status === 403 || !data.success) {
+                    // Only clear cache if token is explicitly rejected (expired or invalid)
                     localStorage.removeItem(AUTH_KEY);
                     setUser(null);
+                } else {
+                    // Retain session on other 500s
+                    setUser(stored);
                 }
             })
             .catch(() => {

@@ -34,6 +34,10 @@ export const AppConfig = {
     maintenance_mode: false,
     newsfeed_refresh_interval_ms: 300000,
 
+    // Cấu hình Session & App Version
+    app_version: '2.0.1',
+    session_timeout_days: 7,
+    
     // Tính năng
     feature_tree_enabled: true,
     feature_newsfeed_enabled: true,

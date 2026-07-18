@@ -1,0 +1,106 @@
+@reference "tailwindcss";
+
+/* GuestView.css */
+.guest-container {
+    @apply flex flex-col min-h-screen w-full bg-[#0b0f19] text-[#c9d1d9] font-sans selection:bg-[#fe6e00]/30 relative overflow-x-hidden;
+}
+
+.guest-bg-layer {
+    @apply fixed inset-0 z-0;
+}
+
+.guest-bg-img {
+    @apply w-full h-full object-cover opacity-[0.15];
+}
+
+.guest-bg-gradient {
+    @apply absolute inset-0 bg-gradient-to-b from-[#0b0f19]/80 via-[#0b0f19]/90 to-[#0b0f19];
+}
+
+.guest-glow-orange {
+    @apply absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-[#fe6e00]/10 rounded-full blur-[120px];
+}
+
+.guest-glow-blue {
+    @apply absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] bg-blue-600/10 rounded-full blur-[150px];
+}
+
+.guest-header {
+    @apply relative z-50 w-full px-8 py-5 flex items-center justify-between border-b border-white/5 bg-[#0b0f19]/60 backdrop-blur-xl;
+}
+
+.guest-logo-container {
+    @apply flex items-center justify-center w-12 h-12 rounded-xl bg-[#161b22] border border-[#30363d] shadow-[0_0_20px_rgba(254,110,0,0.15)] relative overflow-hidden cursor-pointer;
+}
+
+.guest-btn-login {
+    @apply flex items-center gap-2 text-sm font-bold bg-[#161b22] border border-white/10 text-white px-8 py-2.5 rounded-full transition-all shadow-lg;
+}
+.guest-btn-login:hover {
+    background-color: rgba(255,255,255,0.05);
+    border-color: rgba(255,255,255,0.2);
+    box-shadow: 0 10px 30px rgba(254,110,0,0.2);
+}
+
+.guest-main {
+    @apply flex-1 relative z-10 flex flex-col items-center pt-24 pb-32;
+}
+
+.guest-pill {
+    @apply inline-flex items-center gap-2 px-6 py-2 rounded-full text-xs font-semibold text-[#fe6e00] bg-[#fe6e00]/10 border border-[#fe6e00]/20 mb-16 shadow-[0_0_20px_rgba(254,110,0,0.15)] backdrop-blur-md;
+}
+
+.guest-hero-container {
+    @apply w-full max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center mb-32;
+}
+
+.guest-hero-title {
+    @apply text-5xl lg:text-7xl font-extrabold text-white tracking-tight leading-[1.1] mb-6 drop-shadow-lg;
+}
+
+.guest-hero-desc {
+    @apply text-zinc-400 text-lg md:text-xl mb-10 leading-relaxed max-w-xl;
+}
+
+.guest-hero-list-item {
+    @apply flex items-center gap-4 text-zinc-200 font-medium text-lg;
+}
+
+.guest-hero-check-icon {
+    @apply w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 shadow-[0_0_10px_rgba(16,185,129,0.3)];
+}
+
+.guest-btn-primary {
+    @apply relative inline-flex items-center justify-center gap-3 bg-gradient-to-r from-[#fe6e00] to-orange-600 text-white text-lg font-bold px-10 py-4 rounded-xl overflow-hidden transition-all;
+}
+.guest-btn-primary:hover {
+    transform: scale(1.02);
+    box-shadow: 0 0 40px rgba(254,110,0,0.4);
+}
+
+.guest-mockup-container {
+    @apply relative h-[500px] rounded-3xl bg-gradient-to-br from-white/5 to-white/0 border border-white/10 p-8 shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden flex items-center justify-center backdrop-blur-sm;
+}
+
+.guest-features-section {
+    @apply w-full max-w-7xl mx-auto px-6 mt-10;
+}
+
+.guest-features-grid {
+    @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8;
+}
+
+.guest-feature-card {
+    @apply bg-[#161b22]/60 backdrop-blur-md border border-white/5 rounded-3xl transition-all relative overflow-hidden shadow-lg;
+}
+.guest-feature-card:hover {
+    background-color: #161b22;
+}
+
+.guest-feature-icon-wrapper {
+    @apply w-14 h-14 rounded-2xl flex items-center justify-center mb-6 shadow-inner;
+}
+
+.guest-footer {
+    @apply relative z-10 w-full text-center py-8 border-t border-white/5 bg-[#0b0f19]/90 backdrop-blur-xl;
+}

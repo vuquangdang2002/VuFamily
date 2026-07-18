@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { api } from '../../shared/services/api';
 import { useFinanceData } from './useFinanceData';
 import FinanceImportModal from './FinanceImportModal';
-import './Finance.css';
+import { Landmark, TrendingUp, TrendingDown, Upload, Download, Plus, Trash2, History, X, Search, DollarSign, PieChart, BarChart3, ChevronDown, CheckCircle2 } from 'lucide-react';
 
 export default function FinancePage({ user, addToast }) {
     const {
@@ -91,248 +91,366 @@ export default function FinancePage({ user, addToast }) {
     };
 
     return (
-        <div className="page-container finance-page" ref={chartCardRef}>
-            {/* Header */}
-            <div className="finance-header-card">
-                <div>
-                    <h2>{t('finance.title')}</h2>
-                    <p className="finance-subtitle">{t('finance.subtitle')}</p>
+        <div className="h-full w-full p-4 md:p-6 lg:p-8 overflow-y-auto block space-y-6 relative" ref={chartCardRef}>
+            {/* Decorative glow blobs */}
+            <div className="pointer-events-none fixed top-0 left-0 w-full h-full overflow-hidden z-0">
+                <div className="absolute top-1/4 right-1/4 w-[400px] h-[400px] bg-emerald-500/5 rounded-full blur-[120px] mix-blend-screen" />
+                <div className="absolute bottom-1/4 left-1/3 w-[300px] h-[300px] bg-[#fe6e00]/5 rounded-full blur-[100px] mix-blend-screen" />
+            </div>
+            {/* ── Header ── */}
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-2 shrink-0">
+                <div className="flex flex-col gap-1">
+                    <h2 className="text-2xl md:text-3xl font-extrabold text-zinc-900 dark:text-white flex items-center gap-2">
+                        <span className="text-emerald-500">💰</span> {t('finance.title')}
+                    </h2>
+                    <p className="text-sm md:text-base font-medium text-zinc-500 dark:text-zinc-400">{t('finance.subtitle')}</p>
                 </div>
-                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                    {isEditorOrAdmin && (<>
-                        <button className="btn btn-secondary" onClick={() => handleExportCSV(categories)}>📤 {t('finance.export_btn')}</button>
-                        <button className="btn btn-secondary" onClick={() => { setShowImportModal(true); setParsedTransactions([]); setGoogleSheetUrl(''); }}>📥 {t('finance.import_btn')}</button>
-                        <button className="btn btn-primary" onClick={() => setShowAddModal(true)}>{t('finance.add_transaction')}</button>
-                    </>)}
-                    {isAdmin && <button className="btn btn-secondary" onClick={() => setShowLogsModal(true)}>{t('finance.audit_logs_btn')}</button>}
+                
+                <div className="flex flex-wrap gap-2">
+                    {isEditorOrAdmin && (
+                        <>
+                            <button className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-[13px] bg-white/60 dark:bg-white/5 border border-black/5 dark:border-white/10 text-zinc-700 dark:text-zinc-300 hover:bg-white dark:hover:bg-white/10 shadow-sm transition-all" onClick={() => handleExportCSV(categories)}>
+                                <Upload size={16} /> <span className="hidden sm:inline">{t('finance.export_btn')}</span>
+                            </button>
+                            <button className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-[13px] bg-white/60 dark:bg-white/5 border border-black/5 dark:border-white/10 text-zinc-700 dark:text-zinc-300 hover:bg-white dark:hover:bg-white/10 shadow-sm transition-all" onClick={() => { setShowImportModal(true); setParsedTransactions([]); setGoogleSheetUrl(''); }}>
+                                <Download size={16} /> <span className="hidden sm:inline">{t('finance.import_btn')}</span>
+                            </button>
+                            <button className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-[13px] bg-emerald-600 text-white hover:bg-emerald-700 shadow-md transition-all" onClick={() => setShowAddModal(true)}>
+                                <Plus size={16} /> {t('finance.add_transaction')}
+                            </button>
+                        </>
+                    )}
+                    {isAdmin && (
+                        <button className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-[13px] bg-zinc-800 text-white dark:bg-white dark:text-black hover:bg-black dark:hover:bg-zinc-200 shadow-sm transition-all" onClick={() => setShowLogsModal(true)}>
+                            <History size={16} /> <span className="hidden sm:inline">{t('finance.audit_logs_btn')}</span>
+                        </button>
+                    )}
                 </div>
             </div>
 
-            {/* Balance Cards */}
-            <div className="finance-balance-grid">
-                <div className="finance-card balance-total">
-                    <div className="card-icon">🏦</div>
-                    <div>
-                        <div className="card-label">{t('finance.total_balance')}</div>
-                        <div className={`card-value ${currentBalance >= 0 ? 'text-income' : 'text-expense'}`}>{formatCurrency(currentBalance)}</div>
+            {/* ── Balance Cards ── */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 shrink-0">
+                <div className="rounded-[1.5rem] p-5 shadow-sm bg-white/60 dark:bg-[#111111]/60 backdrop-blur-xl border border-black/5 dark:border-white/10 flex items-center gap-4 relative overflow-hidden group">
+                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 to-indigo-500 opacity-80" />
+                    <div className="w-12 h-12 rounded-[1rem] bg-blue-50 dark:bg-blue-500/10 text-blue-500 flex items-center justify-center shrink-0">
+                        <Landmark size={24} />
+                    </div>
+                    <div className="flex flex-col">
+                        <span className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-0.5">{t('finance.total_balance')}</span>
+                        <span className={`text-2xl font-black tracking-tight ${currentBalance >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+                            {formatCurrency(currentBalance)}
+                        </span>
                     </div>
                 </div>
-                <div className="finance-card balance-income">
-                    <div className="card-icon">📈</div>
-                    <div>
-                        <div className="card-label">{t('finance.total_income')}</div>
-                        <div className="card-value text-income">{formatCurrency(totalIncome)}</div>
+                
+                <div className="rounded-[1.5rem] p-5 shadow-sm bg-white/60 dark:bg-[#111111]/60 backdrop-blur-xl border border-black/5 dark:border-white/10 flex items-center gap-4 relative overflow-hidden group">
+                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-400 to-teal-500 opacity-80" />
+                    <div className="w-12 h-12 rounded-[1rem] bg-emerald-50 dark:bg-emerald-500/10 text-emerald-500 flex items-center justify-center shrink-0">
+                        <TrendingUp size={24} />
+                    </div>
+                    <div className="flex flex-col">
+                        <span className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-0.5">{t('finance.total_income')}</span>
+                        <span className="text-2xl font-black tracking-tight text-emerald-600 dark:text-emerald-400">
+                            {formatCurrency(totalIncome)}
+                        </span>
                     </div>
                 </div>
-                <div className="finance-card balance-expense">
-                    <div className="card-icon">📉</div>
-                    <div>
-                        <div className="card-label">{t('finance.total_expense')}</div>
-                        <div className="card-value text-expense">{formatCurrency(totalExpense)}</div>
+
+                <div className="rounded-[1.5rem] p-5 shadow-sm bg-white/60 dark:bg-[#111111]/60 backdrop-blur-xl border border-black/5 dark:border-white/10 flex items-center gap-4 relative overflow-hidden group">
+                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-rose-400 to-pink-500 opacity-80" />
+                    <div className="w-12 h-12 rounded-[1rem] bg-rose-50 dark:bg-rose-500/10 text-rose-500 flex items-center justify-center shrink-0">
+                        <TrendingDown size={24} />
+                    </div>
+                    <div className="flex flex-col">
+                        <span className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-0.5">{t('finance.total_expense')}</span>
+                        <span className="text-2xl font-black tracking-tight text-rose-600 dark:text-rose-400">
+                            {formatCurrency(totalExpense)}
+                        </span>
                     </div>
                 </div>
             </div>
 
-            {/* Analytics Charts */}
-            <div className="finance-analytics-container">
-                <div className="finance-analytics-card">
-                    <h3>{t('finance.analytics_title')}</h3>
-                    <div className="charts-flex-grid">
-                        {/* Donut Chart */}
-                        <div className="chart-wrapper">
-                            <h4>
-                                <span>{donutType === 'EXPENSE' ? t('finance.chart_breakdown_expense') : t('finance.chart_breakdown_income')}</span>
-                                <div className="chart-toggle-group">
-                                    <button className={`chart-toggle-btn ${donutType === 'EXPENSE' ? 'active' : ''}`} onClick={() => setDonutType('EXPENSE')}>{t('finance.type_expense').substring(0, 3)}</button>
-                                    <button className={`chart-toggle-btn ${donutType === 'INCOME' ? 'active' : ''}`} onClick={() => setDonutType('INCOME')}>{t('finance.type_income').substring(0, 3)}</button>
-                                </div>
+            {/* ── Analytics Charts ── */}
+            <div className="rounded-[1.5rem] p-5 shadow-sm bg-white/60 dark:bg-[#111111]/60 backdrop-blur-xl border border-black/5 dark:border-white/10 flex flex-col gap-6 shrink-0">
+                <h3 className="text-[16px] font-extrabold text-zinc-900 dark:text-white flex items-center gap-2">
+                    <PieChart size={18} className="text-blue-500" /> {t('finance.analytics_title')}
+                </h3>
+                
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+                    {/* Donut Chart */}
+                    <div className="flex flex-col gap-4">
+                        <div className="flex items-center justify-between">
+                            <h4 className="text-[14px] font-bold text-zinc-700 dark:text-zinc-300">
+                                {donutType === 'EXPENSE' ? t('finance.chart_breakdown_expense') : t('finance.chart_breakdown_income')}
                             </h4>
-                            {totalDonutAmount === 0 ? (
-                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1, color: 'var(--text-muted)', fontSize: 13 }}>
-                                    <span>⭕</span><span style={{ marginTop: 8 }}>{t('finance.chart_no_data')}</span>
-                                </div>
-                            ) : (<>
-                                <div style={{ position: 'relative', width: 160, height: 160 }}>
-                                    <svg width="160" height="160" viewBox="0 0 160 160">
-                                        <circle cx="80" cy="80" r="50" fill="transparent" stroke="var(--bg-secondary)" strokeWidth="16" />
+                            <div className="flex bg-black/5 dark:bg-white/5 p-1 rounded-lg">
+                                <button className={`px-3 py-1.5 rounded-md text-[11px] font-bold transition-all ${donutType === 'EXPENSE' ? 'bg-white dark:bg-zinc-800 text-rose-600 dark:text-rose-400 shadow-sm' : 'text-zinc-500'}`} onClick={() => setDonutType('EXPENSE')}>
+                                    {t('finance.type_expense')}
+                                </button>
+                                <button className={`px-3 py-1.5 rounded-md text-[11px] font-bold transition-all ${donutType === 'INCOME' ? 'bg-white dark:bg-zinc-800 text-emerald-600 dark:text-emerald-400 shadow-sm' : 'text-zinc-500'}`} onClick={() => setDonutType('INCOME')}>
+                                    {t('finance.type_income')}
+                                </button>
+                            </div>
+                        </div>
+
+                        {totalDonutAmount === 0 ? (
+                            <div className="flex flex-col items-center justify-center h-[200px] w-full text-zinc-400 bg-black/5 dark:bg-white/5 rounded-xl border border-dashed border-black/10 dark:border-white/10 shrink-0">
+                                <PieChart size={32} className="opacity-50 mb-2" />
+                                <span className="text-sm font-medium">{t('finance.chart_no_data')}</span>
+                            </div>
+                        ) : (
+                            <div className="flex flex-col sm:flex-row items-center gap-8 h-full">
+                                <div className="relative w-[180px] h-[180px] shrink-0">
+                                    <svg width="180" height="180" viewBox="0 0 160 160">
+                                        <circle cx="80" cy="80" r="50" fill="transparent" stroke="var(--bg-secondary)" strokeWidth="16" className="stroke-zinc-100 dark:stroke-zinc-800" />
                                         {donutSlices.map(slice => (
                                             <circle key={slice.key} cx="80" cy="80" r="50" fill="transparent" stroke={slice.color} strokeWidth="16"
                                                 strokeDasharray={slice.dashArray} strokeDashoffset={slice.dashOffset}
-                                                transform="rotate(-90 80 80)" className="donut-slice"
+                                                transform="rotate(-90 80 80)" className="transition-all duration-300 hover:stroke-[20px] cursor-pointer"
                                                 onMouseEnter={() => setHoveredSlice({ label: slice.label, amount: slice.amount, percent: slice.percent, color: slice.color })}
                                                 onMouseLeave={() => setHoveredSlice(null)} onMouseMove={handleMouseMove} />
                                         ))}
                                     </svg>
-                                    <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
-                                        <span style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Total</span>
-                                        <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', marginTop: 2 }}>{formatCurrency(totalDonutAmount).split(',')[0]}</span>
+                                    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                                        <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Total</span>
+                                        <span className="text-[15px] font-black text-zinc-900 dark:text-white mt-0.5">{formatCurrency(totalDonutAmount).split(',')[0]}</span>
                                     </div>
                                 </div>
-                                <div className="chart-legend-grid">
+                                <div className="flex flex-wrap sm:flex-col gap-2 flex-1 max-h-[180px] overflow-y-auto pr-2">
                                     {donutSlices.map(slice => (
-                                        <div key={slice.key} className="chart-legend-item">
-                                            <span className="color-dot" style={{ background: slice.color }} />
-                                            <span style={{ fontSize: 11 }}>{slice.label} ({slice.percent.toFixed(0)}%)</span>
+                                        <div key={slice.key} className="flex items-center justify-between gap-3 text-[12px] font-medium text-zinc-600 dark:text-zinc-300 bg-black/5 dark:bg-white/5 px-3 py-1.5 rounded-lg w-full">
+                                            <div className="flex items-center gap-2 truncate">
+                                                <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: slice.color }} />
+                                                <span className="truncate">{slice.label}</span>
+                                            </div>
+                                            <span className="font-bold">{slice.percent.toFixed(0)}%</span>
                                         </div>
                                     ))}
                                 </div>
-                            </>)}
-                        </div>
+                            </div>
+                        )}
+                    </div>
 
-                        {/* Bar Chart */}
-                        <div className="chart-wrapper">
-                            <h4>{t('finance.chart_monthly_trend')}</h4>
-                            <svg width="100%" height="180" viewBox="0 0 360 180" style={{ flex: 1, display: 'block' }}>
-                                <line x1="30" y1="30" x2="340" y2="30" stroke="var(--border-subtle)" strokeWidth="0.5" strokeDasharray="3 3" />
-                                <line x1="30" y1="80" x2="340" y2="80" stroke="var(--border-subtle)" strokeWidth="0.5" strokeDasharray="3 3" />
-                                <line x1="30" y1="130" x2="340" y2="130" stroke="var(--border-subtle)" strokeWidth="0.5" strokeDasharray="3 3" />
-                                <line x1="30" y1="150" x2="340" y2="150" stroke="var(--border-subtle)" strokeWidth="1" />
+                    {/* Bar Chart */}
+                    <div className="flex flex-col gap-4">
+                        <h4 className="text-[14px] font-bold text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
+                            <BarChart3 size={16} className="text-indigo-500" /> {t('finance.chart_monthly_trend')}
+                        </h4>
+                        
+                        <div className="relative w-full h-[200px]">
+                            <svg width="100%" height="200" viewBox="0 0 360 200" preserveAspectRatio="none" className="w-full h-full block">
+                                <line x1="30" y1="30" x2="340" y2="30" stroke="currentColor" strokeWidth="0.5" strokeDasharray="3 3" className="text-black/10 dark:text-white/10" />
+                                <line x1="30" y1="90" x2="340" y2="90" stroke="currentColor" strokeWidth="0.5" strokeDasharray="3 3" className="text-black/10 dark:text-white/10" />
+                                <line x1="30" y1="150" x2="340" y2="150" stroke="currentColor" strokeWidth="0.5" strokeDasharray="3 3" className="text-black/10 dark:text-white/10" />
+                                <line x1="30" y1="170" x2="340" y2="170" stroke="currentColor" strokeWidth="1" className="text-black/20 dark:text-white/20" />
+                                
                                 {monthlyData.map((m, idx) => {
-                                    const startX = 40 + idx * 50;
-                                    const maxBarHeight = 110;
+                                    const maxBarHeight = 130;
                                     const incomeHeight = (m.income / maxMonthlyVal) * maxBarHeight;
                                     const expenseHeight = (m.expense / maxMonthlyVal) * maxBarHeight;
+                                    // Calculate dynamic spacing based on SVG width
+                                    const availableWidth = 310;
+                                    const barGroupWidth = 30; // 12 + 3 + 12 + margin
+                                    const spacing = Math.max((availableWidth - (monthlyData.length * barGroupWidth)) / (monthlyData.length + 1), 5);
+                                    const startX = 40 + (idx * (barGroupWidth + spacing));
+
                                     return (
                                         <g key={idx}>
-                                            <rect x={startX} y={150 - incomeHeight} width="12" height={Math.max(1, incomeHeight)} fill="#10b981" rx="2" className="bar-rect"
+                                            <rect x={startX} y={170 - incomeHeight} width="12" height={Math.max(1, incomeHeight)} fill="#10b981" rx="2" className="cursor-pointer hover:opacity-80 transition-opacity"
                                                 onMouseEnter={() => setHoveredBar({ monthName: m.monthName, type: t('finance.type_income'), amount: m.income })}
                                                 onMouseLeave={() => setHoveredBar(null)} onMouseMove={handleMouseMove} />
-                                            <rect x={startX + 15} y={150 - expenseHeight} width="12" height={Math.max(1, expenseHeight)} fill="#ef4444" rx="2" className="bar-rect"
+                                            <rect x={startX + 14} y={170 - expenseHeight} width="12" height={Math.max(1, expenseHeight)} fill="#f43f5e" rx="2" className="cursor-pointer hover:opacity-80 transition-opacity"
                                                 onMouseEnter={() => setHoveredBar({ monthName: m.monthName, type: t('finance.type_expense'), amount: m.expense })}
                                                 onMouseLeave={() => setHoveredBar(null)} onMouseMove={handleMouseMove} />
-                                            <text x={startX + 14} y="166" fill="var(--text-muted)" fontSize="9" textAnchor="middle" fontWeight="600">{m.monthName}</text>
+                                            <text x={startX + 13} y="186" fill="currentColor" fontSize="10" textAnchor="middle" fontWeight="700" className="text-zinc-500">{m.monthName}</text>
                                         </g>
                                     );
                                 })}
                             </svg>
-                            <div style={{ display: 'flex', gap: 16, marginTop: 10, fontSize: 11 }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}><span className="color-dot" style={{ background: '#10b981' }} /><span>{t('finance.type_income').substring(0, 3)}</span></div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}><span className="color-dot" style={{ background: '#ef4444' }} /><span>{t('finance.type_expense').substring(0, 3)}</span></div>
-                            </div>
+                        </div>
+                        <div className="flex items-center gap-4 text-[11px] font-bold text-zinc-500 px-4">
+                            <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500" /><span>{t('finance.type_income')}</span></div>
+                            <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-rose-500" /><span>{t('finance.type_expense')}</span></div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* Chart Tooltips */}
+            {/* ── Chart Tooltips ── */}
             {hoveredSlice && (
-                <div className="chart-tooltip" style={{ left: tooltipPos.x, top: tooltipPos.y }}>
-                    <div style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <span className="color-dot" style={{ background: hoveredSlice.color }} />{hoveredSlice.label}
+                <div className="absolute z-50 p-3 rounded-xl bg-zinc-900/95 dark:bg-zinc-100/95 text-white dark:text-black shadow-xl backdrop-blur-sm pointer-events-none transform -translate-x-1/2 -translate-y-full mt-[-10px]" style={{ left: tooltipPos.x, top: tooltipPos.y }}>
+                    <div className="flex items-center gap-2 font-bold text-[13px] mb-1">
+                        <span className="w-2.5 h-2.5 rounded-full" style={{ background: hoveredSlice.color }} />{hoveredSlice.label}
                     </div>
-                    <div style={{ marginTop: 4 }}><strong>{formatCurrency(hoveredSlice.amount)}</strong> ({hoveredSlice.percent.toFixed(1)}%)</div>
+                    <div className="text-[14px]"><strong>{formatCurrency(hoveredSlice.amount)}</strong> <span className="opacity-75">({hoveredSlice.percent.toFixed(1)}%)</span></div>
                 </div>
             )}
             {hoveredBar && (
-                <div className="chart-tooltip" style={{ left: tooltipPos.x, top: tooltipPos.y }}>
-                    <div style={{ fontWeight: 600 }}>{hoveredBar.monthName}</div>
-                    <div style={{ marginTop: 4 }}>{hoveredBar.type}: <strong>{formatCurrency(hoveredBar.amount)}</strong></div>
+                <div className="absolute z-50 p-3 rounded-xl bg-zinc-900/95 dark:bg-zinc-100/95 text-white dark:text-black shadow-xl backdrop-blur-sm pointer-events-none transform -translate-x-1/2 -translate-y-full mt-[-10px]" style={{ left: tooltipPos.x, top: tooltipPos.y }}>
+                    <div className="font-bold text-[13px] mb-1">{hoveredBar.monthName}</div>
+                    <div className="text-[14px] flex items-center gap-2">
+                        <span className={`w-2.5 h-2.5 rounded-full ${hoveredBar.type === t('finance.type_income') ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+                        <span>{hoveredBar.type}:</span> <strong>{formatCurrency(hoveredBar.amount)}</strong>
+                    </div>
                 </div>
             )}
 
-            {/* Transactions + Categories Grid */}
-            <div className="finance-main-grid">
-                <div className="finance-card-block list-block">
-                    <h3>{t('finance.recent_activity')}</h3>
+            {/* ── Transactions & Category List ── */}
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 shrink-0">
+                
+                {/* Transaction List */}
+                <div className="xl:col-span-2 rounded-[1.5rem] p-5 shadow-sm bg-white/60 dark:bg-[#111111]/60 backdrop-blur-xl border border-black/5 dark:border-white/10 flex flex-col gap-4">
+                    <h3 className="text-[16px] font-extrabold text-zinc-900 dark:text-white flex items-center gap-2 mb-2">
+                        <History size={18} className="text-amber-500" /> {t('finance.recent_activity')}
+                    </h3>
+                    
                     {transactions.length > 0 && (
-                        <div style={{ marginBottom: 12 }}>
-                            <input type="text" className="form-input" placeholder={t('finance.search_placeholder')} value={financeSearchQuery} onChange={e => setFinanceSearchQuery(e.target.value)}
-                                style={{ width: '100%', borderRadius: 20, padding: '6px 14px', fontSize: 13, background: 'var(--bg-secondary)', border: '1px solid var(--border-subtle)', boxSizing: 'border-box' }} />
+                        <div className="relative">
+                            <Search size={16} className="absolute left-4 top-1/2 transform -translate-y-1/2 text-zinc-400" />
+                            <input type="text" className="w-full bg-white dark:bg-black/40 border border-black/10 dark:border-white/10 rounded-xl pl-11 pr-4 py-2.5 text-[14px] font-medium text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/50" placeholder={t('finance.search_placeholder')} value={financeSearchQuery} onChange={e => setFinanceSearchQuery(e.target.value)} />
                         </div>
                     )}
-                    {loading ? <div className="finance-loading">{t('common.loading')}</div>
-                        : transactions.length === 0 ? <div className="finance-empty">{t('finance.no_transactions')}</div>
-                        : filteredTransactions.length === 0 ? <div style={{ padding: 24, textAlign: 'center', color: 'var(--text-muted)', fontSize: 13 }}>{t('finance.no_search_result')}</div>
-                        : (
-                            <div className="table-responsive">
-                                <table className="finance-table">
-                                    <thead>
-                                        <tr>
-                                            <th>{t('finance.col_date')}</th>
-                                            <th>{t('finance.col_description')}</th>
-                                            <th>{t('finance.col_category')}</th>
-                                            <th>{t('finance.col_amount')}</th>
-                                            {isAdmin && <th>{t('finance.col_action')}</th>}
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {filteredTransactions.map(tx => (
-                                            <tr key={tx.id}>
-                                                <td>{new Date(tx.created_at).toLocaleDateString('vi-VN')}</td>
-                                                <td>
-                                                    <div className="tx-desc">{tx.description}</div>
-                                                    <div className="tx-creator">{t('finance.created_by')} {tx.created_by_user?.display_name || t('finance.system_user')}</div>
+                    
+                    {loading ? (
+                        <div className="py-12 flex items-center justify-center">
+                            <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+                        </div>
+                    ) : transactions.length === 0 ? (
+                        <div className="py-12 flex flex-col items-center justify-center text-zinc-400 bg-white/40 dark:bg-white/5 rounded-xl border border-dashed border-black/10 dark:border-white/10">
+                            <DollarSign size={32} className="opacity-50 mb-2" />
+                            <span className="text-sm font-medium">{t('finance.no_transactions')}</span>
+                        </div>
+                    ) : filteredTransactions.length === 0 ? (
+                        <div className="py-12 text-center text-sm font-medium text-zinc-500 bg-white/40 dark:bg-white/5 rounded-xl border border-dashed border-black/10 dark:border-white/10">
+                            {t('finance.no_search_result')}
+                        </div>
+                    ) : (
+                        <div className="overflow-x-auto rounded-xl border border-black/5 dark:border-white/10 bg-white/40 dark:bg-black/20">
+                            <table className="w-full text-left border-collapse">
+                                <thead>
+                                    <tr className="bg-black/5 dark:bg-white/5 text-[11px] font-black text-zinc-500 uppercase tracking-wider">
+                                        <th className="p-4 rounded-tl-xl">{t('finance.col_date')}</th>
+                                        <th className="p-4">{t('finance.col_description')}</th>
+                                        <th className="p-4">{t('finance.col_category')}</th>
+                                        <th className="p-4">{t('finance.col_amount')}</th>
+                                        {isAdmin && <th className="p-4 rounded-tr-xl w-12 text-center">{t('finance.col_action')}</th>}
+                                    </tr>
+                                </thead>
+                                <tbody className="text-[13px] font-medium text-zinc-700 dark:text-zinc-300 divide-y divide-black/5 dark:divide-white/5">
+                                    {filteredTransactions.map(tx => (
+                                        <tr key={tx.id} className="hover:bg-white/60 dark:hover:bg-white/5 transition-colors group">
+                                            <td className="p-4 whitespace-nowrap">{new Date(tx.created_at).toLocaleDateString('vi-VN')}</td>
+                                            <td className="p-4 min-w-[200px]">
+                                                <div className="font-bold text-zinc-900 dark:text-white mb-0.5">{tx.description}</div>
+                                                <div className="text-[11px] text-zinc-500">{t('finance.created_by')} {tx.created_by_user?.display_name || t('finance.system_user')}</div>
+                                            </td>
+                                            <td className="p-4 whitespace-nowrap">
+                                                <span className="px-2.5 py-1 rounded-md text-[11px] font-bold" style={{ background: `${categories[tx.category]?.color}20`, color: categories[tx.category]?.color }}>
+                                                    {categories[tx.category]?.label || t('finance.cat_other')}
+                                                </span>
+                                            </td>
+                                            <td className={`p-4 whitespace-nowrap font-black ${tx.type === 'INCOME' ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+                                                {tx.type === 'INCOME' ? '+' : '-'}{formatCurrency(tx.amount)}
+                                            </td>
+                                            {isAdmin && (
+                                                <td className="p-4 text-center">
+                                                    <button className="w-8 h-8 rounded-full flex items-center justify-center bg-transparent hover:bg-rose-50 text-zinc-400 hover:text-rose-500 dark:hover:bg-rose-500/20 dark:hover:text-rose-400 transition-colors mx-auto opacity-0 group-hover:opacity-100" onClick={() => handleDelete(tx.id)}>
+                                                        <Trash2 size={16} />
+                                                    </button>
                                                 </td>
-                                                <td><span className="badge-cat" style={{ background: `${categories[tx.category]?.color}15`, color: categories[tx.category]?.color }}>{categories[tx.category]?.label || t('finance.cat_other')}</span></td>
-                                                <td className={tx.type === 'INCOME' ? 'text-income font-bold' : 'text-expense font-bold'}>{tx.type === 'INCOME' ? '+' : '-'}{formatCurrency(tx.amount)}</td>
-                                                {isAdmin && <td><button className="btn btn-sm btn-danger" onClick={() => handleDelete(tx.id)}>🗑️</button></td>}
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        )}
+                                            )}
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
                 </div>
-                <div className="finance-card-block chart-block">
-                    <h3>{t('finance.cat_breakdown')}</h3>
-                    <div className="cat-breakdown-list">
-                        {Object.entries(categories).map(([key, cat]) => (
-                            <div key={key} className="cat-breakdown-item">
-                                <div className="cat-breakdown-header">
-                                    <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                                        <span className="color-dot" style={{ background: cat.color }} />{cat.label}
-                                    </span>
-                                    <span className="font-bold">{formatCurrency(cat.amount)}</span>
+
+                {/* Category Breakdown List */}
+                <div className="rounded-[1.5rem] p-5 shadow-sm bg-white/60 dark:bg-[#111111]/60 backdrop-blur-xl border border-black/5 dark:border-white/10 flex flex-col gap-4">
+                    <h3 className="text-[16px] font-extrabold text-zinc-900 dark:text-white flex items-center gap-2 mb-2">
+                        <PieChart size={18} className="text-teal-500" /> {t('finance.cat_breakdown')}
+                    </h3>
+                    
+                    <div className="flex flex-col gap-5 overflow-y-auto pr-2 max-h-[500px]">
+                        {Object.entries(categories).map(([key, cat]) => {
+                            const pct = totalIncome > 0 ? Math.max(0, Math.min(100, (cat.amount / totalIncome) * 100)) : 0;
+                            return (
+                                <div key={key} className="flex flex-col gap-2">
+                                    <div className="flex items-center justify-between text-[13px]">
+                                        <div className="flex items-center gap-2 font-bold text-zinc-700 dark:text-zinc-200">
+                                            <span className="w-3 h-3 rounded-full" style={{ background: cat.color }} />
+                                            {cat.label}
+                                        </div>
+                                        <span className="font-black text-zinc-900 dark:text-white">{formatCurrency(cat.amount)}</span>
+                                    </div>
+                                    <div className="h-2 w-full bg-black/5 dark:bg-white/5 rounded-full overflow-hidden">
+                                        <div className="h-full rounded-full transition-all duration-500" style={{ background: cat.color, width: `${pct}%` }} />
+                                    </div>
                                 </div>
-                                <div className="cat-progress-bg">
-                                    <div className="cat-progress-fill" style={{ background: cat.color, width: `${totalIncome > 0 ? Math.max(0, Math.min(100, (cat.amount / totalIncome) * 100)) : 0}%` }} />
-                                </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 </div>
             </div>
 
-            {/* Add Transaction Modal */}
+            {/* ── Add Transaction Modal ── */}
             {showAddModal && (
-                <div className="modal-overlay open" onClick={() => setShowAddModal(false)}>
-                    <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 450 }}>
-                        <div className="modal-header">
-                            <h2>{t('finance.modal_add_title')}</h2>
-                            <button className="detail-close" onClick={() => setShowAddModal(false)}>✕</button>
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-900/40 dark:bg-black/60 backdrop-blur-sm animate-fade-in" onClick={() => setShowAddModal(false)}>
+                    <div className="bg-white dark:bg-[#111111] border border-black/10 dark:border-white/10 rounded-[2rem] shadow-2xl w-full max-w-md overflow-hidden transform scale-100" onClick={e => e.stopPropagation()}>
+                        <div className="flex items-center justify-between p-6 border-b border-black/5 dark:border-white/5 bg-zinc-50/50 dark:bg-white/5">
+                            <h2 className="text-lg font-extrabold text-zinc-900 dark:text-white flex items-center gap-2">
+                                <Plus size={20} className="text-emerald-500" /> {t('finance.modal_add_title')}
+                            </h2>
+                            <button className="w-8 h-8 flex items-center justify-center rounded-full bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20 text-zinc-500 transition-colors" onClick={() => setShowAddModal(false)}>
+                                <X size={16} />
+                            </button>
                         </div>
-                        <form onSubmit={async (e) => { e.preventDefault(); const ok = await handleCreateTransaction(formData); if (ok) { setFormData({ type: 'INCOME', amount: '', category: 'other', description: '' }); setShowAddModal(false); } }} className="modal-body">
-                            <div className="form-group">
-                                <label>{t('finance.type_label')}</label>
-                                <select className="form-input" name="type" value={formData.type} onChange={e => setFormData(p => ({ ...p, type: e.target.value }))}>
-                                    <option value="INCOME">{t('finance.type_income')}</option>
-                                    <option value="EXPENSE">{t('finance.type_expense')}</option>
-                                </select>
+                        <form onSubmit={async (e) => { e.preventDefault(); const ok = await handleCreateTransaction(formData); if (ok) { setFormData({ type: 'INCOME', amount: '', category: 'other', description: '' }); setShowAddModal(false); } }} className="p-6 flex flex-col gap-5">
+                            <div className="flex flex-col gap-1.5">
+                                <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider pl-1">{t('finance.type_label')}</label>
+                                <div className="grid grid-cols-2 gap-2 p-1 rounded-xl bg-black/5 dark:bg-white/5">
+                                    <button type="button" className={`py-2.5 rounded-lg text-[13px] font-bold transition-all ${formData.type === 'INCOME' ? 'bg-white dark:bg-zinc-800 text-emerald-600 dark:text-emerald-400 shadow-sm' : 'text-zinc-500'}`} onClick={() => setFormData(p => ({ ...p, type: 'INCOME' }))}>
+                                        {t('finance.type_income')}
+                                    </button>
+                                    <button type="button" className={`py-2.5 rounded-lg text-[13px] font-bold transition-all ${formData.type === 'EXPENSE' ? 'bg-white dark:bg-zinc-800 text-rose-600 dark:text-rose-400 shadow-sm' : 'text-zinc-500'}`} onClick={() => setFormData(p => ({ ...p, type: 'EXPENSE' }))}>
+                                        {t('finance.type_expense')}
+                                    </button>
+                                </div>
                             </div>
-                            <div className="form-group">
-                                <label>{t('finance.amount_label')}</label>
-                                <input type="number" className="form-input" name="amount" value={formData.amount} onChange={e => setFormData(p => ({ ...p, amount: e.target.value }))} placeholder={t('finance.amount_placeholder')} required />
+                            <div className="flex flex-col gap-1.5">
+                                <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider pl-1">{t('finance.amount_label')}</label>
+                                <div className="relative">
+                                    <DollarSign size={16} className="absolute left-4 top-1/2 transform -translate-y-1/2 text-zinc-400" />
+                                    <input type="number" className="w-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl pl-10 pr-4 py-3 text-[15px] font-bold text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500/50" name="amount" value={formData.amount} onChange={e => setFormData(p => ({ ...p, amount: e.target.value }))} placeholder={t('finance.amount_placeholder')} required />
+                                </div>
                             </div>
-                            <div className="form-group">
-                                <label>{t('finance.category_label')}</label>
-                                <select className="form-input" name="category" value={formData.category} onChange={e => setFormData(p => ({ ...p, category: e.target.value }))}>
-                                    {Object.entries(categories).map(([key, cat]) => <option key={key} value={key}>{cat.label}</option>)}
-                                </select>
+                            <div className="flex flex-col gap-1.5">
+                                <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider pl-1">{t('finance.category_label')}</label>
+                                <div className="relative">
+                                    <select className="w-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-4 py-3 text-[14px] font-medium text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500/50 appearance-none" name="category" value={formData.category} onChange={e => setFormData(p => ({ ...p, category: e.target.value }))}>
+                                        {Object.entries(categories).map(([key, cat]) => <option key={key} value={key}>{cat.label}</option>)}
+                                    </select>
+                                    <ChevronDown size={16} className="absolute right-4 top-1/2 transform -translate-y-1/2 text-zinc-400 pointer-events-none" />
+                                </div>
                             </div>
-                            <div className="form-group">
-                                <label>{t('finance.description_label')}</label>
-                                <textarea className="form-input" name="description" value={formData.description} onChange={e => setFormData(p => ({ ...p, description: e.target.value }))} placeholder={t('finance.description_placeholder')} rows={3} required />
+                            <div className="flex flex-col gap-1.5">
+                                <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider pl-1">{t('finance.description_label')}</label>
+                                <textarea className="w-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-4 py-3 text-[14px] font-medium text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500/50 resize-y min-h-[80px]" name="description" value={formData.description} onChange={e => setFormData(p => ({ ...p, description: e.target.value }))} placeholder={t('finance.description_placeholder')} rows={3} required />
                             </div>
-                            <div style={{ display: 'flex', gap: 10, marginTop: 24 }}>
-                                <button type="submit" className="btn btn-primary" style={{ flex: 1, justifyContent: 'center' }}>{t('finance.submit_btn')}</button>
-                                <button type="button" className="btn" style={{ flex: 1, justifyContent: 'center' }} onClick={() => setShowAddModal(false)}>{t('finance.cancel_btn')}</button>
+                            <div className="flex gap-3 mt-4">
+                                <button type="button" className="flex-1 py-3 rounded-xl font-bold text-[14px] bg-black/5 dark:bg-white/5 text-zinc-600 dark:text-zinc-300 hover:bg-black/10 dark:hover:bg-white/10 transition-colors" onClick={() => setShowAddModal(false)}>{t('finance.cancel_btn')}</button>
+                                <button type="submit" className="flex-1 py-3 rounded-xl font-bold text-[14px] bg-emerald-600 text-white hover:bg-emerald-700 shadow-md transition-colors flex items-center justify-center gap-2">
+                                    <CheckCircle2 size={18} /> {t('finance.submit_btn')}
+                                </button>
                             </div>
                         </form>
                     </div>
                 </div>
             )}
 
-            {/* Import Modal */}
+            {/* ── Import Modal ── */}
             {showImportModal && (
                 <FinanceImportModal
                     categories={categories} parsedTransactions={parsedTransactions}
@@ -343,37 +461,55 @@ export default function FinancePage({ user, addToast }) {
                 />
             )}
 
-            {/* Audit Logs Modal */}
+            {/* ── Audit Logs Modal ── */}
             {showLogsModal && isAdmin && (
-                <div className="modal-overlay open" onClick={() => setShowLogsModal(false)}>
-                    <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 700, width: '90%' }}>
-                        <div className="modal-header">
-                            <h2>{t('finance.audit_title')}</h2>
-                            <button className="detail-close" onClick={() => setShowLogsModal(false)}>✕</button>
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-900/40 dark:bg-black/60 backdrop-blur-sm animate-fade-in" onClick={() => setShowLogsModal(false)}>
+                    <div className="bg-white dark:bg-[#111111] border border-black/10 dark:border-white/10 rounded-[2rem] shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[85vh]" onClick={e => e.stopPropagation()}>
+                        <div className="flex items-center justify-between p-6 border-b border-black/5 dark:border-white/5 bg-zinc-50/50 dark:bg-white/5">
+                            <h2 className="text-lg font-extrabold text-zinc-900 dark:text-white flex items-center gap-2">
+                                <History size={20} className="text-zinc-500" /> {t('finance.audit_title')}
+                            </h2>
+                            <button className="w-8 h-8 flex items-center justify-center rounded-full bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20 text-zinc-500 transition-colors" onClick={() => setShowLogsModal(false)}>
+                                <X size={16} />
+                            </button>
                         </div>
-                        <div className="modal-body" style={{ maxHeight: '60vh', overflowY: 'auto' }}>
-                            <p style={{ color: 'var(--text-muted)', fontSize: 13, marginBottom: 16 }}>{t('finance.audit_description')}</p>
-                            <div className="table-responsive">
-                                <table className="finance-table logs-table">
-                                    <thead><tr>
-                                        <th>{t('finance.audit_col_time')}</th>
-                                        <th>{t('finance.audit_col_action')}</th>
-                                        <th>{t('finance.audit_col_user')}</th>
-                                        <th>{t('finance.audit_col_amount')}</th>
-                                    </tr></thead>
-                                    <tbody>
-                                        {auditLogs.map(log => (
-                                            <tr key={log.id}>
-                                                <td>{new Date(log.modified_at).toLocaleString('vi-VN')}</td>
-                                                <td><span className={`badge-action action-${log.action.toLowerCase()}`}>{AUDIT_ACTION_MAP[log.action] || log.action}</span></td>
-                                                <td>{log.modified_by_user?.display_name || t('finance.audit_unknown')}</td>
-                                                <td>
-                                                    {log.action === 'CREATED' && <span>{t('finance.audit_new_amount')} <strong className="text-income">{formatCurrency(log.new_amount)}</strong></span>}
-                                                    {log.action === 'UPDATED' && <span>{formatCurrency(log.old_amount)} → <strong className="text-income">{formatCurrency(log.new_amount)}</strong></span>}
-                                                    {log.action === 'DELETED' && <span>{t('finance.audit_old_deleted')} <strong className="text-expense">{formatCurrency(log.old_amount)}</strong></span>}
-                                                </td>
-                                            </tr>
-                                        ))}
+                        <div className="p-6 overflow-y-auto flex-1 bg-zinc-50/30 dark:bg-black/20">
+                            <p className="text-[13px] font-medium text-zinc-500 mb-4">{t('finance.audit_description')}</p>
+                            
+                            <div className="overflow-x-auto rounded-xl border border-black/5 dark:border-white/10 bg-white/60 dark:bg-black/40 backdrop-blur-md">
+                                <table className="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr className="bg-black/5 dark:bg-white/5 text-[11px] font-black text-zinc-500 uppercase tracking-wider">
+                                            <th className="p-4 rounded-tl-xl">{t('finance.audit_col_time')}</th>
+                                            <th className="p-4">{t('finance.audit_col_action')}</th>
+                                            <th className="p-4">{t('finance.audit_col_user')}</th>
+                                            <th className="p-4 rounded-tr-xl">{t('finance.audit_col_amount')}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="text-[13px] font-medium text-zinc-700 dark:text-zinc-300 divide-y divide-black/5 dark:divide-white/5">
+                                        {auditLogs.map(log => {
+                                            let actionBg = 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400';
+                                            if (log.action === 'CREATED') actionBg = 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400';
+                                            if (log.action === 'UPDATED') actionBg = 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400';
+                                            if (log.action === 'DELETED') actionBg = 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-400';
+
+                                            return (
+                                                <tr key={log.id} className="hover:bg-white dark:hover:bg-white/5 transition-colors">
+                                                    <td className="p-4 whitespace-nowrap text-zinc-500">{new Date(log.modified_at).toLocaleString('vi-VN')}</td>
+                                                    <td className="p-4 whitespace-nowrap">
+                                                        <span className={`px-2.5 py-1 rounded-md text-[11px] font-bold ${actionBg}`}>
+                                                            {AUDIT_ACTION_MAP[log.action] || log.action}
+                                                        </span>
+                                                    </td>
+                                                    <td className="p-4 font-bold">{log.modified_by_user?.display_name || t('finance.audit_unknown')}</td>
+                                                    <td className="p-4 min-w-[200px]">
+                                                        {log.action === 'CREATED' && <span>{t('finance.audit_new_amount')} <strong className="text-emerald-600 dark:text-emerald-400">{formatCurrency(log.new_amount)}</strong></span>}
+                                                        {log.action === 'UPDATED' && <span className="flex items-center gap-2"><span className="line-through opacity-50">{formatCurrency(log.old_amount)}</span> <span>→</span> <strong className="text-emerald-600 dark:text-emerald-400">{formatCurrency(log.new_amount)}</strong></span>}
+                                                        {log.action === 'DELETED' && <span>{t('finance.audit_old_deleted')} <strong className="text-rose-600 dark:text-rose-400">{formatCurrency(log.old_amount)}</strong></span>}
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
                                     </tbody>
                                 </table>
                             </div>

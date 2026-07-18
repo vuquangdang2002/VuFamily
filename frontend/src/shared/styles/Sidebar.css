@@ -1,0 +1,135 @@
+@reference "tailwindcss";
+
+.sidebar-container {
+    @apply relative flex flex-col h-full bg-white/80 dark:bg-[#111111]/80 backdrop-blur-xl border-r border-black/5 dark:border-white/5 shadow-sm transition-all duration-300 z-40;
+}
+
+.sidebar-container.expanded {
+    @apply w-[280px];
+}
+
+.sidebar-container.collapsed {
+    @apply w-[80px];
+}
+
+.sidebar-header {
+    @apply flex items-center justify-between h-20 px-4 md:px-5 shrink-0;
+}
+
+.sidebar-logo-group {
+    @apply flex items-center gap-3 overflow-hidden cursor-pointer;
+}
+
+.sidebar-logo-icon {
+    @apply flex shrink-0 items-center justify-center w-10 h-10 rounded-xl bg-[#161b22] border border-[#30363d] shadow-[0_0_15px_rgba(254,110,0,0.15)] relative overflow-hidden;
+}
+
+.sidebar-nav {
+    @apply flex-1 overflow-y-auto overflow-x-hidden p-3 md:p-4 flex flex-col;
+    gap: 4px;
+}
+
+.sidebar-nav-group {
+    @apply flex flex-col;
+    gap: 4px;
+}
+
+.sidebar-nav-btn {
+    @apply relative flex items-center gap-3 w-full px-3 py-3 md:py-2.5 rounded-xl transition-all duration-300;
+}
+
+.sidebar-nav-btn.active {
+    @apply bg-blue-600 text-white shadow-md shadow-blue-500/20;
+}
+
+.sidebar-nav-btn.inactive {
+    @apply text-zinc-600 dark:text-zinc-400;
+}
+.sidebar-nav-btn.inactive:hover {
+    @apply bg-black/5 text-zinc-900;
+}
+
+.sidebar-divider {
+    @apply w-full h-px bg-black/5 dark:bg-white/5 my-3 shrink-0;
+}
+
+.sidebar-section-title {
+    @apply px-3 mb-2 text-[11px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider;
+}
+
+/* User Menu */
+.sidebar-user-footer {
+    @apply relative p-3 md:p-4 shrink-0 border-t border-black/5 dark:border-white/5;
+}
+
+.sidebar-user-popup {
+    @apply absolute bg-white dark:bg-[#1C1C1E] rounded-2xl shadow-xl border border-black/5 dark:border-white/5 overflow-hidden z-50;
+    bottom: 100%;
+    margin-bottom: 8px !important;
+}
+
+.sidebar-user-popup.collapsed {
+    @apply left-4 w-56;
+}
+
+.sidebar-user-popup.expanded {
+    @apply left-4 right-4;
+}
+
+.sidebar-user-popup-header {
+    @apply p-4 border-b border-black/5 dark:border-white/5 flex items-center gap-3 bg-zinc-50 dark:bg-black/20;
+}
+
+.sidebar-user-popup-body {
+    @apply p-2 flex flex-col;
+    gap: 4px;
+}
+
+.sidebar-menu-btn {
+    @apply flex items-center gap-3 p-2 rounded-xl text-sm transition-colors w-full text-left;
+}
+
+.sidebar-menu-btn.default {
+    @apply text-zinc-700 dark:text-zinc-300;
+}
+.sidebar-menu-btn.default:hover {
+    @apply bg-black/5;
+}
+
+.sidebar-menu-btn.danger {
+    @apply text-rose-600 dark:text-rose-400;
+    margin-top: 4px;
+}
+.sidebar-menu-btn.danger:hover {
+    @apply bg-rose-50;
+}
+
+.sidebar-menu-row {
+    @apply flex items-center justify-between p-2 rounded-xl text-sm text-zinc-700 dark:text-zinc-300;
+}
+.sidebar-menu-row:hover {
+    @apply bg-black/5;
+}
+
+.sidebar-user-toggle {
+    @apply flex items-center gap-3 w-full p-2 rounded-xl transition-all duration-300;
+}
+.sidebar-user-toggle:hover {
+    @apply bg-black/5;
+}
+
+.sidebar-user-toggle.active {
+    @apply bg-black/5 dark:bg-white/5;
+}
+
+.sidebar-avatar {
+    @apply w-10 h-10 shrink-0 rounded-full flex items-center justify-center overflow-hidden border;
+}
+
+.sidebar-avatar.light {
+    @apply bg-zinc-200 dark:bg-zinc-800 border-black/5 dark:border-white/5;
+}
+
+.sidebar-avatar.dark {
+    @apply bg-zinc-100 dark:bg-zinc-800 shadow-sm border-black/5 dark:border-white/5;
+}

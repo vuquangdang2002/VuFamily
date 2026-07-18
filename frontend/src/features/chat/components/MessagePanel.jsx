@@ -5,6 +5,7 @@ import { AuthHelper } from '../../../shared/services/AuthHelper';
 import { cacheSingleMessage } from '../../../shared/services/chatCache';
 import { TrackingHelper } from '../../../shared/services/TrackingHelper';
 import { myError } from '../../../shared/utils/logger';
+import { ChevronLeft, Phone, Video, Info, Edit2, Send, Users, MessageSquarePlus } from 'lucide-react';
 
 function formatMessageContent(content) {
     if (!content) return '';
@@ -99,54 +100,66 @@ export default function MessagePanel({
 
     if (!activeRoomId) {
         return (
-            <div className="chat-messages-panel" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
-                {t('chat.select_room')}
+            <div className="flex flex-col items-center justify-center h-full text-zinc-500 bg-transparent">
+                <div className="w-16 h-16 rounded-[1.5rem] bg-black/5 dark:bg-white/5 flex items-center justify-center mb-4 shadow-sm">
+                    <MessageSquarePlus size={32} className="opacity-50" />
+                </div>
+                <span className="font-bold">{t('chat.select_room')}</span>
             </div>
         );
     }
 
     return (
-        <div className="chat-messages-panel">
+        <div className="flex flex-col h-full bg-transparent w-full relative">
             {/* Chat header */}
-            <div className="chat-msg-header" style={{ padding: '12px 16px', borderBottom: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', gap: 8, background: 'var(--bg-secondary)' }}>
-                <button className="btn" style={{ padding: '4px 8px', borderRadius: '50%', border: 'none', background: 'transparent', fontSize: '20px' }} onClick={() => fetchRooms() /* Back button dummy or just dummy click */}>
-                    ‹
+            <div className="px-4 py-3 flex items-center gap-3 border-b border-black/5 dark:border-white/5 bg-white/60 dark:bg-black/20 backdrop-blur-xl shrink-0 z-10 shadow-sm">
+                <button className="md:hidden w-10 h-10 flex items-center justify-center rounded-xl bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20 text-zinc-600 dark:text-zinc-300 transition-colors" onClick={() => fetchRooms()}>
+                    <ChevronLeft size={24} />
                 </button>
-                <div style={{ width: 36, height: 36, minWidth: 36, minHeight: 36, flexShrink: 0, borderRadius: '50%', background: activeRoom?.type === 'group' ? 'linear-gradient(135deg, #10b981, #047857)' : 'linear-gradient(135deg, var(--gold), var(--gold-dark))', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 'bold' }}>
+                <div className={`relative w-11 h-11 shrink-0 rounded-[1rem] shadow-sm overflow-hidden flex items-center justify-center text-white font-black text-sm ${activeRoom?.type === 'group' ? 'bg-gradient-to-br from-emerald-400 to-teal-600' : 'bg-gradient-to-br from-amber-400 to-orange-500'}`}>
                     {activeRoom?.avatar ? (
-                        <img src={activeRoom.avatar} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} alt="avatar" />
+                        <img src={activeRoom.avatar} className="w-full h-full object-cover" alt="avatar" />
                     ) : (
-                        activeRoom?.type === 'group' ? '👥' : activeRoom?.display_name?.substring(0, 2).toUpperCase()
+                        activeRoom?.type === 'group' ? <Users size={18} /> : activeRoom?.display_name?.substring(0, 2).toUpperCase()
+                    )}
+                    {activeRoom?.type === 'direct' && activeRoom.is_online && (
+                        <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-500 border-2 border-white dark:border-zinc-900 z-10" />
                     )}
                 </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <h3 style={{ margin: 0, fontSize: 16, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{activeRoom?.display_name || t('chat.group_label')}</h3>
+                <div className="flex-1 min-w-0 flex flex-col justify-center">
+                    <div className="flex items-center gap-2">
+                        <h3 className="m-0 font-extrabold text-[15px] text-zinc-900 dark:text-white truncate">{activeRoom?.display_name || t('chat.group_label')}</h3>
                         {activeRoom?.type === 'group' && (
-                            <button className="btn" title={t('chat.rename_group')} style={{ padding: '2px 6px', fontSize: 12, background: 'transparent', border: '1px solid var(--border-subtle)', borderRadius: 4, flexShrink: 0 }} onClick={handleRenameGroup}>✏️</button>
+                            <button className="w-6 h-6 flex items-center justify-center rounded-md bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20 text-zinc-500 transition-colors shrink-0" title={t('chat.rename_group')} onClick={handleRenameGroup}>
+                                <Edit2 size={12} />
+                            </button>
                         )}
                     </div>
                     {activeRoom?.type === 'direct' && (
-                        <span style={{ fontSize: 12, color: activeRoom.is_online ? '#10b981' : 'var(--text-muted)', whiteSpace: 'nowrap', display: 'block' }}>
+                        <span className={`text-[12px] font-medium truncate ${activeRoom.is_online ? 'text-emerald-500' : 'text-zinc-500'}`}>
                             {activeRoom.is_online ? t('chat.online_status') : t('chat.offline_status')}
                         </span>
                     )}
                 </div>
-                <div style={{ marginLeft: 'auto', display: 'flex', gap: 4, flexShrink: 0 }}>
-                    <button className="btn call-btn-mobile" title={t('chat.call_voice')} style={{ padding: '6px 10px' }} onClick={() => onStartCall({ ...activeRoom, requestVideo: false })}>
-                        📞 <span className="hide-on-mobile">{t('chat.call_voice')}</span>
+                <div className="flex items-center gap-1.5 shrink-0 ml-auto">
+                    <button className="flex items-center justify-center w-10 h-10 rounded-xl bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-zinc-700 dark:text-zinc-300 transition-colors" title={t('chat.call_voice')} onClick={() => onStartCall({ ...activeRoom, requestVideo: false })}>
+                        <Phone size={18} />
                     </button>
-                    <button className="btn btn-primary call-btn-mobile" title={t('chat.call_video')} style={{ padding: '6px 10px' }} onClick={() => onStartCall({ ...activeRoom, requestVideo: true })}>
-                        📹 <span className="hide-on-mobile">{t('chat.call_video')}</span>
+                    <button className="flex items-center justify-center w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 hover:bg-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-400 dark:hover:bg-emerald-500/30 transition-colors shadow-sm" title={t('chat.call_video')} onClick={() => onStartCall({ ...activeRoom, requestVideo: true })}>
+                        <Video size={18} />
                     </button>
-                    <button className="btn btn-icon" title={t('chat.group_detail')} style={{ fontSize: 18, padding: '4px' }} onClick={() => setShowGroupInfo(true)}>ℹ️</button>
+                    <button className="flex items-center justify-center w-10 h-10 rounded-xl bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-zinc-700 dark:text-zinc-300 transition-colors" title={t('chat.group_detail')} onClick={() => setShowGroupInfo(true)}>
+                        <Info size={18} />
+                    </button>
                 </div>
             </div>
 
             {/* Messages Container */}
-            <div style={{ flex: 1, overflowY: 'auto', padding: '24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div className="flex-1 overflow-y-auto p-4 md:p-6 block space-y-4" id="message-list">
                 {messages.length === 0 && (
-                    <div style={{ margin: 'auto', color: 'var(--text-muted)' }}>{t('chat.first_message')}</div>
+                    <div className="m-auto text-[13px] font-medium text-zinc-500 bg-white/40 dark:bg-black/20 px-4 py-2 rounded-xl backdrop-blur-sm border border-black/5 dark:border-white/5 shadow-sm">
+                        {t('chat.first_message')}
+                    </div>
                 )}
                 {messages.map((msg) => {
                     const trimmedContent = (msg.content || '').trim();
@@ -154,19 +167,8 @@ export default function MessagePanel({
                     
                     if (isSystem) {
                         return (
-                            <div key={msg.id} style={{ display: 'flex', justifyContent: 'center', margin: '8px 0', width: '100%' }}>
-                                <div style={{
-                                    background: 'var(--bg-secondary)',
-                                    color: 'var(--text-muted)',
-                                    fontSize: 12,
-                                    padding: '6px 16px',
-                                    borderRadius: 20,
-                                    border: '1px solid var(--border-subtle)',
-                                    textAlign: 'center',
-                                    maxWidth: '85%',
-                                    boxShadow: '0 2px 6px rgba(0,0,0,0.02)',
-                                    lineHeight: '1.4'
-                                }}>
+                            <div key={msg.id} className="flex justify-center my-2 w-full">
+                                <div className="bg-black/5 dark:bg-white/5 text-zinc-500 dark:text-zinc-400 text-[11px] font-bold px-4 py-1.5 rounded-full border border-black/5 dark:border-white/5 text-center max-w-[85%] shadow-sm">
                                     {trimmedContent.replace(/===/g, '').trim()}
                                 </div>
                             </div>
@@ -176,35 +178,31 @@ export default function MessagePanel({
                     const isMe = msg.sender_id === user.id;
                     const sender = msg.users || {};
                     return (
-                        <div key={msg.id} style={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start' }}>
+                        <div key={msg.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
                             {!isMe && activeRoom?.type === 'group' && (
-                                <span style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 4, marginLeft: 44 }}>
+                                <span className="text-[11px] font-bold text-zinc-500 mb-1 ml-11">
                                     {sender.display_name || sender.username}
                                 </span>
                             )}
-                            <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end', flexDirection: isMe ? 'row-reverse' : 'row' }}>
+                            <div className={`flex items-end gap-2 max-w-[85%] md:max-w-[70%] ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>
                                 {!isMe && (
-                                    <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--gold)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12 }}>
+                                    <div className="w-8 h-8 shrink-0 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 text-white flex items-center justify-center text-[11px] font-black shadow-sm overflow-hidden">
                                         {sender.avatar ? (
-                                            <img src={sender.avatar} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} alt="avatar" />
+                                            <img src={sender.avatar} className="w-full h-full object-cover" alt="avatar" />
                                         ) : (
                                             sender.display_name?.substring(0, 2).toUpperCase()
                                         )}
                                     </div>
                                 )}
-                                <div style={{
-                                    background: isMe ? 'var(--chat-msg-me-bg)' : 'var(--chat-msg-them-bg)',
-                                    color: isMe ? 'var(--chat-msg-me-color)' : 'var(--chat-msg-them-color)',
-                                    padding: '10px 14px', borderRadius: 16,
-                                    borderBottomRightRadius: isMe ? 4 : 16,
-                                    borderBottomLeftRadius: !isMe ? 4 : 16,
-                                    maxWidth: '400px', wordBreak: 'break-word',
-                                    border: isMe ? 'none' : '1px solid var(--chat-msg-them-border)'
-                                }}>
+                                <div className={`px-4 py-2.5 text-[14px] leading-relaxed break-words shadow-sm ${
+                                    isMe 
+                                        ? 'bg-blue-600 text-white rounded-[1.25rem] rounded-br-[0.25rem]' 
+                                        : 'bg-white dark:bg-[#222222] border border-black/5 dark:border-white/5 text-zinc-900 dark:text-white rounded-[1.25rem] rounded-bl-[0.25rem]'
+                                }`}>
                                     {formatMessageContent(msg.content)}
                                 </div>
                             </div>
-                            <span style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 4 }}>
+                            <span className="text-[10px] font-bold text-zinc-400 mt-1 mx-2">
                                 {new Date(msg.created_at).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
                             </span>
                         </div>
@@ -214,17 +212,16 @@ export default function MessagePanel({
             </div>
 
             {/* Chat input */}
-            <div style={{ padding: '16px', borderTop: '1px solid var(--border-subtle)', background: 'var(--bg-primary)' }}>
-                <form onSubmit={handleSendMessage} style={{ display: 'flex', gap: 8 }}>
+            <div className="p-4 border-t border-black/5 dark:border-white/5 bg-white/60 dark:bg-black/40 backdrop-blur-xl shrink-0 z-10">
+                <form onSubmit={handleSendMessage} className="flex items-center gap-3">
                     <input
-                        className="form-input"
-                        style={{ flex: 1, borderRadius: 24, padding: '12px 20px', background: 'var(--bg-secondary)', border: '1px solid var(--border-subtle)' }}
+                        className="flex-1 bg-white dark:bg-black/60 border border-black/10 dark:border-white/10 rounded-full px-5 py-3.5 text-[14px] font-medium text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/50 shadow-sm"
                         placeholder={t('chat.input_msg')}
                         value={inputText}
                         onChange={e => setInputText(e.target.value)}
                     />
-                    <button type="submit" disabled={!inputText.trim()} className="btn btn-primary" style={{ borderRadius: 24, padding: '0 24px' }}>
-                        {t('chat.send_btn')}
+                    <button type="submit" disabled={!inputText.trim()} className="flex items-center justify-center w-12 h-12 rounded-full bg-blue-600 text-white hover:bg-blue-700 shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed shrink-0">
+                        <Send size={18} className="ml-1" />
                     </button>
                 </form>
             </div>

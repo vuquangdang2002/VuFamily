@@ -97,11 +97,11 @@ export default function TreeCanvas({ members, selectedId, searchResultIds, onSel
             minY = Math.min(minY, p.y); 
             maxY = Math.max(maxY, p.y + p.height); 
         });
-        const tw = maxX - minX, th = maxY - minY, pad = 60;
-        const s = Math.min((cw - pad * 2) / tw, (ch - pad * 2) / th, 1.2);
+        const tw = maxX - minX, th = maxY - minY, pad = 60, headerOffset = 120;
+        const s = Math.max(0.1, Math.min((cw - pad * 2) / tw, (ch - headerOffset - pad * 2) / th, 1.2));
         stateRef.current.scale = s;
         stateRef.current.panX = (cw - tw * s) / 2 - minX * s;
-        stateRef.current.panY = pad - minY * s + 20;
+        stateRef.current.panY = headerOffset + pad - minY * s;
         draw();
     }, [members]);
 
@@ -192,7 +192,7 @@ export default function TreeCanvas({ members, selectedId, searchResultIds, onSel
         let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
         positions.forEach(p => { minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x + p.width); minY = Math.min(minY, p.y); maxY = Math.max(maxY, p.y + p.height); });
         const tw = maxX - minX, th = maxY - minY, pad = 100;
-        const s = Math.min((canvas.width - pad * 2) / tw, (canvas.height - pad * 2) / th, 1);
+        const s = Math.max(0.1, Math.min((canvas.width - pad * 2) / tw, (canvas.height - pad * 2) / th, 1));
         stateRef.current.scale = s; stateRef.current.panX = (canvas.width - tw * s) / 2 - minX * s; stateRef.current.panY = pad - minY * s + 20;
         draw();
     };
@@ -200,8 +200,8 @@ export default function TreeCanvas({ members, selectedId, searchResultIds, onSel
     useEffect(() => { window.__treeCanvas = { zoomIn, zoomOut, fitView }; return () => { delete window.__treeCanvas; }; });
 
     return (
-        <div className="canvas-container">
-            <canvas ref={canvasRef} className="tree-canvas" />
+        <div className="w-full h-full relative overflow-hidden flex-1">
+            <canvas ref={canvasRef} className="tree-canvas block cursor-grab active:cursor-grabbing w-full h-full" />
         </div>
     );
 }

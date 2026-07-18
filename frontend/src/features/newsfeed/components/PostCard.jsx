@@ -3,6 +3,9 @@ import { useTranslation } from '../../../shared/hooks/useTranslation';
 import { api } from '../../../shared/services/api';
 import { myError } from '../../../shared/utils/logger';
 import { TrackingHelper } from '../../../shared/services/TrackingHelper';
+import { MessageCircle, Share2, Trash2, Send, ThumbsUp, User, MoreHorizontal } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { GlassCard } from '../../../shared/components/ui/GlassCard';
 
 const EMOJIS = ['❤️', '👍', '😂', '😮', '😢'];
 
@@ -17,15 +20,14 @@ export default function PostCard({ post, user, isAdmin, currentUserId, addToast,
         const d = new Date(dateStr);
         const now = new Date();
         const diff = Math.floor((now - d) / 1000);
-        if (diff < 60) return t('common.just_now');
-        if (diff < 3600) return `${Math.floor(diff / 60)} ${t('common.minutes_ago')}`;
-        if (diff < 86400) return `${Math.floor(diff / 3600)} ${t('common.hours_ago')}`;
-        if (diff < 604800) return `${Math.floor(diff / 86400)} ${t('common.days_ago')}`;
+        if (diff < 60) return t('common.just_now') || 'Vừa xong';
+        if (diff < 3600) return `${Math.floor(diff / 60)} ${t('common.minutes_ago') || 'phút trước'}`;
+        if (diff < 86400) return `${Math.floor(diff / 3600)} ${t('common.hours_ago') || 'giờ trước'}`;
+        if (diff < 604800) return `${Math.floor(diff / 86400)} ${t('common.days_ago') || 'ngày trước'}`;
         return d.toLocaleDateString('vi-VN');
     }
 
     const handleReaction = async (emoji) => {
-        // Optimistic update
         setPosts(prev => prev.map(p => {
             if (p.id !== post.id) return p;
             const reactions = { ...p.reactions };
@@ -57,11 +59,8 @@ export default function PostCard({ post, user, isAdmin, currentUserId, addToast,
             return { ...p, reactions };
         }));
 
-        try {
-            await api.reactToPost(post.id, emoji);
-        } catch (e) {
-            myError('NEWSFEED', e);
-        }
+        try { await api.reactToPost(post.id, emoji); } 
+        catch (e) { myError('NEWSFEED', e); }
     };
 
     const toggleComments = async () => {
@@ -74,16 +73,13 @@ export default function PostCard({ post, user, isAdmin, currentUserId, addToast,
                     setComments(json.data || []);
                     setCommentsLoaded(true);
                 }
-            } catch (e) {
-                myError('NEWSFEED', e);
-            }
+            } catch (e) { myError('NEWSFEED', e); }
         }
     };
 
     const handleAddComment = async () => {
         const text = commentText.trim();
         if (!text) return;
-
         const tempComment = {
             id: `temp-${Date.now()}`,
             content: text,
@@ -91,92 +87,103 @@ export default function PostCard({ post, user, isAdmin, currentUserId, addToast,
             author_role: user?.role || 'viewer',
             created_at: new Date().toISOString()
         };
-
         setComments(prev => [...prev, tempComment]);
         setCommentText('');
-
-        // Optimistically update comment count in parent
         setPosts(prev => prev.map(p => p.id === post.id ? { ...p, comment_count: (p.comment_count || 0) + 1 } : p));
-
+        TrackingHelper.trackCommentPost();
         try {
-            const json = await api.addComment(post.id, text);
+            const json = await api.addComment(post.id, { content: text });
             if (json.success && json.data) {
                 setComments(prev => prev.map(c => c.id === tempComment.id ? json.data : c));
-            }
-        } catch (e) {
-            addToast(t('chat.send_error'));
-        }
+            } else { addToast(t('newsfeed.comment_fail') || 'Lỗi bình luận'); }
+        } catch (e) { addToast(t('login.error_connection')); }
     };
 
-    const handleDeleteComment = async (commentId) => {
-        setComments(prev => prev.filter(c => c.id !== commentId));
-        setPosts(prev => prev.map(p => p.id === post.id ? { ...p, comment_count: Math.max(0, (p.comment_count || 1) - 1) } : p));
-        try {
-            await api.deleteComment(commentId);
-        } catch (e) {
-            addToast(t('newsfeed.delete_comment_err'));
-        }
+    const handleDeleteComment = async (cid) => {
+        if (!confirm(t('newsfeed.delete_confirm') || 'Bạn có chắc chắn muốn xóa?')) return;
+        setComments(prev => prev.filter(c => c.id !== cid));
+        setPosts(prev => prev.map(p => p.id === post.id ? { ...p, comment_count: Math.max(0, (p.comment_count || 0) - 1) } : p));
+        try { await api.deleteComment(post.id, cid); } 
+        catch (e) { addToast(t('newsfeed.delete_post_err')); }
     };
 
-    const userReaction = EMOJIS.find(e => post.reactions?.[e]?.users?.includes(currentUserId));
-    const LABEL_MAP = { 
-        '👍': t('newsfeed.like'), 
-        '❤️': t('newsfeed.love'), 
-        '😂': t('newsfeed.haha'), 
-        '😮': t('newsfeed.wow'), 
-        '😢': t('newsfeed.sad') 
+    let userReaction = null;
+    for (const em of Object.keys(post.reactions || {})) {
+        if (post.reactions[em]?.users?.includes(currentUserId)) {
+            userReaction = em;
+            break;
+        }
+    }
+
+    const LABEL_MAP = {
+        '❤️': t('newsfeed.love') || 'Yêu thích',
+        '👍': t('newsfeed.like') || 'Thích',
+        '😂': t('newsfeed.haha') || 'Haha',
+        '😮': t('newsfeed.wow') || 'Wow',
+        '😢': t('newsfeed.sad') || 'Buồn'
     };
 
     return (
-        <div className="rounded-3xl p-6 shadow-sm mb-4" style={{ background: 'var(--bg-card)' }}>
-            <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full flex items-center justify-center text-xl overflow-hidden shadow-inner" style={{ background: 'var(--primary-glow)', color: 'var(--primary)' }}>
-                        {(post.author_role || post.authorRole) === 'admin' ? '👑' : '👤'}
-                    </div>
-                    <div>
-                        <div className="font-bold text-sm" style={{ color: 'var(--text-primary)' }}>{post.author}</div>
-                        <div className="text-xs" style={{ color: 'var(--text-muted)' }}>{timeAgo(post.created_at || post.createdAt)}</div>
-                    </div>
+        <GlassCard className="p-5 md:p-6 flex flex-col gap-4">
+            {/* Header */}
+            <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#fe6e00]/20 to-amber-500/20 flex items-center justify-center border border-[#fe6e00]/30 shadow-sm shrink-0 text-[#fe6e00]">
+                    {(post.author_role || post.authorRole) === 'admin' ? '👑' : <User size={18} />}
                 </div>
-                {isAdmin && (
-                    <button className="transition-colors p-2 hover:text-red-500" style={{ color: 'var(--text-muted)' }} onClick={() => onDeletePost(post.id)} title={t('newsfeed.delete_post_title')}>
-                        🗑️
+                <div className="flex flex-col flex-1 min-w-0">
+                    <span className="font-bold text-[15px] text-zinc-900 dark:text-white truncate flex items-center gap-2">
+                        {post.author}
+                        {(post.author_role || post.authorRole) === 'admin' && (
+                            <span className="px-1.5 py-0.5 rounded-md bg-rose-500/10 text-rose-500 text-[10px] uppercase font-bold tracking-wider border border-rose-500/20">Admin</span>
+                        )}
+                    </span>
+                    <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">{timeAgo(post.created_at)}</span>
+                </div>
+                {(isAdmin || (currentUserId && post.author_id === currentUserId)) && (
+                    <button 
+                        className="p-2 -mr-2 text-zinc-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-full transition-colors" 
+                        onClick={() => onDeletePost(post.id)} 
+                        title={t('newsfeed.delete_post_title') || 'Xóa bài viết'}
+                    >
+                        <Trash2 size={18} />
                     </button>
                 )}
             </div>
             
-            <div className="text-[15px] mb-4 whitespace-pre-wrap leading-relaxed" style={{ color: 'var(--text-primary)' }}>{post.content}</div>
+            {/* Content */}
+            <div className="text-[15px] whitespace-pre-wrap leading-relaxed text-zinc-800 dark:text-zinc-200">
+                {post.content}
+            </div>
 
             {/* Summary */}
             {(Object.keys(post.reactions || {}).length > 0 || (post.comment_count > 0)) && (
-                <div className="flex justify-between items-center text-xs mb-3 pb-3" style={{ color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-subtle)' }}>
+                <div className="flex justify-between items-center text-[13px] pb-2 border-b border-black/5 dark:border-white/10 text-zinc-500 dark:text-zinc-400 font-medium">
                     <div className="flex items-center">
-                        {Object.keys(post.reactions || {}).filter(e => post.reactions[e].count > 0).slice(0, 3).map((e) => (
-                            <span key={e} className="mr-1">{e}</span>
+                        {Object.keys(post.reactions || {}).filter(e => post.reactions[e].count > 0).slice(0, 3).map((e, idx) => (
+                            <span key={e} className={`bg-white dark:bg-zinc-800 border border-black/5 dark:border-white/10 rounded-full p-0.5 text-xs shadow-sm ${idx > 0 ? '-ml-1.5' : ''} relative z-[${10-idx}]`}>
+                                {e}
+                            </span>
                         ))}
                         {Object.values(post.reactions || {}).reduce((sum, r) => sum + (r.count || 0), 0) > 0 && (
-                            <span className="ml-1">{Object.values(post.reactions || {}).reduce((sum, r) => sum + (r.count || 0), 0)}</span>
+                            <span className="ml-2 font-semibold text-zinc-600 dark:text-zinc-300">
+                                {Object.values(post.reactions || {}).reduce((sum, r) => sum + (r.count || 0), 0)}
+                            </span>
                         )}
                     </div>
-                    <div>
-                        <span className="cursor-pointer hover:underline" onClick={toggleComments}>
-                            {post.comment_count || 0} {t('newsfeed.comments_count')}
-                        </span>
+                    <div className="cursor-pointer hover:text-[#fe6e00] transition-colors" onClick={toggleComments}>
+                        {post.comment_count || 0} {t('newsfeed.comments_count') || 'bình luận'}
                     </div>
                 </div>
             )}
 
             {/* Actions Bar */}
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2 pt-1">
                 <div className="relative group">
-                    <div className="absolute bottom-full left-0 mb-2 hidden group-hover:flex rounded-full shadow-lg p-1 gap-1 z-10 animate-fade-in-up" style={{ background: 'var(--bg-primary)', border: '1px solid var(--border-subtle)' }}>
+                    <div className="absolute bottom-full left-0 mb-3 hidden group-hover:flex rounded-[1.5rem] shadow-xl p-1.5 gap-1.5 z-20 bg-white dark:bg-[#1C1C1E] border border-black/5 dark:border-white/10 animate-in fade-in slide-in-from-bottom-2">
                         {EMOJIS.map(emoji => (
                             <button
                                 key={emoji}
-                                className="w-8 h-8 rounded-full hover:scale-125 transition-all text-lg flex items-center justify-center"
-                                style={{ background: 'transparent' }}
-                                title={emoji === '👍' ? t('newsfeed.like') : emoji === '❤️' ? t('newsfeed.love') : emoji === '😂' ? t('newsfeed.haha') : emoji === '😮' ? t('newsfeed.wow') : t('newsfeed.sad')}
+                                className="w-10 h-10 rounded-full hover:scale-125 hover:bg-black/5 dark:hover:bg-white/10 transition-all text-xl flex items-center justify-center origin-bottom"
                                 onClick={() => handleReaction(emoji)}
                             >
                                 {emoji}
@@ -184,84 +191,99 @@ export default function PostCard({ post, user, isAdmin, currentUserId, addToast,
                         ))}
                     </div>
                     <button
-                        className="flex items-center gap-2 px-4 py-2 rounded-xl transition-colors font-medium text-sm"
-                        style={userReaction ? { color: 'var(--primary)', background: 'var(--primary-glow)' } : { color: 'var(--text-secondary)' }}
+                        className={`flex items-center justify-center gap-2 px-4 py-2 rounded-xl transition-all font-bold text-[13px] ${userReaction ? 'bg-[#fe6e00]/10 text-[#fe6e00]' : 'bg-transparent text-zinc-600 dark:text-zinc-400 hover:bg-black/5 dark:hover:bg-white/5'}`}
                         onClick={() => handleReaction(userReaction ? userReaction : '👍')}
                     >
-                        <span className="text-lg">
-                            {userReaction ? userReaction : (
-                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2">
-                                    <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
-                                </svg>
-                            )}
-                        </span>
-                        <span>{userReaction ? LABEL_MAP[userReaction] : t('newsfeed.like')}</span>
+                        {userReaction ? <span className="text-base leading-none">{userReaction}</span> : <ThumbsUp size={16} className="mb-0.5" />}
+                        <span>{userReaction ? LABEL_MAP[userReaction] : (t('newsfeed.like') || 'Thích')}</span>
                     </button>
                 </div>
                 
-                <button className="flex items-center gap-2 px-4 py-2 rounded-xl transition-colors font-medium text-sm" style={{ color: 'var(--text-secondary)' }} onClick={toggleComments}>
-                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                    </svg>
-                    <span>{t('newsfeed.comment')}</span>
+                <button 
+                    className={`flex items-center justify-center gap-2 px-4 py-2 rounded-xl transition-colors font-bold text-[13px] ${isExpanded ? 'bg-black/5 dark:bg-white/10 text-zinc-900 dark:text-white' : 'bg-transparent text-zinc-600 dark:text-zinc-400 hover:bg-black/5 dark:hover:bg-white/5'}`}
+                    onClick={toggleComments}
+                >
+                    <MessageCircle size={16} />
+                    <span>{t('newsfeed.comment') || 'Bình luận'}</span>
                 </button>
 
-                <button className="flex items-center gap-2 px-4 py-2 rounded-xl transition-colors font-medium text-sm ml-auto" style={{ color: 'var(--text-secondary)' }} onClick={() => addToast(t('newsfeed.share_coming'))}>
-                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
-                        <polyline points="16 6 12 2 8 6"></polyline>
-                        <line x1="12" y1="2" x2="12" y2="15"></line>
-                    </svg>
+                <button 
+                    className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-transparent text-zinc-600 dark:text-zinc-400 hover:bg-black/5 dark:hover:bg-white/5 transition-colors font-bold text-[13px] ml-auto" 
+                    onClick={() => addToast(t('newsfeed.share_coming') || 'Tính năng chia sẻ đang phát triển')}
+                >
+                    <Share2 size={16} />
+                    <span className="hidden sm:inline">{t('newsfeed.share') || 'Chia sẻ'}</span>
                 </button>
             </div>
 
-            {/* Comments Section */}
-            {isExpanded && (
-                <div className="mt-4 pt-4 flex flex-col gap-4" style={{ borderTop: '1px solid var(--border-subtle)' }}>
-                    {comments.map(c => (
-                        <div key={c.id} className="flex gap-3">
-                            <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm shrink-0" style={{ background: 'var(--bg-primary)' }}>
-                                {(c.author_role || c.authorRole) === 'admin' ? '👑' : '👤'}
-                            </div>
-                            <div className="flex flex-col flex-1">
-                                <div className="rounded-2xl p-3 relative group" style={{ background: 'var(--bg-hover)' }}>
-                                    <div className="font-bold text-xs mb-1" style={{ color: 'var(--text-primary)' }}>{c.author}</div>
-                                    <div className="text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>{c.content}</div>
-                                    
-                                    {isAdmin && (
-                                        <button 
-                                            className="absolute right-2 top-2 hidden group-hover:flex w-6 h-6 items-center justify-center shadow-sm rounded-full text-red-500 text-xs" 
-                                            style={{ background: 'var(--bg-card)' }}
-                                            onClick={() => handleDeleteComment(c.id)} 
-                                            title={t('newsfeed.delete_comment_title')}
-                                        >
-                                            ✕
-                                        </button>
-                                    )}
+            {/* Comments Accordion */}
+            <AnimatePresence>
+                {isExpanded && (
+                    <motion.div 
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        className="overflow-hidden flex flex-col gap-4 border-t border-black/5 dark:border-white/10"
+                    >
+                        <div className="pt-4 flex flex-col gap-5">
+                            {comments.map(c => (
+                                <div key={c.id} className="flex gap-3 group/comment">
+                                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm shrink-0 bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 text-zinc-600 dark:text-zinc-400">
+                                        {(c.author_role || c.authorRole) === 'admin' ? '👑' : <User size={14} />}
+                                    </div>
+                                    <div className="flex flex-col flex-1">
+                                        <div className="rounded-[1.25rem] rounded-tl-sm p-3.5 bg-black/5 dark:bg-white/5 relative">
+                                            <div className="font-bold text-[13px] mb-0.5 text-zinc-900 dark:text-white flex items-center gap-2">
+                                                {c.author}
+                                            </div>
+                                            <div className="text-[14px] leading-relaxed text-zinc-700 dark:text-zinc-300">{c.content}</div>
+                                            {isAdmin && (
+                                                <button 
+                                                    className="absolute -right-2 -top-2 opacity-0 group-hover/comment:opacity-100 w-7 h-7 flex items-center justify-center shadow-md rounded-full bg-white dark:bg-zinc-800 border border-black/5 dark:border-white/10 text-rose-500 transition-all hover:scale-110" 
+                                                    onClick={() => handleDeleteComment(c.id)} 
+                                                >
+                                                    <Trash2 size={12} />
+                                                </button>
+                                            )}
+                                        </div>
+                                        <div className="flex gap-3 mt-1 ml-1 text-xs font-bold text-zinc-500 dark:text-zinc-500">
+                                            <span>{timeAgo(c.created_at)}</span>
+                                        </div>
+                                    </div>
                                 </div>
-                                <span className="text-[11px] mt-1 ml-2" style={{ color: 'var(--text-muted)' }}>{timeAgo(c.created_at || c.createdAt)}</span>
+                            ))}
+
+                            <div className="flex items-end gap-3 mt-2">
+                                <div className="w-8 h-8 rounded-full shrink-0 flex items-center justify-center bg-gradient-to-tr from-[#fe6e00]/20 to-amber-500/20 text-[#fe6e00] border border-[#fe6e00]/30 shadow-sm">
+                                    {user?.role === 'admin' ? '👑' : <User size={14} />}
+                                </div>
+                                <div className="flex-1 bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 rounded-[1.25rem] rounded-bl-sm flex items-end p-1.5 focus-within:ring-2 focus-within:ring-[#fe6e00]/50 transition-all">
+                                    <textarea 
+                                        rows={1}
+                                        value={commentText}
+                                        onChange={e => setCommentText(e.target.value)}
+                                        onKeyDown={e => {
+                                            if (e.key === 'Enter' && !e.shiftKey) {
+                                                e.preventDefault();
+                                                handleAddComment();
+                                            }
+                                        }}
+                                        placeholder={t('newsfeed.write_comment') || 'Viết bình luận...'}
+                                        className="w-full bg-transparent outline-none resize-none px-3 py-2 text-[14px] text-zinc-900 dark:text-white placeholder:text-zinc-500 min-h-[40px] max-h-[120px] custom-scrollbar"
+                                    />
+                                    <button 
+                                        onClick={handleAddComment}
+                                        disabled={!commentText.trim()}
+                                        className="w-9 h-9 shrink-0 flex items-center justify-center bg-[#fe6e00] hover:bg-amber-600 disabled:opacity-50 disabled:hover:bg-[#fe6e00] text-white rounded-xl transition-colors mb-0.5 mr-0.5"
+                                    >
+                                        <Send size={16} className="-ml-0.5" />
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                    ))}
-                    <div className="flex gap-3 items-center mt-2">
-                        <input
-                            className="flex-1 rounded-full px-4 py-2 outline-none text-sm"
-                            style={{ background: 'var(--input-bg)', border: '1px solid var(--border-subtle)', color: 'var(--input-color)' }}
-                            placeholder={t('newsfeed.comment_placeholder')}
-                            value={commentText}
-                            onChange={e => setCommentText(e.target.value)}
-                            onKeyDown={e => e.key === 'Enter' && handleAddComment()}
-                        />
-                        <button
-                            className="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center disabled:opacity-50 hover:bg-blue-700 transition-colors shrink-0"
-                            onClick={handleAddComment}
-                            disabled={!commentText.trim()}
-                        >
-                            ➤
-                        </button>
-                    </div>
-                </div>
-            )}
-        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </GlassCard>
     );
 }

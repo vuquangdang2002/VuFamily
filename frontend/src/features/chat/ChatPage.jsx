@@ -11,7 +11,6 @@ import { useTranslation } from '../../shared/hooks/useTranslation';
 import InboxPanel from './components/InboxPanel';
 import MessagePanel from './components/MessagePanel';
 import ChatModals from './components/ChatModals';
-import './Chat.css';
 
 export default function ChatPage({ user, addToast, onStartCall }) {
     const { t } = useTranslation();
@@ -377,30 +376,36 @@ export default function ChatPage({ user, addToast, onStartCall }) {
     const currentUserRole = activeRoom?.type === 'group' ? (activeRoom.members?.find(m => m.id === user.id)?.role || 'member') : 'member';
 
     return (
-        <div className="page-container no-mobile-padding" style={{ display: 'flex', flexDirection: 'column', height: '100%', padding: 0 }}>
-            <div className={`chat-layout ${activeRoomId ? 'room-active' : ''}`}>
-                <InboxPanel
-                    rooms={rooms}
-                    loadingRooms={loadingRooms}
-                    activeRoomId={activeRoomId}
-                    setActiveRoomId={setActiveRoomId}
-                    setShowNewChat={setShowNewChat}
-                    handleJoinRoom={handleJoinRoom}
-                />
+        <div className="h-full w-full overflow-hidden flex flex-col relative">
+            <div className="flex-1 min-h-0 flex flex-col md:flex-row relative">
+                {/* Inbox Panel - Hidden on mobile if a room is active */}
+                <div className={`w-full md:w-[340px] lg:w-[380px] h-full shrink-0 border-r border-black/5 dark:border-white/5 bg-white/60 dark:bg-[#111111]/60 backdrop-blur-xl ${activeRoomId ? 'hidden md:flex md:flex-col' : 'flex flex-col'}`}>
+                    <InboxPanel
+                        rooms={rooms}
+                        loadingRooms={loadingRooms}
+                        activeRoomId={activeRoomId}
+                        setActiveRoomId={setActiveRoomId}
+                        setShowNewChat={setShowNewChat}
+                        handleJoinRoom={handleJoinRoom}
+                    />
+                </div>
 
-                <MessagePanel
-                    activeRoomId={activeRoomId}
-                    activeRoom={activeRoom}
-                    messages={messages}
-                    setMessages={setMessages}
-                    user={user}
-                    onStartCall={onStartCall}
-                    setShowGroupInfo={setShowGroupInfo}
-                    handleRenameGroup={handleRenameGroup}
-                    addToast={addToast}
-                    fetchRooms={fetchRooms}
-                    latestMsgTimeRef={latestMsgTimeRef}
-                />
+                {/* Message Panel - Hidden on mobile if NO room is active */}
+                <div className={`flex-1 h-full bg-white/40 dark:bg-transparent ${!activeRoomId ? 'hidden md:flex md:flex-col' : 'flex flex-col'}`}>
+                    <MessagePanel
+                        activeRoomId={activeRoomId}
+                        activeRoom={activeRoom}
+                        messages={messages}
+                        setMessages={setMessages}
+                        user={user}
+                        onStartCall={onStartCall}
+                        setShowGroupInfo={setShowGroupInfo}
+                        handleRenameGroup={handleRenameGroup}
+                        addToast={addToast}
+                        fetchRooms={fetchRooms}
+                        latestMsgTimeRef={latestMsgTimeRef}
+                    />
+                </div>
             </div>
 
             <ChatModals
@@ -421,16 +426,6 @@ export default function ChatPage({ user, addToast, onStartCall }) {
                 handleAddMember={handleAddMember}
                 handleUpdateMemberRole={handleUpdateMemberRole}
             />
-
-            <style>
-                {`
-                .form-input:focus { border-color: var(--primary); outline: none; }
-                @media (max-width: 768px) {
-                    .hide-on-mobile { display: none; }
-                    .call-btn-mobile { padding: 6px 8px !important; font-size: 16px !important; }
-                }
-                `}
-            </style>
         </div>
     );
 }

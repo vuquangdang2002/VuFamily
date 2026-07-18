@@ -70,17 +70,17 @@ html.dark {
     --input-focus-shadow: rgba(10, 132, 255, 0.2);
 
     /* ── Family Tree ── */
-    --tree-bg:                 #000000;
+    --tree-bg:                 transparent;
     --tree-grid:               rgba(255, 255, 255, 0.03);
-    --tree-node-bg:            #1C1C1E;
-    --tree-node-border:        #38383A;
-    --tree-node-border-active: #0A84FF;
+    --tree-node-bg:            rgba(255, 255, 255, 0.05); /* Glass card look inside canvas */
+    --tree-node-border:        rgba(255, 255, 255, 0.1);
+    --tree-node-border-active: #fe6e00;
     --tree-node-shadow:        0 8px 24px rgba(0, 0, 0, 0.4);
-    --tree-node-shadow-active: 0 0 16px rgba(10, 132, 255, 0.3);
-    --tree-line-parent:        rgba(142, 142, 147, 0.5);
-    --tree-line-spouse:        rgba(255, 55, 95, 0.5);
-    --tree-badge-bg:           #2C2C2E;
-    --tree-badge-border:       #38383A;
+    --tree-node-shadow-active: 0 0 16px rgba(254, 110, 0, 0.5);
+    --tree-line-parent:        rgba(255, 255, 255, 0.2);
+    --tree-line-spouse:        rgba(254, 110, 0, 0.5);
+    --tree-badge-bg:           rgba(255, 255, 255, 0.1);
+    --tree-badge-border:       rgba(255, 255, 255, 0.15);
     --tree-badge-text:         #FFFFFF;
 
     /* ── Chat custom ── */

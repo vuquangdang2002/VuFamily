@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { useTranslation } from '../hooks/useTranslation';
-import { Search, Users, Network, Download, Upload, RotateCcw, X, Plus, ChevronDown } from 'lucide-react';
+import { Search, Users, Network, Download, Upload, RotateCcw, X, Plus, ChevronDown, User as UserIcon, Calendar } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import '../styles/Header.css';
 
 export default function Header({ stats, onSearch, searchResults, onSelectResult, onAddRoot, onExport, onExportCSV, onImport, onReset, isAdmin }) {
     const { t } = useTranslation();
@@ -30,87 +32,145 @@ export default function Header({ stats, onSearch, searchResults, onSelectResult,
     }, []);
 
     return (
-        <header className="header">
-            <div className="header-left">
-                <div className="search-container" onClick={e => e.stopPropagation()}>
-                    <div className="search-wrapper">
-                        <Search className="search-icon" size={18} />
-                        <input className="search-input" placeholder={t('header.search_placeholder')} value={query}
-                            onChange={e => handleSearch(e.target.value)} onFocus={() => query && setShowResults(true)} />
-                        {query && <button className="btn-clear-search" onClick={clearSearch}><X size={14}/></button>}
+        <header className="header-container">
+            {/* Left: Search */}
+            <div className="header-search-wrapper">
+                <div className="header-search-box">
+                    <div className="header-search-icon">
+                        <Search size={18} />
                     </div>
-                    <div className={`search-results ${showResults && query ? 'open' : ''}`}>
-                        {searchResults.length === 0 && <div className="search-empty">{t('header.no_results')}</div>}
-                        {searchResults.map(m => (
-                            <div key={m.id} className="search-item" onClick={() => handleResultClick(m)}>
-                                <span className="search-item-icon">{m.gender === 1 ? '👨' : '👩'}</span>
-                                <div>
-                                    <div className="search-item-name">{m.name}</div>
-                                    <div className="search-item-info">{m.birthPlace || ''}{m.occupation ? ` · ${m.occupation}` : ''}</div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
+                    <input 
+                        className="header-search-input" 
+                        placeholder={t('header.search_placeholder') || 'Tìm kiếm thành viên...'} 
+                        value={query}
+                        onChange={e => handleSearch(e.target.value)} 
+                        onFocus={() => query && setShowResults(true)} 
+                        onClick={e => e.stopPropagation()}
+                    />
+                    {query && (
+                        <button className="header-search-clear" onClick={clearSearch}>
+                            <X size={16}/>
+                        </button>
+                    )}
+                </div>
+
+                {/* Search Results Dropdown */}
+                <AnimatePresence>
+                    {showResults && query && (
+                        <motion.div 
+                            initial={{ opacity: 0, y: 10, scale: 0.98 }} 
+                            animate={{ opacity: 1, y: 0, scale: 1 }} 
+                            exit={{ opacity: 0, y: 10, scale: 0.98 }}
+                            className="header-search-dropdown custom-scrollbar"
+                            onClick={e => e.stopPropagation()}
+                        >
+                            {searchResults.length === 0 ? (
+                                <div className="header-search-empty">Không tìm thấy "{query}"</div>
+                            ) : (
+                                searchResults.map(m => (
+                                    <button 
+                                        key={m.id} 
+                                        className="header-search-result-btn" 
+                                        onClick={() => handleResultClick(m)}
+                                    >
+                                        <div className={`header-search-avatar ${m.gender === 1 ? 'male' : 'female'}`}>
+                                            <UserIcon size={20} />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="font-bold text-sm text-zinc-900 dark:text-white truncate">{m.name}</div>
+                                            <div className="text-xs text-zinc-500 dark:text-zinc-400 truncate">
+                                                {m.birthYear || '?'} {m.birthPlace ? `- ${m.birthPlace}` : ''}
+                                            </div>
+                                        </div>
+                                    </button>
+                                ))
+                            )}
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            </div>
+
+            {/* Center: Stats */}
+            <div className="header-stats-group">
+                <div className="header-stat-item">
+                    <div className="header-stat-icon users"><Users size={14} /></div>
+                    {stats.totalMembers} <span className="text-zinc-500 font-medium">{t('header.members_label') || 'Thành viên'}</span>
+                </div>
+                <div className="header-stat-divider" />
+                <div className="header-stat-item">
+                    <div className="header-stat-icon network"><Network size={14} /></div>
+                    {stats.totalGenerations} <span className="text-zinc-500 font-medium">{t('header.generations_label') || 'Thế hệ'}</span>
                 </div>
             </div>
 
-            <div className="header-center">
-                <div className="stat-badge"><Users size={14} /> <span className="stat-value">{stats.totalMembers}</span> {t('header.members_label')}</div>
-                <div className="stat-badge"><Network size={14} /> <span className="stat-value">{stats.totalGenerations}</span> {t('header.generations_label')}</div>
-            </div>
-
-            <div className="header-right">
+            {/* Right: Actions */}
+            <div className="header-actions-group no-scrollbar">
                 {isAdmin && onAddRoot && (
-                    <button className="btn btn-primary" onClick={onAddRoot}>
-                        <Plus size={16} /> {t('header.add_root')}
+                    <button className="header-action-btn-primary" onClick={onAddRoot}>
+                        <Plus size={16} /> <span className="hidden sm:inline">{t('header.add_root')}</span>
                     </button>
                 )}
 
                 {/* ── Export Dropdown ── */}
                 {isAdmin && onExport && (
-                    <div className="header-dropdown" ref={exportMenuRef} onClick={e => e.stopPropagation()}>
-                        <button className="btn" onClick={() => { setShowExportMenu(!showExportMenu); setShowImportMenu(false); }} title={t('header.export')}>
-                            <Download size={16} /> {t('header.export')} <ChevronDown size={14} />
+                    <div className="relative shrink-0" ref={exportMenuRef}>
+                        <button className="header-action-btn-secondary" onClick={(e) => { e.stopPropagation(); setShowExportMenu(!showExportMenu); setShowImportMenu(false); }}>
+                            <Download size={16} /> <span className="hidden xl:inline">{t('header.export')}</span> <ChevronDown size={14} className={`transition-transform ${showExportMenu ? 'rotate-180' : ''}`} />
                         </button>
-                        {showExportMenu && (
-                            <div className="header-dropdown-menu">
-                                <button className="header-dropdown-item" onClick={() => { onExport('json'); setShowExportMenu(false); }}>
-                                    {t('header.export_json')}
-                                </button>
-                                <button className="header-dropdown-item" onClick={() => { onExport('csv'); setShowExportMenu(false); }}>
-                                    {t('header.export_csv')}
-                                </button>
-                            </div>
-                        )}
+                        <AnimatePresence>
+                            {showExportMenu && (
+                                <motion.div 
+                                    initial={{ opacity: 0, y: 10, scale: 0.98 }} 
+                                    animate={{ opacity: 1, y: 0, scale: 1 }} 
+                                    exit={{ opacity: 0, y: 10, scale: 0.98 }}
+                                    className="header-dropdown-menu"
+                                >
+                                    <button className="header-dropdown-item" onClick={() => { onExport('json'); setShowExportMenu(false); }}>
+                                        {t('header.export_json') || 'Xuất JSON'}
+                                    </button>
+                                    <button className="header-dropdown-item" onClick={() => { onExport('csv'); setShowExportMenu(false); }}>
+                                        {t('header.export_csv') || 'Xuất CSV'}
+                                    </button>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
                     </div>
                 )}
 
                 {/* ── Import Dropdown ── */}
                 {isAdmin && onImport && (
-                    <div className="header-dropdown" ref={importMenuRef} onClick={e => e.stopPropagation()}>
-                        <button className="btn" onClick={() => { setShowImportMenu(!showImportMenu); setShowExportMenu(false); }} title={t('header.import')}>
-                            <Upload size={16} /> {t('header.import')} <ChevronDown size={14} />
+                    <div className="relative shrink-0" ref={importMenuRef}>
+                        <button className="header-action-btn-secondary" onClick={(e) => { e.stopPropagation(); setShowImportMenu(!showImportMenu); setShowExportMenu(false); }}>
+                            <Upload size={16} /> <span className="hidden xl:inline">{t('header.import')}</span> <ChevronDown size={14} className={`transition-transform ${showImportMenu ? 'rotate-180' : ''}`} />
                         </button>
-                        {showImportMenu && (
-                            <div className="header-dropdown-menu">
-                                <button className="header-dropdown-item" onClick={() => fileJsonRef.current?.click()}>
-                                    {t('header.import_json')}
-                                </button>
-                                <button className="header-dropdown-item" onClick={() => fileCsvRef.current?.click()}>
-                                    {t('header.import_csv')}
-                                </button>
-                            </div>
-                        )}
+                        <AnimatePresence>
+                            {showImportMenu && (
+                                <motion.div 
+                                    initial={{ opacity: 0, y: 10, scale: 0.98 }} 
+                                    animate={{ opacity: 1, y: 0, scale: 1 }} 
+                                    exit={{ opacity: 0, y: 10, scale: 0.98 }}
+                                    className="header-dropdown-menu"
+                                >
+                                    <button className="header-dropdown-item" onClick={() => fileJsonRef.current?.click()}>
+                                        {t('header.import_json') || 'Nhập JSON'}
+                                    </button>
+                                    <button className="header-dropdown-item" onClick={() => fileCsvRef.current?.click()}>
+                                        {t('header.import_csv') || 'Nhập CSV'}
+                                    </button>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
                     </div>
                 )}
 
                 {isAdmin && onReset && (
-                    <button className="btn btn-danger btn-icon-only" onClick={onReset} title={t('header.reset_title')}>
-                        <RotateCcw size={16} />
+                    <button className="header-action-btn-danger" onClick={onReset} title={t('header.reset_title')}>
+                        <RotateCcw size={18} />
                     </button>
                 )}
-                <input ref={fileJsonRef} type="file" accept=".json" style={{ display: 'none' }} onChange={handleImportJson} />
-                <input ref={fileCsvRef} type="file" accept=".csv" style={{ display: 'none' }} onChange={handleImportCsv} />
+                
+                <input ref={fileJsonRef} type="file" accept=".json" className="hidden" onChange={handleImportJson} />
+                <input ref={fileCsvRef} type="file" accept=".csv" className="hidden" onChange={handleImportCsv} />
             </div>
         </header>
     );

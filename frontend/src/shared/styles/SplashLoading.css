@@ -1,0 +1,89 @@
+@reference "tailwindcss";
+
+.splash-container {
+    @apply flex flex-col items-center justify-center min-h-screen w-full bg-[#0b0f19] text-[#c9d1d9] font-sans overflow-hidden relative;
+}
+
+.splash-bg-layer {
+    @apply fixed inset-0 z-0;
+}
+
+.splash-bg-gradient {
+    @apply absolute inset-0 bg-gradient-to-b from-[#0b0f19]/80 via-[#0b0f19]/95 to-[#0b0f19];
+}
+
+.splash-glow-amber {
+    @apply absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-amber-500/10 rounded-full blur-[120px] mix-blend-screen pointer-events-none;
+}
+
+.splash-glow-orange {
+    @apply absolute bottom-0 right-1/4 w-[600px] h-[600px] bg-[#fe6e00]/10 rounded-full blur-[150px] mix-blend-screen pointer-events-none;
+}
+
+.splash-content-wrapper {
+    @apply relative z-10 flex flex-col items-center justify-center w-full max-w-sm px-8 sm:px-10 py-12;
+    /* Explicit gap instead of margin to avoid tailwind purge bugs and ensure layout consistency */
+    gap: 32px;
+}
+
+.splash-logo-container {
+    @apply relative;
+}
+
+.splash-logo-glow {
+    @apply absolute inset-0 bg-amber-500/30 blur-2xl rounded-full;
+}
+
+.splash-logo-box {
+    @apply w-24 h-24 rounded-2xl bg-[#161b22] border border-white/10 shadow-[0_0_40px_rgba(254,110,0,0.3)] flex items-center justify-center relative z-10 overflow-hidden;
+}
+
+.splash-logo-inner-glow {
+    @apply absolute inset-0 bg-gradient-to-br from-[#fe6e00]/20 to-transparent opacity-80;
+}
+
+.splash-logo-image {
+    @apply w-14 h-14 object-contain relative z-10 drop-shadow-[0_0_12px_rgba(254,110,0,0.8)];
+}
+
+.splash-text-container {
+    @apply flex flex-col items-center justify-center;
+    gap: 12px;
+}
+
+.splash-title {
+    @apply text-3xl font-extrabold text-white tracking-tight drop-shadow-md text-center m-0;
+}
+
+.splash-subtitle {
+    @apply text-zinc-400 text-sm text-center m-0;
+}
+
+.splash-progress-wrapper {
+    @apply w-full flex flex-col items-center bg-[#161b22]/40 backdrop-blur-md border border-white/5 p-6 rounded-2xl shadow-xl;
+    gap: 16px;
+}
+
+.splash-progress-header {
+    @apply w-full flex justify-between text-xs font-mono font-medium text-amber-400 tracking-wide uppercase m-0;
+}
+
+.splash-progress-dot {
+    @apply w-1.5 h-1.5 rounded-full bg-amber-400;
+}
+
+.splash-progress-track {
+    @apply w-full h-2 bg-[#161b22] border border-white/10 rounded-full overflow-hidden shadow-inner relative;
+}
+
+.splash-progress-track-glow {
+    @apply absolute inset-0 bg-amber-900/20;
+}
+
+.splash-progress-fill {
+    @apply h-full bg-gradient-to-r from-amber-500 to-[#fe6e00] rounded-full transition-all duration-300 ease-out shadow-[0_0_10px_rgba(254,110,0,0.8)] relative;
+}
+
+.splash-progress-fill-highlight {
+    @apply absolute top-0 right-0 bottom-0 w-4 bg-white/40 blur-[2px];
+}

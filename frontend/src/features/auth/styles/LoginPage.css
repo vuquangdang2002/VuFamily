@@ -1,0 +1,93 @@
+@reference "tailwindcss";
+
+/* LoginPage.css */
+.login-container {
+    @apply min-h-screen w-full flex items-center justify-center relative overflow-hidden bg-[#050505] font-sans selection:bg-[#fe6e00]/30;
+}
+
+.login-bg-layer {
+    @apply absolute inset-0 z-0;
+}
+
+.login-bg-img {
+    @apply w-full h-full object-cover opacity-20 scale-105;
+    filter: blur(20px);
+}
+
+.login-bg-gradient {
+    @apply absolute inset-0 bg-gradient-to-b from-black/60 via-[#0a0a0a]/90 to-[#0a0a0a];
+}
+
+.login-glow-orange {
+    @apply absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-[#fe6e00]/10 rounded-full blur-[120px] mix-blend-screen pointer-events-none;
+}
+
+.login-glow-red {
+    @apply absolute bottom-0 right-1/4 w-[600px] h-[600px] bg-red-600/10 rounded-full blur-[150px] mix-blend-screen pointer-events-none;
+}
+
+.login-card-wrapper {
+    @apply z-10 w-full max-w-md px-6 py-12 relative;
+}
+
+.login-card {
+    @apply bg-[#111111]/80 backdrop-blur-2xl border border-white/10 p-8 rounded-[2rem] shadow-2xl shadow-black/50;
+}
+
+.login-logo-container {
+    @apply w-20 h-20 rounded-2xl bg-[#161b22] border border-[#30363d] shadow-[0_0_30px_rgba(254,110,0,0.2)] flex items-center justify-center relative z-10 overflow-hidden;
+}
+
+.login-input-wrapper {
+    @apply relative;
+}
+
+.login-input-wrapper .absolute.left-0 {
+    padding-left: 16px !important;
+}
+
+.login-input-wrapper .absolute.right-0 {
+    padding-right: 16px !important;
+}
+
+.login-input {
+    @apply w-full bg-black/40 border border-white/10 text-white placeholder-zinc-600 rounded-xl text-sm transition-all;
+    padding: 12px 16px 12px 44px !important;
+}
+.login-input:focus {
+    outline: none;
+    border-color: rgba(254,110,0,0.5);
+    box-shadow: 0 0 0 1px rgba(254,110,0,0.5);
+}
+
+.login-btn-primary {
+    @apply w-full bg-gradient-to-r from-[#fe6e00] to-orange-600 text-white font-bold rounded-xl py-3.5 text-sm mt-6 transition-all disabled:opacity-70 disabled:pointer-events-none flex items-center justify-center gap-2;
+}
+.login-btn-primary:hover {
+    box-shadow: 0 10px 25px -5px rgba(254,110,0,0.2);
+}
+.login-btn-primary:active {
+    transform: scale(0.98);
+}
+
+.login-btn-secondary {
+    @apply w-full bg-transparent border border-white/10 text-white font-medium rounded-xl py-3.5 text-sm transition-all;
+}
+.login-btn-secondary:hover {
+    background-color: rgba(255,255,255,0.05);
+}
+.login-btn-secondary:active {
+    transform: scale(0.98);
+}
+
+.login-alert {
+    @apply mb-6 p-4 rounded-xl text-sm flex items-start gap-3 border;
+}
+
+.login-alert-success {
+    @apply bg-emerald-500/10 border-emerald-500/20 text-emerald-400;
+}
+
+.login-alert-error {
+    @apply bg-red-500/10 border-red-500/20 text-red-400;
+}

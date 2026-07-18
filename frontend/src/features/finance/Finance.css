@@ -1,3 +1,1 @@
-/* Finance styles — split into focused sub-files for maintainability */
-@import './FinanceCards.css';
-@import './FinanceCharts.css';
+/* Migrated to Tailwind CSS */

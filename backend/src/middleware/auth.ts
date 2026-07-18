@@ -2,6 +2,7 @@ import { Context, Next } from 'hono';
 import { getDb } from '../db/client';
 import { users } from '../db/schema';
 import { eq } from 'drizzle-orm';
+import { AppConfig } from '../config';
 
 // Extend Hono Context to include user
 declare module 'hono' {
@@ -26,6 +27,15 @@ export const authenticate = async (c: Context, next: Next) => {
 
     if (user.status === 'banned') {
       return c.json({ success: false, error: 'Tài khoản của bạn đã bị khóa' }, 403);
+    }
+
+    if (user.lastActive) {
+      const lastActiveDate = new Date(user.lastActive);
+      const now = new Date();
+      const diffInDays = (now.getTime() - lastActiveDate.getTime()) / (1000 * 3600 * 24);
+      if (diffInDays > AppConfig.SESSION_TIMEOUT_DAYS) {
+        return c.json({ success: false, error: `Phiên đăng nhập đã hết hạn (quá ${AppConfig.SESSION_TIMEOUT_DAYS} ngày). Vui lòng đăng nhập lại.` }, 401);
+      }
     }
 
     c.set('user', user);

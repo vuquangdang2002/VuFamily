@@ -1,36 +1,37 @@
 import React from 'react';
 import { useTranslation } from '../hooks/useTranslation';
 import { Search, Bell, HelpCircle, PenTool, User as UserIcon } from 'lucide-react';
+import '../styles/TopBar.css';
 
 export default function TopBar({ user, onSearch }) {
     const { t } = useTranslation();
 
     return (
-        <div className="flex items-center justify-between bg-white rounded-2xl px-6 py-3 mb-6 shadow-sm shrink-0">
+        <div className="topbar-container">
             {/* Search Bar */}
-            <div className="flex items-center bg-gray-50 rounded-full px-4 py-2 w-96 border border-gray-100">
-                <Search size={18} className="text-gray-400 mr-2" />
+            <div className="topbar-search-wrapper">
+                <Search size={18} className="topbar-search-icon" />
                 <input 
                     type="text" 
                     placeholder="Tìm kiếm chức năng, nhân viên..." 
-                    className="bg-transparent border-none outline-none text-sm w-full text-gray-700 placeholder-gray-400"
+                    className="topbar-search-input"
                     onChange={(e) => onSearch && onSearch(e.target.value)}
                 />
             </div>
 
             {/* Right Icons */}
-            <div className="flex items-center gap-4">
-                <button className="text-gray-500 hover:text-blue-600 transition-colors">
+            <div className="topbar-actions-group">
+                <button className="topbar-action-btn">
                     <HelpCircle size={20} />
                 </button>
-                <button className="text-gray-500 hover:text-blue-600 transition-colors relative">
+                <button className="topbar-action-btn">
                     <Bell size={20} />
-                    <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                    <span className="topbar-action-badge"></span>
                 </button>
-                <button className="text-gray-500 hover:text-blue-600 transition-colors">
+                <button className="topbar-action-btn">
                     <PenTool size={20} />
                 </button>
-                <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold overflow-hidden cursor-pointer">
+                <div className="topbar-avatar">
                     {user?.avatar ? (
                         <img src={user.avatar} alt="User" className="w-full h-full object-cover" />
                     ) : (

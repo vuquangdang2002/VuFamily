@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import loginHero from '../../assets/login-hero.png';
 import { useTranslation } from '../../shared/hooks/useTranslation.js';
-import './Login.css';
-import { TrackingHelper } from '../../shared/services/TrackingHelper';
-import { myLog, myError } from '../../shared/utils/logger';
+import { User, Mail, Phone, Lock, Eye, EyeOff, ArrowLeft, AlertCircle, Loader2, Link as LinkIcon } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import './styles/LoginPage.css';
 
 export default function LoginPage({ onLogin, verifyMsg, initialRegisterMode = false, onGoBack }) {
     const { t } = useTranslation();
@@ -12,6 +12,8 @@ export default function LoginPage({ onLogin, verifyMsg, initialRegisterMode = fa
     const [showPass, setShowPass] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    
+    // Forgot password
     const [showForgot, setShowForgot] = useState(false);
     const [forgotUser, setForgotUser] = useState('');
     const [forgotMsg, setForgotMsg] = useState('');
@@ -99,177 +101,310 @@ export default function LoginPage({ onLogin, verifyMsg, initialRegisterMode = fa
     };
 
     return (
-        <div className="lp-root">
-            {/* LEFT: Form */}
-            <div className="lp-left">
+        <div className="login-container">
+            {/* Background Effects */}
+            <div className="login-bg-layer">
+                <img src={loginHero} alt="Background" className="login-bg-img" />
+                <div className="login-bg-gradient"></div>
+                
+                {/* Accent Glows */}
+                <div className="login-glow-orange"></div>
+                <div className="login-glow-red"></div>
+            </div>
+
+            {/* Main Content */}
+            <div className="login-card-wrapper">
                 {onGoBack && (
                     <button
                         type="button"
                         onClick={onGoBack}
-                        style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: 6,
-                            background: 'none',
-                            border: 'none',
-                            color: '#6B7280',
-                            fontSize: 14,
-                            fontWeight: 600,
-                            cursor: 'pointer',
-                            marginBottom: 20,
-                            padding: 0
-                        }}
+                        className="fixed top-6 left-6 md:top-8 md:left-8 flex items-center gap-2 text-zinc-400 hover:text-white transition-colors text-sm font-medium z-50"
                     >
-                        ← Quay lại trang chủ
+                        <ArrowLeft size={16} />
+                        Quay lại trang chủ
                     </button>
                 )}
-                <div className="lp-logo">
-                    <div className="lp-logo-icon">族</div>
-                    <div>
-                        <div className="lp-logo-text">{isRegisterMode ? t('login.create_account') : t('login.title')}</div>
-                        <div className="lp-logo-sub">{isRegisterMode ? t('login.register_member') : t('login.sub')}</div>
-                    </div>
-                </div>
 
-                {/* Banners */}
-                {verifyMsg && (
-                    <div style={{
-                        borderRadius: 8, padding: '10px 14px', marginBottom: 16,
-                        background: verifyMsg.success ? '#ECFDF5' : '#FEF2F2',
-                        border: `1px solid ${verifyMsg.success ? '#A7F3D0' : '#FECACA'}`,
-                        color: verifyMsg.success ? '#065F46' : '#DC2626', fontSize: 13
-                    }}>
-                        {verifyMsg.success ? '✅ ' : '❌ '}{verifyMsg.text}
-                    </div>
-                )}
-                {registerSuccess && (
-                    <div style={{
-                        borderRadius: 8, padding: '12px 14px', marginBottom: 16,
-                        background: '#ECFDF5', border: '1px solid #A7F3D0', color: '#065F46', fontSize: 13
-                    }} dangerouslySetInnerHTML={{ __html: '📧 ' + registerSuccess }} />
-                )}
-                {error && <div className="lp-error" style={{ marginBottom: 16 }}>{error}</div>}
-
-                {showForgot && (
-                    <div className="lp-forgot-panel" style={{ marginBottom: 16 }}>
-                        <p>{t('login.forgot_hint')}</p>
-                        <input className="lp-input" type="text" placeholder={t('login.forgot_placeholder')} value={forgotUser} onChange={e => setForgotUser(e.target.value)} autoFocus />
-                        {forgotMsg && <div className="lp-forgot-msg">{forgotMsg}</div>}
-                        <div style={{ display: 'flex', gap: 8 }}>
-                            <button className="lp-btn-primary" style={{ flex: 1 }} onClick={handleForgotPassword} disabled={forgotLoading}>
-                                {forgotLoading ? t('login.forgot_sending') : t('login.forgot_submit')}
-                            </button>
-                            <button className="lp-btn-outline" style={{ flex: 1 }} onClick={() => setShowForgot(false)}>{t('action.cancel')}</button>
-                        </div>
-                    </div>
-                )}
-
-                <form className="lp-form" onSubmit={handleSubmit}>
-                    {isRegisterMode && (
-                        <div className="lp-field">
-                            <label className="lp-label">{t('login.fullname')}</label>
-                            <input className="lp-input" type="text" value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder="Nguyễn Văn A" />
-                        </div>
-                    )}
-
-                    <div className="lp-field">
-                        <label className="lp-label"><span className="req">*</span>{t('login.username')}</label>
-                        <div className="lp-input-wrap">
-                            <span className="lp-input-icon">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
-                            </span>
-                            <input
-                                className="lp-input has-icon"
-                                type="text"
-                                value={username}
-                                onChange={e => setUsername(e.target.value)}
-                                placeholder={t('login.username')}
-                                autoFocus
-                            />
-                        </div>
-                    </div>
-
-                    {isRegisterMode && (
-                        <>
-                            <div className="lp-field">
-                                <label className="lp-label"><span className="req">*</span>Email</label>
-                                <input className="lp-input" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="email@example.com" />
-                                <p className="lp-input-hint">{t('login.email_hint')}</p>
+                <motion.div 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, ease: "easeOut" }}
+                    className="login-card"
+                >
+                    {/* Header */}
+                    <div className="flex flex-col items-center" style={{ marginBottom: '32px' }}>
+                        <div className="relative" style={{ marginBottom: '16px' }}>
+                            <div className="absolute inset-0 bg-[#fe6e00]/30 blur-xl rounded-full"></div>
+                            <div className="login-logo-container group">
+                                <div className="absolute inset-0 bg-gradient-to-br from-[#fe6e00]/20 to-transparent opacity-50 group-hover:opacity-100 transition-opacity"></div>
+                                <img src="/logo.png" alt="Vu Gia Logo" className="w-14 h-14 object-contain relative z-10 drop-shadow-[0_0_12px_rgba(254,110,0,0.8)]" />
                             </div>
-                            <div className="lp-field">
-                                <label className="lp-label">{t('login.phone')} <span style={{ color: '#9CA3AF', fontWeight: 'normal' }}>{t('login.optional')}</span></label>
-                                <input className="lp-input" type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="0912345678" />
-                            </div>
-                            <div className="lp-field">
-                                <label className="lp-label">{t('login.facebook')} <span style={{ color: '#9CA3AF', fontWeight: 'normal' }}>{t('login.optional')}</span></label>
-                                <input className="lp-input" type="url" value={facebook} onChange={e => setFacebook(e.target.value)} placeholder="https://facebook.com/..." />
-                            </div>
-                        </>
-                    )}
+                        </div>
+                        <h1 className="text-2xl font-bold text-white tracking-tight" style={{ marginBottom: '8px' }}>
+                            {isRegisterMode ? t('login.create_account') : t('login.title')}
+                        </h1>
+                        <p className="text-sm text-zinc-400 text-center max-w-[280px]">
+                            {isRegisterMode ? t('login.register_member') : t('login.sub')}
+                        </p>
+                    </div>
 
-                    <div className="lp-field">
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <label className="lp-label"><span className="req">*</span>{t('login.password')}</label>
+                    {/* Alerts */}
+                    <AnimatePresence mode="wait">
+                        {verifyMsg && (
+                            <motion.div 
+                                initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
+                                className={`login-alert ${verifyMsg.success ? 'login-alert-success' : 'login-alert-error'}`}
+                            >
+                                <AlertCircle size={18} className="shrink-0 mt-0.5" />
+                                <span>{verifyMsg.text}</span>
+                            </motion.div>
+                        )}
+                        
+                        {registerSuccess && (
+                            <motion.div 
+                                initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
+                                className="login-alert login-alert-success"
+                            >
+                                <AlertCircle size={18} className="shrink-0 mt-0.5" />
+                                <span dangerouslySetInnerHTML={{ __html: registerSuccess }} />
+                            </motion.div>
+                        )}
+
+                        {error && (
+                            <motion.div 
+                                initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
+                                className="login-alert login-alert-error"
+                            >
+                                <AlertCircle size={18} className="shrink-0 mt-0.5" />
+                                <span>{error}</span>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+
+                    {/* Forgot Password Panel */}
+                    <AnimatePresence>
+                        {showForgot && (
+                            <motion.div 
+                                initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
+                                className="overflow-hidden" style={{ marginBottom: '24px' }}
+                            >
+                                <div className="p-5 bg-black/40 border border-white/5 rounded-xl flex flex-col gap-4">
+                                    <p className="text-sm text-zinc-300">{t('login.forgot_hint')}</p>
+                                    <div className="login-input-wrapper">
+                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-500">
+                                            <User size={16} />
+                                        </div>
+                                        <input 
+                                            type="text" 
+                                            placeholder={t('login.forgot_placeholder')} 
+                                            value={forgotUser} 
+                                            onChange={e => setForgotUser(e.target.value)} 
+                                            className="login-input"
+                                        />
+                                    </div>
+                                    {forgotMsg && <div className="text-sm text-[#fe6e00]">{forgotMsg}</div>}
+                                    <div className="flex gap-3">
+                                        <button 
+                                            onClick={handleForgotPassword} 
+                                            disabled={forgotLoading}
+                                            className="flex-1 bg-white text-black font-semibold rounded-lg py-2 text-sm hover:bg-zinc-200 transition-colors disabled:opacity-50"
+                                        >
+                                            {forgotLoading ? t('login.forgot_sending') : t('login.forgot_submit')}
+                                        </button>
+                                        <button 
+                                            onClick={() => setShowForgot(false)}
+                                            className="flex-1 bg-transparent border border-white/20 text-white font-medium rounded-lg py-2 text-sm hover:bg-white/5 transition-colors"
+                                        >
+                                            {t('action.cancel')}
+                                        </button>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+
+                    {/* Main Form */}
+                    <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+                        {isRegisterMode && (
+                            <div className="flex flex-col gap-1.5">
+                                <label className="text-xs font-medium text-zinc-400 ml-1">{t('login.fullname')}</label>
+                                <div className="login-input-wrapper">
+                                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-zinc-500">
+                                        <User size={18} />
+                                    </div>
+                                    <input 
+                                        type="text" 
+                                        value={displayName} 
+                                        onChange={e => setDisplayName(e.target.value)} 
+                                        placeholder="Nguyễn Văn A" 
+                                        className="login-input"
+                                    />
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="flex flex-col gap-1.5">
+                            <label className="text-xs font-medium text-zinc-400 ml-1">
+                                <span className="text-red-400 mr-1">*</span>{t('login.username')}
+                            </label>
+                            <div className="login-input-wrapper">
+                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-zinc-500">
+                                    <User size={18} />
+                                </div>
+                                <input
+                                    type="text"
+                                    value={username}
+                                    onChange={e => setUsername(e.target.value)}
+                                    placeholder={t('login.username')}
+                                    className="login-input"
+                                    autoFocus
+                                />
+                            </div>
                         </div>
-                        <div className="lp-input-wrap">
-                            <span className="lp-input-icon">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
-                            </span>
-                            <input
-                                className="lp-input has-icon"
-                                type={showPass ? 'text' : 'password'}
-                                value={password}
-                                onChange={e => setPassword(e.target.value)}
-                                placeholder={t('login.password')}
-                                style={{ paddingRight: 42 }}
-                            />
-                            <button type="button" className="lp-eye" onClick={() => setShowPass(!showPass)} tabIndex={-1}>
-                                {showPass
-                                    ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" /><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" /><line x1="1" y1="1" x2="23" y2="23" /></svg>
-                                    : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
-                                }
-                            </button>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px' }}>
-                            {isRegisterMode ? (
-                                <p className="lp-input-hint" style={{ margin: 0 }}>{t('login.password_hint')}</p>
-                            ) : (
-                                <div style={{ flex: 1 }} /> // Spacer
-                            )}
-                            {!isRegisterMode && (
-                                <button type="button" className="lp-forgot-link" onClick={() => { setShowForgot(!showForgot); setForgotMsg(''); }}>
-                                    {t('login.forgot_password')}
+
+                        {isRegisterMode && (
+                            <>
+                                <div className="flex flex-col gap-1.5">
+                                    <label className="text-xs font-medium text-zinc-400 ml-1">
+                                        <span className="text-red-400 mr-1">*</span>Email
+                                    </label>
+                                    <div className="login-input-wrapper">
+                                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-zinc-500">
+                                            <Mail size={18} />
+                                        </div>
+                                        <input 
+                                            type="email" 
+                                            value={email} 
+                                            onChange={e => setEmail(e.target.value)} 
+                                            placeholder="email@example.com" 
+                                            className="login-input"
+                                        />
+                                    </div>
+                                    <p className="text-[11px] text-zinc-500 ml-1" style={{ marginTop: '4px' }}>{t('login.email_hint')}</p>
+                                </div>
+                                
+                                <div className="flex flex-col gap-1.5">
+                                    <label className="flex items-center justify-between text-xs font-medium text-zinc-400 ml-1">
+                                        <span>{t('login.phone')}</span>
+                                        <span className="text-zinc-600 font-normal">{t('login.optional')}</span>
+                                    </label>
+                                    <div className="login-input-wrapper">
+                                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-zinc-500">
+                                            <Phone size={18} />
+                                        </div>
+                                        <input 
+                                            type="tel" 
+                                            value={phone} 
+                                            onChange={e => setPhone(e.target.value)} 
+                                            placeholder="0912345678" 
+                                            className="login-input"
+                                        />
+                                    </div>
+                                </div>
+                                
+                                <div className="flex flex-col gap-1.5">
+                                    <label className="flex items-center justify-between text-xs font-medium text-zinc-400 ml-1">
+                                        <span>{t('login.facebook')}</span>
+                                        <span className="text-zinc-600 font-normal">{t('login.optional')}</span>
+                                    </label>
+                                    <div className="login-input-wrapper">
+                                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-zinc-500">
+                                            <LinkIcon size={18} />
+                                        </div>
+                                        <input 
+                                            type="url" 
+                                            value={facebook} 
+                                            onChange={e => setFacebook(e.target.value)} 
+                                            placeholder="https://facebook.com/..." 
+                                            className="login-input"
+                                        />
+                                    </div>
+                                </div>
+                            </>
+                        )}
+
+                        <div className="flex flex-col gap-1.5">
+                            <div className="px-1">
+                                <label className="text-xs font-medium text-zinc-400">
+                                    <span className="text-red-400 mr-1">*</span>{t('login.password')}
+                                </label>
+                            </div>
+                            <div className="login-input-wrapper">
+                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-zinc-500">
+                                    <Lock size={18} />
+                                </div>
+                                <input
+                                    type={showPass ? 'text' : 'password'}
+                                    value={password}
+                                    onChange={e => setPassword(e.target.value)}
+                                    placeholder={t('login.password')}
+                                    className="login-input pr-12"
+                                />
+                                <button 
+                                    type="button" 
+                                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-zinc-500 hover:text-zinc-300 transition-colors"
+                                    onClick={() => setShowPass(!showPass)}
+                                    tabIndex={-1}
+                                >
+                                    {showPass ? <EyeOff size={18} /> : <Eye size={18} />}
                                 </button>
+                            </div>
+                            {isRegisterMode ? (
+                                <p className="text-[11px] text-zinc-500 ml-1" style={{ marginTop: '4px' }}>{t('login.password_hint')}</p>
+                            ) : (
+                                <div className="flex justify-end px-1" style={{ marginTop: '4px' }}>
+                                    <button 
+                                        type="button" 
+                                        onClick={() => { setShowForgot(!showForgot); setForgotMsg(''); }}
+                                        className="text-[11px] text-[#fe6e00] hover:text-orange-400 transition-colors font-medium"
+                                    >
+                                        {t('login.forgot_password')}
+                                    </button>
+                                </div>
                             )}
                         </div>
+
+                        <button 
+                            type="submit" 
+                            disabled={loading}
+                            className="login-btn-primary"
+                            style={{ marginTop: '24px' }}
+                        >
+                            {loading ? (
+                                <>
+                                    <Loader2 size={18} className="animate-spin" /> 
+                                    {isRegisterMode ? t('login.signing_up') : t('login.signing_in')}
+                                </>
+                            ) : (
+                                isRegisterMode ? t('login.sign_up') : t('login.sign_in')
+                            )}
+                        </button>
+                    </form>
+
+                    {/* Separator */}
+                    <div className="relative flex items-center" style={{ margin: '24px 0' }}>
+                        <div className="flex-grow border-t border-white/10"></div>
+                        <span className="flex-shrink-0 mx-4 text-xs font-medium text-zinc-500 uppercase tracking-wider">{t('login.or')}</span>
+                        <div className="flex-grow border-t border-white/10"></div>
                     </div>
 
-                    <button className="lp-btn-primary" type="submit" disabled={loading}>
-                        {loading
-                            ? <><div className="spinner spinner-sm" style={{ borderTopColor: '#fff', borderColor: 'rgba(255,255,255,0.3)' }}></div> {isRegisterMode ? t('login.signing_up') : t('login.signing_in')}</>
-                            : (isRegisterMode ? t('login.sign_up') : t('login.sign_in'))
-                        }
+                    {/* Toggle Mode */}
+                    <button 
+                        type="button" 
+                        onClick={() => { setIsRegisterMode(!isRegisterMode); setError(''); setShowForgot(false); }}
+                        className="login-btn-secondary"
+                    >
+                        {isRegisterMode ? t('login.sign_in') : t('login.create_new_account')}
                     </button>
-                </form>
+                </motion.div>
 
-                <div className="lp-or">{t('login.or')}</div>
-
-                <button type="button" className="lp-btn-outline" onClick={() => { setIsRegisterMode(!isRegisterMode); setError(''); setShowForgot(false); }}>
-                    {isRegisterMode ? t('login.sign_in') : t('login.create_new_account')}
-                </button>
-
-                <div className="lp-footer">
-                    <a href="#">{t('login.about_us')}</a>
-                    <a href="#">{t('login.contact')}</a>
-                    <a href="#">{t('login.guide')}</a>
+                {/* Footer Links */}
+                <div className="flex justify-center gap-6 text-xs font-medium text-zinc-500" style={{ marginTop: '32px' }}>
+                    <a href="#" className="hover:text-zinc-300 transition-colors">{t('login.about_us')}</a>
+                    <a href="#" className="hover:text-zinc-300 transition-colors">{t('login.contact')}</a>
+                    <a href="#" className="hover:text-zinc-300 transition-colors">{t('login.guide')}</a>
                 </div>
-                <p className="lp-copyright">Copyright © 2026 by DangVQ</p>
-            </div>
-
-            {/* RIGHT: Hero image */}
-            <div className="lp-right">
-                <img src={loginHero} alt="Gia phả dòng họ" />
-                <div className="lp-right-overlay" />
+                <p className="text-center text-xs text-zinc-600" style={{ marginTop: '16px' }}>Copyright © 2026 by DangVQ</p>
             </div>
         </div>
     );

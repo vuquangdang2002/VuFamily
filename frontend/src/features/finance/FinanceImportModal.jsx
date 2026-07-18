@@ -1,5 +1,6 @@
 import React from 'react';
 import { useTranslation } from '../../shared/hooks/useTranslation';
+import { X, UploadCloud, Link as LinkIcon, AlertTriangle, CheckCircle2, FileSpreadsheet } from 'lucide-react';
 
 // CSV parser utility
 function parseCSV(text) {
@@ -121,83 +122,107 @@ export default function FinanceImportModal({
     const validCount = parsedTransactions.filter(item => item.selected && item.valid).length;
 
     return (
-        <div className="modal-overlay open" onClick={() => !importLoading && onClose()}>
-            <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 780, width: '90%' }}>
-                <div className="modal-header">
-                    <h2>📥 {t('finance.import_modal_title')}</h2>
-                    <button className="detail-close" onClick={() => !importLoading && onClose()}>✕</button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-900/40 dark:bg-black/60 backdrop-blur-sm animate-fade-in" onClick={() => !importLoading && onClose()}>
+            <div className="bg-white dark:bg-[#111111] border border-black/10 dark:border-white/10 rounded-[2rem] shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden transform scale-100" onClick={e => e.stopPropagation()}>
+                <div className="flex items-center justify-between p-6 border-b border-black/5 dark:border-white/5 bg-zinc-50/50 dark:bg-white/5 shrink-0">
+                    <h2 className="text-lg font-extrabold text-zinc-900 dark:text-white flex items-center gap-2">
+                        <FileSpreadsheet size={20} className="text-blue-500" /> {t('finance.import_modal_title')}
+                    </h2>
+                    <button className="w-8 h-8 flex items-center justify-center rounded-full bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20 text-zinc-500 transition-colors" onClick={() => !importLoading && onClose()}>
+                        <X size={16} />
+                    </button>
                 </div>
-                <div className="modal-body" style={{ position: 'relative' }}>
+                
+                <div className="p-6 overflow-y-auto flex-1 flex flex-col gap-6 relative">
                     {importLoading && importProgress.total > 0 && (
-                        <div className="progress-overlay">
-                            <div className="progress-spinner"></div>
-                            <div style={{ fontSize: 15, fontWeight: 700 }}>
+                        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-white/80 dark:bg-black/80 backdrop-blur-sm rounded-b-[2rem]">
+                            <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+                            <div className="text-[15px] font-bold text-zinc-900 dark:text-white">
                                 {t('finance.import_processing').replace('{current}', importProgress.current).replace('{total}', importProgress.total)}
                             </div>
                         </div>
                     )}
-                    <div className="import-upload-zone" onClick={() => document.getElementById('import-file-input').click()}>
-                        <input type="file" id="import-file-input" accept=".csv" onChange={handleFileSelect} style={{ display: 'none' }} />
-                        <div style={{ fontSize: 32, marginBottom: 8 }}>📄</div>
-                        <div style={{ fontSize: 13, fontWeight: 600 }}>{t('finance.import_select_file')}</div>
-                        <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>CSV (Unicode, UTF-8)</div>
-                    </div>
-                    <div className="import-sheet-zone">
-                        <label style={{ fontSize: 12, fontWeight: 600, display: 'block', marginBottom: 6 }}>{t('finance.import_google_sheet')}</label>
-                        <div style={{ display: 'flex', gap: 10 }}>
-                            <input type="url" className="form-input" placeholder={t('finance.import_google_sheet_placeholder')} value={googleSheetUrl} onChange={e => setGoogleSheetUrl(e.target.value)} style={{ flex: 1 }} />
-                            <button className="btn btn-primary" onClick={handleLoadSheet} disabled={importLoading || !googleSheetUrl.trim()}>⚡ {t('finance.import_load_btn')}</button>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-blue-500/30 bg-blue-50/50 dark:bg-blue-900/10 dark:border-blue-500/20 rounded-2xl cursor-pointer hover:bg-blue-100/50 dark:hover:bg-blue-900/20 transition-colors text-center group" onClick={() => document.getElementById('import-file-input').click()}>
+                            <input type="file" id="import-file-input" accept=".csv" onChange={handleFileSelect} className="hidden" />
+                            <div className="w-12 h-12 rounded-full bg-white dark:bg-black flex items-center justify-center text-blue-500 mb-3 shadow-sm group-hover:scale-110 transition-transform">
+                                <UploadCloud size={24} />
+                            </div>
+                            <div className="text-[14px] font-bold text-blue-700 dark:text-blue-400 mb-1">{t('finance.import_select_file')}</div>
+                            <div className="text-[11px] font-medium text-blue-500/70">CSV (Unicode, UTF-8)</div>
                         </div>
-                        <small style={{ color: 'var(--text-muted)', fontSize: 11, marginTop: 4, display: 'block' }}>⚠️ {t('finance.import_google_sheet_hint')}</small>
+                        
+                        <div className="flex flex-col justify-center p-6 bg-zinc-50 dark:bg-white/5 border border-black/5 dark:border-white/5 rounded-2xl">
+                            <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                                <LinkIcon size={14} /> {t('finance.import_google_sheet')}
+                            </label>
+                            <div className="flex flex-col gap-3">
+                                <input type="url" className="w-full bg-white dark:bg-black/40 border border-black/10 dark:border-white/10 rounded-xl px-4 py-2.5 text-[14px] font-medium text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/50" placeholder={t('finance.import_google_sheet_placeholder')} value={googleSheetUrl} onChange={e => setGoogleSheetUrl(e.target.value)} />
+                                <button className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-bold text-[13px] bg-blue-600 text-white hover:bg-blue-700 shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed" onClick={handleLoadSheet} disabled={importLoading || !googleSheetUrl.trim()}>
+                                    ⚡ {t('finance.import_load_btn')}
+                                </button>
+                            </div>
+                            <div className="flex items-start gap-1.5 mt-3 text-[11px] font-medium text-amber-600 dark:text-amber-500">
+                                <AlertTriangle size={12} className="shrink-0 mt-0.5" />
+                                <span>{t('finance.import_google_sheet_hint')}</span>
+                            </div>
+                        </div>
                     </div>
+                    
                     {parsedTransactions.length > 0 && (
-                        <div style={{ marginTop: 20 }}>
-                            <h4 style={{ margin: '0 0 8px 0', fontSize: 14, fontWeight: 700 }}>
-                                {t('finance.import_preview_title').replace('{count}', parsedTransactions.length)}
+                        <div className="flex flex-col gap-3 mt-4 border-t border-black/5 dark:border-white/5 pt-6">
+                            <h4 className="text-[14px] font-extrabold text-zinc-900 dark:text-white flex items-center gap-2">
+                                <span className="w-6 h-6 rounded-md bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400 flex items-center justify-center text-xs">{parsedTransactions.length}</span>
+                                {t('finance.import_preview_title').replace('{count}', '')}
                             </h4>
-                            <div className="preview-table-container">
-                                <table className="preview-table">
+                            
+                            <div className="overflow-x-auto rounded-xl border border-black/5 dark:border-white/10 bg-white/60 dark:bg-black/40 backdrop-blur-md">
+                                <table className="w-full text-left border-collapse min-w-[700px]">
                                     <thead>
-                                        <tr>
-                                            <th style={{ width: 40, textAlign: 'center' }}>{t('finance.import_col_select')}</th>
-                                            <th style={{ width: 110 }}>{t('finance.import_col_type')}</th>
-                                            <th style={{ width: 130 }}>{t('finance.import_col_amount')}</th>
-                                            <th style={{ width: 140 }}>{t('finance.import_col_category')}</th>
-                                            <th>{t('finance.import_col_description')}</th>
+                                        <tr className="bg-black/5 dark:bg-white/5 text-[11px] font-black text-zinc-500 uppercase tracking-wider">
+                                            <th className="p-3 w-12 text-center rounded-tl-xl">{t('finance.import_col_select')}</th>
+                                            <th className="p-3 w-[120px]">{t('finance.import_col_type')}</th>
+                                            <th className="p-3 w-[140px]">{t('finance.import_col_amount')}</th>
+                                            <th className="p-3 w-[160px]">{t('finance.import_col_category')}</th>
+                                            <th className="p-3 rounded-tr-xl">{t('finance.import_col_description')}</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
+                                    <tbody className="text-[13px] font-medium text-zinc-700 dark:text-zinc-300 divide-y divide-black/5 dark:divide-white/5">
                                         {parsedTransactions.map(item => (
-                                            <tr key={item.id} className={!item.valid ? 'invalid-row' : ''}>
-                                                <td style={{ textAlign: 'center' }}>
-                                                    <input type="checkbox" checked={item.selected} onChange={() => item.valid && handleRowSelect(item.id)} disabled={!item.valid} />
+                                            <tr key={item.id} className={`transition-colors ${!item.valid ? 'bg-rose-50/50 dark:bg-rose-900/10' : 'hover:bg-white dark:hover:bg-white/5'}`}>
+                                                <td className="p-2 text-center">
+                                                    <input type="checkbox" className="w-4 h-4 rounded border-black/20 text-blue-600 focus:ring-blue-500/50" checked={item.selected} onChange={() => item.valid && handleRowSelect(item.id)} disabled={!item.valid} />
                                                 </td>
-                                                <td>
-                                                    <select className="form-input" value={item.type} onChange={e => handleRowChange(item.id, 'type', e.target.value)}>
+                                                <td className="p-2">
+                                                    <select className="w-full bg-white dark:bg-black border border-black/10 dark:border-white/10 rounded-lg px-2 py-1.5 text-[12px] font-bold outline-none focus:ring-2 focus:ring-blue-500/50" value={item.type} onChange={e => handleRowChange(item.id, 'type', e.target.value)}>
                                                         <option value="INCOME">{t('finance.type_income').substring(0, 3)}</option>
                                                         <option value="EXPENSE">{t('finance.type_expense').substring(0, 3)}</option>
                                                     </select>
                                                 </td>
-                                                <td>
-                                                    <input type="number" className={`form-input ${item.amount <= 0 ? 'invalid-field' : ''}`} value={item.amount === 0 ? '' : item.amount} onChange={e => handleRowChange(item.id, 'amount', e.target.value)} placeholder="Amount..." />
+                                                <td className="p-2">
+                                                    <input type="number" className={`w-full bg-white dark:bg-black border rounded-lg px-3 py-1.5 text-[13px] font-bold outline-none focus:ring-2 focus:ring-blue-500/50 ${item.amount <= 0 ? 'border-rose-300 dark:border-rose-800 text-rose-600' : 'border-black/10 dark:border-white/10'}`} value={item.amount === 0 ? '' : item.amount} onChange={e => handleRowChange(item.id, 'amount', e.target.value)} placeholder="0" />
                                                 </td>
-                                                <td>
-                                                    <select className="form-input" value={item.category} onChange={e => handleRowChange(item.id, 'category', e.target.value)}>
+                                                <td className="p-2">
+                                                    <select className="w-full bg-white dark:bg-black border border-black/10 dark:border-white/10 rounded-lg px-2 py-1.5 text-[12px] font-bold outline-none focus:ring-2 focus:ring-blue-500/50" value={item.category} onChange={e => handleRowChange(item.id, 'category', e.target.value)}>
                                                         {Object.entries(categories).map(([key, cat]) => <option key={key} value={key}>{cat.label}</option>)}
                                                     </select>
                                                 </td>
-                                                <td>
-                                                    <input type="text" className={`form-input ${item.description.trim().length === 0 ? 'invalid-field' : ''}`} value={item.description} onChange={e => handleRowChange(item.id, 'description', e.target.value)} placeholder="Description..." />
+                                                <td className="p-2">
+                                                    <input type="text" className={`w-full bg-white dark:bg-black border rounded-lg px-3 py-1.5 text-[13px] outline-none focus:ring-2 focus:ring-blue-500/50 ${item.description.trim().length === 0 ? 'border-rose-300 dark:border-rose-800' : 'border-black/10 dark:border-white/10'}`} value={item.description} onChange={e => handleRowChange(item.id, 'description', e.target.value)} placeholder="Description..." />
                                                 </td>
                                             </tr>
                                         ))}
                                     </tbody>
                                 </table>
                             </div>
-                            <div style={{ display: 'flex', gap: 12, marginTop: 20, justifyContent: 'flex-end' }}>
-                                <button type="button" className="btn" onClick={onClose} disabled={importLoading}>{t('finance.cancel_btn')}</button>
-                                <button type="button" className="btn btn-primary" onClick={onSave} disabled={importLoading || validCount === 0}>
-                                    🚀 {t('finance.import_confirm_btn').replace('{count}', validCount)}
+                            
+                            <div className="flex items-center justify-end gap-3 mt-4 shrink-0">
+                                <button type="button" className="px-5 py-2.5 rounded-xl font-bold text-[13px] bg-black/5 dark:bg-white/5 text-zinc-600 dark:text-zinc-300 hover:bg-black/10 dark:hover:bg-white/10 transition-colors" onClick={onClose} disabled={importLoading}>
+                                    {t('finance.cancel_btn')}
+                                </button>
+                                <button type="button" className="flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-[13px] bg-blue-600 text-white hover:bg-blue-700 shadow-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed" onClick={onSave} disabled={importLoading || validCount === 0}>
+                                    <CheckCircle2 size={16} /> {t('finance.import_confirm_btn').replace('{count}', validCount)}
                                 </button>
                             </div>
                         </div>
