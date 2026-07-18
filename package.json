@@ -2,17 +2,15 @@
   "name": "vu-family-genealogy",
   "version": "2.0.1",
   "description": "Gia Phả - Ứng dụng web Gia phả dòng họ Vũ",
-  "main": "server/index.js",
+  "main": "api/src/index.ts",
   "scripts": {
-    "start": "node server/index.js",
-    "server": "nodemon server/index.js",
+    "dev:server": "wrangler dev",
     "client": "cd client && npm run dev",
-    "dev": "concurrently \"npm run server\" \"npm run client\"",
-    "build": "cd client && npm install && npm run build && node ../scripts/build-worker.js",
-    "db:init": "node database/init.js",
-    "db:hash": "node scripts/generate-hashes.js",
+    "dev": "concurrently \"npm run dev:server\" \"npm run client\"",
+    "build": "cd client && npm install && npm run build",
+    "vercel-build": "cd client && npm install && npm run build",
     "install:all": "npm install && cd client && npm install",
-    "vercel-build": "cd client && npm install && npm run build"
+    "db:push": "wrangler d1 execute vufamily_db --file=database/seed_d1.sql --local"
   },
   "keywords": [
     "genealogy",
