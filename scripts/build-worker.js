@@ -4,10 +4,10 @@ const path = require('path');
 const mockIconvPlugin = {
   name: 'mock-iconv-lite',
   setup(build) {
-    build.onResolve({ filter: /^iconv-lite$/ }, args => {
+    build.onResolve({ filter: /iconv-lite/ }, args => {
       return { path: path.resolve(__dirname, './mock-iconv-lite.js') };
     });
-    build.onResolve({ filter: /^dotenv$/ }, args => {
+    build.onResolve({ filter: /dotenv/ }, args => {
       return { path: path.resolve(__dirname, './mock-dotenv.js') };
     });
   }

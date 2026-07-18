@@ -1,6 +1,6 @@
 # Wrangler configuration for Cloudflare Workers (Full-Stack with Assets)
 name = "vu-family"
-main = "dist-worker/index.js"
+main = "api/src/index.ts"
 
 # Compatibility settings
 compatibility_date = "2026-02-01"

@@ -1,24 +1,29 @@
 import { httpServerHandler } from 'cloudflare:node';
 import app from './server/index.js';
 
-let handler;
+// Setup Cloudflare's native httpServerHandler to bridge Express and fetch
+const port = 8080;
+app.listen(port);
+
+const nodeHandler = httpServerHandler({
+  port: port, // Internal mock port
+  fetch: app  // The Express app instance
+});
 
 export default {
   async fetch(request, env, ctx) {
-    const url = new URL(request.url);
-    
-    // Bind the Cloudflare env & context to global scope for D1/R2 compatibility
     globalThis.MINIFLARE_ENV = env;
     globalThis.CLOUDFLARE_CONTEXT = ctx;
     
-    if (url.pathname.startsWith('/api/')) {
-      if (!handler) {
-        handler = httpServerHandler(app);
-      }
-      return handler(request, env, ctx);
+    const url = new URL(request.url);
+    if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/auth/') || url.pathname.startsWith('/uploads/')) {
+       if (typeof nodeHandler === 'function') {
+         return nodeHandler(request, env, ctx);
+       } else if (nodeHandler && typeof nodeHandler.fetch === 'function') {
+         return nodeHandler.fetch(request, env, ctx);
+       }
     }
     
-    // Serve static frontend assets from client/dist
     return env.ASSETS.fetch(request);
   }
 };
