@@ -34,8 +34,6 @@ import Toolbar from './shared/components/Toolbar';
 import Toast from './shared/components/Toast';
 import SplashLoading from './shared/components/SplashLoading';
 import ForceChangePasswordModal from './features/auth/ForceChangePasswordModal';
-import MobileNavigation from './shared/components/MobileNavigation';
-import MobileBottomSheet from './shared/components/MobileBottomSheet';
 
 // ── Routing Constants & Helper ──
 const PAGE_TO_PATH = {
@@ -141,8 +139,6 @@ export default function App() {
     });
     const [activeCallRoom, setActiveCallRoom] = useState(null);
     const [sidebarCollapsed, setSidebarCollapsed] = useState(() => window.innerWidth <= 768);
-    const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 768);
-    const [showMobileMenu, setShowMobileMenu] = useState(false);
 
     // Sync activePage and sub-resource selections from window.location.pathname on popstate (browser navigation)
     useEffect(() => {
@@ -248,9 +244,7 @@ export default function App() {
     // Responsive design resize handler
     useEffect(() => {
         const handleResize = () => {
-            const mobile = window.innerWidth <= 768;
-            setIsMobile(mobile);
-            if (mobile) setSidebarCollapsed(true);
+            if (window.innerWidth <= 768) setSidebarCollapsed(true);
         };
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
@@ -370,52 +364,23 @@ export default function App() {
     }
 
     return (
-        <div className={`app-layout ${sidebarCollapsed ? 'sidebar-collapsed' : ''} ${isMobile ? 'is-mobile' : ''}`}>
-            {!isMobile && (
-                <Sidebar
-                    activePage={activePage}
-                    onNavigate={setActivePage}
-                    isAdmin={isAdmin}
-                    user={user}
-                    onLogout={handleLogout}
-                    collapsed={sidebarCollapsed}
-                    onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
-                    pendingCount={pendingCount}
-                    onOpenProfile={() => setProfileModalOpen(true)}
-                    theme={theme}
-                    setTheme={setTheme}
-                />
-            )}
+        <div className={`app-layout ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
+            <Sidebar
+                activePage={activePage}
+                onNavigate={setActivePage}
+                isAdmin={isAdmin}
+                user={user}
+                onLogout={handleLogout}
+                collapsed={sidebarCollapsed}
+                onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
+                pendingCount={pendingCount}
+                onOpenProfile={() => setProfileModalOpen(true)}
+                theme={theme}
+                setTheme={setTheme}
+            />
             <main className="main-content">
                 {renderPage()}
             </main>
-
-            {/* Mobile Navigation */}
-            {isMobile && (
-                <MobileNavigation
-                    activePage={activePage}
-                    setActivePage={setActivePage}
-                    showMobileMenu={showMobileMenu}
-                    setShowMobileMenu={setShowMobileMenu}
-                    pendingCount={pendingCount}
-                />
-            )}
-
-            {/* Mobile Bottom Sheet Menu */}
-            {isMobile && (
-                <MobileBottomSheet
-                    showMobileMenu={showMobileMenu}
-                    setShowMobileMenu={setShowMobileMenu}
-                    setActivePage={setActivePage}
-                    setProfileModalOpen={setProfileModalOpen}
-                    user={user}
-                    isAdmin={isAdmin}
-                    pendingCount={pendingCount}
-                    theme={theme}
-                    setTheme={setTheme}
-                    handleLogout={handleLogout}
-                />
-            )}
 
             {/* Modals */}
             <MemberModal 

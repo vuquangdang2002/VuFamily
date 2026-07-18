@@ -97,7 +97,7 @@ export default function Sidebar({ activePage, onNavigate, isAdmin, user, onLogou
                 {activeCommonItems.map(item => (
                     <button
                         key={item.id}
-                        className={`sidebar-item hidden-on-mobile ${activePage === item.id ? 'active' : ''}`}
+                        className={`sidebar-item ${activePage === item.id ? 'active' : ''}`}
                         onClick={() => onNavigate(item.id)}
                         title={collapsed ? t('nav.' + item.id) : ''}
                     >
@@ -108,15 +108,15 @@ export default function Sidebar({ activePage, onNavigate, isAdmin, user, onLogou
 
                 {(isEditorOrAdmin) && (
                     <>
-                        <div className="sidebar-divider hidden-on-mobile" style={{ marginTop: '16px' }} />
-                        {!collapsed && <div className="hidden-on-mobile" style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-muted)', textTransform: 'uppercase', padding: '12px 16px 4px', letterSpacing: '0.5px' }}>{t('sidebar.admin_section')}</div>}
+                        <div className="sidebar-divider" style={{ marginTop: '16px' }} />
+                        {!collapsed && <div style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-muted)', textTransform: 'uppercase', padding: '12px 16px 4px', letterSpacing: '0.5px' }}>{t('sidebar.admin_section')}</div>}
                     </>
                 )}
 
                 {isEditorOrAdmin && activeEditorItems.map(item => (
                     <button
                         key={item.id}
-                        className={`sidebar-item hidden-on-mobile ${activePage === item.id ? 'active' : ''}`}
+                        className={`sidebar-item ${activePage === item.id ? 'active' : ''}`}
                         onClick={() => onNavigate(item.id)}
                         title={collapsed ? t('nav.' + item.id) : ''}
                     >
@@ -130,7 +130,7 @@ export default function Sidebar({ activePage, onNavigate, isAdmin, user, onLogou
                 {isAdmin && ADMIN_ITEMS.map(item => (
                     <button
                         key={item.id}
-                        className={`sidebar-item hidden-on-mobile ${activePage === item.id ? 'active' : ''}`}
+                        className={`sidebar-item ${activePage === item.id ? 'active' : ''}`}
                         onClick={() => onNavigate(item.id)}
                         title={collapsed ? t('nav.' + item.id) : ''}
                     >
@@ -160,26 +160,6 @@ export default function Sidebar({ activePage, onNavigate, isAdmin, user, onLogou
                     </div>
                     <div className="sidebar-user-menu-divider" />
                     
-                    {/* Extra Navigation items for Mobile inside User Menu */}
-                    <div className="mobile-only-menu-items">
-                        {activeCommonItems.map(item => (
-                            <button key={item.id} className="sidebar-user-menu-item" onClick={() => { setShowUserMenu(false); onNavigate(item.id); }}>
-                                <span>{item.icon}</span> {t('nav.' + item.id) || item.label}
-                            </button>
-                        ))}
-                        {isEditorOrAdmin && activeEditorItems.map(item => (
-                            <button key={item.id} className="sidebar-user-menu-item" onClick={() => { setShowUserMenu(false); onNavigate(item.id); }}>
-                                <span>{item.icon}</span> {t('nav.' + item.id) || item.label}
-                            </button>
-                        ))}
-                        {isAdmin && ADMIN_ITEMS.map(item => (
-                            <button key={item.id} className="sidebar-user-menu-item" onClick={() => { setShowUserMenu(false); onNavigate(item.id); }}>
-                                <span>{item.icon}</span> {t('nav.' + item.id) || item.label}
-                            </button>
-                        ))}
-                        <div className="sidebar-user-menu-divider" />
-                    </div>
-
                     <div className="sidebar-user-menu-item" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'default' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                             <span>{theme === 'light' ? <Sun size={14}/> : <Moon size={14}/>}</span> {t('app.theme')}
@@ -240,12 +220,12 @@ export default function Sidebar({ activePage, onNavigate, isAdmin, user, onLogou
                             user?.role === 'admin' ? <Crown size={20} /> : <User size={20} />
                         )}
                     </span>
-                    <div className="sidebar-user-info hidden-on-mobile">
+                    <div className="sidebar-user-info">
                         <span className="sidebar-user-name">{user?.displayName || user?.username}</span>
                         <span className="sidebar-user-role">{getRoleLabel(user?.role, t)}</span>
                     </div>
                     {!collapsed && (
-                        <span className="sidebar-user-expand hidden-on-mobile">{showUserMenu ? <ChevronDown size={16}/> : <ChevronUp size={16}/>}</span>
+                        <span className="sidebar-user-expand">{showUserMenu ? <ChevronDown size={16}/> : <ChevronUp size={16}/>}</span>
                     )}
                 </div>
             </div>
