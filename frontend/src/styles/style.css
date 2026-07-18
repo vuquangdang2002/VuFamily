@@ -1,4 +1,4 @@
-/* ============================================================
+﻿/* ============================================================
    GIA PHẢ — VuFamily Design System
    Entry point CSS — chỉ chứa import và global base styles
    Theme tokens được tách vào:
@@ -9,24 +9,27 @@
 /* ── Google Fonts ── */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap');
 
-/* ── Theme tokens (load trước tất cả) ── */
+/* ── Tailwind (Cần đặt ở ĐẦU để utilities có thể override) ── */
+@import "tailwindcss";
+
+/* ── Theme tokens (load trước tất cả component) ── */
 @import "./theme-light.css";
 @import "./theme-dark.css";
 
 /* ── Component styles ── */
+@import "../shared/components/SidebarBase.css";
 @import "../shared/components/Sidebar.css";
 @import "../shared/components/Header.css";
 @import "../shared/components/Buttons.css";
 @import "../shared/components/Search.css";
+@import "../shared/components/SidePanel.css";
+@import "../shared/components/SidePanelList.css";
 @import "../shared/components/Modal.css";
 @import "../shared/components/Toast.css";
 @import "../shared/components/Scrollbar.css";
 @import "../shared/components/Common.css";
 @import "../shared/components/Responsive.css";
 @import "../shared/components/Animations.css";
-
-/* ── Tailwind (nếu dùng) ── */
-@import "tailwindcss";
 
 @theme {
     --font-heading: 'Outfit', sans-serif;
@@ -72,33 +75,8 @@ h1, h2, h3, h4, h5, h6 {
     margin: 0 0 0.5rem 0;
 }
 
-h1 {
-    font-size: 2.25rem; /* 36px - Main page headlines */
-}
-
-h2 {
-    font-size: 1.75rem; /* 28px - Primary page/section titles */
-}
-
-h3 {
-    font-size: 1.35rem; /* 21.6px - Secondary subsection headers */
-}
-
-h4 {
-    font-size: 1.15rem; /* 18.4px - Card / Component titles */
-}
-
-h5 {
-    font-size: 1.00rem; /* 16px - High-level details & metrics */
-}
-
-h6 {
-    font-size: 0.88rem; /* 14px - Inline emphasis */
-}
-
 p {
     font-family: var(--font-body);
-    font-size: 0.95rem; /* 15.2px - Standard paragraphs */
     line-height: 1.6;
     color: var(--text-secondary);
     margin: 0;
@@ -115,16 +93,10 @@ small, .text-small {
 
 input, select, textarea {
     font-family: var(--font-body);
-    background-color: var(--input-bg);
-    color: var(--input-color);
-    border: 1px solid var(--input-border);
     border-radius: var(--radius-sm);
-    padding: 8px 12px;
 }
 input:focus, select:focus, textarea:focus {
-    border-color: var(--input-focus-border);
     outline: none;
-    box-shadow: 0 0 0 3px var(--input-focus-shadow);
 }
 
 ::selection {
@@ -158,7 +130,6 @@ input, select, textarea {
 }
 
 /* ── View Transitions API — Circular Wipe ── */
-/* Tắt cross-fade mặc định, dùng clip-path custom từ ThemeToggle.jsx */
 ::view-transition-old(root),
 ::view-transition-new(root) {
     animation: none;
