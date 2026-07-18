@@ -8,7 +8,7 @@
     "server": "nodemon server/index.js",
     "client": "cd client && npm run dev",
     "dev": "concurrently \"npm run server\" \"npm run client\"",
-    "build": "cd client && npm install && npm run build && node scripts/build-worker.js",
+    "build": "cd client && npm install && npm run build && node ../scripts/build-worker.js",
     "db:init": "node database/init.js",
     "db:hash": "node scripts/generate-hashes.js",
     "install:all": "npm install && cd client && npm install",
