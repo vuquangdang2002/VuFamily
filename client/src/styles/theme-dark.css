@@ -12,9 +12,9 @@ html.dark {
     --font-body: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 
     /* ── Nền (Apple Dark Mode) ── */
-    --bg-primary:   #000000;   /* Deep Black */
-    --bg-secondary: #1C1C1E;   /* Dark Gray Background */
-    --bg-card:      #1C1C1E;   /* Elevated Card */
+    --bg-primary:   #000000;   /* Pitch Black */
+    --bg-secondary: #1C1C1E;   /* Very Dark Gray Background */
+    --bg-card:      #1C1C1E;   /* Apple Solid/Glass Elevated Card */
     --bg-glass:     rgba(28, 28, 30, 0.75);
     --bg-hover:     #2C2C2E;
 
@@ -39,9 +39,9 @@ html.dark {
     --sidebar-text-active: #FFFFFF;
 
     /* ── Typography ── */
-    --text-primary:   #FFFFFF;
-    --text-secondary: #EBEBF5;
-    --text-muted:     #8E8E93;
+    --text-primary:   #F5F5F7;
+    --text-secondary: rgba(235, 235, 245, 0.6);
+    --text-muted:     rgba(235, 235, 245, 0.3);
 
     /* ── Accent ── */
     --accent-male:    #0A84FF;
@@ -52,14 +52,14 @@ html.dark {
     --accent-info:    #0A84FF;
 
     /* ── Viền ── */
-    --border-subtle: #38383A;
-    --border-glow:   rgba(10, 132, 255, 0.15);
+    --border-subtle: rgba(255, 255, 255, 0.05);
+    --border-glow:   transparent;
 
     /* ── Bóng đổ (Apple Dark Shadows) ── */
-    --shadow-sm:   0 1px 2px  rgba(0, 0, 0, 0.3);
-    --shadow-md:   0 4px 12px rgba(0, 0, 0, 0.4);
-    --shadow-lg:   0 12px 32px rgba(0, 0, 0, 0.5);
-    --shadow-glow: 0 0 16px rgba(10, 132, 255, 0.15);
+    --shadow-sm:   0 1px 3px rgba(0, 0, 0, 0.2);
+    --shadow-md:   0 4px 14px rgba(0, 0, 0, 0.3);
+    --shadow-lg:   0 12px 32px rgba(0, 0, 0, 0.4);
+    --shadow-glow: none;
 
     /* ── Input ── */
     --input-bg:           #2C2C2E;

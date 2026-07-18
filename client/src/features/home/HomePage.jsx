@@ -4,7 +4,18 @@ import { Solar } from '../../shared/utils/lunar.js';
 import { ganZhiToViet, lunarMonthName } from '../../shared/utils/vietLunar.js';
 import { getUpcomingBirthdays, getUpcomingAnniversaries } from '../calendar/utils/calendarHelpers';
 import { Network, Newspaper, MessageSquare, Calendar, Wallet, Users, LayoutList, HelpCircle, ChevronRight, Cake, Flame, Quote, Sparkles } from 'lucide-react';
-import './HomePage.css';
+import { motion } from 'framer-motion';
+
+const cardVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } },
+    hover: { y: -4, scale: 1.01, transition: { duration: 0.2, ease: "easeOut" } }
+};
+
+const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
+};
 
 export default function HomePage({ user, members, onNavigate, addToast }) {
     const { t } = useTranslation();
@@ -52,117 +63,121 @@ export default function HomePage({ user, members, onNavigate, addToast }) {
     const hasEvents = upcomingBirthdays.length > 0 || upcomingAnniversaries.length > 0;
 
     return (
-        <div className="page-container home-page">
+        <motion.div 
+            className="flex flex-col gap-6 md:gap-8 p-4 md:p-8 h-full overflow-y-auto w-full text-zinc-900 dark:text-zinc-100 bg-[#F2F2F7] dark:bg-black"
+            initial="hidden" animate="visible" variants={containerVariants}
+        >
             {/* ── Welcome Hero Banner ── */}
-            <div className="home-hero">
-                <div className="home-hero-content">
-                    <span className="home-hero-badge"><Sparkles size={14} className="inline-block mr-1" /> Gia tộc Vũ tộc</span>
-                    <h1 className="home-hero-title">
-                        {greetingText}, <span className="highlight">{user?.displayName || user?.username}</span>!
+            <motion.div 
+                className="relative overflow-hidden rounded-[2rem] bg-white dark:bg-[#1C1C1E] p-8 md:p-12 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between"
+                variants={cardVariants}
+            >
+                <div className="relative z-10 flex flex-col gap-4 max-w-2xl">
+                    <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider text-amber-600 bg-amber-500/10 border border-amber-500/20 self-start">
+                        <Sparkles size={14} /> Gia tộc Vũ tộc
+                    </div>
+                    <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight leading-tight">
+                        {greetingText}, <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-500 dark:from-blue-400 dark:to-indigo-300">{user?.displayName || user?.username}</span>!
                     </h1>
-                    <p className="home-hero-subtitle">
+                    <p className="text-lg text-zinc-600 dark:text-zinc-400">
                         Chào mừng bạn trở lại không gian sinh hoạt số của Dòng Họ Vũ.
                     </p>
                     {dateDisplay.lunar && (
-                        <div className="home-date-box">
-                            <span className="solar-date"><Calendar size={14} className="inline-block mr-1" /> {dateDisplay.solar}</span>
-                            <span className="date-separator">|</span>
-                            <span className="lunar-date">Âm lịch: {dateDisplay.lunar}</span>
+                        <div className="flex flex-wrap items-center gap-3 text-sm font-medium mt-2">
+                            <span className="flex items-center gap-1.5 text-blue-600 dark:text-blue-400"><Calendar size={16} /> {dateDisplay.solar}</span>
+                            <span className="text-zinc-300 dark:text-zinc-700 hidden md:inline">|</span>
+                            <span className="text-amber-600 dark:text-amber-400">Âm lịch: {dateDisplay.lunar}</span>
                         </div>
                     )}
                 </div>
-                <div className="home-hero-decoration">
-                    <div className="circle-glow glow-1"></div>
-                    <div className="circle-glow glow-2"></div>
+                
+                {/* Decorative glows (Subtle for iOS) */}
+                <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden opacity-50">
+                    <div className="absolute top-[-20%] right-[-10%] w-[300px] h-[300px] bg-blue-500/10 rounded-full blur-[80px]"></div>
+                    <div className="absolute bottom-[-20%] right-[10%] w-[250px] h-[250px] bg-amber-500/10 rounded-full blur-[80px]"></div>
                 </div>
-            </div>
+            </motion.div>
 
             {/* ── Quick Navigation Dashboard Grid (Bento Box) ── */}
-            <div className="home-section">
-                <h3 className="section-title"><LayoutList size={20} /> Tính năng chính</h3>
-                <div className="home-grid bento-grid">
-                    <div className="home-card card-tree bento-wide" onClick={() => onNavigate('tree')}>
-                        <div className="card-icon"><Network size={24} /></div>
-                        <div className="card-body">
-                            <h4>Phả đồ Dòng họ</h4>
-                            <p>Khám phá sơ đồ phả hệ dòng họ Vũ, tra cứu nguồn cội và các nhánh gia tộc.</p>
-                        </div>
-                        <div className="card-action">Mở phả đồ <ChevronRight size={14} className="inline-block" /></div>
-                    </div>
-
-                    <div className="home-card card-newsfeed" onClick={() => onNavigate('newsfeed')}>
-                        <div className="card-icon"><Newspaper size={24} /></div>
-                        <div className="card-body">
-                            <h4>Bản tin Gia đình</h4>
-                            <p>Cập nhật tin tức, hoạt động, thông báo quan trọng từ hội đồng dòng họ.</p>
-                        </div>
-                        <div className="card-action">Xem bản tin <ChevronRight size={14} className="inline-block" /></div>
-                    </div>
-
-                    <div className="home-card card-chat" onClick={() => onNavigate('chat')}>
-                        <div className="card-icon"><MessageSquare size={24} /></div>
-                        <div className="card-body">
-                            <h4>Trò chuyện trực tuyến</h4>
-                            <p>Nhắn tin tức thời, chia sẻ hình ảnh và gọi thoại/video nhóm miễn phí.</p>
-                        </div>
-                        <div className="card-action">Vào phòng chat <ChevronRight size={14} className="inline-block" /></div>
-                    </div>
-
-                    <div className="home-card card-calendar" onClick={() => onNavigate('calendar')}>
-                        <div className="card-icon"><Calendar size={24} /></div>
-                        <div className="card-body">
-                            <h4>Lịch & Sự kiện</h4>
-                            <p>Theo dõi ngày giỗ, sinh nhật thành viên và sự kiện chung sắp diễn ra.</p>
-                        </div>
-                        <div className="card-action">Xem lịch <ChevronRight size={14} className="inline-block" /></div>
-                    </div>
-
-                    <div className="home-card card-finance" onClick={() => onNavigate('finance')}>
-                        <div className="card-icon"><Wallet size={24} /></div>
-                        <div className="card-body">
-                            <h4>Quỹ Tài chính</h4>
-                            <p>Quản lý các khoản đóng góp, báo cáo thu chi minh bạch của dòng họ.</p>
-                        </div>
-                        <div className="card-action">Xem tài chính <ChevronRight size={14} className="inline-block" /></div>
-                    </div>
-                </div>
+            <div className="flex flex-col gap-4">
+                <h3 className="text-xl font-bold flex items-center gap-2 px-2"><LayoutList size={22} className="text-zinc-400" /> Tính năng chính</h3>
+                <motion.div 
+                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 auto-rows-[minmax(200px,auto)] gap-4 md:gap-5"
+                    variants={containerVariants}
+                >
+                    {[
+                        { id: 'tree', title: 'Phả đồ Dòng họ', desc: 'Khám phá sơ đồ phả hệ dòng họ Vũ, tra cứu nguồn cội và các nhánh gia tộc.', icon: Network, color: 'text-blue-500', bg: 'bg-blue-500/10', wide: true },
+                        { id: 'newsfeed', title: 'Bản tin Gia đình', desc: 'Cập nhật tin tức, hoạt động, thông báo quan trọng từ hội đồng dòng họ.', icon: Newspaper, color: 'text-amber-500', bg: 'bg-amber-500/10' },
+                        { id: 'chat', title: 'Trò chuyện trực tuyến', desc: 'Nhắn tin tức thời, chia sẻ hình ảnh và gọi thoại/video nhóm miễn phí.', icon: MessageSquare, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+                        { id: 'calendar', title: 'Lịch & Sự kiện', desc: 'Theo dõi ngày giỗ, sinh nhật thành viên và sự kiện chung sắp diễn ra.', icon: Calendar, color: 'text-purple-500', bg: 'bg-purple-500/10' },
+                        { id: 'finance', title: 'Quỹ Tài chính', desc: 'Quản lý các khoản đóng góp, báo cáo thu chi minh bạch của dòng họ.', icon: Wallet, color: 'text-rose-500', bg: 'bg-rose-500/10' }
+                    ].map((feature, i) => (
+                        <motion.div 
+                            key={feature.id}
+                            className={`group relative flex flex-col p-6 rounded-[2rem] bg-white dark:bg-[#1C1C1E] shadow-sm cursor-pointer overflow-hidden ${feature.wide ? 'md:col-span-2 lg:col-span-2' : ''}`}
+                            variants={cardVariants}
+                            whileHover="hover"
+                            onClick={() => onNavigate(feature.id)}
+                        >
+                            <div className="absolute inset-0 bg-black/[0.02] dark:bg-white/[0.02] opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                            
+                            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-4 ${feature.bg} ${feature.color} border border-current/10 shadow-sm transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3`}>
+                                <feature.icon size={24} />
+                            </div>
+                            
+                            <h4 className="text-lg font-bold mb-2 text-zinc-900 dark:text-white">{feature.title}</h4>
+                            <p className="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed mb-6">{feature.desc}</p>
+                            
+                            <div className="mt-auto pt-2 flex items-center text-sm font-semibold text-zinc-400 group-hover:text-zinc-800 dark:group-hover:text-zinc-200 transition-colors">
+                                Vào {feature.title.toLowerCase()} <ChevronRight size={16} className="ml-1 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" />
+                            </div>
+                        </motion.div>
+                    ))}
+                </motion.div>
             </div>
 
             {/* ── Bottom Section with Events and Stats ── */}
-            <div className="home-bottom-layout">
+            <motion.div 
+                className="grid grid-cols-1 lg:grid-cols-[1.5fr_1fr] gap-6"
+                variants={containerVariants}
+            >
                 {/* Upcoming Events Column */}
-                <div className="home-panel panel-events bento-tall">
-                    <div className="panel-header">
-                        <h3><Calendar size={18} className="inline-block mr-2" /> Sự kiện sắp tới</h3>
-                        <button className="panel-header-btn" onClick={() => onNavigate('calendar')}>Xem tất cả</button>
+                <motion.div 
+                    className="flex flex-col bg-white dark:bg-[#1C1C1E] rounded-[2rem] shadow-sm overflow-hidden h-[450px]"
+                    variants={cardVariants}
+                >
+                    <div className="flex items-center justify-between px-6 py-5 border-b border-black/5 dark:border-white/5">
+                        <h3 className="font-bold flex items-center gap-2"><Calendar size={18} className="text-purple-500" /> Sự kiện sắp tới</h3>
+                        <button className="text-sm font-semibold text-blue-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors" onClick={() => onNavigate('calendar')}>Xem tất cả</button>
                     </div>
-                    <div className="panel-body">
+                    
+                    <div className="flex-1 overflow-y-auto p-2">
                         {!hasEvents ? (
-                            <div className="empty-panel-state">
-                                <span><Sparkles size={32} className="text-muted" /></span>
-                                <p>Không có sự kiện quan trọng nào trong 30 ngày tới.</p>
+                            <div className="h-full flex flex-col items-center justify-center text-center p-6 opacity-60">
+                                <Sparkles size={48} className="mb-4 text-zinc-300 dark:text-zinc-700" />
+                                <p className="text-sm">Không có sự kiện quan trọng nào trong 30 ngày tới.</p>
                             </div>
                         ) : (
-                            <div className="events-list">
+                            <div className="flex flex-col gap-2 p-2">
                                 {/* Anniversaries (Ngày Giỗ) */}
                                 {upcomingAnniversaries.map((ann, i) => (
-                                    <div key={`ann-${i}`} className="event-item type-anniversary">
-                                        <div className="event-emoji"><Flame size={20} className="text-orange-500" /></div>
-                                        <div className="event-info">
-                                            <div className="event-name">
-                                                Ngày giỗ <strong>{ann.member.name}</strong>
-                                            </div>
-                                            <div className="event-meta">
-                                                <span>Âm lịch: {ann.lunarStr}</span>
-                                                <span className="meta-dot">•</span>
-                                                <span>Dương lịch: {ann.solarAnniversary}</span>
+                                    <div key={`ann-${i}`} className="group flex items-center gap-4 p-4 rounded-3xl hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer">
+                                        <div className="w-12 h-12 rounded-[1rem] bg-orange-500/10 text-orange-500 flex items-center justify-center shrink-0">
+                                            <Flame size={24} />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="font-medium truncate">Ngày giỗ <span className="font-bold">{ann.member.name}</span></div>
+                                            <div className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 flex gap-2">
+                                                <span>Âm: {ann.lunarStr}</span>
+                                                <span className="opacity-50">•</span>
+                                                <span>Dương: {ann.solarAnniversary}</span>
                                             </div>
                                         </div>
-                                        <div className="event-countdown">
+                                        <div className="shrink-0">
                                             {ann.daysUntil === 0 ? (
-                                                <span className="badge badge-today">Hôm nay</span>
+                                                <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 ring-1 ring-emerald-500/30 animate-pulse">Hôm nay</span>
                                             ) : (
-                                                <span className="badge badge-pending">Còn {ann.daysUntil} ngày</span>
+                                                <span className="px-3 py-1 rounded-full text-xs font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300">Còn {ann.daysUntil} ngày</span>
                                             )}
                                         </div>
                                     </div>
@@ -170,27 +185,27 @@ export default function HomePage({ user, members, onNavigate, addToast }) {
 
                                 {/* Birthdays (Sinh Nhật) */}
                                 {upcomingBirthdays.map((bd, i) => (
-                                    <div key={`bd-${i}`} className="event-item type-birthday">
-                                        <div className="event-emoji"><Cake size={20} className="text-pink-500" /></div>
-                                        <div className="event-info">
-                                            <div className="event-name">
-                                                Sinh nhật <strong>{bd.member.name}</strong>
-                                            </div>
-                                            <div className="event-meta">
-                                                <span>Ngày sinh: {bd.fullDate}</span>
+                                    <div key={`bd-${i}`} className="group flex items-center gap-4 p-4 rounded-3xl hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer">
+                                        <div className="w-12 h-12 rounded-[1rem] bg-pink-500/10 text-pink-500 flex items-center justify-center shrink-0">
+                                            <Cake size={24} />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="font-medium truncate">Sinh nhật <span className="font-bold">{bd.member.name}</span></div>
+                                            <div className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 flex gap-2">
+                                                <span>{bd.fullDate}</span>
                                                 {bd.age !== null && (
                                                     <>
-                                                        <span className="meta-dot">•</span>
+                                                        <span className="opacity-50">•</span>
                                                         <span>Tuổi: {bd.age}</span>
                                                     </>
                                                 )}
                                             </div>
                                         </div>
-                                        <div className="event-countdown">
+                                        <div className="shrink-0">
                                             {bd.daysUntil === 0 ? (
-                                                <span className="badge badge-today">Hôm nay</span>
+                                                <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 ring-1 ring-emerald-500/30 animate-pulse">Hôm nay</span>
                                             ) : (
-                                                <span className="badge badge-pending">Còn {bd.daysUntil} ngày</span>
+                                                <span className="px-3 py-1 rounded-full text-xs font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300">Còn {bd.daysUntil} ngày</span>
                                             )}
                                         </div>
                                     </div>
@@ -198,50 +213,63 @@ export default function HomePage({ user, members, onNavigate, addToast }) {
                             </div>
                         )}
                     </div>
-                </div>
+                </motion.div>
 
                 {/* Family Stats Column */}
-                <div className="home-panel panel-stats bento-square">
-                    <div className="panel-header">
-                        <h3><Users size={18} className="inline-block mr-2" /> Thống kê Gia tộc</h3>
-                    </div>
-                    <div className="panel-body">
-                        <div className="stats-metric-container">
-                            <div className="metric-box">
-                                <span className="metric-icon"><Users size={24} /></span>
-                                <div className="metric-info">
-                                    <span className="metric-value">{totalMembers}</span>
-                                    <span className="metric-label">Thành viên gia phả</span>
-                                </div>
+                <motion.div 
+                    className="flex flex-col gap-6"
+                    variants={containerVariants}
+                >
+                    <motion.div className="grid grid-cols-2 gap-4" variants={cardVariants}>
+                        <div className="flex flex-col items-start gap-4 p-6 bg-white dark:bg-[#1C1C1E] rounded-[2rem] shadow-sm">
+                            <div className="w-12 h-12 rounded-full bg-blue-500/10 text-blue-500 flex items-center justify-center shrink-0">
+                                <Users size={24} />
                             </div>
-                            <div className="metric-box">
-                                <span className="metric-icon"><Network size={24} /></span>
-                                <div className="metric-info">
-                                    <span className="metric-value">{totalGenerations}</span>
-                                    <span className="metric-label">Thế hệ dòng họ</span>
-                                </div>
+                            <div>
+                                <div className="text-3xl font-black">{totalMembers}</div>
+                                <div className="text-xs font-semibold text-zinc-500 uppercase tracking-wide">Thành viên</div>
                             </div>
                         </div>
+                        <div className="flex flex-col items-start gap-4 p-6 bg-white dark:bg-[#1C1C1E] rounded-[2rem] shadow-sm">
+                            <div className="w-12 h-12 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center shrink-0">
+                                <Network size={24} />
+                            </div>
+                            <div>
+                                <div className="text-3xl font-black">{totalGenerations}</div>
+                                <div className="text-xs font-semibold text-zinc-500 uppercase tracking-wide">Thế hệ</div>
+                            </div>
+                        </div>
+                    </motion.div>
 
-                        <div className="stats-quote-box">
-                            <span className="quote-mark"><Quote size={32} opacity={0.2} /></span>
-                            <p className="quote-text">
-                                Con người có tổ có tông,<br />
-                                Như cây có cội, như sông có nguồn.
-                            </p>
-                            <span className="quote-author">— Ca dao Việt Nam</span>
-                        </div>
+                    <motion.div 
+                        className="relative p-8 bg-white dark:bg-[#1C1C1E] rounded-[2rem] shadow-sm flex flex-col items-start gap-4 overflow-hidden"
+                        variants={cardVariants}
+                    >
+                        <Quote size={80} className="absolute -top-4 -left-4 text-amber-500/10 rotate-12" />
+                        <p className="relative z-10 text-amber-900 dark:text-amber-100 text-lg italic leading-relaxed pl-6 border-l-2 border-amber-500/50">
+                            "Con người có tổ có tông,<br />
+                            Như cây có cội, như sông có nguồn."
+                        </p>
+                        <span className="relative z-10 self-end text-sm font-semibold text-amber-700/60 dark:text-amber-300/60">— Ca dao Việt Nam</span>
+                    </motion.div>
 
-                        <div className="stats-quick-guide" onClick={() => onNavigate('guide')}>
-                            <span className="guide-icon"><HelpCircle size={20} /></span>
-                            <div className="guide-body">
-                                <h5>Hướng dẫn sử dụng hệ thống</h5>
-                                <p>Xem ngay cách tương tác, chỉnh sửa gia phả, tạo phòng chat hoặc quỹ tài chính.</p>
-                            </div>
+                    <motion.div 
+                        className="flex items-center gap-4 p-6 bg-white dark:bg-[#1C1C1E] rounded-[2rem] shadow-sm cursor-pointer transition-all"
+                        variants={cardVariants}
+                        whileHover={{ scale: 1.02 }}
+                        onClick={() => onNavigate('guide')}
+                    >
+                        <div className="w-12 h-12 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center shrink-0">
+                            <HelpCircle size={24} />
                         </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+                        <div>
+                            <h5 className="font-bold text-sm">Hướng dẫn sử dụng</h5>
+                            <p className="text-xs text-zinc-500 mt-0.5">Cách dùng gia phả, tạo chat, quản lý quỹ.</p>
+                        </div>
+                    </motion.div>
+                </motion.div>
+
+            </motion.div>
+        </motion.div>
     );
 }
