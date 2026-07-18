@@ -11,16 +11,7 @@ import { AuthHelper } from '../../shared/services/AuthHelper';
 import PostCard from './components/PostCard';
 import ContactsTab from './components/ContactsTab';
 import SidebarPanel from './components/SidebarPanel';
-import './Newsfeed.css';
-
-// Biến toàn cục để cache lại bài đăng trong phiên làm việc
-let cachedPosts = null;
-let lastFetchTime = 0;
-
-function getTodayLabel() {
-    const d = new Date();
-    return d.toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-}
+import TopBar from '../../shared/components/TopBar';
 
 export default function NewsfeedPage({ user, isAdmin, addToast, members = [], onNavigate }) {
     const { t } = useTranslation();
@@ -158,172 +149,93 @@ export default function NewsfeedPage({ user, isAdmin, addToast, members = [], on
     };
 
     return (
-        <div className="page-container">
-            {/* Dashboard Header */}
-            <div className="nf-dashboard-header">
-                <div className="nf-welcome-row">
-                    <div>
-                        <h2 className="nf-welcome-greeting">
-                            {t('newsfeed.greeting')}, {user?.displayName || t('role.member')}! 👋
-                        </h2>
-                        <p className="nf-welcome-sub">{getTodayLabel()}</p>
-                    </div>
-                </div>
+        <div className="flex flex-col h-full w-full bg-[#F3F4F6] relative overflow-hidden">
+            {/* Top Bar with Search */}
+            <TopBar user={user} onSearch={setPostSearchQuery} />
 
-                {/* Stats Cards */}
-                <div className="nf-stat-cards">
-                    <div className="nf-stat-card">
-                        <div className="nf-stat-icon" style={{ background: 'rgba(245,158,11,0.1)' }}>👥</div>
-                        <div className="nf-stat-body">
-                            <div className="nf-stat-value">{totalMembers}</div>
-                            <div className="nf-stat-label">{t('newsfeed.stats_members')}</div>
+            {/* Main Grid */}
+            <div className="flex flex-1 gap-6 min-h-0 overflow-y-auto pr-2 pb-6">
+                
+                {/* Left Area: Newsfeed Content (70%) */}
+                <div className="flex-1 flex flex-col gap-6 max-w-[70%]">
+                    {/* Header Card */}
+                    <div className="bg-white rounded-3xl p-6 shadow-sm flex flex-col items-start justify-center">
+                        <div className="flex items-center gap-2 text-blue-600 font-medium mb-1">
+                            <span className="text-xl">📄</span> NEWSFEED
                         </div>
+                        <h2 className="text-3xl font-bold text-gray-800">Newsfeed</h2>
+                        <p className="text-gray-500 mt-1">Thông báo và chia sẻ nội bộ dòng họ Vũ</p>
                     </div>
-                    <div className="nf-stat-card">
-                        <div className="nf-stat-icon" style={{ background: 'rgba(59,130,246,0.1)' }}>🌿</div>
-                        <div className="nf-stat-body">
-                            <div className="nf-stat-value">{generations}</div>
-                            <div className="nf-stat-label">{t('newsfeed.stats_generations')}</div>
-                        </div>
-                    </div>
-                    <div className="nf-stat-card">
-                        <div className="nf-stat-icon" style={{ background: 'rgba(16,185,129,0.1)' }}>🎂</div>
-                        <div className="nf-stat-body">
-                            <div className="nf-stat-value">
-                                {members.filter(m => m.birthDate && !m.deathDate).length}
+
+                    {/* Create Post Card */}
+                    {canEdit && (
+                        <div className="bg-white rounded-3xl p-6 shadow-sm flex flex-col gap-4">
+                            <div className="flex items-center gap-3">
+                                <span className="text-2xl">{user?.role === 'admin' ? '👑' : '👤'}</span>
+                                <span className="font-bold text-gray-800">{user?.displayName}</span>
                             </div>
-                            <div className="nf-stat-label">{t('newsfeed.upcoming_birthdays')}</div>
-                        </div>
-                    </div>
-                    <div className="nf-stat-card">
-                        <div className="nf-stat-icon" style={{ background: 'rgba(239,68,68,0.1)' }}>📝</div>
-                        <div className="nf-stat-body">
-                            <div className="nf-stat-value">{posts.length}</div>
-                            <div className="nf-stat-label">{t('newsfeed.tab_posts')}</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* 2-Column Body (Feed + Right Panel) */}
-            <div className="nf-body-grid">
-                {/* Left: Tab + Feed */}
-                <div>
-                    {/* Tab Navigation */}
-                    <div className="nf-tabs">
-                        <button className={`nf-tab ${tab === 'posts' ? 'active' : ''}`} onClick={() => switchTab('posts')}>
-                            📝 {t('newsfeed.tab_posts')}
-                        </button>
-                        <button className={`nf-tab ${tab === 'contacts' ? 'active' : ''}`} onClick={() => switchTab('contacts')}>
-                            📱 {t('newsfeed.tab_contacts')}
-                        </button>
-                    </div>
-
-                    <div className="page-body">
-                        {/* POSTS TAB */}
-                        {tab === 'posts' && (
-                            <div className="nf-posts-section">
-                                <div className="nf-create-post">
-                                    <div className="nf-create-header">
-                                        <span className="nf-author-avatar">{user?.role === 'admin' ? '👑' : '👤'}</span>
-                                        <span className="nf-author-name">{user?.displayName}</span>
-                                    </div>
-                                    <textarea
-                                        className="nf-post-input"
-                                        placeholder={t('newsfeed.write_post')}
-                                        value={newPost}
-                                        onChange={e => setNewPost(e.target.value)}
-                                        rows={3}
-                                    />
-                                    <div className="nf-create-footer">
-                                        <span className="nf-char-count">{newPost.length}/500</span>
-                                        <button className="btn btn-primary" onClick={handleCreatePost} disabled={!newPost.trim()}>
-                                            📤 {t('newsfeed.post_btn')}
-                                        </button>
-                                    </div>
-                                </div>
-
-                                {hasNewPostsHint && (
-                                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
-                                        <button
-                                            onClick={() => fetchPosts(true)}
-                                            style={{ background: 'var(--primary)', color: '#fff', border: 'none', padding: '8px 20px', borderRadius: 24, fontSize: 13, fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 12px rgba(59,130,246,0.3)', display: 'flex', alignItems: 'center', gap: 6, transition: 'all 0.2s' }}
-                                            onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
-                                            onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
-                                        >
-                                            <span style={{ fontSize: 16 }}>↑</span> {t('newsfeed.new_posts_hint')}
-                                        </button>
-                                    </div>
-                                )}
-
-                                {posts.length > 0 && (
-                                    <div style={{ marginBottom: 16 }}>
-                                        <input
-                                            type="text"
-                                            className="form-input"
-                                            placeholder={t('newsfeed.search_posts_placeholder')}
-                                            value={postSearchQuery}
-                                            onChange={e => setPostSearchQuery(e.target.value)}
-                                            style={{
-                                                width: '100%',
-                                                borderRadius: 24,
-                                                padding: '10px 18px',
-                                                fontSize: 13,
-                                                background: 'var(--bg-secondary)',
-                                                border: '1px solid var(--border-subtle)',
-                                                boxSizing: 'border-box'
-                                            }}
-                                        />
-                                    </div>
-                                )}
-
-                                {loading && posts.length === 0 ? (
-                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 0' }}>
-                                        <div className="nf-spinner"></div>
-                                        <span style={{ marginLeft: 12, color: 'var(--text-muted)' }}>{t('common.loading')}</span>
-                                    </div>
-                                ) : posts.length === 0 ? (
-                                    <div className="empty-state">
-                                        <span style={{ fontSize: 48 }}>📭</span>
-                                        <h3>{t('newsfeed.empty')}</h3>
-                                    </div>
-                                ) : filteredPosts.length === 0 ? (
-                                    <div style={{ padding: 32, textAlign: 'center', color: 'var(--text-muted)', fontSize: 14 }}>
-                                        {t('newsfeed.no_search_result')}
-                                    </div>
-                                ) : (
-                                    <div className="nf-posts-list">
-                                        {filteredPosts.map(post => (
-                                            <PostCard
-                                                key={post.id}
-                                                post={post}
-                                                user={user}
-                                                isAdmin={isAdmin}
-                                                currentUserId={currentUserId}
-                                                addToast={addToast}
-                                                setPosts={setPosts}
-                                                onDeletePost={handleDeletePost}
-                                            />
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        )}
-
-
-
-                        {/* CONTACTS TAB */}
-                        {tab === 'contacts' && (
-                            <ContactsTab
-                                isAdmin={isAdmin}
-                                addToast={addToast}
+                            <textarea
+                                className="w-full bg-gray-50 rounded-2xl p-4 border border-gray-100 outline-none focus:border-blue-300 resize-none"
+                                placeholder={t('newsfeed.write_post')}
+                                value={newPost}
+                                onChange={e => setNewPost(e.target.value)}
+                                rows={3}
                             />
-                        )}
+                            <div className="flex justify-between items-center">
+                                <span className="text-xs text-gray-400">{newPost.length}/500</span>
+                                <button 
+                                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full transition-colors disabled:opacity-50"
+                                    onClick={handleCreatePost} 
+                                    disabled={!newPost.trim()}
+                                >
+                                    📤 {t('newsfeed.post_btn')}
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Posts Section */}
+                    {loading && posts.length === 0 ? (
+                        <div className="flex items-center justify-center p-10">
+                            <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                        </div>
+                    ) : (
+                        <div className="flex flex-col gap-4">
+                            {filteredPosts.map(post => (
+                                <PostCard
+                                    key={post.id}
+                                    post={post}
+                                    user={user}
+                                    isAdmin={isAdmin}
+                                    currentUserId={currentUserId}
+                                    addToast={addToast}
+                                    setPosts={setPosts}
+                                    onDeletePost={handleDeletePost}
+                                />
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                {/* Right Area: News Categories (30%) */}
+                <div className="w-[30%] flex-shrink-0">
+                    <div className="bg-white rounded-3xl p-4 shadow-sm flex flex-col gap-2">
+                        <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-4 mb-2">NEWS</h3>
+                        
+                        <button onClick={() => switchTab('posts')} className={`flex items-center gap-3 w-full text-left p-4 rounded-2xl transition-colors ${tab === 'posts' ? 'bg-blue-50 text-blue-600 font-bold' : 'hover:bg-gray-50 text-gray-700 font-medium'}`}>
+                            <span className={`text-xl ${tab === 'posts' ? 'text-blue-500' : 'text-gray-400'}`}>📄</span> Newsfeed
+                        </button>
+                        
+                        <button onClick={() => switchTab('contacts')} className={`flex items-center gap-3 w-full text-left p-4 rounded-2xl transition-colors ${tab === 'contacts' ? 'bg-blue-50 text-blue-600 font-bold' : 'hover:bg-gray-50 text-gray-700 font-medium'}`}>
+                            <span className={`text-xl ${tab === 'contacts' ? 'text-blue-500' : 'text-gray-400'}`}>📱</span> Danh bạ & Liên hệ
+                        </button>
+
+                        <button className="flex items-center gap-3 w-full text-left p-4 rounded-2xl hover:bg-gray-50 transition-colors text-gray-700 font-medium">
+                            <span className="text-xl text-gray-400">🏆</span> Cuộc thi nội bộ
+                        </button>
                     </div>
                 </div>
 
-                {/* Right Panel */}
-                <SidebarPanel members={members} onNavigate={onNavigate} />
             </div>
         </div>
     );
