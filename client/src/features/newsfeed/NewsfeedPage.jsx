@@ -149,7 +149,7 @@ export default function NewsfeedPage({ user, isAdmin, addToast, members = [], on
     };
 
     return (
-        <div className="flex flex-col h-full w-full bg-[#F3F4F6] relative overflow-hidden">
+        <div className="flex flex-col h-full w-full relative overflow-hidden" style={{ background: 'var(--bg-primary)' }}>
             {/* Top Bar with Search */}
             <TopBar user={user} onSearch={setPostSearchQuery} />
 
@@ -159,23 +159,24 @@ export default function NewsfeedPage({ user, isAdmin, addToast, members = [], on
                 {/* Left Area: Newsfeed Content (70%) */}
                 <div className="flex-1 flex flex-col gap-6 max-w-[70%]">
                     {/* Header Card */}
-                    <div className="bg-white rounded-3xl p-6 shadow-sm flex flex-col items-start justify-center">
+                    <div className="rounded-3xl p-6 shadow-sm flex flex-col items-start justify-center" style={{ background: 'var(--bg-card)' }}>
                         <div className="flex items-center gap-2 text-blue-600 font-medium mb-1">
                             <span className="text-xl">📄</span> NEWSFEED
                         </div>
-                        <h2 className="text-3xl font-bold text-gray-800">Newsfeed</h2>
-                        <p className="text-gray-500 mt-1">Thông báo và chia sẻ nội bộ dòng họ Vũ</p>
+                        <h2 className="text-3xl font-bold" style={{ color: 'var(--text-primary)' }}>Newsfeed</h2>
+                        <p className="mt-1" style={{ color: 'var(--text-secondary)' }}>Thông báo và chia sẻ nội bộ dòng họ Vũ</p>
                     </div>
 
                     {/* Create Post Card */}
                     {canEdit && (
-                        <div className="bg-white rounded-3xl p-6 shadow-sm flex flex-col gap-4">
+                        <div className="rounded-3xl p-6 shadow-sm flex flex-col gap-4" style={{ background: 'var(--bg-card)' }}>
                             <div className="flex items-center gap-3">
                                 <span className="text-2xl">{user?.role === 'admin' ? '👑' : '👤'}</span>
-                                <span className="font-bold text-gray-800">{user?.displayName}</span>
+                                <span className="font-bold" style={{ color: 'var(--text-primary)' }}>{user?.displayName}</span>
                             </div>
                             <textarea
-                                className="w-full bg-gray-50 rounded-2xl p-4 border border-gray-100 outline-none focus:border-blue-300 resize-none"
+                                className="w-full rounded-2xl p-4 outline-none resize-none"
+                                style={{ background: 'var(--input-bg)', color: 'var(--input-color)', border: '1px solid var(--border-subtle)' }}
                                 placeholder={t('newsfeed.write_post')}
                                 value={newPost}
                                 onChange={e => setNewPost(e.target.value)}
@@ -219,19 +220,19 @@ export default function NewsfeedPage({ user, isAdmin, addToast, members = [], on
 
                 {/* Right Area: News Categories (30%) */}
                 <div className="w-[30%] flex-shrink-0">
-                    <div className="bg-white rounded-3xl p-4 shadow-sm flex flex-col gap-2">
-                        <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-4 mb-2">NEWS</h3>
+                    <div className="rounded-3xl p-4 shadow-sm flex flex-col gap-2" style={{ background: 'var(--bg-card)' }}>
+                        <h3 className="text-xs font-bold uppercase tracking-wider ml-4 mb-2" style={{ color: 'var(--text-muted)' }}>NEWS</h3>
                         
-                        <button onClick={() => switchTab('posts')} className={`flex items-center gap-3 w-full text-left p-4 rounded-2xl transition-colors ${tab === 'posts' ? 'bg-blue-50 text-blue-600 font-bold' : 'hover:bg-gray-50 text-gray-700 font-medium'}`}>
-                            <span className={`text-xl ${tab === 'posts' ? 'text-blue-500' : 'text-gray-400'}`}>📄</span> Newsfeed
+                        <button onClick={() => switchTab('posts')} className="flex items-center gap-3 w-full text-left p-4 rounded-2xl transition-colors font-medium" style={tab === 'posts' ? { background: 'var(--primary-glow)', color: 'var(--primary)', fontWeight: 'bold' } : { color: 'var(--text-secondary)' }}>
+                            <span className="text-xl">📄</span> Newsfeed
                         </button>
                         
-                        <button onClick={() => switchTab('contacts')} className={`flex items-center gap-3 w-full text-left p-4 rounded-2xl transition-colors ${tab === 'contacts' ? 'bg-blue-50 text-blue-600 font-bold' : 'hover:bg-gray-50 text-gray-700 font-medium'}`}>
-                            <span className={`text-xl ${tab === 'contacts' ? 'text-blue-500' : 'text-gray-400'}`}>📱</span> Danh bạ & Liên hệ
+                        <button onClick={() => switchTab('contacts')} className="flex items-center gap-3 w-full text-left p-4 rounded-2xl transition-colors font-medium" style={tab === 'contacts' ? { background: 'var(--primary-glow)', color: 'var(--primary)', fontWeight: 'bold' } : { color: 'var(--text-secondary)' }}>
+                            <span className="text-xl">📱</span> Danh bạ & Liên hệ
                         </button>
 
-                        <button className="flex items-center gap-3 w-full text-left p-4 rounded-2xl hover:bg-gray-50 transition-colors text-gray-700 font-medium">
-                            <span className="text-xl text-gray-400">🏆</span> Cuộc thi nội bộ
+                        <button className="flex items-center gap-3 w-full text-left p-4 rounded-2xl transition-colors font-medium" style={{ color: 'var(--text-secondary)' }}>
+                            <span className="text-xl">🏆</span> Cuộc thi nội bộ
                         </button>
                     </div>
                 </div>

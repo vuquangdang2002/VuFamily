@@ -19,23 +19,23 @@ export default function DetailPanel({ member, members, isOpen, onClose, onEdit, 
         social: t('detail.cat_social'), award: t('detail.cat_award'), other: t('detail.cat_other')
     };
 
-    const spouse = member.spouseId ? members.find(m => m.id === member.spouseId) : null;
-    let children = members.filter(m => m.parentId === member.id);
+    const spouse = member?.spouseId ? members.find(m => m.id === member.spouseId) : null;
+    let children = member ? members.filter(m => m.parentId === member.id) : [];
     if (spouse) { members.filter(m => m.parentId === spouse.id).forEach(sc => { if (!children.find(c => c.id === sc.id)) children.push(sc); }); }
     children.sort((a, b) => (a.birthOrder || 99) - (b.birthOrder || 99));
-    const parent = member.parentId ? members.find(m => m.id === member.parentId) : null;
+    const parent = member?.parentId ? members.find(m => m.id === member.parentId) : null;
 
-    const birthDisplay = member.birthDate ? formatDate(member.birthDate) : t('detail.unknown');
-    const birthTimeDisplay = member.birthTime ? ` ${t('detail.at')} ${member.birthTime}` : '';
+    const birthDisplay = member?.birthDate ? formatDate(member.birthDate) : t('detail.unknown');
+    const birthTimeDisplay = member?.birthTime ? ` ${t('detail.at')} ${member.birthTime}` : '';
     let deathDisplay = '';
-    if (member.deathDate) {
+    if (member?.deathDate) {
         deathDisplay = formatDate(member.deathDate);
         if (member.deathDateLunar) deathDisplay += ` (ÂL: ${member.deathDateLunar})`;
     }
 
     // ── Label con thứ mấy ──
     const childLabel = (() => {
-        if (!parent) return '';
+        if (!parent || !member) return '';
         const orderNum = member.birthOrder || 0;
         const typeStr = member.childType === 'adopted' ? ` (${t('detail.adopted').toLowerCase()})` : '';
         if (orderNum) {

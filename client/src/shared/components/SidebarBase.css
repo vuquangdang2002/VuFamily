@@ -3,8 +3,7 @@
     display: flex;
     height: 100vh;
     width: 100vw;
-    background-color: #F3F4F6;
-    /* Soft gray background */
+    background-color: var(--bg-primary, #F3F4F6);
     overflow: hidden;
     padding: 16px;
     gap: 16px;
