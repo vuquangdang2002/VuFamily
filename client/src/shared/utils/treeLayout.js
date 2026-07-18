@@ -10,7 +10,7 @@ export function buildHierarchy(members) {
     const getSpouse = (m) => m && m.spouseId ? memberMap.get(m.spouseId) || null : null;
 
     const getChildren = (parentId) =>
-        members.filter(m => m.parentId === parentId).sort((a, b) => (a.birthDate || '').localeCompare(b.birthDate || ''));
+        members.filter(m => m && m.parentId === parentId).sort((a, b) => (a?.birthDate || '').localeCompare(b?.birthDate || ''));
 
     // Find root: member with no parentId, not a spouse-only
     const roots = members.filter(m => {
@@ -39,8 +39,8 @@ export function buildHierarchy(members) {
                 if (!allChildren.find(c => c.id === sc.id)) allChildren.push(sc);
             });
         }
-        allChildren.sort((a, b) => (a.birthDate || '').localeCompare(b.birthDate || ''));
-        return { member, spouse, children: allChildren.map(c => buildNode(c)) };
+        allChildren.sort((a, b) => (a?.birthDate || '').localeCompare(b?.birthDate || ''));
+        return { member, spouse, children: allChildren.map(c => buildNode(c)).filter(Boolean) };
     };
 
     return buildNode(root);
@@ -54,13 +54,15 @@ export function calculateLayout(hierarchy, nodeWidth = 260, nodeHeight = 170, hG
     const positions = [];
 
     const calcWidth = (node) => {
-        if (node.children.length === 0) return node.spouse ? COUPLE_W : nodeWidth;
+        if (!node) return 0;
+        if (!node.children || node.children.length === 0) return node.spouse ? COUPLE_W : nodeWidth;
         let cw = 0;
         node.children.forEach((c, i) => { if (i > 0) cw += hGap; cw += calcWidth(c); });
         return Math.max(node.spouse ? COUPLE_W : nodeWidth, cw);
     };
 
     const positionNode = (node, x, y, availW) => {
+        if (!node) return;
         const selfW = node.spouse ? COUPLE_W : nodeWidth;
         const cx = x + availW / 2;
         const memberX = node.spouse ? cx - nodeWidth - 20 : cx - nodeWidth / 2;
