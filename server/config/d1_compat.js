@@ -383,38 +383,20 @@ class D1QueryBuilder {
   }
 }
 
-// Storage adapter mockup (uses local filesystem on Node or R2 on Cloudflare)
+// Storage adapter mockup (uses SQLite/D1 database table storage_objects)
 const storageAdapter = {
   from(bucket) {
-    const isLocal = !isCloudflare();
-    const localDir = path.resolve(__dirname, '../../database/uploads', bucket);
-
     return {
       async upload(fileName, buffer, options = {}) {
         try {
-          if (isLocal) {
-            if (!fs.existsSync(localDir)) {
-              fs.mkdirSync(localDir, { recursive: true });
-            }
-            const filePath = path.join(localDir, fileName);
-            fs.writeFileSync(filePath, buffer);
-            return { data: { path: fileName }, error: null };
-          } else {
-            // Cloudflare R2 mode
-            const env = globalThis.MINIFLARE_ENV || (globalThis.CLOUDFLARE_CONTEXT && globalThis.CLOUDFLARE_CONTEXT.env);
-            // Use bucket name upper cased (e.g. AVATARS)
-            const r2BindingName = bucket.toUpperCase();
-            const bucketBinding = env[r2BindingName] || env.AVATARS;
-            
-            if (!bucketBinding) {
-              throw new Error(`R2 bucket binding (${r2BindingName} or AVATARS) not found`);
-            }
-            
-            await bucketBinding.put(fileName, buffer, {
-              httpMetadata: { contentType: options.contentType || 'image/jpeg' }
-            });
-            return { data: { path: fileName }, error: null };
-          }
+          const contentType = options.contentType || 'image/jpeg';
+          const id = `${bucket}/${fileName}`;
+          
+          const sql = `INSERT INTO storage_objects (id, bucket, filename, content_type, data) VALUES (?, ?, ?, ?, ?) ` +
+                      `ON CONFLICT(id) DO UPDATE SET content_type = excluded.content_type, data = excluded.data`;
+          
+          await executeQuery(sql, [id, bucket, fileName, contentType, buffer], true);
+          return { data: { path: fileName }, error: null };
         } catch (err) {
           console.error(`[d1_compat - storage.upload] Error:`, err.message);
           return { data: null, error: { message: err.message } };
@@ -423,34 +405,29 @@ const storageAdapter = {
 
       async download(fileName) {
         try {
-          if (isLocal) {
-            const filePath = path.join(localDir, fileName);
-            if (!fs.existsSync(filePath)) {
-              return { data: null, error: { message: 'File not found' } };
-            }
-            const buffer = fs.readFileSync(filePath);
-            const ext = fileName.split('.').pop();
-            const contentType = ext === 'png' ? 'image/png' : 'image/jpeg';
-            return { data: { buffer, contentType }, error: null };
-          } else {
-            // Cloudflare R2 mode
-            const env = globalThis.MINIFLARE_ENV || (globalThis.CLOUDFLARE_CONTEXT && globalThis.CLOUDFLARE_CONTEXT.env);
-            const r2BindingName = bucket.toUpperCase();
-            const bucketBinding = env[r2BindingName] || env.AVATARS;
-            
-            if (!bucketBinding) {
-              throw new Error(`R2 bucket binding (${r2BindingName} or AVATARS) not found`);
-            }
-            
-            const object = await bucketBinding.get(fileName);
-            if (!object) {
-              return { data: null, error: { message: 'File not found' } };
-            }
-            const arrayBuffer = await object.arrayBuffer();
-            const buffer = Buffer.from(arrayBuffer);
-            const contentType = object.httpMetadata?.contentType || 'image/jpeg';
-            return { data: { buffer, contentType }, error: null };
+          const id = `${bucket}/${fileName}`;
+          const sql = `SELECT content_type, data FROM storage_objects WHERE id = ?`;
+          const results = await executeQuery(sql, [id], false);
+          if (results.length === 0) {
+            return { data: null, error: { message: 'File not found' } };
           }
+          const row = results[0];
+          
+          let buffer = row.data;
+          if (typeof buffer === 'string') {
+            buffer = Buffer.from(buffer, 'base64');
+          } else if (buffer instanceof Uint8Array) {
+            buffer = Buffer.from(buffer.buffer, buffer.byteOffset, buffer.byteLength);
+          } else if (buffer && typeof buffer.arrayBuffer === 'function') {
+            const ab = await buffer.arrayBuffer();
+            buffer = Buffer.from(ab);
+          } else if (buffer && buffer.type === 'Buffer' && Array.isArray(buffer.data)) {
+            buffer = Buffer.from(buffer.data);
+          } else if (buffer && !(buffer instanceof Buffer)) {
+            buffer = Buffer.from(buffer);
+          }
+          
+          return { data: { buffer, contentType: row.content_type }, error: null };
         } catch (err) {
           console.error(`[d1_compat - storage.download] Error:`, err.message);
           return { data: null, error: { message: err.message } };
@@ -458,7 +435,6 @@ const storageAdapter = {
       },
 
       getPublicUrl(fileName) {
-        // Return a relative route or a full route that points to our API
         const domain = process.env.VITE_APP_URL || '';
         const publicUrl = `${domain}/api/uploads/${bucket}/${fileName}`;
         return { data: { publicUrl } };
@@ -466,6 +442,7 @@ const storageAdapter = {
     };
   }
 };
+
 
 const d1CompatClient = {
   from(tableName) {

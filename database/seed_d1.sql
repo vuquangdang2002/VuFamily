@@ -188,6 +188,15 @@ DROP TABLE IF EXISTS funds_audit_logs;
       modified_by INTEGER,
       modified_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
+DROP TABLE IF EXISTS storage_objects;
+    CREATE TABLE storage_objects (
+      id TEXT PRIMARY KEY,
+      bucket TEXT NOT NULL,
+      filename TEXT NOT NULL,
+      content_type TEXT,
+      data BLOB NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
 
 -- Seeding table: members
 INSERT INTO members (id, name, gender, birth_date, birth_time, death_date, death_date_lunar, birth_place, death_place, occupation, phone, email, address, note, photo, birth_order, child_type, parent_id, spouse_id, generation, created_at, updated_at) VALUES (1, 'Vũ Văn Tổ', 1, '1900-01-15', NULL, '1975-08-20', NULL, 'Hà Nam', 'Hà Nam', 'Nông dân', '', '', '', 'Cụ Tổ - Thế hệ thứ nhất', '', NULL, 'biological', NULL, 2, 1, '2026-06-03T18:35:17.769233+00:00', '2026-06-03T18:35:17.769233+00:00');

@@ -18,7 +18,4 @@ binding = "DB"
 database_name = "vufamily-db"
 database_id = "e216091a-8977-4606-bfc8-b6542b17f2f8"
 
-# 2. Cloudflare R2 Storage Binding (for Avatar Uploads)
-[[r2_buckets]]
-binding = "AVATARS"
-bucket_name = "vufamily-avatars"
+

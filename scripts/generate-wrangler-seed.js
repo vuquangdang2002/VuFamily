@@ -215,6 +215,16 @@ function generateSeed() {
       new_amount_encrypted TEXT,
       modified_by INTEGER,
       modified_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );`,
+
+    `DROP TABLE IF EXISTS storage_objects;
+    CREATE TABLE storage_objects (
+      id TEXT PRIMARY KEY,
+      bucket TEXT NOT NULL,
+      filename TEXT NOT NULL,
+      content_type TEXT,
+      data BLOB NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );`
   ];
 

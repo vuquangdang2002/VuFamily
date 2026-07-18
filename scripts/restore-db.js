@@ -266,6 +266,17 @@ async function restore() {
     );
   `);
 
+  db.run(`
+    CREATE TABLE IF NOT EXISTS storage_objects (
+      id TEXT PRIMARY KEY,
+      bucket TEXT NOT NULL,
+      filename TEXT NOT NULL,
+      content_type TEXT,
+      data BLOB NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
   // Locate the latest backup file
   const backupDir = path.resolve(__dirname, '../database/backups');
   if (!fs.existsSync(backupDir)) {
