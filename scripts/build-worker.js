@@ -83,6 +83,8 @@ const require = (id) => {
   if (shimModules[id]) return shimModules[id];
   throw new Error("Dynamic require of " + id + " is not supported");
 };
+const __dirname = "/";
+const __filename = "/index.js";
 `;
 
 esbuild.build({
