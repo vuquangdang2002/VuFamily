@@ -16,6 +16,8 @@
         "@capacitor/splash-screen": "^8.0.1",
         "@tailwindcss/postcss": "^4.2.4",
         "firebase": "^12.12.1",
+        "framer-motion": "^12.42.2",
+        "lucide-react": "^1.25.0",
         "react": "^18.2.0",
         "react-dom": "^18.2.0",
         "socket.io-client": "^4.8.3"

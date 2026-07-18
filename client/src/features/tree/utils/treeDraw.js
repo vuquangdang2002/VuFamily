@@ -23,6 +23,8 @@ function getThemeColors() {
         genBadgeText: v('--tree-badge-text'),
         spouseLine: v('--tree-line-spouse'),
         childLine: v('--tree-line-parent'),
+        accentMale: v('--accent-male'),
+        accentFemale: v('--accent-female'),
     };
     return _cachedColors;
 }
@@ -43,17 +45,17 @@ function drawConRec(ctx, node, posMap, colors) {
     let parentCX;
 
     const isGoldLine = node.member.generation === 1;
-    const lineColor = isGoldLine ? '#D4AF37' : '#00F0FF';
-    const lineGlow = isGoldLine ? 'rgba(212, 175, 55, 0.4)' : 'rgba(0, 240, 255, 0.4)';
+    const lineColor = isGoldLine ? '#D4AF37' : colors.childLine;
+    const lineGlow = isGoldLine ? 'rgba(212, 175, 55, 0.4)' : 'rgba(0, 0, 0, 0.1)';
 
     if (node.spouse) {
         const sp = posMap.get(node.spouse.id);
         if (sp) {
             parentCX = (pp.x + sp.x + sp.width) / 2;
             ctx.save();
-            ctx.shadowColor = '#D4AF37';
+            ctx.shadowColor = 'rgba(212, 175, 55, 0.4)';
             ctx.shadowBlur = 6;
-            ctx.strokeStyle = '#D4AF37';
+            ctx.strokeStyle = colors.spouseLine;
             ctx.lineWidth = 2;
             ctx.setLineDash([5, 5]);
             ctx.beginPath();
@@ -145,33 +147,40 @@ function drawNode(ctx, nodePos, selId, searchIds, imgCache, colors, t) {
 
     // Glassmorphic Node Card Background
     ctx.save();
-    ctx.shadowColor = isSel ? '#00F0FF' : 'rgba(0, 0, 0, 0.4)';
-    ctx.shadowBlur = isSel ? 16 : 8;
-    ctx.shadowOffsetY = 4;
+    if (isSel) {
+        ctx.shadowColor = colors.nodeBorderSelected;
+        ctx.shadowBlur = 12;
+    } else {
+        // Parse the shadow string (e.g. "0 4px 10px rgba(0,0,0,0.12)") to just use the color and blur
+        // For canvas, it's easier to just use a standard subtle shadow
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.08)';
+        ctx.shadowBlur = 12;
+        ctx.shadowOffsetY = 4;
+    }
 
     ctx.beginPath(); 
     roundRect(ctx, x, y, w, h, r);
-    ctx.fillStyle = 'rgba(10, 15, 30, 0.75)';
+    ctx.fillStyle = colors.nodeFill;
     ctx.fill();
     ctx.restore();
 
     // Card fine border
     ctx.beginPath(); 
     roundRect(ctx, x, y, w, h, r);
-    ctx.strokeStyle = isSel ? '#00F0FF' : isSearch ? '#00F0FF' : 'rgba(255, 255, 255, 0.08)';
+    ctx.strokeStyle = isSel ? colors.nodeBorderSelected : isSearch ? colors.nodeBorderSearch : colors.nodeBorder;
     ctx.lineWidth = isSel ? 2 : 1;
     ctx.stroke();
 
     // Glowing Avatar Ring
     const isGoldRing = member.generation === 1 || (member.role && member.role.toLowerCase() === 'admin') || !isMale;
-    const ringColor = isGoldRing ? '#D4AF37' : '#00F0FF';
-    const ringGlow = isGoldRing ? 'rgba(212, 175, 55, 0.5)' : 'rgba(0, 240, 255, 0.5)';
+    const ringColor = isGoldRing ? '#D4AF37' : colors.textPrimary;
+    const ringGlow = isGoldRing ? 'rgba(212, 175, 55, 0.5)' : 'rgba(0, 0, 0, 0.1)';
 
     const ax = x + w / 2, ay = y + 46, ar = 30;
 
     ctx.save();
     ctx.shadowColor = ringGlow;
-    ctx.shadowBlur = 10;
+    ctx.shadowBlur = 8;
     ctx.beginPath();
     ctx.arc(ax, ay, ar + 3, 0, Math.PI * 2);
     ctx.strokeStyle = ringColor;
@@ -193,11 +202,11 @@ function drawNode(ctx, nodePos, selId, searchIds, imgCache, colors, t) {
         ctx.arc(ax, ay, ar, 0, Math.PI * 2);
         const ag = ctx.createRadialGradient(ax, ay, 0, ax, ay, ar);
         if (isMale) {
-            ag.addColorStop(0, '#102a45');
-            ag.addColorStop(1, '#051220');
+            ag.addColorStop(0, colors.accentMale);
+            ag.addColorStop(1, colors.nodeBorder); // blend into border color
         } else {
-            ag.addColorStop(0, '#3a1a2b');
-            ag.addColorStop(1, '#1b0510');
+            ag.addColorStop(0, colors.accentFemale);
+            ag.addColorStop(1, colors.nodeBorder);
         }
         ctx.fillStyle = ag; 
         ctx.fill();
@@ -210,7 +219,7 @@ function drawNode(ctx, nodePos, selId, searchIds, imgCache, colors, t) {
     ctx.restore();
 
     // Name
-    ctx.fillStyle = isDead ? '#64748B' : '#FFFFFF';
+    ctx.fillStyle = isDead ? colors.textDead : colors.textPrimary;
     ctx.font = 'bold 15px "Inter", sans-serif';
     ctx.textAlign = 'center'; 
     ctx.textBaseline = 'middle';
@@ -220,7 +229,7 @@ function drawNode(ctx, nodePos, selId, searchIds, imgCache, colors, t) {
     ctx.fillText(dn, x + w / 2, y + 98);
 
     // Sub-label
-    ctx.fillStyle = isGoldRing ? '#D4AF37' : '#00F0FF';
+    ctx.fillStyle = isGoldRing ? '#D4AF37' : colors.textMuted;
     ctx.font = '600 12px "Inter", sans-serif';
     let roleLabel = '';
     if (member.role && member.role.toLowerCase() === 'admin') {
@@ -235,14 +244,14 @@ function drawNode(ctx, nodePos, selId, searchIds, imgCache, colors, t) {
     // Timeline Years
     const yt = deathYear ? `${birthYear || '?'} - ${deathYear}` : birthYear ? `${birthYear} - ${t('detail.present')}` : '';
     if (yt) {
-        ctx.fillStyle = '#64748B';
+        ctx.fillStyle = colors.textMuted;
         ctx.font = '500 11px "Inter", sans-serif';
         ctx.fillText(yt, x + w / 2, y + 138);
     }
 
     // Dead Indicator
     if (isDead) {
-        ctx.fillStyle = '#64748B';
+        ctx.fillStyle = colors.textDead;
         ctx.font = '12px "Inter", sans-serif';
         ctx.textAlign = 'center';
         ctx.fillText('✝', x + w - 16, y + 18);

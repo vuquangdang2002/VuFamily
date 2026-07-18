@@ -1,17 +1,18 @@
 /* ============ HEADER ============ */
 .header {
-    min-height: var(--header-height);
+    min-height: 64px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 8px 20px;
-    background: var(--bg-secondary);
+    padding: 8px 24px;
+    background: var(--bg-glass);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
     border-bottom: 1px solid var(--border-subtle);
-    z-index: 100;
+    z-index: 50;
     flex-shrink: 0;
-    box-shadow: var(--shadow-sm);
-    flex-wrap: wrap;
-    gap: 8px;
+    position: sticky;
+    top: 0;
 }
 
 .header-left {

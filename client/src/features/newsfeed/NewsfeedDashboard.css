@@ -46,10 +46,11 @@
 }
 
 .nf-stat-card {
-    background: var(--bg-glass);
-    backdrop-filter: blur(8px);
-    border: 1px solid rgba(0, 240, 255, 0.12);
-    border-radius: var(--radius-md);
+    background: var(--bg-card);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-xl);
     padding: 16px 20px;
     display: flex;
     align-items: center;
@@ -120,10 +121,11 @@
 }
 
 .nf-panel-card {
-    background: var(--bg-glass);
-    backdrop-filter: blur(12px);
+    background: var(--bg-card);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-lg);
+    border-radius: var(--radius-xl);
     padding: 20px;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
     transition: all 0.2s ease;

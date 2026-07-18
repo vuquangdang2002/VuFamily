@@ -3,6 +3,7 @@ import { useTranslation } from '../../shared/hooks/useTranslation.js';
 import { AuthHelper } from '../../shared/services/AuthHelper';
 import { TrackingHelper } from '../../shared/services/TrackingHelper';
 import { myLog, myError } from '../../shared/utils/logger';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function ProfileModal({ isOpen, onClose, user, onUpdateUser, onAddToast, theme, setTheme }) {
     const { t } = useTranslation();
@@ -153,8 +154,22 @@ export default function ProfileModal({ isOpen, onClose, user, onUpdateUser, onAd
         `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName || 'U')}&background=3B6FCF&color=fff&size=96`;
 
     return (
-        <div className="modal-overlay open" style={{ zIndex: 9999 }} onClick={e => e.target === e.currentTarget && onClose()}>
-            <div className="modal" style={{ width: 480 }}>
+        <AnimatePresence>
+        {isOpen && (
+        <motion.div 
+            className="modal-overlay open" style={{ zIndex: 9999 }} 
+            onClick={e => e.target === e.currentTarget && onClose()}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+        >
+            <motion.div 
+                className="modal" style={{ width: 480 }}
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+            >
                 {/* Header */}
                 <div className="modal-header" style={{ padding: '20px 24px 0', borderBottom: 'none' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
@@ -326,7 +341,9 @@ export default function ProfileModal({ isOpen, onClose, user, onUpdateUser, onAd
                         </div>
                     )}
                 </div>
-            </div>
-        </div>
+            </motion.div>
+        </motion.div>
+        )}
+        </AnimatePresence>
     );
 }

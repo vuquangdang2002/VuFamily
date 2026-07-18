@@ -1,6 +1,6 @@
 /* ── Inbox sidebar ── */
 .chat-layout { display: flex; height: 100%; background: var(--bg-primary); overflow: hidden; }
-.chat-inbox { width: 340px; min-width: 340px; border-right: 1px solid var(--border-subtle); display: flex; flex-direction: column; background: var(--bg-glass); backdrop-filter: blur(12px); height: 100%; }
+.chat-inbox { width: 340px; min-width: 340px; border-right: 1px solid var(--border-subtle); display: flex; flex-direction: column; background: var(--bg-card); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); height: 100%; }
 .chat-inbox-header { padding: 12px 16px 0; flex-shrink: 0; }
 .chat-inbox-header h2 { font-family: var(--font-body); font-size: 24px; font-weight: 800; color: var(--text-primary); margin: 0 0 12px; display: flex; align-items: center; justify-content: space-between; }
 .chat-inbox-header h2 .chat-new-btn { width: 36px; height: 36px; border-radius: 50%; background: var(--bg-primary); border: none; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; transition: background 0.15s; color: var(--text-primary); }

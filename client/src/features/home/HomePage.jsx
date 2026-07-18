@@ -3,6 +3,7 @@ import { useTranslation } from '../../shared/hooks/useTranslation';
 import { Solar } from '../../shared/utils/lunar.js';
 import { ganZhiToViet, lunarMonthName } from '../../shared/utils/vietLunar.js';
 import { getUpcomingBirthdays, getUpcomingAnniversaries } from '../calendar/utils/calendarHelpers';
+import { Network, Newspaper, MessageSquare, Calendar, Wallet, Users, LayoutList, HelpCircle, ChevronRight, Cake, Flame, Quote, Sparkles } from 'lucide-react';
 import './HomePage.css';
 
 export default function HomePage({ user, members, onNavigate, addToast }) {
@@ -55,7 +56,7 @@ export default function HomePage({ user, members, onNavigate, addToast }) {
             {/* ── Welcome Hero Banner ── */}
             <div className="home-hero">
                 <div className="home-hero-content">
-                    <span className="home-hero-badge">🏛️ Gia tộc Vũ tộc</span>
+                    <span className="home-hero-badge"><Sparkles size={14} className="inline-block mr-1" /> Gia tộc Vũ tộc</span>
                     <h1 className="home-hero-title">
                         {greetingText}, <span className="highlight">{user?.displayName || user?.username}</span>!
                     </h1>
@@ -64,9 +65,9 @@ export default function HomePage({ user, members, onNavigate, addToast }) {
                     </p>
                     {dateDisplay.lunar && (
                         <div className="home-date-box">
-                            <span className="solar-date">📅 {dateDisplay.solar}</span>
+                            <span className="solar-date"><Calendar size={14} className="inline-block mr-1" /> {dateDisplay.solar}</span>
                             <span className="date-separator">|</span>
-                            <span className="lunar-date">🌙 Âm lịch: {dateDisplay.lunar}</span>
+                            <span className="lunar-date">Âm lịch: {dateDisplay.lunar}</span>
                         </div>
                     )}
                 </div>
@@ -76,53 +77,53 @@ export default function HomePage({ user, members, onNavigate, addToast }) {
                 </div>
             </div>
 
-            {/* ── Quick Navigation Dashboard Grid ── */}
+            {/* ── Quick Navigation Dashboard Grid (Bento Box) ── */}
             <div className="home-section">
-                <h3 className="section-title">✨ Tính năng chính</h3>
-                <div className="home-grid">
-                    <div className="home-card card-tree" onClick={() => onNavigate('tree')}>
-                        <div className="card-icon">🌳</div>
+                <h3 className="section-title"><LayoutList size={20} /> Tính năng chính</h3>
+                <div className="home-grid bento-grid">
+                    <div className="home-card card-tree bento-wide" onClick={() => onNavigate('tree')}>
+                        <div className="card-icon"><Network size={24} /></div>
                         <div className="card-body">
                             <h4>Phả đồ Dòng họ</h4>
                             <p>Khám phá sơ đồ phả hệ dòng họ Vũ, tra cứu nguồn cội và các nhánh gia tộc.</p>
                         </div>
-                        <div className="card-action">Mở phả đồ →</div>
+                        <div className="card-action">Mở phả đồ <ChevronRight size={14} className="inline-block" /></div>
                     </div>
 
                     <div className="home-card card-newsfeed" onClick={() => onNavigate('newsfeed')}>
-                        <div className="card-icon">📰</div>
+                        <div className="card-icon"><Newspaper size={24} /></div>
                         <div className="card-body">
                             <h4>Bản tin Gia đình</h4>
                             <p>Cập nhật tin tức, hoạt động, thông báo quan trọng từ hội đồng dòng họ.</p>
                         </div>
-                        <div className="card-action">Xem bản tin →</div>
+                        <div className="card-action">Xem bản tin <ChevronRight size={14} className="inline-block" /></div>
                     </div>
 
                     <div className="home-card card-chat" onClick={() => onNavigate('chat')}>
-                        <div className="card-icon">💬</div>
+                        <div className="card-icon"><MessageSquare size={24} /></div>
                         <div className="card-body">
                             <h4>Trò chuyện trực tuyến</h4>
                             <p>Nhắn tin tức thời, chia sẻ hình ảnh và gọi thoại/video nhóm miễn phí.</p>
                         </div>
-                        <div className="card-action">Vào phòng chat →</div>
+                        <div className="card-action">Vào phòng chat <ChevronRight size={14} className="inline-block" /></div>
                     </div>
 
                     <div className="home-card card-calendar" onClick={() => onNavigate('calendar')}>
-                        <div className="card-icon">📅</div>
+                        <div className="card-icon"><Calendar size={24} /></div>
                         <div className="card-body">
                             <h4>Lịch & Sự kiện</h4>
-                            <p>Theo dõi ngày giỗ, sinh nhật thành viên và các sự kiện chung sắp diễn ra.</p>
+                            <p>Theo dõi ngày giỗ, sinh nhật thành viên và sự kiện chung sắp diễn ra.</p>
                         </div>
-                        <div className="card-action">Xem lịch →</div>
+                        <div className="card-action">Xem lịch <ChevronRight size={14} className="inline-block" /></div>
                     </div>
 
                     <div className="home-card card-finance" onClick={() => onNavigate('finance')}>
-                        <div className="card-icon">💰</div>
+                        <div className="card-icon"><Wallet size={24} /></div>
                         <div className="card-body">
                             <h4>Quỹ Tài chính</h4>
                             <p>Quản lý các khoản đóng góp, báo cáo thu chi minh bạch của dòng họ.</p>
                         </div>
-                        <div className="card-action">Xem tài chính →</div>
+                        <div className="card-action">Xem tài chính <ChevronRight size={14} className="inline-block" /></div>
                     </div>
                 </div>
             </div>
@@ -130,15 +131,15 @@ export default function HomePage({ user, members, onNavigate, addToast }) {
             {/* ── Bottom Section with Events and Stats ── */}
             <div className="home-bottom-layout">
                 {/* Upcoming Events Column */}
-                <div className="home-panel panel-events">
+                <div className="home-panel panel-events bento-tall">
                     <div className="panel-header">
-                        <h3>📅 Sự kiện gia tộc sắp tới (30 ngày)</h3>
+                        <h3><Calendar size={18} className="inline-block mr-2" /> Sự kiện sắp tới</h3>
                         <button className="panel-header-btn" onClick={() => onNavigate('calendar')}>Xem tất cả</button>
                     </div>
                     <div className="panel-body">
                         {!hasEvents ? (
                             <div className="empty-panel-state">
-                                <span>🎉</span>
+                                <span><Sparkles size={32} className="text-muted" /></span>
                                 <p>Không có sự kiện quan trọng nào trong 30 ngày tới.</p>
                             </div>
                         ) : (
@@ -146,7 +147,7 @@ export default function HomePage({ user, members, onNavigate, addToast }) {
                                 {/* Anniversaries (Ngày Giỗ) */}
                                 {upcomingAnniversaries.map((ann, i) => (
                                     <div key={`ann-${i}`} className="event-item type-anniversary">
-                                        <div className="event-emoji">🕯️</div>
+                                        <div className="event-emoji"><Flame size={20} className="text-orange-500" /></div>
                                         <div className="event-info">
                                             <div className="event-name">
                                                 Ngày giỗ <strong>{ann.member.name}</strong>
@@ -170,7 +171,7 @@ export default function HomePage({ user, members, onNavigate, addToast }) {
                                 {/* Birthdays (Sinh Nhật) */}
                                 {upcomingBirthdays.map((bd, i) => (
                                     <div key={`bd-${i}`} className="event-item type-birthday">
-                                        <div className="event-emoji">🎂</div>
+                                        <div className="event-emoji"><Cake size={20} className="text-pink-500" /></div>
                                         <div className="event-info">
                                             <div className="event-name">
                                                 Sinh nhật <strong>{bd.member.name}</strong>
@@ -200,21 +201,21 @@ export default function HomePage({ user, members, onNavigate, addToast }) {
                 </div>
 
                 {/* Family Stats Column */}
-                <div className="home-panel panel-stats">
+                <div className="home-panel panel-stats bento-square">
                     <div className="panel-header">
-                        <h3>📊 Thống kê Gia tộc</h3>
+                        <h3><Users size={18} className="inline-block mr-2" /> Thống kê Gia tộc</h3>
                     </div>
                     <div className="panel-body">
                         <div className="stats-metric-container">
                             <div className="metric-box">
-                                <span className="metric-icon">👥</span>
+                                <span className="metric-icon"><Users size={24} /></span>
                                 <div className="metric-info">
                                     <span className="metric-value">{totalMembers}</span>
                                     <span className="metric-label">Thành viên gia phả</span>
                                 </div>
                             </div>
                             <div className="metric-box">
-                                <span className="metric-icon">🪜</span>
+                                <span className="metric-icon"><Network size={24} /></span>
                                 <div className="metric-info">
                                     <span className="metric-value">{totalGenerations}</span>
                                     <span className="metric-label">Thế hệ dòng họ</span>
@@ -223,7 +224,7 @@ export default function HomePage({ user, members, onNavigate, addToast }) {
                         </div>
 
                         <div className="stats-quote-box">
-                            <span className="quote-mark">“</span>
+                            <span className="quote-mark"><Quote size={32} opacity={0.2} /></span>
                             <p className="quote-text">
                                 Con người có tổ có tông,<br />
                                 Như cây có cội, như sông có nguồn.
@@ -232,7 +233,7 @@ export default function HomePage({ user, members, onNavigate, addToast }) {
                         </div>
 
                         <div className="stats-quick-guide" onClick={() => onNavigate('guide')}>
-                            <span className="guide-icon">❓</span>
+                            <span className="guide-icon"><HelpCircle size={20} /></span>
                             <div className="guide-body">
                                 <h5>Hướng dẫn sử dụng hệ thống</h5>
                                 <p>Xem ngay cách tương tác, chỉnh sửa gia phả, tạo phòng chat hoặc quỹ tài chính.</p>

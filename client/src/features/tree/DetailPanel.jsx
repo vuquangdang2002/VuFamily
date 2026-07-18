@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { localApi, formatDate } from '../../shared/services/api';
 import { TrackingHelper } from '../../shared/services/TrackingHelper';
 import { useTranslation } from '../../shared/hooks/useTranslation';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function DetailPanel({ member, members, isOpen, onClose, onEdit, onDelete, onAddChild, onAddSpouse, onRefresh, isAdmin, onSelfEdit }) {
     const { t } = useTranslation();
@@ -11,8 +12,6 @@ export default function DetailPanel({ member, members, isOpen, onClose, onEdit, 
     useEffect(() => {
         if (member) { setAchievements(localApi.getAchievements(member.id)); } else { setAchievements([]); }
     }, [member]);
-
-    if (!member) return null;
 
     // ── Lookup dữ liệu gia đình ──
     const CATEGORY_LABELS = {
@@ -51,7 +50,15 @@ export default function DetailPanel({ member, members, isOpen, onClose, onEdit, 
     };
 
     return (
-        <div className={`detail-panel ${isOpen ? 'open' : ''}`}>
+        <AnimatePresence>
+        {isOpen && member && (
+        <motion.div 
+            className="detail-panel"
+            initial={{ opacity: 0, x: 100, scale: 0.95, filter: 'blur(10px)' }}
+            animate={{ opacity: 1, x: 0, scale: 1, filter: 'blur(0px)' }}
+            exit={{ opacity: 0, x: 100, scale: 0.95, filter: 'blur(10px)' }}
+            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+        >
             <div className="detail-header">
                 <h3>{t('detail.title')}</h3>
                 <button className="detail-close" onClick={onClose}>✕</button>
@@ -145,6 +152,8 @@ export default function DetailPanel({ member, members, isOpen, onClose, onEdit, 
                     {onSelfEdit && <button className="btn" onClick={() => onSelfEdit(member.id)}>{t('detail.btn_self_edit')}</button>}
                 </div>
             )}
-        </div>
+        </motion.div>
+        )}
+        </AnimatePresence>
     );
 }

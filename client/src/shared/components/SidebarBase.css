@@ -1,10 +1,10 @@
 /* ============ SIDEBAR BASE LAYOUT ============ */
-.app-layout { display: flex; height: 100dvh; width: 100vw; overflow: hidden; padding: 0; background: var(--bg-primary); }
-.main-content { flex: 1; min-width: 0; display: flex; flex-direction: column; height: 100%; overflow: auto; background: var(--bg-secondary); border-radius: 0; z-index: 1; box-shadow: -4px 0 20px rgba(0,0,0,0.08); }
-.tree-page { display: flex; flex-direction: column; height: 100%; }
+.app-layout { display: flex; height: 100dvh; width: 100vw; overflow: hidden; padding: 12px; background: var(--sidebar-bg); gap: 12px; }
+.main-content { flex: 1; min-width: 0; display: flex; flex-direction: column; height: 100%; overflow: auto; background: var(--bg-primary); border-radius: var(--radius-xl); z-index: 1; box-shadow: var(--shadow-md); border: 1px solid var(--border-subtle); position: relative; }
+.tree-page { display: flex; flex-direction: column; height: 100%; border-radius: inherit; }
 
-.sidebar { width: 240px; min-width: 240px; height: 100%; background: var(--sidebar-bg); border-right: none; border-radius: 0; display: flex; flex-direction: column; transition: width 250ms ease, min-width 250ms ease; z-index: 100; overflow: visible; box-shadow: 4px 0 24px rgba(0,0,0,0.18); }
-.sidebar.collapsed { width: 60px; min-width: 60px; }
+.sidebar { width: 240px; min-width: 240px; height: 100%; background: transparent; border-right: none; border-radius: 0; display: flex; flex-direction: column; transition: width 250ms ease, min-width 250ms ease; z-index: 100; overflow: visible; }
+.sidebar.collapsed { width: 64px; min-width: 64px; }
 
 .sidebar-header { display: flex; align-items: center; justify-content: space-between; padding: 16px; min-height: 64px; border-bottom: 1px solid rgba(255,255,255,0.12); }
 .sidebar-logo { display: flex; align-items: center; gap: 10px; white-space: nowrap; overflow: hidden; }
@@ -26,6 +26,10 @@
 .sidebar.collapsed .sidebar-item { justify-content: center; padding: 10px; }
 .sidebar.collapsed .sidebar-badge { position: absolute; top: 4px; right: 4px; margin: 0; }
 
+/* Mobile logic */
+.mobile-only-item { display: none !important; }
+.mobile-only-menu-items { display: none !important; }
+
 /* ─── Page containers ─── */
 .page-container { display: flex; flex-direction: column; height: 100%; overflow-y: auto; padding: 24px 32px; }
 .page-header { margin-bottom: 24px; }
@@ -33,19 +37,92 @@
 .page-subtitle { font-size: 13px; color: var(--text-muted); }
 .page-body { flex: 1; }
 
-/* ─── Responsive Mobile ─── */
+/* ─── Responsive Mobile (Bottom Navigation) ─── */
 @media (max-width: 768px) {
-    .sidebar { display: none !important; }
-    .main-content { margin-left: 0 !important; width: 100vw !important; flex: 1 !important; }
+    .app-layout { padding: 0; padding-bottom: 70px; gap: 0; } /* Reset padding for mobile */
+    .sidebar { 
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100vw !important;
+        height: 70px;
+        min-width: 0 !important;
+        flex-direction: row;
+        justify-content: space-around;
+        align-items: center;
+        background: var(--bg-glass);
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
+        border-top: 1px solid var(--border-subtle);
+        box-shadow: 0 -4px 16px rgba(0,0,0,0.05);
+        z-index: 100;
+        padding: 0;
+        border-radius: 0;
+    }
+    .sidebar.collapsed { width: 100vw; min-width: 0; }
+    .sidebar-header, .sidebar-divider, .sidebar-item-label { display: none !important; }
+    .hidden-on-mobile { display: none !important; }
+    .mobile-only-item { display: flex !important; }
+    .mobile-only-menu-items { display: block !important; }
+    
+    .sidebar-nav {
+        flex-direction: row;
+        justify-content: space-around;
+        width: 100%;
+        padding: 0;
+        overflow: hidden;
+    }
+    
+    .sidebar-item {
+        flex-direction: column;
+        padding: 8px;
+        border-radius: 12px;
+        margin: 0;
+        gap: 4px;
+        flex: 1;
+        justify-content: center;
+    }
+    
+    .sidebar-footer {
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        padding: 0;
+        margin: 0;
+        border: none;
+    }
+
+    .sidebar-user {
+        flex-direction: column;
+        padding: 8px;
+        border-radius: 12px;
+        margin: 0;
+        gap: 4px;
+        justify-content: center;
+        background: transparent;
+    }
+    
+    .sidebar-item-icon {
+        font-size: 20px;
+        margin: 0;
+        width: auto;
+    }
+    
+    .sidebar-item.active {
+        background: transparent;
+        color: var(--primary);
+        box-shadow: none;
+    }
+    
+    .sidebar-item:active {
+        transform: scale(0.92);
+        transition: transform 0.1s;
+    }
+
+    .main-content { margin-left: 0 !important; width: 100vw !important; flex: 1 !important; height: calc(100dvh - 70px); border-radius: 0; border: none; }
     .page-container:not(.no-mobile-padding) { padding: 16px 16px 24px 16px !important; }
-    .page-container:not(.no-mobile-padding)::after { display: none !important; }
-    .page-container.no-mobile-padding { padding: 0 !important; }
-    .theme-toggle-float { bottom: 78px !important; right: 16px !important; width: 44px !important; height: 44px !important; font-size: 20px !important; background: rgba(10,16,28,0.85) !important; border: 1px solid rgba(255,255,255,0.08) !important; box-shadow: 0 4px 16px rgba(0,0,0,0.4) !important; }
+    .theme-toggle-float { bottom: 90px !important; right: 16px !important; }
     .header { padding: 8px 12px !important; gap: 6px; }
     .header-right { gap: 4px !important; }
     .header-right .btn { padding: 6px 10px !important; font-size: 12px !important; }
-    .chat-input-bar { padding-bottom: 12px !important; }
-    .calendar-page .page-container { overflow-y: auto !important; }
-    .calendar-layout { height: auto !important; overflow: visible !important; }
-    .page-container.flex.flex-col.h-screen { height: auto !important; min-height: 100%; }
 }

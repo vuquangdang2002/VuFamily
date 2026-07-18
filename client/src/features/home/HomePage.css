@@ -13,14 +13,16 @@
 .home-hero {
     position: relative;
     padding: 40px;
-    background: linear-gradient(135deg, var(--bg-card) 0%, rgba(15, 21, 36, 0.4) 100%);
+    background: var(--bg-card);
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-xl);
     overflow: hidden;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    box-shadow: var(--shadow-md);
+    box-shadow: var(--shadow-sm);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
 }
 
 .home-hero-content {
@@ -135,17 +137,27 @@
     gap: 8px;
 }
 
-/* ── Feature Cards Grid ── */
+/* ── Feature Cards Grid (Bento Box) ── */
 .home-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    grid-auto-rows: minmax(180px, auto);
     gap: 20px;
+}
+
+@media (min-width: 1024px) {
+    .home-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    .bento-wide {
+        grid-column: span 2;
+    }
 }
 
 .home-card {
     background: var(--bg-card);
     border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-lg);
+    border-radius: var(--radius-xl); /* Softer squircle corners */
     padding: 24px;
     display: flex;
     flex-direction: column;
@@ -154,7 +166,9 @@
     position: relative;
     overflow: hidden;
     box-shadow: var(--shadow-sm);
-    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
 }
 
 .home-card::before {
@@ -169,8 +183,8 @@
 }
 
 .home-card:hover {
-    transform: translateY(-5px);
-    box-shadow: var(--shadow-md), 0 0 20px rgba(0, 240, 255, 0.05);
+    transform: translateY(-4px) scale(1.01);
+    box-shadow: var(--shadow-md);
     border-color: rgba(255, 255, 255, 0.15);
 }
 
@@ -181,11 +195,11 @@
 .home-card.card-finance:hover { border-color: rgba(244, 63, 94, 0.3); }
 
 /* Custom top highlight bar on hover */
-.home-card.card-tree::before { background: linear-gradient(90deg, #00F0FF, #00B4D8); }
-.home-card.card-newsfeed::before { background: linear-gradient(90deg, #F59E0B, #D97706); }
-.home-card.card-chat::before { background: linear-gradient(90deg, #10B981, #059669); }
-.home-card.card-calendar::before { background: linear-gradient(90deg, #D4AF37, #F0D060); }
-.home-card.card-finance::before { background: linear-gradient(90deg, #F43F5E, #E11D48); }
+.home-card.card-tree::before { background: var(--primary); }
+.home-card.card-newsfeed::before { background: #F59E0B; }
+.home-card.card-chat::before { background: #10B981; }
+.home-card.card-calendar::before { background: #D4AF37; }
+.home-card.card-finance::before { background: #F43F5E; }
 
 .card-icon {
     font-size: 2rem;
@@ -241,10 +255,18 @@
 .home-panel {
     background: var(--bg-card);
     border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-lg);
+    border-radius: var(--radius-xl);
     box-shadow: var(--shadow-sm);
     display: flex;
     flex-direction: column;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.home-panel:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
 }
 
 .panel-header {
@@ -454,8 +476,8 @@
     color: rgba(212, 175, 55, 0.3);
     line-height: 1;
     position: absolute;
-    top: 6px;
-    left: 14px;
+    top: 16px;
+    left: 16px;
 }
 
 .quote-text {

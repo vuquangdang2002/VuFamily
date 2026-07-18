@@ -12,14 +12,16 @@
 .toast {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 12px 20px;
+    gap: 12px;
+    padding: 14px 24px;
     background: var(--bg-card);
     border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-xl);
     backdrop-filter: blur(20px);
-    box-shadow: var(--shadow-md);
-    font-size: 14px;
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+    font-size: 15px;
+    font-weight: 500;
     color: var(--text-primary);
     opacity: 0;
     transform: translateX(100%);

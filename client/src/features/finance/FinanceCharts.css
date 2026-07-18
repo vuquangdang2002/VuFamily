@@ -1,9 +1,9 @@
 /* ── Finance Analytics SVG Charts & Import/Export ── */
 .finance-analytics-container { margin-bottom: 24px; }
-.finance-analytics-card { background: var(--bg-secondary); border: 1px solid var(--border-subtle); border-radius: 16px; padding: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.02); }
+.finance-analytics-card { background: var(--bg-card); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid var(--border-subtle); border-radius: var(--radius-xl); padding: 24px; box-shadow: var(--shadow-sm); }
 .finance-analytics-card h3 { margin: 0 0 20px 0; font-size: 18px; font-weight: 600; }
 .charts-flex-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px; }
-.chart-wrapper { background: var(--bg-primary); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; align-items: center; position: relative; min-height: 280px; box-sizing: border-box; }
+.chart-wrapper { background: var(--bg-primary); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); padding: 20px; display: flex; flex-direction: column; align-items: center; position: relative; min-height: 280px; box-sizing: border-box; }
 .chart-wrapper h4 { margin: 0 0 16px 0; font-size: 14px; font-weight: 600; color: var(--text-primary); display: flex; justify-content: space-between; width: 100%; align-items: center; }
 .chart-toggle-group { display: flex; background: var(--bg-secondary); padding: 2px; border-radius: 6px; border: 1px solid var(--border-subtle); }
 .chart-toggle-btn { border: none; background: transparent; color: var(--text-muted); font-size: 11px; font-weight: 600; padding: 4px 8px; border-radius: 4px; cursor: pointer; transition: all 0.2s; }

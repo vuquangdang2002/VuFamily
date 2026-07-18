@@ -12,12 +12,12 @@ html.light {
     --font-heading: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     --font-body: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 
-    /* ── Nền ── */
-    --bg-primary:   #EEF0F5;   /* Xám xanh nhạt — phân biệt rõ với card */
-    --bg-secondary: #F6F7FB;
+    /* ── Nền (Apple Warm Light) ── */
+    --bg-primary:   #F5F5F7;   /* Apple standard light background */
+    --bg-secondary: #FFFFFF;
     --bg-card:      #FFFFFF;
-    --bg-glass:     rgba(255, 255, 255, 0.9);
-    --bg-hover:     #E4E7F0;
+    --bg-glass:     rgba(255, 255, 255, 0.75);
+    --bg-hover:     #E5E5EA;
 
     /* ── Brand Gold ── */
     --gold:      #B8922A;
@@ -53,14 +53,14 @@ html.light {
     --accent-info:    #2563EB;
 
     /* ── Viền ── */
-    --border-subtle: #CBD5E1;
-    --border-glow:   rgba(67, 56, 202, 0.2);
+    --border-subtle: #E5E5EA;
+    --border-glow:   rgba(67, 56, 202, 0.1);
 
-    /* ── Bóng đổ (rõ hơn để có chiều sâu) ── */
-    --shadow-sm:   0 1px 3px  rgba(0, 0, 0, 0.10);
-    --shadow-md:   0 4px 10px rgba(0, 0, 0, 0.12);
-    --shadow-lg:   0 10px 24px rgba(0, 0, 0, 0.14);
-    --shadow-glow: 0 0 16px rgba(67, 56, 202, 0.10);
+    /* ── Bóng đổ (Apple Drop Shadows) ── */
+    --shadow-sm:   0 1px 2px  rgba(0, 0, 0, 0.05);
+    --shadow-md:   0 4px 12px rgba(0, 0, 0, 0.05);
+    --shadow-lg:   0 12px 32px rgba(0, 0, 0, 0.08);
+    --shadow-glow: 0 0 16px rgba(67, 56, 202, 0.05);
 
     /* ── Input ── */
     --input-bg:           #FFFFFF;
