@@ -1,6 +1,0 @@
-node_modules
-scripts
-*.db
-.env
-.env.example
-README.md

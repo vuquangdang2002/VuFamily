@@ -12,6 +12,7 @@ import { chatRouter, callRouter } from './modules/chat';
 
 export type Env = {
   DB: D1Database;
+  CHAT_ENCRYPTION_KEY?: string;
 };
 
 const app = new Hono<{ Bindings: Env }>();

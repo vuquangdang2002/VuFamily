@@ -10,7 +10,8 @@
     "build": "cd client && npm install && npm run build",
     "build:client": "cd client && npm install && npm run build",
     "install:all": "npm install && cd client && npm install",
-    "db:push": "wrangler d1 execute vufamily_db --file=database/seed_d1.sql --local"
+    "db:push": "wrangler d1 execute vufamily_db --file=database/seed_d1.sql --local",
+    "deploy": "npm run build && wrangler deploy"
   },
   "keywords": [
     "genealogy",
