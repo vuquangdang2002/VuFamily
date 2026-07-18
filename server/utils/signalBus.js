@@ -17,8 +17,7 @@ class SignalBus {
     constructor() {
         // Map<userId, Set<SSEConnection>>  — one user can have multiple tabs
         this._clients = new Map();
-        // Heartbeat every 25 seconds to keep proxies alive
-        this._heartbeatInterval = setInterval(() => this._heartbeat(), 25000);
+        this._heartbeatInterval = null;
     }
 
     /** Register an SSE response stream for a user. Returns unsubscribe fn. */
@@ -28,11 +27,21 @@ class SignalBus {
         }
         this._clients.get(userId).add(res);
 
+        // Start heartbeat interval lazily on the first subscription (inside request context)
+        if (!this._heartbeatInterval) {
+            this._heartbeatInterval = setInterval(() => this._heartbeat(), 25000);
+        }
+
         return () => {
             const set = this._clients.get(userId);
             if (set) {
                 set.delete(res);
                 if (set.size === 0) this._clients.delete(userId);
+            }
+            // Stop heartbeat interval when no clients are subscribed
+            if (this._clients.size === 0 && this._heartbeatInterval) {
+                clearInterval(this._heartbeatInterval);
+                this._heartbeatInterval = null;
             }
         };
     }
@@ -65,10 +74,13 @@ class SignalBus {
     }
 
     destroy() {
-        clearInterval(this._heartbeatInterval);
+        if (this._heartbeatInterval) {
+            clearInterval(this._heartbeatInterval);
+            this._heartbeatInterval = null;
+        }
         this._clients.clear();
     }
 }
 
-// Singleton — shared across the whole Node.js process
+// Singleton — shared across the whole process
 module.exports = new SignalBus();
