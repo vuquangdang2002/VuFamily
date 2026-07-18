@@ -1,9 +1,10 @@
-/* ─── Global App Layout (Style) ─── */
+/* ─── Global App Layout (Vu Family) ─── */
 .app-layout {
     display: flex;
     height: 100vh;
     width: 100vw;
-    background-color: var(--bg-primary, #F3F4F6);
+    background-color: #F3F4F6;
+    /* Soft gray background */
     overflow: hidden;
     padding: 16px;
     gap: 16px;
