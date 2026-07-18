@@ -31,7 +31,20 @@ import nodeTls from 'node:tls';
 import nodeAssert from 'node:assert';
 import nodeOs from 'node:os';
 
+const mockFs = {
+  readFileSync: () => { throw new Error('fs.readFileSync is not supported'); },
+  writeFileSync: () => { throw new Error('fs.writeFileSync is not supported'); },
+  existsSync: () => false,
+  mkdirSync: () => {},
+  promises: {
+    readFile: async () => { throw new Error('fs.readFile is not supported'); },
+    writeFile: async () => { throw new Error('fs.writeFile is not supported'); }
+  }
+};
+
 const shimModules = {
+  'fs': mockFs,
+  'node:fs': mockFs,
   'http': nodeHttp,
   'path': nodePath,
   'crypto': nodeCrypto,
