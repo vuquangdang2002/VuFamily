@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from '../../shared/hooks/useTranslation';
 import { api } from '../../shared/services/api';
+import { request } from '../../shared/services/api/request';
 import { myError } from '../../shared/utils/logger';
 import CalendarGrid from './components/CalendarGrid';
 import UpcomingEventsSidebar from './components/UpcomingEventsSidebar';
@@ -14,6 +15,8 @@ export default function CalendarPage({ members, user, addToast }) {
     const [viewMonth, setViewMonth] = useState(today.getMonth() + 1);
     const [selectedDay, setSelectedDay] = useState(null);
     const [serverEvents, setServerEvents] = useState([]);
+    const [monthlyEvents, setMonthlyEvents] = useState([]);
+    const [loadingMonthly, setLoadingMonthly] = useState(true);
     
     // Tabs & Event Form State
     const [tab, setTab] = useState(() => {
@@ -72,9 +75,27 @@ export default function CalendarPage({ members, user, addToast }) {
         }
     };
 
+    const fetchMonthlyEvents = async () => {
+        setLoadingMonthly(true);
+        try {
+            const json = await request(`/events/monthly?year=${viewYear}&month=${viewMonth}`);
+            if (json.success) {
+                setMonthlyEvents(json.data || []);
+            }
+        } catch (e) {
+            myError('CALENDAR', 'Error fetching monthly events:', e);
+        } finally {
+            setLoadingMonthly(false);
+        }
+    };
+
     useEffect(() => {
         fetchEvents();
     }, []);
+
+    useEffect(() => {
+        fetchMonthlyEvents();
+    }, [viewYear, viewMonth]);
 
     const handleCreateEvent = async () => {
         if (!eventForm.title.trim() || !eventForm.event_date) {
@@ -258,9 +279,10 @@ export default function CalendarPage({ members, user, addToast }) {
                         selectedDay={selectedDay} 
                         setSelectedDay={setSelectedDay}
                         serverEvents={serverEvents}
+                        monthlyEvents={monthlyEvents}
                         user={user}
                         addToast={addToast}
-                        onRefreshEvents={fetchEvents}
+                        onRefreshEvents={() => { fetchEvents(); fetchMonthlyEvents(); }}
                     />
                     
                     <UpcomingEventsSidebar members={members} serverEvents={serverEvents} />

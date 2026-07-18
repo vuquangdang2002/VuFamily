@@ -31,6 +31,7 @@ export const members = sqliteTable('members', {
   childType: text('child_type').default('biological'), // 'biological' | 'adopted'
   parentId: integer('parent_id'),
   spouseId: integer('spouse_id'),
+  weddingDate: text('wedding_date'),
   generation: integer('generation').default(1),
   createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`),
   updatedAt: text('updated_at').default(sql`CURRENT_TIMESTAMP`),

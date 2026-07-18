@@ -27,6 +27,9 @@ export default function MemberModal({ isOpen, onClose, onSubmit, editMember, par
         occupation: '', phone: '', email: '', address: '',
         birthOrder: '', childType: 'biological',
         photo: '',
+        weddingDate: '',
+        parentId: '',
+        spouseId: '',
     });
 
     const [achievements, setAchievements] = useState([]);
@@ -52,6 +55,9 @@ export default function MemberModal({ isOpen, onClose, onSubmit, editMember, par
                 phone: editMember.phone || '', email: editMember.email || '',
                 address: editMember.address || '', birthOrder: editMember.birthOrder || '',
                 childType: editMember.childType || 'biological', photo: editMember.photo || '',
+                weddingDate: editMember.weddingDate || '',
+                parentId: editMember.parentId || '',
+                spouseId: editMember.spouseId || '',
             });
         } else {
             let gen = 1, gender = 1;
@@ -64,7 +70,8 @@ export default function MemberModal({ isOpen, onClose, onSubmit, editMember, par
             }
             setForm({ name: '', gender, birthDate: '', birthTime: '', deathDate: '', deathDateLunar: '',
                 birthPlace: '', deathPlace: '', generation: gen, note: '', occupation: '',
-                phone: '', email: '', address: '', birthOrder: '', childType: 'biological', photo: '' });
+                phone: '', email: '', address: '', birthOrder: '', childType: 'biological', photo: '', weddingDate: '',
+                parentId: parentId || '', spouseId: spouseOfId || '' });
         }
         if (editMember) { setAchievements(localApi.getAchievements(editMember.id) || []); }
         else { setAchievements([]); }
@@ -77,8 +84,8 @@ export default function MemberModal({ isOpen, onClose, onSubmit, editMember, par
         onSubmit({
             ...form, generation: form.generation ? parseInt(form.generation) : 1,
             birthOrder: form.birthOrder ? parseInt(form.birthOrder) : null,
-            parentId: editMember ? editMember.parentId : parentId || null,
-            spouseId: editMember ? editMember.spouseId : spouseOfId || null,
+            parentId: form.parentId ? parseInt(form.parentId) : null,
+            spouseId: form.spouseId ? parseInt(form.spouseId) : null,
             id: editMember?.id, newAchievements: achievements,
         });
     };
@@ -142,10 +149,47 @@ export default function MemberModal({ isOpen, onClose, onSubmit, editMember, par
                     <button className="detail-close" onClick={onClose}>✕</button>
                 </div>
 
+                {/* Banner Hướng dẫn Quan hệ */}
+                {form.parentId && (
+                    <div className="relation-context-banner" style={{ background: 'rgba(234, 179, 8, 0.1)', color: 'rgb(202, 138, 4)', padding: '10px 16px', borderRadius: '1rem', margin: '12px 24px 0', fontSize: 13, fontWeight: 500, display: 'flex', alignItems: 'center', gap: 6, border: '1px solid rgba(234, 179, 8, 0.2)' }}>
+                        👶 Đang thêm con của: <strong>{members.find(m => String(m.id) === String(form.parentId))?.name || 'Chưa rõ'}</strong>
+                    </div>
+                )}
+                {form.spouseId && (
+                    <div className="relation-context-banner" style={{ background: 'rgba(244, 63, 94, 0.1)', color: 'rgb(244, 63, 94)', padding: '10px 16px', borderRadius: '1rem', margin: '12px 24px 0', fontSize: 13, fontWeight: 500, display: 'flex', alignItems: 'center', gap: 6, border: '1px solid rgba(244, 63, 94, 0.2)' }}>
+                        💍 Đang kết hôn (dâu/rể) với: <strong>{members.find(m => String(m.id) === String(form.spouseId))?.name || 'Chưa rõ'}</strong>
+                    </div>
+                )}
+
                 <form onSubmit={handleSubmit}>
                     <div className="modal-body">
                         {/* ── Thông tin cơ bản ── */}
                         <div className="form-section-title">{t('member.section_basic')}</div>
+
+                        {/* Chọn quan hệ gia đình trực tiếp */}
+                        <div className="form-row" style={{ marginBottom: 16 }}>
+                            <div className="form-group">
+                                <label className="form-label" style={{ fontWeight: 600 }}>Liên kết Bố/Mẹ</label>
+                                <select className="form-select" value={form.parentId} onChange={e => setForm({ ...form, parentId: e.target.value })}>
+                                    <option value="">-- Chọn phụ huynh (nếu có) --</option>
+                                    {members.filter(m => !editMember || m.id !== editMember.id).map(m => (
+                                        <option key={m.id} value={m.id}>{m.name} (Đời {m.generation})</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label" style={{ fontWeight: 600 }}>Liên kết Vợ/Chồng</label>
+                                <select className="form-select" value={form.spouseId} onChange={e => {
+                                    const val = e.target.value;
+                                    setForm({ ...form, spouseId: val, weddingDate: val ? form.weddingDate : '' });
+                                }}>
+                                    <option value="">-- Chưa kết hôn / Ly hôn --</option>
+                                    {members.filter(m => !editMember || m.id !== editMember.id).map(m => (
+                                        <option key={m.id} value={m.id}>{m.name} (Đời {m.generation})</option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
 
                         <div className="form-group" style={{ textAlign: 'center' }}>
                             <label className="form-label">{t('member.photo_label')}</label>
@@ -243,6 +287,13 @@ export default function MemberModal({ isOpen, onClose, onSubmit, editMember, par
                         <div className="form-group">
                             <label className="form-label">{t('member.death_place')}</label>
                             <input className="form-input" value={form.deathPlace} onChange={e => setForm({ ...form, deathPlace: e.target.value })} placeholder={t('member.birth_place_placeholder')} />
+                        </div>
+
+                        {/* ── Hôn nhân ── */}
+                        <div className="form-section-title" style={{ marginTop: 20 }}>{t('member.section_marriage') || 'Thông tin hôn nhân'}</div>
+                        <div className="form-group">
+                            <label className="form-label">{t('member.wedding_date') || 'Ngày cưới'}</label>
+                            <input className="form-input" type="date" value={form.weddingDate} onChange={e => setForm({ ...form, weddingDate: e.target.value })} />
                         </div>
 
                         {/* ── Liên hệ ── */}

@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  vufamily:
+    build: .
+    container_name: vufamily-app
+    ports:
+      - "8787:8787"
+    volumes:
+      - .wrangler_docker:/app/.wrangler
+    environment:
+      - NODE_ENV=development
+    restart: always

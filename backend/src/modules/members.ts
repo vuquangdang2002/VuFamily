@@ -87,6 +87,9 @@ memberRouter.post('/', authenticate, requireEditorOrAdmin, async (c) => {
     const body = await c.req.json();
     if (!body.name) return c.json({ success: false, error: 'Tên là bắt buộc' }, 400);
 
+    const spouseIdVal = body.spouseId ? parseInt(body.spouseId) : null;
+    const weddingDateVal = spouseIdVal ? body.weddingDate : null;
+
     const db = getDb(c.env.DB);
     const [newMember] = await db.insert(members).values({
       name: body.name,
@@ -106,9 +109,15 @@ memberRouter.post('/', authenticate, requireEditorOrAdmin, async (c) => {
       birthOrder: body.birthOrder,
       childType: body.childType ?? 'biological',
       parentId: body.parentId,
-      spouseId: body.spouseId,
+      spouseId: spouseIdVal,
+      weddingDate: weddingDateVal,
       generation: body.generation ?? 1,
     }).returning();
+
+    // Bidirectional spouse linking
+    if (newMember.spouseId) {
+      await db.update(members).set({ spouseId: newMember.id }).where(eq(members.id, newMember.spouseId));
+    }
 
     return c.json({ success: true, data: newMember }, 201);
   } catch (err: any) {
@@ -123,12 +132,38 @@ memberRouter.put('/:id', authenticate, requireEditorOrAdmin, async (c) => {
     const body = await c.req.json();
     const db = getDb(c.env.DB);
     
+    const oldMember = await db.select().from(members).where(eq(members.id, id)).then(r => r[0]);
+
+    const updateData = { ...body };
+    if (body.spouseId === null || body.spouseId === "") {
+      updateData.spouseId = null;
+      updateData.weddingDate = null;
+    }
+
     const [updated] = await db.update(members).set({
-      ...body,
+      ...updateData,
       updatedAt: new Date().toISOString(),
     }).where(eq(members.id, id)).returning();
 
     if (!updated) return c.json({ success: false, error: 'Không tìm thấy' }, 404);
+
+    // Bidirectional spouse linking updates
+    if (body.spouseId !== undefined) {
+      const newSpouseId = body.spouseId ? parseInt(body.spouseId) : null;
+      const oldSpouseId = oldMember?.spouseId;
+
+      if (newSpouseId !== oldSpouseId) {
+        // 1. Clear old spouse link
+        if (oldSpouseId) {
+          await db.update(members).set({ spouseId: null }).where(eq(members.id, oldSpouseId));
+        }
+        // 2. Set new spouse link
+        if (newSpouseId) {
+          await db.update(members).set({ spouseId: id }).where(eq(members.id, newSpouseId));
+        }
+      }
+    }
+
     return c.json({ success: true, data: updated });
   } catch (err: any) {
     return c.json({ success: false, error: err.message }, 500);

@@ -12,7 +12,8 @@
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "allowJs": true
+    "allowJs": true,
+    "noEmit": true
   },
   "include": ["backend/src/**/*.ts"],
   "exclude": ["node_modules", "frontend"]

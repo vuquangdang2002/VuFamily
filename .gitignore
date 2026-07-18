@@ -9,5 +9,8 @@ public/
 *.apks
 *.apk
 .wrangler/
+.wrangler_docker/
 dist-worker/
 database/backups/
+frontend/dist/
+frontend/node_modules/

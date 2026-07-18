@@ -1,0 +1,11 @@
+node_modules/
+frontend/node_modules/
+frontend/dist/
+.git/
+.wrangler/
+.wrangler_docker/
+.agents/
+.gemini/
+*.log
+docker-compose.yml
+Dockerfile

@@ -1,8 +1,8 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useTranslation } from '../../shared/hooks/useTranslation';
 import { Solar } from '../../shared/utils/lunar.js';
 import { ganZhiToViet, lunarMonthName } from '../../shared/utils/vietLunar.js';
-import { getUpcomingBirthdays, getUpcomingAnniversaries } from '../calendar/utils/calendarHelpers';
+import { request } from '../../shared/services/api/request';
 import { Network, Newspaper, MessageSquare, Calendar, Wallet, Users, LayoutList, HelpCircle, ChevronRight, Cake, Flame, Quote, Sparkles, LogIn, UserPlus, Image, Heart, Award } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -56,11 +56,38 @@ export default function HomePage({ user, members, onNavigate, addToast }) {
         return Math.max(...members.map(m => m.generation || 0), 0);
     }, [members]);
 
-    // ── Upcoming Events ──
-    const upcomingBirthdays = useMemo(() => getUpcomingBirthdays(members, 30), [members]);
-    const upcomingAnniversaries = useMemo(() => getUpcomingAnniversaries(members, 30), [members]);
+    // ── Upcoming Events (API-driven) ──
+    const [anniversaries, setAnniversaries] = useState({
+        birthdays: [],
+        weddingAnniversaries: [],
+        deathAnniversaries: [],
+        day30Events: [],
+        year1Events: []
+    });
+    const [loadingEvents, setLoadingEvents] = useState(true);
 
-    const hasEvents = upcomingBirthdays.length > 0 || upcomingAnniversaries.length > 0;
+    useEffect(() => {
+        if (!user) return;
+        request('/events/anniversaries?daysAhead=30')
+            .then(json => {
+                if (json.success) setAnniversaries(json.data);
+            })
+            .catch(err => console.error('Failed to fetch anniversaries:', err))
+            .finally(() => setLoadingEvents(false));
+    }, [user]);
+
+    const combinedEvents = useMemo(() => {
+        const list = [];
+        anniversaries.deathAnniversaries.forEach(ev => list.push({ ...ev, type: 'anniversary' }));
+        anniversaries.birthdays.forEach(ev => list.push({ ...ev, type: 'birthday' }));
+        anniversaries.weddingAnniversaries.forEach(ev => list.push({ ...ev, type: 'wedding' }));
+        anniversaries.day30Events.forEach(ev => list.push({ ...ev, type: 'day30' }));
+        anniversaries.year1Events.forEach(ev => list.push({ ...ev, type: 'year1' }));
+        
+        return list.sort((a, b) => a.daysUntil - b.daysUntil);
+    }, [anniversaries]);
+
+    const hasEvents = combinedEvents.length > 0;
 
     // ── PUBLIC GUEST LANDING VIEW ──
     if (!user) {
@@ -330,57 +357,60 @@ export default function HomePage({ user, members, onNavigate, addToast }) {
                             </div>
                         ) : (
                             <div className="flex flex-col gap-2 p-2">
-                                {/* Anniversaries (Ngày Giỗ) */}
-                                {upcomingAnniversaries.map((ann, i) => (
-                                    <div key={`ann-${i}`} className="group flex items-center gap-4 p-4 rounded-3xl hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer">
-                                        <div className="w-12 h-12 rounded-[1rem] bg-orange-500/10 text-orange-500 flex items-center justify-center shrink-0">
-                                            <Flame size={24} />
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <div className="font-medium truncate">Ngày giỗ <span className="font-bold">{ann.member.name}</span></div>
-                                            <div className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 flex gap-2">
-                                                <span>Âm: {ann.lunarStr}</span>
-                                                <span className="opacity-50">•</span>
-                                                <span>Dương: {ann.solarAnniversary}</span>
-                                            </div>
-                                        </div>
-                                        <div className="shrink-0">
-                                            {ann.daysUntil === 0 ? (
-                                                <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 ring-1 ring-emerald-500/30 animate-pulse">Hôm nay</span>
-                                            ) : (
-                                                <span className="px-3 py-1 rounded-full text-xs font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300">Còn {ann.daysUntil} ngày</span>
-                                            )}
-                                        </div>
-                                    </div>
-                                ))}
+                                {combinedEvents.map((ev, i) => {
+                                    let icon = <Cake size={24} />;
+                                    let bgCls = "bg-pink-500/10 text-pink-500";
+                                    let title = null;
+                                    let subtitle = "";
 
-                                {/* Birthdays (Sinh Nhật) */}
-                                {upcomingBirthdays.map((bd, i) => (
-                                    <div key={`bd-${i}`} className="group flex items-center gap-4 p-4 rounded-3xl hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer">
-                                        <div className="w-12 h-12 rounded-[1rem] bg-pink-500/10 text-pink-500 flex items-center justify-center shrink-0">
-                                            <Cake size={24} />
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <div className="font-medium truncate">Sinh nhật <span className="font-bold">{bd.member.name}</span></div>
-                                            <div className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 flex gap-2">
-                                                <span>{bd.fullDate}</span>
-                                                {bd.age !== null && (
-                                                    <>
-                                                        <span className="opacity-50">•</span>
-                                                        <span>Tuổi: {bd.age}</span>
-                                                    </>
+                                    if (ev.type === 'anniversary') {
+                                        icon = <Flame size={24} />;
+                                        bgCls = "bg-orange-500/10 text-orange-500";
+                                        title = <>Ngày giỗ <span className="font-bold">{ev.member.name}</span></>;
+                                        subtitle = `Âm: ${ev.lunarStr} • Dương: ${ev.solarAnniversary}`;
+                                    } else if (ev.type === 'birthday') {
+                                        icon = <Cake size={24} />;
+                                        bgCls = "bg-pink-500/10 text-pink-500";
+                                        title = <>Sinh nhật <span className="font-bold">{ev.member.name}</span></>;
+                                        subtitle = `${ev.fullDate} ${ev.age !== null ? `• Tuổi: ${ev.age}` : ''}`;
+                                    } else if (ev.type === 'wedding') {
+                                        icon = <Heart size={24} />;
+                                        bgCls = "bg-rose-500/10 text-rose-500";
+                                        title = <>Kỷ niệm ngày cưới <span className="font-bold">{ev.member.name}</span></>;
+                                        subtitle = `Kỷ niệm ${ev.years} năm • Ngày: ${ev.displayDate}`;
+                                    } else if (ev.type === 'day30') {
+                                        icon = <Sparkles size={24} />;
+                                        bgCls = "bg-emerald-500/10 text-emerald-500";
+                                        title = <>Đầy tháng bé <span className="font-bold">{ev.member.name}</span></>;
+                                        subtitle = `Lễ đầy tháng • Ngày: ${ev.displayDate}`;
+                                    } else if (ev.type === 'year1') {
+                                        icon = <Award size={24} />;
+                                        bgCls = "bg-blue-500/10 text-blue-500";
+                                        title = <>Lễ thôi nôi bé <span className="font-bold">{ev.member.name}</span></>;
+                                        subtitle = `Thôi nôi (1 tuổi) • Ngày: ${ev.displayDate}`;
+                                    }
+
+                                    return (
+                                        <div key={`${ev.type}-${i}`} className="group flex items-center gap-4 p-4 rounded-3xl hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer">
+                                            <div className={`w-12 h-12 rounded-[1rem] flex items-center justify-center shrink-0 ${bgCls}`}>
+                                                {icon}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="font-medium truncate text-zinc-900 dark:text-white">{title}</div>
+                                                <div className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+                                                    {subtitle}
+                                                </div>
+                                            </div>
+                                            <div className="shrink-0">
+                                                {ev.daysUntil === 0 ? (
+                                                    <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 ring-1 ring-emerald-500/30 animate-pulse">Hôm nay</span>
+                                                ) : (
+                                                    <span className="px-3 py-1 rounded-full text-xs font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300">Còn {ev.daysUntil} ngày</span>
                                                 )}
                                             </div>
                                         </div>
-                                        <div className="shrink-0">
-                                            {bd.daysUntil === 0 ? (
-                                                <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 ring-1 ring-emerald-500/30 animate-pulse">Hôm nay</span>
-                                            ) : (
-                                                <span className="px-3 py-1 rounded-full text-xs font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300">Còn {bd.daysUntil} ngày</span>
-                                            )}
-                                        </div>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         )}
                     </div>

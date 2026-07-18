@@ -102,6 +102,12 @@ export default function DetailPanel({ member, members, isOpen, onClose, onEdit, 
                     <div className="detail-field"><div className="detail-field-label">{t('detail.parent')}</div><div className="detail-field-value">{parent ? parent.name : t('detail.none')}</div></div>
                     {member.birthOrder && parent && <div className="detail-field"><div className="detail-field-label">{t('detail.birth_order')}</div><div className="detail-field-value">#{member.birthOrder} {member.childType === 'adopted' ? `(${t('detail.adopted')})` : `(${t('detail.biological')})`}</div></div>}
                     <div className="detail-field"><div className="detail-field-label">{t('detail.spouse')}</div><div className="detail-field-value">{spouse ? spouse.name : t('detail.not_yet')}</div></div>
+                    {member.weddingDate && (
+                        <div className="detail-field">
+                            <div className="detail-field-label">Ngày cưới</div>
+                            <div className="detail-field-value">💍 {formatDate(member.weddingDate)}</div>
+                        </div>
+                    )}
                     <div className="detail-field">
                         <div className="detail-field-label">{t('detail.children')} ({children.length})</div>
                         <div className="detail-field-value">

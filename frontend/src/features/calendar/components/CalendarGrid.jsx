@@ -21,6 +21,7 @@ export default function CalendarGrid({
     viewMonth, setViewMonth, 
     selectedDay, setSelectedDay,
     serverEvents = [],
+    monthlyEvents = [],
     user,
     addToast,
     onRefreshEvents
@@ -58,7 +59,7 @@ export default function CalendarGrid({
     };
     
     const isToday = (d) => d === today.getDate() && viewMonth === today.getMonth() + 1 && viewYear === today.getFullYear();
-    const selectedDayEvents = selectedDay ? getEventsForDate(members, viewYear, viewMonth, selectedDay, serverEvents) : [];
+    const selectedDayEvents = selectedDay ? monthlyEvents.filter(ev => ev.day === selectedDay) : [];
 
     const currentUserId = (() => {
         try {
@@ -103,10 +104,10 @@ export default function CalendarGrid({
                     {weeks.map((wk, wi) =>
                         wk.map((d, di) => {
                             if (d === null) return <div key={`e-${wi}-${di}`} className="cal-day cal-day-empty" />;
-                            const events = getEventsForDate(members, viewYear, viewMonth, d, serverEvents);
-                            const hasBD = events.some(e => e.type === 'birthday');
+                            const events = monthlyEvents.filter(ev => ev.day === d);
+                            const hasBD = events.some(e => ['birthday', 'day30', 'year1'].includes(e.type));
                             const hasAN = events.some(e => e.type === 'anniversary');
-                            const hasEV = events.some(e => e.type === 'event');
+                            const hasEV = events.some(e => ['event', 'wedding'].includes(e.type));
 
                             let lunarLabel = '';
                             try {
@@ -173,16 +174,33 @@ export default function CalendarGrid({
                                             </div>
                                         );
                                     }
+                                    let typeLabel = "";
+                                    let emoji = "👤";
+                                    if (ev.type === 'birthday') {
+                                        typeLabel = `${t('calendar.birthday_label') || 'Sinh nhật'} — ${ev.age} ${t('calendar.age_suffix') || 'tuổi'}`;
+                                        emoji = "🎂";
+                                    } else if (ev.type === 'anniversary') {
+                                        typeLabel = `${t('calendar.anniversary_label') || 'Ngày giỗ'} (Âm lịch: ${ev.lunarStr})`;
+                                        emoji = "🕯️";
+                                    } else if (ev.type === 'wedding') {
+                                        typeLabel = `Kỷ niệm ngày cưới (${ev.years} năm)`;
+                                        emoji = "💍";
+                                    } else if (ev.type === 'day30') {
+                                        typeLabel = "Lễ đầy tháng";
+                                        emoji = "👶";
+                                    } else if (ev.type === 'year1') {
+                                        typeLabel = "Lễ thôi nôi";
+                                        emoji = "🎁";
+                                    }
+
                                     return (
                                         <div key={i} className={`cal-event-item cal-event-${ev.type}`}>
-                                            <MemberAvatar member={ev.member} size={32} />
+                                            <div className="cal-event-icon" style={{ fontSize: 20, marginRight: 12 }}>{emoji}</div>
                                             <div className="cal-event-info">
                                                 <span className="cal-event-name">{ev.member.name}</span>
                                                 <span className="cal-event-sub">
-                                                    {ev.type === 'birthday'
-                                                        ? `${t('calendar.birthday_label')} — ${calcAge(ev.member.birthDate)} ${t('calendar.age_suffix')}`
-                                                        : t('calendar.anniversary_label')}
-                                                    {ev.member.generation ? ` · ${t('calendar.generation_prefix')} ${ev.member.generation}` : ''}
+                                                    {typeLabel}
+                                                    {ev.member.generation ? ` · ${t('calendar.generation_prefix') || 'Đời thứ'} ${ev.member.generation}` : ''}
                                                 </span>
                                             </div>
                                         </div>
