@@ -1,5 +1,4 @@
-// localNotifications.js - Offline-first Local Notifications service for Capacitor and Web Browsers
-import { LocalNotifications } from '@capacitor/local-notifications';
+// localNotifications.js - Offline-first Local Notifications service for Web Browsers
 import { myLog, myError } from './logger';
 
 // Parse YYYY-MM-DD
@@ -57,35 +56,8 @@ export async function scheduleOfflineNotifications(members) {
             return;
         }
 
-        // 1. Capacitor Native Push Notifications
-        if (window.Capacitor) {
-            // Request permissions just in case
-            const perm = await LocalNotifications.checkPermissions();
-            if (perm.display !== 'granted') {
-                await LocalNotifications.requestPermissions();
-            }
-
-            // Cancel any previously scheduled notifications to prevent duplicates
-            const pending = await LocalNotifications.getPending();
-            if (pending.notifications.length > 0) {
-                await LocalNotifications.cancel(pending);
-            }
-
-            // Schedule fresh alerts
-            const notifications = targetEvents.map(ev => ({
-                id: ev.id,
-                title: ev.title,
-                body: ev.body,
-                largeIcon: 'res://icon',
-                smallIcon: 'res://ic_stat_name',
-                schedule: { at: new Date(Date.now() + 5000) } // trigger in 5 seconds
-            }));
-
-            await LocalNotifications.schedule({ notifications });
-            myLog('NOTIFICATION', `Capacitor scheduled ${notifications.length} native alerts.`);
-        } 
-        // 2. Web Browser Standard API Notifications
-        else if ('Notification' in window && Notification.permission === 'granted') {
+        // Web Browser Standard API Notifications
+        if ('Notification' in window && Notification.permission === 'granted') {
             targetEvents.forEach(ev => {
                 // To avoid multiple duplicate alerts on every single reload:
                 // Only show if the last alert was more than 1 hour ago

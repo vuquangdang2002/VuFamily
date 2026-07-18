@@ -5,8 +5,6 @@ import { clearAllCache as clearChatCache } from '../services/chatCache';
 import { offlineCache } from '../utils/offlineCache';
 import { TrackingHelper } from '../services/TrackingHelper';
 import { I18nHelper } from '../services/i18n.js';
-import { LocalNotifications } from '@capacitor/local-notifications';
-import { SplashScreen } from '@capacitor/splash-screen';
 import { syncRemoteConfig } from '../../firebase.js';
 
 const AUTH_KEY = 'vuFamilyAuth';
@@ -52,9 +50,7 @@ export default function useAuthSystem() {
             try {
                 await syncRemoteConfig();
 
-                if (window.Capacitor) {
-                    await LocalNotifications.requestPermissions();
-                } else if ('Notification' in window) {
+                if ('Notification' in window) {
                     await Notification.requestPermission();
                 }
             } catch (e) {
@@ -86,9 +82,6 @@ export default function useAuthSystem() {
             setLoadingStatus(I18nHelper.t('splash.done'));
             setTimeout(() => {
                 setAuthChecked(true);
-                if (window.Capacitor) {
-                    SplashScreen.hide().catch(() => {});
-                }
             }, 600);
         };
 
