@@ -1,0 +1,24 @@
+# Wrangler configuration for Cloudflare Workers (Full-Stack with Assets)
+name = "vu-family"
+main = "dist-worker/index.js"
+
+# Compatibility settings
+compatibility_date = "2026-02-01"
+compatibility_flags = [ "nodejs_compat" ]
+
+# Static Assets Configuration (Frontend SPA)
+[assets]
+directory = "./client/dist"
+binding = "ASSETS"
+not_found_handling = "single-page-application"
+
+# 1. Cloudflare D1 Database Binding
+[[d1_databases]]
+binding = "DB"
+database_name = "vufamily-db"
+database_id = "e216091a-8977-4606-bfc8-b6542b17f2f8"
+
+# 2. Cloudflare R2 Storage Binding (for Avatar Uploads)
+[[r2_buckets]]
+binding = "AVATARS"
+bucket_name = "vufamily-avatars"

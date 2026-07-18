@@ -8,7 +8,7 @@
     "server": "nodemon server/index.js",
     "client": "cd client && npm run dev",
     "dev": "concurrently \"npm run server\" \"npm run client\"",
-    "build": "cd client && npm run build",
+    "build": "cd client && npm install && npm run build && node scripts/build-worker.js",
     "db:init": "node database/init.js",
     "db:hash": "node scripts/generate-hashes.js",
     "install:all": "npm install && cd client && npm install",
@@ -32,10 +32,13 @@
     "morgan": "^1.10.0",
     "multer": "^2.1.1",
     "resend": "^6.10.0",
-    "socket.io": "^4.8.3"
+    "socket.io": "^4.8.3",
+    "sql.js": "^1.14.1"
   },
   "devDependencies": {
     "concurrently": "^8.2.2",
-    "nodemon": "^3.0.2"
+    "esbuild": "^0.28.1",
+    "nodemon": "^3.0.2",
+    "wrangler": "^4.15.2"
   }
 }

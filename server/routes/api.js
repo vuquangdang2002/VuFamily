@@ -183,4 +183,23 @@ router.get('/cron/reminders', async (req, res, next) => {
     }
 });
 
+// ─── Uploaded Files Retrieval (public) ───
+router.get('/uploads/:bucket/:filename', async (req, res) => {
+    try {
+        const { bucket, filename } = req.params;
+        const { supabase } = require('../config/supabase');
+        
+        const { data, error } = await supabase.storage.from(bucket).download(filename);
+        if (error || !data) {
+            return res.status(404).send('File not found');
+        }
+        
+        res.setHeader('Content-Type', data.contentType || 'image/jpeg');
+        res.send(data.buffer);
+    } catch (err) {
+        res.status(500).send(err.message);
+    }
+});
+
 module.exports = router;
+

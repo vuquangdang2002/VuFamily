@@ -8,3 +8,6 @@ public/
 .DS_Store
 *.apks
 *.apk
+.wrangler/
+dist-worker/
+database/backups/
