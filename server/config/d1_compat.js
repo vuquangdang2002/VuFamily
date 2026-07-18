@@ -1,83 +1,14 @@
-const fs = require('fs');
-const path = require('path');
-let initSqlJs;
-try {
-  initSqlJs = require('sql.js');
-} catch (e) {
-  console.warn('⚠️ sql.js not found, local SQLite mode will fail if invoked in standard Node.');
+// Unified execute function against Cloudflare D1
+async function executeQuery(sql, params = []) {
+  const env = globalThis.MINIFLARE_ENV || (globalThis.CLOUDFLARE_CONTEXT && globalThis.CLOUDFLARE_CONTEXT.env);
+  const db = env?.DB;
+  if (!db) {
+    throw new Error('Cloudflare D1 database binding (env.DB) is not available');
+  }
+  const result = await db.prepare(sql).bind(...params).all();
+  return result.results || [];
 }
 
-const dbPath = path.resolve(__dirname, '../../database/family_all.db');
-let SQL = null;
-
-// Helper to get local SQLite connection (sql.js)
-async function getLocalDb() {
-  if (!SQL) {
-    if (!initSqlJs) {
-      throw new Error('sql.js is required for local SQLite database operation');
-    }
-    SQL = await initSqlJs();
-  }
-  let db;
-  if (fs.existsSync(dbPath)) {
-    const buffer = fs.readFileSync(dbPath);
-    db = new SQL.Database(buffer);
-  } else {
-    db = new SQL.Database();
-  }
-  return db;
-}
-
-// Run query locally
-async function runLocalQuery(sql, params = [], isWrite = false) {
-  const db = await getLocalDb();
-  try {
-    const stmt = db.prepare(sql);
-    stmt.bind(params);
-    
-    const rows = [];
-    while (stmt.step()) {
-      rows.push(stmt.getAsObject());
-    }
-    stmt.free();
-    
-    if (isWrite) {
-      const data = db.export();
-      const dir = path.dirname(dbPath);
-      if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir, { recursive: true });
-      }
-      fs.writeFileSync(dbPath, Buffer.from(data));
-    }
-    
-    db.close();
-    return rows;
-  } catch (err) {
-    db.close();
-    throw err;
-  }
-}
-
-// Check environment
-const isCloudflare = () => {
-  return typeof globalThis.MINIFLARE_ENV !== 'undefined' || 
-         (globalThis.CLOUDFLARE_CONTEXT && globalThis.CLOUDFLARE_CONTEXT.env);
-};
-
-// Unified execute function
-async function executeQuery(sql, params = [], isWrite = false) {
-  if (isCloudflare()) {
-    const env = globalThis.MINIFLARE_ENV || (globalThis.CLOUDFLARE_CONTEXT && globalThis.CLOUDFLARE_CONTEXT.env);
-    const db = env.DB;
-    if (!db) {
-      throw new Error('Cloudflare D1 database binding (env.DB) is not available');
-    }
-    const result = await db.prepare(sql).bind(...params).all();
-    return result.results || [];
-  } else {
-    return runLocalQuery(sql, params, isWrite);
-  }
-}
 
 class D1QueryBuilder {
   constructor(tableName) {
