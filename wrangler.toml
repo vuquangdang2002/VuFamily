@@ -6,6 +6,11 @@ main = "api/src/index.ts"
 compatibility_date = "2026-02-01"
 compatibility_flags = [ "nodejs_compat" ]
 
+# Custom Domain
+routes = [
+  { pattern = "family.dangvq.online", custom_domain = true }
+]
+
 # Static Assets Configuration (Frontend SPA)
 [assets]
 directory = "./client/dist"
@@ -18,4 +23,17 @@ binding = "DB"
 database_name = "vufamily-db"
 database_id = "e216091a-8977-4606-bfc8-b6542b17f2f8"
 
+[observability]
+enabled = false
+head_sampling_rate = 1
 
+[observability.logs]
+enabled = true
+head_sampling_rate = 1
+persist = true
+invocation_logs = true
+
+[observability.traces]
+enabled = false
+persist = true
+head_sampling_rate = 1
