@@ -92,9 +92,9 @@ export default function HomePage({ user, members, onNavigate, addToast }) {
     // ── PUBLIC GUEST LANDING VIEW ──
     if (!user) {
         return (
-            <div className="flex flex-col min-h-screen bg-[#F2F2F7] dark:bg-black text-zinc-900 dark:text-zinc-100 overflow-y-auto">
+            <div className="flex flex-col min-h-screen w-full bg-[#F2F2F7] dark:bg-black text-zinc-900 dark:text-zinc-100 overflow-y-auto overflow-x-hidden">
                 {/* Landing Header */}
-                <header className="sticky top-0 z-50 backdrop-blur-md bg-white/70 dark:bg-black/70 border-b border-black/5 dark:border-white/10 px-6 py-4 flex items-center justify-between">
+                <header className="sticky top-0 z-50 backdrop-blur-md bg-white/70 dark:bg-black/70 border-b border-black/5 dark:border-white/10 px-6 py-4 flex items-center justify-between w-full">
                     <div className="flex items-center gap-2">
                         <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 text-white flex items-center justify-center font-bold text-lg shadow-sm">
                             族
@@ -131,7 +131,7 @@ export default function HomePage({ user, members, onNavigate, addToast }) {
                         <div className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 bg-blue-500/10 border border-blue-500/20">
                             <Sparkles size={14} /> Kính Tổ Tế Tông • Tương Thân Tương Ái
                         </div>
-                        <h1 className="text-4xl md:text-6xl font-black tracking-tight leading-none max-w-3xl">
+                        <h1 className="text-4xl md:text-6xl font-black tracking-tight leading-tight md:leading-tight max-w-3xl">
                             Kết Nối Cội Nguồn <br className="hidden md:inline" />
                             <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-500 dark:from-blue-400 dark:to-indigo-300">
                                 Gìn Giữ Gia Phong
