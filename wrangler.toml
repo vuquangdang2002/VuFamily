@@ -1,6 +1,6 @@
 # Wrangler configuration for Cloudflare Workers (Full-Stack with Assets)
 name = "vu-family"
-main = "api/src/index.ts"
+main = "backend/src/index.ts"
 
 # Compatibility settings
 compatibility_date = "2026-02-01"
@@ -13,7 +13,7 @@ routes = [
 
 # Static Assets Configuration (Frontend SPA)
 [assets]
-directory = "./client/dist"
+directory = "./frontend/dist"
 binding = "ASSETS"
 not_found_handling = "single-page-application"
 

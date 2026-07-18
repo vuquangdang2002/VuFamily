@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 
 const locales = ['vi', 'en'];
-const sourceDir = path.resolve(__dirname, '../client/src/shared/locales');
+const sourceDir = path.resolve(__dirname, '../frontend/src/shared/locales');
 
 // Define category prefixes
 const CATEGORIES = {
