@@ -7,13 +7,14 @@ export function buildHierarchy(members) {
     const memberMap = new Map();
     members.forEach(m => memberMap.set(m.id, m));
 
-    const getSpouse = (m) => m.spouseId ? memberMap.get(m.spouseId) || null : null;
+    const getSpouse = (m) => m && m.spouseId ? memberMap.get(m.spouseId) || null : null;
 
     const getChildren = (parentId) =>
         members.filter(m => m.parentId === parentId).sort((a, b) => (a.birthDate || '').localeCompare(b.birthDate || ''));
 
     // Find root: member with no parentId, not a spouse-only
     const roots = members.filter(m => {
+        if (!m) return false;
         if (m.parentId) return false;
         const spouse = getSpouse(m);
         if (spouse && spouse.parentId) return false;
@@ -30,6 +31,7 @@ export function buildHierarchy(members) {
     if (!root) return null;
 
     const buildNode = (member) => {
+        if (!member) return null;
         const spouse = getSpouse(member);
         let allChildren = [...getChildren(member.id)];
         if (spouse) {
