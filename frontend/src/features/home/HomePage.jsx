@@ -3,7 +3,7 @@ import { useTranslation } from '../../shared/hooks/useTranslation';
 import { Solar } from '../../shared/utils/lunar.js';
 import { ganZhiToViet, lunarMonthName } from '../../shared/utils/vietLunar.js';
 import { getUpcomingBirthdays, getUpcomingAnniversaries } from '../calendar/utils/calendarHelpers';
-import { Network, Newspaper, MessageSquare, Calendar, Wallet, Users, LayoutList, HelpCircle, ChevronRight, Cake, Flame, Quote, Sparkles } from 'lucide-react';
+import { Network, Newspaper, MessageSquare, Calendar, Wallet, Users, LayoutList, HelpCircle, ChevronRight, Cake, Flame, Quote, Sparkles, LogIn, UserPlus, Image, Heart, Award } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const cardVariants = {
@@ -62,6 +62,177 @@ export default function HomePage({ user, members, onNavigate, addToast }) {
 
     const hasEvents = upcomingBirthdays.length > 0 || upcomingAnniversaries.length > 0;
 
+    // ── PUBLIC GUEST LANDING VIEW ──
+    if (!user) {
+        return (
+            <div className="flex flex-col min-h-screen bg-[#F2F2F7] dark:bg-black text-zinc-900 dark:text-zinc-100 overflow-y-auto">
+                {/* Landing Header */}
+                <header className="sticky top-0 z-50 backdrop-blur-md bg-white/70 dark:bg-black/70 border-b border-black/5 dark:border-white/10 px-6 py-4 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 text-white flex items-center justify-center font-bold text-lg shadow-sm">
+                            族
+                        </div>
+                        <span className="font-extrabold text-xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-zinc-900 to-zinc-600 dark:from-white dark:to-zinc-400">
+                            VŨ GIA
+                        </span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <button 
+                            onClick={() => onNavigate('login')}
+                            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-2xl text-zinc-700 dark:text-zinc-300 hover:bg-black/5 dark:hover:bg-white/5 transition-all"
+                        >
+                            <LogIn size={16} /> Đăng nhập
+                        </button>
+                        <button 
+                            onClick={() => onNavigate('register')}
+                            className="flex items-center gap-2 px-5 py-2.5 text-sm font-bold rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md hover:shadow-lg transition-all transform active:scale-95"
+                        >
+                            <UserPlus size={16} /> Đăng ký
+                        </button>
+                    </div>
+                </header>
+
+                <motion.div 
+                    className="max-w-6xl mx-auto p-6 md:p-12 flex flex-col gap-12 md:gap-16 w-full"
+                    initial="hidden" animate="visible" variants={containerVariants}
+                >
+                    {/* Hero Section */}
+                    <motion.div 
+                        className="relative overflow-hidden rounded-[2.5rem] bg-white dark:bg-[#1C1C1E] p-8 md:p-16 shadow-xl border border-black/5 dark:border-white/5 text-center flex flex-col items-center gap-6"
+                        variants={cardVariants}
+                    >
+                        <div className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 bg-blue-500/10 border border-blue-500/20">
+                            <Sparkles size={14} /> Kính Tổ Tế Tông • Tương Thân Tương Ái
+                        </div>
+                        <h1 className="text-4xl md:text-6xl font-black tracking-tight leading-none max-w-3xl">
+                            Kết Nối Cội Nguồn <br className="hidden md:inline" />
+                            <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-500 dark:from-blue-400 dark:to-indigo-300">
+                                Gìn Giữ Gia Phong
+                            </span>
+                        </h1>
+                        <p className="text-lg md:text-xl text-zinc-500 dark:text-zinc-400 max-w-2xl leading-relaxed">
+                            Không gian số kết nối các thế hệ Vũ Tộc. Nơi dòng họ lưu giữ phả đồ số hóa, chia sẻ khoảnh khắc sum vầy và tôn vinh truyền thống hiếu học.
+                        </p>
+                        
+                        <div className="flex flex-col sm:flex-row items-center gap-4 mt-4 w-full justify-center">
+                            <button 
+                                onClick={() => onNavigate('login')}
+                                className="w-full sm:w-auto px-8 py-4 font-extrabold rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/20 hover:scale-102 hover:shadow-xl hover:shadow-blue-500/30 transition-all flex items-center justify-center gap-2"
+                            >
+                                Khám phá phả hệ <ChevronRight size={18} />
+                            </button>
+                            <button 
+                                onClick={() => onNavigate('register')}
+                                className="w-full sm:w-auto px-8 py-4 font-bold rounded-2xl bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-white border border-black/5 dark:border-white/5 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-all"
+                            >
+                                Gửi yêu cầu gia nhập
+                            </button>
+                        </div>
+
+                        {/* Background decor */}
+                        <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden opacity-30">
+                            <div className="absolute top-[-30%] left-[-10%] w-[400px] h-[400px] bg-blue-500/20 rounded-full blur-[120px]"></div>
+                            <div className="absolute bottom-[-30%] right-[-10%] w-[350px] h-[350px] bg-indigo-500/20 rounded-full blur-[120px]"></div>
+                        </div>
+                    </motion.div>
+
+                    {/* Family Moments Section (Khoảnh khắc gia đình) */}
+                    <div className="flex flex-col gap-6">
+                        <div className="flex flex-col gap-2">
+                            <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight flex items-center gap-2">
+                                <Image className="text-blue-500" size={26} /> Khoảnh khắc gia tộc
+                            </h2>
+                            <p className="text-zinc-500 dark:text-zinc-400">Những sự kiện, kỷ niệm đẹp được lưu lại và chia sẻ cùng con cháu.</p>
+                        </div>
+                        <motion.div 
+                            className="grid grid-cols-1 md:grid-cols-3 gap-6"
+                            variants={containerVariants}
+                        >
+                            {[
+                                { title: "Lễ Tế Tổ & Khuyến Học", desc: "Họp mặt tế lễ Tổ tiên thường niên và trao quỹ khuyến học nâng bước con cháu đỗ đạt thành tài.", date: "Đầu xuân hàng năm", icon: Award, color: "from-amber-500 to-orange-600" },
+                                { title: "Mừng Thọ Các Cụ Cao Niên", desc: "Lễ chúc thọ ấm cúng thể hiện lòng hiếu thảo, cầu mong vạn sự bình an cho ông bà cha mẹ dòng tộc.", date: "Tết Nguyên Đán", icon: Heart, color: "from-rose-500 to-pink-600" },
+                                { title: "Hội Ngộ Chi Nhánh Gia Tộc", desc: "Dịp gặp mặt kết nối các gia đình xa xứ, chia sẻ câu chuyện cuộc sống và cùng hướng về nguồn cội.", date: "Tháng 8 Âm lịch", icon: Users, color: "from-blue-500 to-indigo-600" }
+                            ].map((moment, idx) => (
+                                <motion.div 
+                                    key={idx}
+                                    className="group relative flex flex-col p-6 rounded-[2.2rem] bg-white dark:bg-[#1C1C1E] shadow-md border border-black/5 dark:border-white/5 overflow-hidden"
+                                    variants={cardVariants}
+                                    whileHover="hover"
+                                >
+                                    <div className="absolute inset-0 bg-black/[0.01] dark:bg-white/[0.01]"></div>
+                                    <div className={`w-12 h-12 rounded-2xl bg-gradient-to-tr ${moment.color} text-white flex items-center justify-center mb-6 shadow-md transition-transform duration-300 group-hover:scale-110`}>
+                                        <moment.icon size={22} />
+                                    </div>
+                                    <h3 className="text-lg font-bold mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{moment.title}</h3>
+                                    <p className="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed mb-6 flex-1">{moment.desc}</p>
+                                    <div className="text-xs font-semibold text-zinc-400 border-t border-black/5 dark:border-white/5 pt-4">
+                                        ⏱ {moment.date}
+                                    </div>
+                                </motion.div>
+                            ))}
+                        </motion.div>
+                    </div>
+
+                    {/* Features Overview */}
+                    <div className="flex flex-col gap-6">
+                        <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight flex items-center gap-2">
+                            <LayoutList className="text-indigo-500" size={26} /> Giá trị không gian số dòng họ
+                        </h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            {[
+                                { title: "Cây Phả Hệ Trực Quan", desc: "Tra cứu danh sách thành viên dòng họ qua sơ đồ phả hệ thông minh trực quan.", icon: Network, color: "text-blue-500" },
+                                { title: "Bản Tin & Sự Kiện", desc: "Nơi cập nhật thông tin ngày giỗ, ngày lễ và thông báo chung kịp thời.", icon: Newspaper, color: "text-amber-500" },
+                                { title: "Trò Chuyện & Gọi Nhóm", desc: "Kết nối trực tuyến chất lượng cao không giới hạn qua Jitsi Meet Call.", icon: MessageSquare, color: "text-emerald-500" },
+                                { title: "Minh Bạch Quỹ Dòng Họ", desc: "Quản lý dòng tiền đóng đóng, thu chi công khai minh bạch.", icon: Wallet, color: "text-rose-500" }
+                            ].map((feat, idx) => (
+                                <div key={idx} className="flex gap-4 p-5 rounded-3xl bg-white/50 dark:bg-white/[0.02] border border-black/5 dark:border-white/5">
+                                    <div className={`${feat.color} shrink-0 mt-1`}><feat.icon size={22} /></div>
+                                    <div>
+                                        <h4 className="font-bold text-base mb-1">{feat.title}</h4>
+                                        <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">{feat.desc}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* CTA Bottom Section */}
+                    <motion.div 
+                        className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-tr from-zinc-900 to-indigo-950 text-white p-8 md:p-14 shadow-xl text-center flex flex-col items-center gap-6"
+                        variants={cardVariants}
+                    >
+                        <h2 className="text-3xl md:text-5xl font-black max-w-2xl leading-tight">
+                            Bắt đầu kết nối số dòng họ Vũ của bạn
+                        </h2>
+                        <p className="text-zinc-300 max-w-xl text-sm md:text-base leading-relaxed">
+                            Hãy đăng nhập để tham gia trò chuyện trực tuyến, tìm kiếm sơ đồ phả hệ cội nguồn gia quyến hoặc gửi yêu cầu tạo tài khoản mới.
+                        </p>
+                        <div className="flex flex-col sm:flex-row items-center gap-4 mt-2 w-full justify-center">
+                            <button 
+                                onClick={() => onNavigate('login')}
+                                className="w-full sm:w-auto px-8 py-3.5 font-bold rounded-2xl bg-white text-zinc-950 shadow-md hover:bg-zinc-100 transition-all flex items-center justify-center gap-2"
+                            >
+                                Đăng nhập tài khoản
+                            </button>
+                            <button 
+                                onClick={() => onNavigate('register')}
+                                className="w-full sm:w-auto px-8 py-3.5 font-bold rounded-2xl bg-white/10 text-white border border-white/20 hover:bg-white/20 transition-all"
+                            >
+                                Gửi mẫu Đăng ký
+                            </button>
+                        </div>
+                    </motion.div>
+                </motion.div>
+                
+                {/* Simple Footer */}
+                <footer className="mt-auto py-8 text-center text-xs text-zinc-400 dark:text-zinc-600 border-t border-black/5 dark:border-white/5">
+                    Copyright © 2026 by DangVQ • VuFamily Genealogy Platforms
+                </footer>
+            </div>
+        );
+    }
+
+    // ── AUTHENTICATED USER HOME VIEW (Dashboard) ──
     return (
         <motion.div 
             className="flex flex-col gap-6 md:gap-8 p-4 md:p-8 h-full overflow-y-auto w-full text-zinc-900 dark:text-zinc-100 bg-[#F2F2F7] dark:bg-black"

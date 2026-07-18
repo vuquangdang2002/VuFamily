@@ -1,11 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import loginHero from '../../assets/login-hero.png';
 import { useTranslation } from '../../shared/hooks/useTranslation.js';
 import './Login.css';
 import { TrackingHelper } from '../../shared/services/TrackingHelper';
 import { myLog, myError } from '../../shared/utils/logger';
 
-export default function LoginPage({ onLogin, verifyMsg }) {
+export default function LoginPage({ onLogin, verifyMsg, initialRegisterMode = false, onGoBack }) {
     const { t } = useTranslation();
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
@@ -18,7 +18,10 @@ export default function LoginPage({ onLogin, verifyMsg }) {
     const [forgotLoading, setForgotLoading] = useState(false);
 
     // Registration state
-    const [isRegisterMode, setIsRegisterMode] = useState(false);
+    const [isRegisterMode, setIsRegisterMode] = useState(initialRegisterMode);
+    useEffect(() => {
+        setIsRegisterMode(initialRegisterMode);
+    }, [initialRegisterMode]);
     const [displayName, setDisplayName] = useState('');
     const [email, setEmail] = useState('');
     const [phone, setPhone] = useState('');
@@ -99,6 +102,27 @@ export default function LoginPage({ onLogin, verifyMsg }) {
         <div className="lp-root">
             {/* LEFT: Form */}
             <div className="lp-left">
+                {onGoBack && (
+                    <button
+                        type="button"
+                        onClick={onGoBack}
+                        style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 6,
+                            background: 'none',
+                            border: 'none',
+                            color: '#6B7280',
+                            fontSize: 14,
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            marginBottom: 20,
+                            padding: 0
+                        }}
+                    >
+                        ← Quay lại trang chủ
+                    </button>
+                )}
                 <div className="lp-logo">
                     <div className="lp-logo-icon">族</div>
                     <div>

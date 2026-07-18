@@ -355,9 +355,33 @@ export default function App() {
     }
 
     if (!user) {
+        if (activePage === 'home') {
+            return (
+                <>
+                    <HomePage 
+                        user={null} 
+                        members={members} 
+                        onNavigate={(page) => {
+                            if (page === 'login' || page === 'register') {
+                                setActivePage(page);
+                            } else {
+                                setActivePage('login');
+                            }
+                        }} 
+                        addToast={addToast} 
+                    />
+                    <Toast toasts={toasts} />
+                </>
+            );
+        }
         return (
             <>
-                <LoginPage onLogin={handleLogin} verifyMsg={verifyMsg} />
+                <LoginPage 
+                    onLogin={handleLogin} 
+                    verifyMsg={verifyMsg} 
+                    initialRegisterMode={activePage === 'register'}
+                    onGoBack={() => setActivePage('home')}
+                />
                 <Toast toasts={toasts} />
             </>
         );
