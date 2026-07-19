@@ -56,7 +56,7 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
         
         console.log(`[Jitsi] Starting call in room: ${roomName}`);
 
-        const domain = 'meet.jit.si';
+        const domain = 'meet.ffmuc.net';
         const options = {
             roomName: roomName,
             width: '100%',
