@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTheme } from './shared/components/ThemeToggle';
-import { localApi } from './shared/services/api';
+import { localApi, getApiBase } from './shared/services/api';
 import { myLog, myError } from './shared/utils/logger';
 import { I18nHelper } from './shared/services/i18n.js';
 import { TrackingHelper } from './shared/services/TrackingHelper';
@@ -229,7 +229,7 @@ export default function App() {
 
         try {
             const token = localStorage.getItem('vuFamilyToken');
-            await fetch(`${API_BASE_URL}/calls/respond`, {
+            const res = await fetch(`${getApiBase()}/calls/respond`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
                 body: JSON.stringify({ callId: incomingCall.callId, action: 'accept' })
