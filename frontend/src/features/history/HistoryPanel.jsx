@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { api, localApi, formatDate } from '../../shared/services/api';
 import { TrackingHelper } from '../../shared/services/TrackingHelper';
 import { useTranslation } from '../../shared/hooks/useTranslation';
+import { motion, AnimatePresence } from 'framer-motion';
 
 function DiffView({ before, after, t }) {
     let finalAfter = after;
@@ -66,15 +67,31 @@ export default function HistoryPage({ isAdmin, user, onRefresh, addToast, member
         delete: { icon: '🗑️', text: t('history.action_delete'), color: '#f44336' },
     };
 
+    const containerVariants = {
+        hidden: { opacity: 0 },
+        show: {
+            opacity: 1,
+            transition: { staggerChildren: 0.05 }
+        }
+    };
+
+    const itemVariants = {
+        hidden: { opacity: 0, y: 15 },
+        show: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 100, damping: 15 } }
+    };
+
     function timeAgo(dateStr) {
+        if (!dateStr) return '';
         const d = new Date(dateStr);
+        if (isNaN(d.getTime())) return '';
         const now = new Date();
         const diff = Math.floor((now - d) / 1000);
+        if (diff < 0) return t('common.just_now');
         if (diff < 60) return t('common.just_now');
         if (diff < 3600) return `${Math.floor(diff / 60)} ${t('common.minutes_ago')}`;
         if (diff < 86400) return `${Math.floor(diff / 3600)} ${t('common.hours_ago')}`;
         if (diff < 604800) return `${Math.floor(diff / 86400)} ${t('common.days_ago')}`;
-        return formatDate(dateStr.slice(0, 10));
+        return formatDate(String(dateStr).slice(0, 10));
     }
 
     const fetchHistory = async () => {
@@ -117,39 +134,62 @@ export default function HistoryPage({ isAdmin, user, onRefresh, addToast, member
                         <p>{t('history.empty')}</p>
                     </div>
                 ) : (
-                    <div className="history-timeline">
+                    <motion.div 
+                        className="history-timeline"
+                        variants={containerVariants}
+                        initial="hidden"
+                        animate="show"
+                    >
                         {history.map(entry => {
                             const action = ACTION_LABELS.update;
                             const isExpanded = expandedId === entry.id;
                             return (
-                                <div key={entry.id} className="history-entry update">
-                                    <div className="history-entry-header" onClick={() => setExpandedId(isExpanded ? null : entry.id)}>
-                                        <div className="history-entry-icon" style={{ color: action.color }}>{action.icon}</div>
-                                        <div className="history-entry-info">
-                                            <div className="history-entry-title">
-                                                <strong>{action.text}</strong> — {entry.memberName}
-                                            </div>
-                                            <div className="history-entry-meta">
-                                                👤 {entry.requestedByName} · {t('history.approved_by')} {entry.reviewedBy} {t('history.at')} {timeAgo(entry.reviewedAt)}
+                                <motion.div 
+                                    key={entry.id} 
+                                    variants={itemVariants}
+                                    className={`history-entry update backdrop-blur-md bg-white/40 dark:bg-white/5 border border-white/10 rounded-2xl p-4 mb-4 transition-all duration-300 hover:scale-[1.015] hover:border-amber-500/30 hover:shadow-lg`}
+                                    layout
+                                >
+                                    <div className="history-entry-header cursor-pointer flex items-center justify-between" onClick={() => setExpandedId(isExpanded ? null : entry.id)}>
+                                        <div className="flex items-center gap-3">
+                                            <div className="history-entry-icon text-xl" style={{ color: action.color }}>{action.icon}</div>
+                                            <div className="history-entry-info">
+                                                <div className="history-entry-title text-[15px] font-bold text-zinc-900 dark:text-white">
+                                                    <strong>{action.text}</strong> — {entry.memberName}
+                                                </div>
+                                                <div className="history-entry-meta text-xs text-zinc-500">
+                                                    👤 {entry.requestedByName} · {t('history.approved_by')} {entry.reviewedBy} {t('history.at')} {timeAgo(entry.reviewedAt)}
+                                                </div>
                                             </div>
                                         </div>
-                                        <span className="history-entry-expand">{isExpanded ? '▲' : '▼'}</span>
+                                        <span className="history-entry-expand text-zinc-400 font-bold transition-transform duration-300" style={{ transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
                                     </div>
-                                    {isExpanded && (
-                                        <div className="history-entry-details">
-                                            <DiffView before={members.find(m => String(m.id) === String(entry.memberId))} after={entry.changes} t={t} />
-                                            {isAdmin && (
-                                                <button className="btn btn-sm" style={{ marginTop: 8 }}
-                                                    onClick={() => handleRevert(entry)}>
-                                                    {t('history.revert')}
-                                                </button>
-                                            )}
-                                        </div>
-                                    )}
-                                </div>
+                                    
+                                    <AnimatePresence initial={false}>
+                                        {isExpanded && (
+                                            <motion.div
+                                                initial={{ height: 0, opacity: 0 }}
+                                                animate={{ height: 'auto', opacity: 1 }}
+                                                exit={{ height: 0, opacity: 0 }}
+                                                transition={{ duration: 0.25, ease: 'easeInOut' }}
+                                                style={{ overflow: 'hidden' }}
+                                            >
+                                                <div className="history-entry-details pt-4 border-t border-black/5 dark:border-white/5 mt-3">
+                                                    <DiffView before={members.find(m => String(m.id) === String(entry.memberId))} after={entry.changes} t={t} />
+                                                    {isAdmin && (
+                                                        <button className="btn btn-sm mt-3 px-4 py-1.5 rounded-xl bg-zinc-200 dark:bg-white/10 hover:bg-zinc-300 dark:hover:bg-white/20 text-xs font-semibold transition-all duration-300 active:scale-95"
+                                                            onClick={() => handleRevert(entry)}>
+                                                            {t('history.revert')}
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
+                                </motion.div>
                             );
                         })}
-                    </div>
+                    </motion.div>
                 )}
             </div>
         </div>

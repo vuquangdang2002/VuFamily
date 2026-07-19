@@ -66,14 +66,17 @@ function RequestCard({ req, members, isAdmin, handleApprove, handleReject, t }) 
     };
 
     function timeAgo(dateStr) {
+        if (!dateStr) return '';
         const d = new Date(dateStr);
+        if (isNaN(d.getTime())) return '';
         const now = new Date();
         const diff = Math.floor((now - d) / 1000);
+        if (diff < 0) return t('common.just_now');
         if (diff < 60) return t('common.just_now');
         if (diff < 3600) return `${Math.floor(diff / 60)} ${t('common.minutes_ago')}`;
         if (diff < 86400) return `${Math.floor(diff / 3600)} ${t('common.hours_ago')}`;
         if (diff < 604800) return `${Math.floor(diff / 86400)} ${t('common.days_ago')}`;
-        return formatDate(dateStr.slice(0, 10));
+        return formatDate(String(dateStr).slice(0, 10));
     }
 
     const status = STATUS_CONFIG[req.status] || STATUS_CONFIG.pending;
@@ -84,7 +87,9 @@ function RequestCard({ req, members, isAdmin, handleApprove, handleReject, t }) 
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
-            className={`bg-white/60 dark:bg-white/5 backdrop-blur-xl border rounded-2xl overflow-hidden shadow-sm transition-shadow hover:shadow-md ${status.border}`}
+            whileHover={{ scale: 1.015, y: -2 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+            className={`bg-white/60 dark:bg-white/5 backdrop-blur-xl border rounded-2xl overflow-hidden shadow-sm transition-all duration-300 hover:shadow-lg hover:border-amber-500/30 ${status.border}`}
         >
             {/* Card Header */}
             <div className="p-4 md:p-5 flex items-start gap-4">

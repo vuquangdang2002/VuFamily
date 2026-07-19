@@ -5,6 +5,7 @@ import { eq } from 'drizzle-orm';
 import * as bcrypt from 'bcryptjs';
 import { Env } from '../index';
 import { authenticate, requireAdmin } from '../middleware/auth';
+import { successResponse, errorResponse } from '../utils/response';
 
 export const userRouter = new Hono<{ Bindings: Env }>();
 
@@ -21,12 +22,11 @@ userRouter.get('/public', authenticate, async (c) => {
       lastActive: users.lastActive,
     }).from(users).where(eq(users.status, 'active'));
 
-    // Optional sorting
     data.sort((a, b) => (a.displayName || '').localeCompare(b.displayName || ''));
 
-    return c.json({ success: true, data });
+    return successResponse(c, data);
   } catch (err: any) {
-    return c.json({ success: false, error: err.message }, 500);
+    return errorResponse(c, err.message, 500);
   }
 });
 
@@ -49,9 +49,9 @@ userRouter.get('/', authenticate, requireAdmin, async (c) => {
       updatedAt: users.updatedAt,
     }).from(users);
 
-    return c.json({ success: true, data });
+    return successResponse(c, data);
   } catch (err: any) {
-    return c.json({ success: false, error: err.message }, 500);
+    return errorResponse(c, err.message, 500);
   }
 });
 
@@ -60,13 +60,13 @@ userRouter.post('/', authenticate, requireAdmin, async (c) => {
   try {
     const { username, password, displayName, role } = await c.req.json();
     if (!username || !password) {
-      return c.json({ success: false, error: 'Tên đăng nhập và mật khẩu là bắt buộc' }, 400);
+      return errorResponse(c, 'Tên đăng nhập và mật khẩu là bắt buộc', 400);
     }
 
     const db = getDb(c.env.DB);
     const [existing] = await db.select({ id: users.id }).from(users).where(eq(users.username, username));
     if (existing) {
-      return c.json({ success: false, error: 'Tên đăng nhập đã tồn tại' }, 400);
+      return errorResponse(c, 'Tên đăng nhập đã tồn tại', 400);
     }
 
     const hashedPw = await bcrypt.hash(password, 10);
@@ -75,11 +75,13 @@ userRouter.post('/', authenticate, requireAdmin, async (c) => {
       password: hashedPw,
       displayName: displayName || username,
       role: ['admin', 'editor', 'viewer'].includes(role) ? role : 'viewer',
+      status: 'active',
+      emailVerified: true
     });
 
-    return c.json({ success: true, message: 'Đã tạo tài khoản' }, 201);
+    return successResponse(c, null, 'Đã tạo tài khoản thành công', 201);
   } catch (err: any) {
-    return c.json({ success: false, error: err.message }, 500);
+    return errorResponse(c, err.message, 500);
   }
 });
 
@@ -91,11 +93,11 @@ userRouter.put('/:id', authenticate, requireAdmin, async (c) => {
     const currentUser = c.get('user');
 
     if (!displayName || !role) {
-      return c.json({ success: false, error: 'Tên hiển thị và quyền là bắt buộc' }, 400);
+      return errorResponse(c, 'Tên hiển thị và quyền là bắt buộc', 400);
     }
 
     if (status === 'banned' && userId === currentUser.id) {
-      return c.json({ success: false, error: 'Bạn không thể tự khóa tài khoản của chính mình' }, 400);
+      return errorResponse(c, 'Bạn không thể tự khóa tài khoản của chính mình', 400);
     }
 
     const db = getDb(c.env.DB);
@@ -111,9 +113,9 @@ userRouter.put('/:id', authenticate, requireAdmin, async (c) => {
 
     await db.update(users).set(updateData).where(eq(users.id, userId));
 
-    return c.json({ success: true, message: 'Cập nhật tài khoản thành công' });
+    return successResponse(c, null, 'Cập nhật tài khoản thành công');
   } catch (err: any) {
-    return c.json({ success: false, error: err.message }, 500);
+    return errorResponse(c, err.message, 500);
   }
 });
 
@@ -124,15 +126,15 @@ userRouter.delete('/:id', authenticate, requireAdmin, async (c) => {
     const currentUser = c.get('user');
 
     if (userId === currentUser.id) {
-      return c.json({ success: false, error: 'Không thể xóa chính mình' }, 400);
+      return errorResponse(c, 'Không thể xóa chính mình', 400);
     }
 
     const db = getDb(c.env.DB);
     await db.delete(users).where(eq(users.id, userId));
 
-    return c.json({ success: true, message: 'Đã xóa tài khoản' });
+    return successResponse(c, null, 'Đã xóa tài khoản');
   } catch (err: any) {
-    return c.json({ success: false, error: err.message }, 500);
+    return errorResponse(c, err.message, 500);
   }
 });
 
@@ -143,7 +145,7 @@ userRouter.post('/:id/reset-password', authenticate, requireAdmin, async (c) => 
     const { newPassword } = await c.req.json();
 
     if (!newPassword) {
-      return c.json({ success: false, error: 'Mật khẩu mới là bắt buộc' }, 400);
+      return errorResponse(c, 'Mật khẩu mới là bắt buộc', 400);
     }
 
     const hashedPw = await bcrypt.hash(newPassword, 10);
@@ -154,8 +156,8 @@ userRouter.post('/:id/reset-password', authenticate, requireAdmin, async (c) => 
       updatedAt: new Date().toISOString(),
     }).where(eq(users.id, userId));
 
-    return c.json({ success: true, message: 'Đã đặt lại mật khẩu' });
+    return successResponse(c, null, 'Đã đặt lại mật khẩu');
   } catch (err: any) {
-    return c.json({ success: false, error: err.message }, 500);
+    return errorResponse(c, err.message, 500);
   }
 });

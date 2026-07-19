@@ -5,10 +5,10 @@ import { eq, and, desc, inArray, sql } from 'drizzle-orm';
 import { Env } from '../index';
 import { authenticate } from '../middleware/auth';
 import { encryptText, decryptText } from '../utils/crypto';
+import { successResponse, errorResponse } from '../utils/response';
 
 export const chatRouter = new Hono<{ Bindings: Env }>();
 
-// Helper for crypto logic
 const tryEncrypt = (text: string, env: Env) => encryptText(text, env);
 const tryDecrypt = (text: string, env: Env) => decryptText(text, env);
 
@@ -18,11 +18,10 @@ chatRouter.get('/', authenticate, async (c) => {
     const currentUser = c.get('user');
     const db = getDb(c.env.DB);
     
-    // Find all room IDs user is a member of
     const myMemberships = await db.select({ roomId: chatMembers.roomId })
       .from(chatMembers).where(eq(chatMembers.userId, currentUser.id));
     
-    if (myMemberships.length === 0) return c.json({ success: true, data: [] });
+    if (myMemberships.length === 0) return successResponse(c, []);
     const roomIds = myMemberships.map(m => m.roomId);
 
     const rooms = await db.select().from(chatRooms).where(inArray(chatRooms.id, roomIds)).orderBy(desc(chatRooms.updatedAt));
@@ -76,9 +75,9 @@ chatRouter.get('/', authenticate, async (c) => {
       };
     });
 
-    return c.json({ success: true, data: enrichedRooms });
+    return successResponse(c, enrichedRooms);
   } catch (err: any) {
-    return c.json({ success: false, error: err.message }, 500);
+    return errorResponse(c, err.message, 500);
   }
 });
 
@@ -89,7 +88,7 @@ chatRouter.post('/', authenticate, async (c) => {
     const { type, name, participantIds } = await c.req.json();
 
     if (!participantIds || participantIds.length === 0) {
-      return c.json({ success: false, error: 'Phải chọn ít nhất 1 người để chat' }, 400);
+      return errorResponse(c, 'Phải chọn ít nhất 1 người để chat', 400);
     }
 
     const isGroup = type === 'group' || participantIds.length > 1;
@@ -98,7 +97,6 @@ chatRouter.post('/', authenticate, async (c) => {
 
     if (actualType === 'direct') {
       const targetId = participantIds[0];
-      // Check existing direct room
       const existingRooms = await db.select({ roomId: chatMembers.roomId })
         .from(chatMembers)
         .where(inArray(chatMembers.userId, [currentUser.id, targetId]))
@@ -106,11 +104,10 @@ chatRouter.post('/', authenticate, async (c) => {
         .having(sql`COUNT(DISTINCT ${chatMembers.userId}) = 2`);
       
       if (existingRooms.length > 0) {
-        // Also check if type is actually direct
         for (const row of existingRooms) {
           const [room] = await db.select().from(chatRooms).where(and(eq(chatRooms.id, row.roomId), eq(chatRooms.type, 'direct')));
           if (room) {
-            return c.json({ success: true, data: { id: room.id } });
+            return successResponse(c, { id: room.id });
           }
         }
       }
@@ -157,17 +154,14 @@ chatRouter.post('/', authenticate, async (c) => {
       } catch (e) {}
     }
 
-    return c.json({ 
-      success: true, 
-      data: { 
-        ...newRoom, 
-        display_name, 
-        inviteCode, 
-        allowAdd 
-      } 
+    return successResponse(c, {
+      ...newRoom,
+      display_name,
+      inviteCode,
+      allowAdd
     });
   } catch (err: any) {
-    return c.json({ success: false, error: err.message }, 500);
+    return errorResponse(c, err.message, 500);
   }
 });
 
@@ -180,10 +174,9 @@ chatRouter.get('/:id/messages', authenticate, async (c) => {
 
     const [membership] = await db.select().from(chatMembers).where(and(eq(chatMembers.roomId, roomId), eq(chatMembers.userId, currentUser.id)));
     if (!membership) {
-      return c.json({ success: false, error: 'Bạn không có quyền xem nhóm chat này' }, 403);
+      return errorResponse(c, 'Bạn không có quyền xem nhóm chat này', 403);
     }
 
-    // A limit, usually fetched in chunks
     const data = await db.select({
       id: chatMessages.id,
       roomId: chatMessages.roomId,
@@ -198,12 +191,10 @@ chatRouter.get('/:id/messages', authenticate, async (c) => {
     .leftJoin(users, eq(chatMessages.senderId, users.id))
     .where(eq(chatMessages.roomId, roomId))
     .orderBy(desc(chatMessages.createdAt))
-    .limit(50); // Hardcode for now, can implement 'since' later
+    .limit(50);
 
-    // Update lastRead
     await db.update(chatMembers).set({ lastReadAt: new Date().toISOString() }).where(and(eq(chatMembers.roomId, roomId), eq(chatMembers.userId, currentUser.id)));
 
-    // Reverse to chronological order and decrypt
     const decryptedMessages = data.reverse().map(m => ({
       id: m.id,
       room_id: m.roomId,
@@ -217,9 +208,9 @@ chatRouter.get('/:id/messages', authenticate, async (c) => {
       }
     }));
 
-    return c.json({ success: true, data: decryptedMessages });
+    return successResponse(c, decryptedMessages);
   } catch (err: any) {
-    return c.json({ success: false, error: err.message }, 500);
+    return errorResponse(c, err.message, 500);
   }
 });
 
@@ -230,11 +221,11 @@ chatRouter.post('/:id/messages', authenticate, async (c) => {
     const currentUser = c.get('user');
     const { content } = await c.req.json();
     
-    if (!content || !content.trim()) return c.json({ success: false, error: 'Tin nhắn rỗng' }, 400);
+    if (!content || !content.trim()) return errorResponse(c, 'Tin nhắn rỗng', 400);
 
     const db = getDb(c.env.DB);
     const [membership] = await db.select().from(chatMembers).where(and(eq(chatMembers.roomId, roomId), eq(chatMembers.userId, currentUser.id)));
-    if (!membership) return c.json({ success: false, error: 'Bạn không có quyền gửi tin' }, 403);
+    if (!membership) return errorResponse(c, 'Bạn không có quyền gửi tin', 403);
 
     const encrypted = tryEncrypt(content.trim(), c.env);
     
@@ -246,7 +237,7 @@ chatRouter.post('/:id/messages', authenticate, async (c) => {
 
     await db.update(chatRooms).set({ updatedAt: new Date().toISOString() }).where(eq(chatRooms.id, roomId));
 
-    return c.json({ success: true, data: {
+    return successResponse(c, {
       id: newMessage.id,
       room_id: newMessage.roomId,
       sender_id: newMessage.senderId,
@@ -257,13 +248,12 @@ chatRouter.post('/:id/messages', authenticate, async (c) => {
         username: currentUser.username,
         avatar: currentUser.avatar
       }
-    } });
+    });
   } catch (err: any) {
-    return c.json({ success: false, error: err.message }, 500);
+    return errorResponse(c, err.message, 500);
   }
 });
 
-// In-memory real-time call sessions store
 interface CallSession {
   callId: string;
   roomId: number;
@@ -281,7 +271,6 @@ const activeCallsMap = new Map<string, CallSession>();
 
 export const callRouter = new Hono<{ Bindings: Env }>();
 
-// Clean up expired calls (> 60s)
 const cleanupCalls = () => {
   const now = Date.now();
   for (const [id, session] of activeCallsMap.entries()) {
@@ -305,7 +294,7 @@ callRouter.post('/start', authenticate, async (c) => {
 
     const targetUserIds = members.map(m => m.userId).filter(id => id !== currentUser.id);
 
-    const callId = `call_${roomId}_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+    const callId = `call_${roomId}_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
     const session: CallSession = {
       callId,
       roomId,
@@ -321,9 +310,9 @@ callRouter.post('/start', authenticate, async (c) => {
 
     activeCallsMap.set(callId, session);
 
-    return c.json({ success: true, data: session });
+    return successResponse(c, session);
   } catch (err: any) {
-    return c.json({ success: false, error: err.message }, 500);
+    return errorResponse(c, err.message, 500);
   }
 });
 
@@ -334,20 +323,19 @@ callRouter.get('/active', authenticate, async (c) => {
     const currentUser = c.get('user');
     const now = Date.now();
 
-    // Find any active or ringing call for this user
     for (const session of activeCallsMap.values()) {
       if (session.status === 'ended') continue;
       const isCaller = session.callerId === currentUser.id;
       const isTarget = session.targetUserIds.includes(currentUser.id);
 
       if ((isCaller || isTarget) && (now - session.startedAt < 60000)) {
-        return c.json({ success: true, data: session });
+        return successResponse(c, session);
       }
     }
 
-    return c.json({ success: true, data: null });
+    return successResponse(c, null);
   } catch (err: any) {
-    return c.json({ success: false, error: err.message }, 500);
+    return errorResponse(c, err.message, 500);
   }
 });
 
@@ -360,7 +348,7 @@ callRouter.post('/respond', authenticate, async (c) => {
 
     const session = activeCallsMap.get(callId);
     if (!session) {
-      return c.json({ success: false, error: 'Cuộc gọi đã kết thúc hoặc không tồn tại.' }, 404);
+      return errorResponse(c, 'Cuộc gọi đã kết thúc hoặc không tồn tại.', 404);
     }
 
     if (action === 'accept') {
@@ -369,9 +357,9 @@ callRouter.post('/respond', authenticate, async (c) => {
       session.status = 'rejected';
     }
 
-    return c.json({ success: true, data: session });
+    return successResponse(c, session);
   } catch (err: any) {
-    return c.json({ success: false, error: err.message }, 500);
+    return errorResponse(c, err.message, 500);
   }
 });
 
@@ -384,9 +372,8 @@ callRouter.post('/end', authenticate, async (c) => {
       if (session) session.status = 'ended';
       activeCallsMap.delete(callId);
     }
-    return c.json({ success: true });
+    return successResponse(c, null, 'Cuộc gọi đã kết thúc');
   } catch (err: any) {
-    return c.json({ success: false, error: err.message }, 500);
+    return errorResponse(c, err.message, 500);
   }
 });
-

@@ -4,6 +4,7 @@ import { events, members } from '../db/schema';
 import { eq } from 'drizzle-orm';
 import { Env } from '../index';
 import { authenticate, requireAdmin, requireEditorOrAdmin } from '../middleware/auth';
+import { successResponse, errorResponse } from '../utils/response';
 // @ts-ignore
 import { Solar, Lunar } from '../utils/lunar';
 // @ts-ignore
@@ -11,7 +12,6 @@ import { ganZhiToViet } from '../utils/vietLunar';
 
 export const eventRouter = new Hono<{ Bindings: Env }>();
 
-// Helper to safely parse description JSON
 function parseDescription(description: string | null) {
   let meta: any = {};
   try {
@@ -22,143 +22,6 @@ function parseDescription(description: string | null) {
   return meta;
 }
 
-// GET /api/events
-eventRouter.get('/', authenticate, async (c) => {
-  try {
-    const db = getDb(c.env.DB);
-    const data = await db.select().from(events).orderBy(events.eventDate);
-
-    const formattedEvents = data.map(ev => {
-      const meta = parseDescription(ev.description);
-      return {
-        ...ev,
-        location: meta.location || '',
-        time: meta.time || '',
-        end_date: meta.end_date || '',
-        end_time: meta.end_time || '',
-        recurrence: meta.recurrence || 'none',
-        note: meta.note || '',
-        subscribers: meta.subscribers || [],
-        created_by_name: meta.created_by_name || ''
-      };
-    });
-
-    return c.json({ success: true, data: formattedEvents });
-  } catch (err: any) {
-    return c.json({ success: false, error: err.message }, 500);
-  }
-});
-
-// POST /api/events
-eventRouter.post('/', authenticate, requireEditorOrAdmin, async (c) => {
-  try {
-    const { title, event_date, event_type, location, time, recurrence, note, end_date, end_time } = await c.req.json();
-    if (!title || !title.trim()) return c.json({ success: false, error: 'Tiêu đề sự kiện không được trống' }, 400);
-    if (!event_date) return c.json({ success: false, error: 'Ngày sự kiện không được trống' }, 400);
-
-    const currentUser = c.get('user');
-    
-    const meta = {
-      location: location || '',
-      time: time || '',
-      end_date: end_date || '',
-      end_time: end_time || '',
-      recurrence: recurrence || 'none',
-      note: note || '',
-      subscribers: [],
-      created_by_name: currentUser.displayName || currentUser.username
-    };
-
-    const db = getDb(c.env.DB);
-    const [newEvent] = await db.insert(events).values({
-      title: title.trim(),
-      eventDate: event_date,
-      eventType: event_type || 'meeting',
-      description: JSON.stringify(meta),
-      // memberId is null
-    }).returning();
-
-    return c.json({
-      success: true,
-      data: {
-        ...newEvent,
-        ...meta
-      }
-    }, 201);
-  } catch (err: any) {
-    return c.json({ success: false, error: err.message }, 500);
-  }
-});
-
-// DELETE /api/events/:id
-eventRouter.delete('/:id', authenticate, requireAdmin, async (c) => {
-  try {
-    const eventId = parseInt(c.req.param('id') as string);
-    const db = getDb(c.env.DB);
-    await db.delete(events).where(eq(events.id, eventId));
-    return c.json({ success: true, message: 'Đã xóa sự kiện' });
-  } catch (err: any) {
-    return c.json({ success: false, error: err.message }, 500);
-  }
-});
-
-// POST /api/events/:id/register
-eventRouter.post('/:id/register', authenticate, async (c) => {
-  try {
-    const eventId = parseInt(c.req.param('id') as string);
-    const currentUser = c.get('user');
-    const userName = currentUser.displayName || currentUser.username;
-
-    const db = getDb(c.env.DB);
-    const [event] = await db.select().from(events).where(eq(events.id, eventId));
-    if (!event) return c.json({ success: false, error: 'Không tìm thấy sự kiện' }, 404);
-
-    const meta = parseDescription(event.description);
-    const subscribers = meta.subscribers || [];
-
-    if (subscribers.some((s: any) => s.id === currentUser.id)) {
-      return c.json({ success: true, message: 'Đã đăng ký trước đó', data: { subscribers } });
-    }
-
-    subscribers.push({ id: currentUser.id, name: userName, registered_at: new Date().toISOString() });
-    meta.subscribers = subscribers;
-
-    await db.update(events).set({
-      description: JSON.stringify(meta)
-    }).where(eq(events.id, eventId));
-
-    return c.json({ success: true, data: { subscribers } });
-  } catch (err: any) {
-    return c.json({ success: false, error: err.message }, 500);
-  }
-});
-
-// POST /api/events/:id/unregister
-eventRouter.post('/:id/unregister', authenticate, async (c) => {
-  try {
-    const eventId = parseInt(c.req.param('id') as string);
-    const currentUser = c.get('user');
-
-    const db = getDb(c.env.DB);
-    const [event] = await db.select().from(events).where(eq(events.id, eventId));
-    if (!event) return c.json({ success: false, error: 'Không tìm thấy sự kiện' }, 404);
-
-    const meta = parseDescription(event.description);
-    let subscribers = meta.subscribers || [];
-    subscribers = subscribers.filter((s: any) => s.id !== currentUser.id);
-    meta.subscribers = subscribers;
-
-    await db.update(events).set({
-      description: JSON.stringify(meta)
-    }).where(eq(events.id, eventId));
-
-    return c.json({ success: true, data: { subscribers } });
-  } catch (err: any) {
-    return c.json({ success: false, error: err.message }, 500);
-  }
-});
-
-// Helper utilities for anniversary calculations
 function parseMD(dateStr: string | null) {
   if (!dateStr) return null;
   const parts = dateStr.split('-');
@@ -184,6 +47,135 @@ function calcAge(birthDateStr: string | null) {
   return age;
 }
 
+// GET /api/events
+eventRouter.get('/', authenticate, async (c) => {
+  try {
+    const db = getDb(c.env.DB);
+    const data = await db.select().from(events).orderBy(events.eventDate);
+
+    const formattedEvents = data.map(ev => {
+      const meta = parseDescription(ev.description);
+      return {
+        ...ev,
+        location: meta.location || '',
+        time: meta.time || '',
+        end_date: meta.end_date || '',
+        end_time: meta.end_time || '',
+        recurrence: meta.recurrence || 'none',
+        note: meta.note || '',
+        subscribers: meta.subscribers || [],
+        created_by_name: meta.created_by_name || ''
+      };
+    });
+
+    return successResponse(c, formattedEvents);
+  } catch (err: any) {
+    return errorResponse(c, err.message, 500);
+  }
+});
+
+// POST /api/events
+eventRouter.post('/', authenticate, requireEditorOrAdmin, async (c) => {
+  try {
+    const { title, event_date, event_type, location, time, recurrence, note, end_date, end_time } = await c.req.json();
+    if (!title || !title.trim()) return errorResponse(c, 'Tiêu đề sự kiện không được trống', 400);
+    if (!event_date) return errorResponse(c, 'Ngày sự kiện không được trống', 400);
+
+    const currentUser = c.get('user');
+    
+    const meta = {
+      location: location || '',
+      time: time || '',
+      end_date: end_date || '',
+      end_time: end_time || '',
+      recurrence: recurrence || 'none',
+      note: note || '',
+      subscribers: [],
+      created_by_name: currentUser.displayName || currentUser.username
+    };
+
+    const db = getDb(c.env.DB);
+    const [newEvent] = await db.insert(events).values({
+      title: title.trim(),
+      eventDate: event_date,
+      eventType: event_type || 'meeting',
+      description: JSON.stringify(meta),
+    }).returning();
+
+    return successResponse(c, { ...newEvent, ...meta }, 'Tạo sự kiện thành công', 201);
+  } catch (err: any) {
+    return errorResponse(c, err.message, 500);
+  }
+});
+
+// DELETE /api/events/:id
+eventRouter.delete('/:id', authenticate, requireAdmin, async (c) => {
+  try {
+    const eventId = parseInt(c.req.param('id') as string);
+    const db = getDb(c.env.DB);
+    await db.delete(events).where(eq(events.id, eventId));
+    return successResponse(c, null, 'Đã xóa sự kiện');
+  } catch (err: any) {
+    return errorResponse(c, err.message, 500);
+  }
+});
+
+// POST /api/events/:id/register
+eventRouter.post('/:id/register', authenticate, async (c) => {
+  try {
+    const eventId = parseInt(c.req.param('id') as string);
+    const currentUser = c.get('user');
+    const userName = currentUser.displayName || currentUser.username;
+
+    const db = getDb(c.env.DB);
+    const [event] = await db.select().from(events).where(eq(events.id, eventId));
+    if (!event) return errorResponse(c, 'Không tìm thấy sự kiện', 404);
+
+    const meta = parseDescription(event.description);
+    const subscribers = meta.subscribers || [];
+
+    if (subscribers.some((s: any) => s.id === currentUser.id)) {
+      return successResponse(c, { subscribers }, 'Đã đăng ký trước đó');
+    }
+
+    subscribers.push({ id: currentUser.id, name: userName, registered_at: new Date().toISOString() });
+    meta.subscribers = subscribers;
+
+    await db.update(events).set({
+      description: JSON.stringify(meta)
+    }).where(eq(events.id, eventId));
+
+    return successResponse(c, { subscribers }, 'Đã đăng ký tham gia sự kiện');
+  } catch (err: any) {
+    return errorResponse(c, err.message, 500);
+  }
+});
+
+// POST /api/events/:id/unregister
+eventRouter.post('/:id/unregister', authenticate, async (c) => {
+  try {
+    const eventId = parseInt(c.req.param('id') as string);
+    const currentUser = c.get('user');
+
+    const db = getDb(c.env.DB);
+    const [event] = await db.select().from(events).where(eq(events.id, eventId));
+    if (!event) return errorResponse(c, 'Không tìm thấy sự kiện', 404);
+
+    const meta = parseDescription(event.description);
+    let subscribers = meta.subscribers || [];
+    subscribers = subscribers.filter((s: any) => s.id !== currentUser.id);
+    meta.subscribers = subscribers;
+
+    await db.update(events).set({
+      description: JSON.stringify(meta)
+    }).where(eq(events.id, eventId));
+
+    return successResponse(c, { subscribers }, 'Đã hủy đăng ký tham gia');
+  } catch (err: any) {
+    return errorResponse(c, err.message, 500);
+  }
+});
+
 // GET /api/events/anniversaries
 eventRouter.get('/anniversaries', authenticate, async (c) => {
   try {
@@ -198,13 +190,11 @@ eventRouter.get('/anniversaries', authenticate, async (c) => {
     const birthdays: any[] = [];
     const weddingAnniversaries: any[] = [];
     const deathAnniversaries: any[] = [];
-    const day30Events: any[] = []; // Đầy tháng
-    const year1Events: any[] = []; // Thôi nôi
+    const day30Events: any[] = [];
+    const year1Events: any[] = [];
 
     allMembers.forEach(m => {
-      // 1. Members alive: Birthdays, Wedding Anniversaries, Đầy tháng, Thôi nôi
       if (!m.deathDate) {
-        // Birthday
         const bd = parseMD(m.birthDate);
         if (bd) {
           let eventDate = new Date(thisYear, bd.month - 1, bd.day);
@@ -220,7 +210,6 @@ eventRouter.get('/anniversaries', authenticate, async (c) => {
             });
           }
 
-          // Đầy tháng (exactly 30 days after birth date)
           const birthDate = new Date(bd.year, bd.month - 1, bd.day);
           const day30 = new Date(birthDate.getTime() + 30 * 24 * 60 * 60 * 1000);
           day30.setHours(0, 0, 0, 0);
@@ -234,7 +223,6 @@ eventRouter.get('/anniversaries', authenticate, async (c) => {
             });
           }
 
-          // Thôi nôi (exactly 1 year after birth date)
           const day365 = new Date(bd.year + 1, bd.month - 1, bd.day);
           day365.setHours(0, 0, 0, 0);
           const diff365 = Math.floor((day365.getTime() - today.getTime()) / 86400000);
@@ -248,7 +236,6 @@ eventRouter.get('/anniversaries', authenticate, async (c) => {
           }
         }
 
-        // Wedding Anniversary
         if (m.weddingDate) {
           const wd = parseMD(m.weddingDate);
           if (wd) {
@@ -267,9 +254,7 @@ eventRouter.get('/anniversaries', authenticate, async (c) => {
             }
           }
         }
-      } 
-      // 2. Members deceased: Giỗ (Lunar death anniversary)
-      else {
+      } else {
         const dd = parseMD(m.deathDate);
         if (dd) {
           try {
@@ -303,14 +288,11 @@ eventRouter.get('/anniversaries', authenticate, async (c) => {
                 deathDateDisplay: formatDateVN(m.deathDate),
               });
             }
-          } catch (e) {
-            console.error('Error calculating lunar anniversary on server:', e);
-          }
+          } catch (e) {}
         }
       }
     });
 
-    // Sort all arrays by daysUntil
     const sortFn = (a: any, b: any) => a.daysUntil - b.daysUntil;
     birthdays.sort(sortFn);
     weddingAnniversaries.sort(sortFn);
@@ -318,18 +300,15 @@ eventRouter.get('/anniversaries', authenticate, async (c) => {
     day30Events.sort(sortFn);
     year1Events.sort(sortFn);
 
-    return c.json({
-      success: true,
-      data: {
-        birthdays,
-        weddingAnniversaries,
-        deathAnniversaries,
-        day30Events,
-        year1Events
-      }
+    return successResponse(c, {
+      birthdays,
+      weddingAnniversaries,
+      deathAnniversaries,
+      day30Events,
+      year1Events
     });
   } catch (err: any) {
-    return c.json({ success: false, error: err.message }, 500);
+    return errorResponse(c, err.message, 500);
   }
 });
 
@@ -346,7 +325,6 @@ eventRouter.get('/monthly', authenticate, async (c) => {
     const resultEvents: any[] = [];
 
     allMembers.forEach(m => {
-      // Deceased member check for Giỗ
       if (m.deathDate) {
         const dd = parseMD(m.deathDate);
         if (dd) {
@@ -366,10 +344,7 @@ eventRouter.get('/monthly', authenticate, async (c) => {
             }
           } catch (e) {}
         }
-      } 
-      // Living member check for Birthdays, Weddings, Đầy tháng, Thôi nôi
-      else {
-        // Birthday
+      } else {
         const bd = parseMD(m.birthDate);
         if (bd && bd.month === month) {
           resultEvents.push({
@@ -380,7 +355,6 @@ eventRouter.get('/monthly', authenticate, async (c) => {
           });
         }
 
-        // Wedding Anniversary
         const wd = parseMD(m.weddingDate);
         if (wd && wd.month === month) {
           resultEvents.push({
@@ -391,7 +365,6 @@ eventRouter.get('/monthly', authenticate, async (c) => {
           });
         }
 
-        // Đầy tháng
         if (bd) {
           const birthDate = new Date(bd.year, bd.month - 1, bd.day);
           const day30 = new Date(birthDate.getTime() + 30 * 24 * 60 * 60 * 1000);
@@ -403,7 +376,6 @@ eventRouter.get('/monthly', authenticate, async (c) => {
             });
           }
 
-          // Thôi nôi
           const day365 = new Date(bd.year + 1, bd.month - 1, bd.day);
           if (day365.getMonth() + 1 === month && day365.getFullYear() === year) {
             resultEvents.push({
@@ -416,11 +388,9 @@ eventRouter.get('/monthly', authenticate, async (c) => {
       }
     });
 
-    // Check custom events
     customEvents.forEach(ev => {
       const evDate = parseMD(ev.eventDate);
       if (evDate) {
-        // Simple match, support recurrence if recurrent
         let matches = false;
         let meta: any = {};
         try {
@@ -451,8 +421,8 @@ eventRouter.get('/monthly', authenticate, async (c) => {
       }
     });
 
-    return c.json({ success: true, data: resultEvents });
+    return successResponse(c, resultEvents);
   } catch (err: any) {
-    return c.json({ success: false, error: err.message }, 500);
+    return errorResponse(c, err.message, 500);
   }
 });

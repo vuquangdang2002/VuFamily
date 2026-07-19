@@ -9,6 +9,7 @@ import { postRouter, commentRouter } from './modules/posts';
 import { eventRouter } from './modules/events';
 import { financeRouter } from './modules/finance';
 import { chatRouter, callRouter } from './modules/chat';
+import { requestRouter } from './modules/requests';
 
 export type Env = {
   DB: D1Database;
@@ -44,5 +45,6 @@ app.route('/api/events', eventRouter);
 app.route('/api/finance', financeRouter);
 app.route('/api/chats', chatRouter);
 app.route('/api/calls', callRouter);
+app.route('/api/requests', requestRouter);
 
 export default app;

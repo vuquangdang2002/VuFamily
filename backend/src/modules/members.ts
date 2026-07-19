@@ -4,6 +4,7 @@ import { members, achievements } from '../db/schema';
 import { eq, or, ilike, count, sql } from 'drizzle-orm';
 import { Env } from '../index';
 import { authenticate, requireEditorOrAdmin } from '../middleware/auth';
+import { successResponse, errorResponse } from '../utils/response';
 
 export const memberRouter = new Hono<{ Bindings: Env }>();
 
@@ -11,7 +12,7 @@ export const memberRouter = new Hono<{ Bindings: Env }>();
 memberRouter.get('/search', async (c) => {
   try {
     const q = c.req.query('q')?.toLowerCase().trim() || '';
-    if (!q) return c.json({ success: true, data: [] });
+    if (!q) return successResponse(c, []);
 
     const db = getDb(c.env.DB);
     const searchPattern = `%${q}%`;
@@ -25,9 +26,9 @@ memberRouter.get('/search', async (c) => {
       ))
       .limit(50);
 
-    return c.json({ success: true, data, cached: false });
+    return successResponse(c, data);
   } catch (err: any) {
-    return c.json({ success: false, error: err.message }, 500);
+    return errorResponse(c, err.message, 500);
   }
 });
 
@@ -35,11 +36,10 @@ memberRouter.get('/search', async (c) => {
 memberRouter.get('/', async (c) => {
   try {
     const db = getDb(c.env.DB);
-    // Fetch all members, order by generation and birthDate
     const data = await db.select().from(members).orderBy(members.generation, members.birthDate);
-    return c.json({ success: true, data });
+    return successResponse(c, data);
   } catch (err: any) {
-    return c.json({ success: false, error: err.message }, 500);
+    return errorResponse(c, err.message, 500);
   }
 });
 
@@ -50,10 +50,10 @@ memberRouter.get('/:id', async (c) => {
     const db = getDb(c.env.DB);
     const [member] = await db.select().from(members).where(eq(members.id, id));
     
-    if (!member) return c.json({ success: false, error: 'Không tìm thấy' }, 404);
-    return c.json({ success: true, data: member });
+    if (!member) return errorResponse(c, 'Không tìm thấy thành viên', 404);
+    return successResponse(c, member);
   } catch (err: any) {
-    return c.json({ success: false, error: err.message }, 500);
+    return errorResponse(c, err.message, 500);
   }
 });
 
@@ -63,9 +63,9 @@ memberRouter.get('/:id/children', async (c) => {
     const parentId = parseInt(c.req.param('id') as string);
     const db = getDb(c.env.DB);
     const childrenList = await db.select().from(members).where(eq(members.parentId, parentId)).orderBy(members.birthOrder);
-    return c.json({ success: true, data: childrenList });
+    return successResponse(c, childrenList);
   } catch (err: any) {
-    return c.json({ success: false, error: err.message }, 500);
+    return errorResponse(c, err.message, 500);
   }
 });
 
@@ -75,9 +75,9 @@ memberRouter.get('/:id/achievements', async (c) => {
     const memberId = parseInt(c.req.param('id') as string);
     const db = getDb(c.env.DB);
     const data = await db.select().from(achievements).where(eq(achievements.memberId, memberId)).orderBy(achievements.startYear);
-    return c.json({ success: true, data });
+    return successResponse(c, data);
   } catch (err: any) {
-    return c.json({ success: false, error: err.message }, 500);
+    return errorResponse(c, err.message, 500);
   }
 });
 
@@ -85,7 +85,7 @@ memberRouter.get('/:id/achievements', async (c) => {
 memberRouter.post('/', authenticate, requireEditorOrAdmin, async (c) => {
   try {
     const body = await c.req.json();
-    if (!body.name) return c.json({ success: false, error: 'Tên là bắt buộc' }, 400);
+    if (!body.name) return errorResponse(c, 'Tên thành viên là bắt buộc', 400);
 
     const spouseIdVal = body.spouseId ? parseInt(body.spouseId) : null;
     const weddingDateVal = spouseIdVal ? body.weddingDate : null;
@@ -114,14 +114,13 @@ memberRouter.post('/', authenticate, requireEditorOrAdmin, async (c) => {
       generation: body.generation ?? 1,
     }).returning();
 
-    // Bidirectional spouse linking
     if (newMember.spouseId) {
       await db.update(members).set({ spouseId: newMember.id }).where(eq(members.id, newMember.spouseId));
     }
 
-    return c.json({ success: true, data: newMember }, 201);
+    return successResponse(c, newMember, 'Thêm thành viên thành công', 201);
   } catch (err: any) {
-    return c.json({ success: false, error: err.message }, 500);
+    return errorResponse(c, err.message, 500);
   }
 });
 
@@ -145,28 +144,25 @@ memberRouter.put('/:id', authenticate, requireEditorOrAdmin, async (c) => {
       updatedAt: new Date().toISOString(),
     }).where(eq(members.id, id)).returning();
 
-    if (!updated) return c.json({ success: false, error: 'Không tìm thấy' }, 404);
+    if (!updated) return errorResponse(c, 'Không tìm thấy thành viên', 404);
 
-    // Bidirectional spouse linking updates
     if (body.spouseId !== undefined) {
       const newSpouseId = body.spouseId ? parseInt(body.spouseId) : null;
       const oldSpouseId = oldMember?.spouseId;
 
       if (newSpouseId !== oldSpouseId) {
-        // 1. Clear old spouse link
         if (oldSpouseId) {
           await db.update(members).set({ spouseId: null }).where(eq(members.id, oldSpouseId));
         }
-        // 2. Set new spouse link
         if (newSpouseId) {
           await db.update(members).set({ spouseId: id }).where(eq(members.id, newSpouseId));
         }
       }
     }
 
-    return c.json({ success: true, data: updated });
+    return successResponse(c, updated, 'Cập nhật thành viên thành công');
   } catch (err: any) {
-    return c.json({ success: false, error: err.message }, 500);
+    return errorResponse(c, err.message, 500);
   }
 });
 
@@ -177,14 +173,14 @@ memberRouter.delete('/:id', authenticate, requireEditorOrAdmin, async (c) => {
     const db = getDb(c.env.DB);
     const [deleted] = await db.delete(members).where(eq(members.id, id)).returning();
     
-    if (!deleted) return c.json({ success: false, error: 'Không tìm thấy' }, 404);
-    return c.json({ success: true, message: 'Đã xóa' });
+    if (!deleted) return errorResponse(c, 'Không tìm thấy thành viên', 404);
+    return successResponse(c, null, 'Đã xóa thành viên');
   } catch (err: any) {
-    return c.json({ success: false, error: err.message }, 500);
+    return errorResponse(c, err.message, 500);
   }
 });
 
-// ─── Stats and Achievements Routers ───
+// Stats Router
 export const statsRouter = new Hono<{ Bindings: Env }>();
 statsRouter.get('/', async (c) => {
   try {
@@ -192,27 +188,30 @@ statsRouter.get('/', async (c) => {
     const [totalObj] = await db.select({ value: count() }).from(members);
     const [malesObj] = await db.select({ value: count() }).from(members).where(eq(members.gender, 1));
     const [femalesObj] = await db.select({ value: count() }).from(members).where(eq(members.gender, 0));
-    const [passedAwayObj] = await db.select({ value: count() }).from(members).where(sql`${members.deathDate} IS NOT NULL OR ${members.deathDate} != ''`);
+    const [passedAwayObj] = await db.select({ value: count() }).from(members).where(sql`${members.deathDate} IS NOT NULL AND ${members.deathDate} != ''`);
     
+    const [maxGenObj] = await db.select({ value: sql`MAX(${members.generation})` }).from(members);
+
     const data = {
       total: totalObj.value,
       males: malesObj.value,
       females: femalesObj.value,
       passed_away: passedAwayObj.value,
-      generations: 10 // Mock for now, would need a distinct generation query
+      generations: maxGenObj.value || 1
     };
 
-    return c.json({ success: true, data });
+    return successResponse(c, data);
   } catch (err: any) {
-    return c.json({ success: false, error: err.message }, 500);
+    return errorResponse(c, err.message, 500);
   }
 });
 
+// Achievements Router
 export const achievementRouter = new Hono<{ Bindings: Env }>();
 achievementRouter.post('/', authenticate, requireEditorOrAdmin, async (c) => {
   try {
     const body = await c.req.json();
-    if (!body.title) return c.json({ success: false, error: 'Tên thành tích là bắt buộc' }, 400);
+    if (!body.title) return errorResponse(c, 'Tên thành tích là bắt buộc', 400);
 
     const db = getDb(c.env.DB);
     const [newAch] = await db.insert(achievements).values({
@@ -225,9 +224,9 @@ achievementRouter.post('/', authenticate, requireEditorOrAdmin, async (c) => {
       description: body.description || ''
     }).returning({ id: achievements.id });
 
-    return c.json({ success: true, data: { id: newAch.id } }, 201);
+    return successResponse(c, { id: newAch.id }, 'Đã thêm thành tích', 201);
   } catch (err: any) {
-    return c.json({ success: false, error: err.message }, 500);
+    return errorResponse(c, err.message, 500);
   }
 });
 
@@ -236,8 +235,8 @@ achievementRouter.delete('/:id', authenticate, requireEditorOrAdmin, async (c) =
     const id = parseInt(c.req.param('id') as string);
     const db = getDb(c.env.DB);
     await db.delete(achievements).where(eq(achievements.id, id));
-    return c.json({ success: true, message: 'Đã xóa' });
+    return successResponse(c, null, 'Đã xóa thành tích');
   } catch (err: any) {
-    return c.json({ success: false, error: err.message }, 500);
+    return errorResponse(c, err.message, 500);
   }
 });

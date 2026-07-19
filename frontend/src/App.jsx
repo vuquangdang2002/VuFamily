@@ -499,8 +499,17 @@ export default function App() {
                 theme={theme}
                 setTheme={setTheme}
             />
-            <main className="flex-1 flex flex-col h-full overflow-hidden relative">
-                {renderPage()}
+            <main className="flex-1 flex flex-col h-full overflow-hidden relative bg-zinc-50 dark:bg-[#050505]">
+                {/* Background Glassmorphic Glows */}
+                <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none select-none">
+                    <div className="absolute top-1/4 left-1/4 w-[400px] h-[400px] rounded-full bg-amber-500/10 dark:bg-[#fe6e00]/10 blur-[100px] animate-pulse" style={{ animationDuration: '8s' }}></div>
+                    <div className="absolute bottom-1/4 right-1/4 w-[450px] h-[450px] rounded-full bg-orange-500/10 dark:bg-amber-500/5 blur-[120px] animate-pulse" style={{ animationDuration: '12s' }}></div>
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[350px] h-[350px] rounded-full bg-yellow-500/5 dark:bg-[#fe6e00]/5 blur-[90px] animate-pulse" style={{ animationDuration: '15s' }}></div>
+                </div>
+
+                <div className="relative z-10 flex-1 flex flex-col h-full overflow-hidden">
+                    {renderPage()}
+                </div>
             </main>
 
             {/* Modals */}

@@ -5,6 +5,7 @@ import { eq, desc } from 'drizzle-orm';
 import { Env } from '../index';
 import { authenticate, requireAdmin, requireEditorOrAdmin } from '../middleware/auth';
 import { encryptText, decryptText } from '../utils/crypto';
+import { successResponse, errorResponse } from '../utils/response';
 
 export const financeRouter = new Hono<{ Bindings: Env }>();
 
@@ -43,9 +44,9 @@ financeRouter.get('/transactions', authenticate, async (c) => {
       };
     });
 
-    return c.json({ success: true, data: decryptedTxs });
+    return successResponse(c, decryptedTxs);
   } catch (err: any) {
-    return c.json({ success: false, error: err.message }, 500);
+    return errorResponse(c, err.message, 500);
   }
 });
 
@@ -55,13 +56,13 @@ financeRouter.post('/transactions', authenticate, requireEditorOrAdmin, async (c
     const { type, amount, description, category } = await c.req.json();
     
     if (!type || !['INCOME', 'EXPENSE'].includes(type)) {
-      return c.json({ success: false, error: 'Loại giao dịch không hợp lệ.' }, 400);
+      return errorResponse(c, 'Loại giao dịch không hợp lệ.', 400);
     }
     if (amount === undefined || isNaN(amount) || amount <= 0) {
-      return c.json({ success: false, error: 'Số tiền phải là số lớn hơn 0.' }, 400);
+      return errorResponse(c, 'Số tiền phải là số lớn hơn 0.', 400);
     }
     if (!description || description.trim() === '') {
-      return c.json({ success: false, error: 'Mô tả không được để trống.' }, 400);
+      return errorResponse(c, 'Mô tả không được để trống.', 400);
     }
 
     const currentUser = c.get('user');
@@ -83,17 +84,13 @@ financeRouter.post('/transactions', authenticate, requireEditorOrAdmin, async (c
       modifiedBy: currentUser.id
     });
 
-    return c.json({
-      success: true,
-      message: 'Tạo giao dịch tài chính thành công.',
-      data: {
-        ...newTx,
-        amount: parseFloat(amount),
-        creatorName: currentUser.displayName
-      }
-    }, 201);
+    return successResponse(c, {
+      ...newTx,
+      amount: parseFloat(amount),
+      creatorName: currentUser.displayName
+    }, 'Tạo giao dịch tài chính thành công.', 201);
   } catch (err: any) {
-    return c.json({ success: false, error: err.message }, 500);
+    return errorResponse(c, err.message, 500);
   }
 });
 
@@ -107,14 +104,14 @@ financeRouter.put('/transactions/:id', authenticate, requireAdmin, async (c) => 
     const [original] = await db.select().from(fundsTransactions).where(eq(fundsTransactions.id, id));
     
     if (!original) {
-      return c.json({ success: false, error: 'Không tìm thấy giao dịch này.' }, 404);
+      return errorResponse(c, 'Không tìm thấy giao dịch này.', 404);
     }
 
     if (type && !['INCOME', 'EXPENSE'].includes(type)) {
-      return c.json({ success: false, error: 'Loại giao dịch không hợp lệ.' }, 400);
+      return errorResponse(c, 'Loại giao dịch không hợp lệ.', 400);
     }
     if (amount !== undefined && (isNaN(amount) || amount <= 0)) {
-      return c.json({ success: false, error: 'Số tiền phải lớn hơn 0.' }, 400);
+      return errorResponse(c, 'Số tiền phải lớn hơn 0.', 400);
     }
 
     const updatedFields: any = { updatedAt: new Date().toISOString() };
@@ -139,16 +136,12 @@ financeRouter.put('/transactions/:id', authenticate, requireAdmin, async (c) => 
       modifiedBy: currentUser.id
     });
 
-    return c.json({
-      success: true,
-      message: 'Cập nhật giao dịch thành công.',
-      data: {
-        ...updatedTx,
-        amount: amount !== undefined ? parseFloat(amount) : parseFloat(decryptText(newAmountEncrypted, c.env))
-      }
-    });
+    return successResponse(c, {
+      ...updatedTx,
+      amount: amount !== undefined ? parseFloat(amount) : parseFloat(decryptText(newAmountEncrypted, c.env))
+    }, 'Cập nhật giao dịch thành công.');
   } catch (err: any) {
-    return c.json({ success: false, error: err.message }, 500);
+    return errorResponse(c, err.message, 500);
   }
 });
 
@@ -160,12 +153,12 @@ financeRouter.delete('/transactions/:id', authenticate, requireAdmin, async (c) 
     const [original] = await db.select().from(fundsTransactions).where(eq(fundsTransactions.id, id));
     
     if (!original) {
-      return c.json({ success: false, error: 'Không tìm thấy giao dịch này.' }, 404);
+      return errorResponse(c, 'Không tìm thấy giao dịch này.', 404);
     }
 
     const currentUser = c.get('user');
     await db.insert(fundsAuditLogs).values({
-      transactionId: null, // Because tx will be deleted
+      transactionId: null,
       action: 'DELETED',
       oldAmountEncrypted: original.amountEncrypted,
       modifiedBy: currentUser.id
@@ -173,9 +166,9 @@ financeRouter.delete('/transactions/:id', authenticate, requireAdmin, async (c) 
 
     await db.delete(fundsTransactions).where(eq(fundsTransactions.id, id));
 
-    return c.json({ success: true, message: 'Xóa giao dịch tài chính thành công.' });
+    return successResponse(c, null, 'Xóa giao dịch tài chính thành công.');
   } catch (err: any) {
-    return c.json({ success: false, error: err.message }, 500);
+    return errorResponse(c, err.message, 500);
   }
 });
 
@@ -216,8 +209,8 @@ financeRouter.get('/audit-logs', authenticate, requireAdmin, async (c) => {
       };
     });
 
-    return c.json({ success: true, data: decryptedLogs });
+    return successResponse(c, decryptedLogs);
   } catch (err: any) {
-    return c.json({ success: false, error: err.message }, 500);
+    return errorResponse(c, err.message, 500);
   }
 });

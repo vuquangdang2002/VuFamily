@@ -5,43 +5,40 @@ import { eq } from 'drizzle-orm';
 import * as bcrypt from 'bcryptjs';
 import { Env } from '../index';
 import { authenticate } from '../middleware/auth';
+import { successResponse, errorResponse } from '../utils/response';
 
 export const authRouter = new Hono<{ Bindings: Env }>();
 
-// Helper to generate a hex token
 function generateToken(): string {
   const array = new Uint8Array(32);
   crypto.getRandomValues(array);
   return Array.from(array).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
+// POST /api/auth/login
 authRouter.post('/login', async (c) => {
   try {
     const body = await c.req.json();
     const { username, password } = body;
 
     if (!username || !password) {
-      return c.json({ success: false, error: 'Vui lòng nhập tên đăng nhập và mật khẩu' }, 400);
+      return errorResponse(c, 'Vui lòng nhập tên đăng nhập và mật khẩu', 400);
     }
 
     const db = getDb(c.env.DB);
     const [user] = await db.select().from(users).where(eq(users.username, username));
 
     if (!user) {
-      return c.json({ success: false, error: 'Sai tên đăng nhập hoặc mật khẩu' }, 401);
+      return errorResponse(c, 'Sai tên đăng nhập hoặc mật khẩu', 401);
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return c.json({ success: false, error: 'Sai tên đăng nhập hoặc mật khẩu' }, 401);
+      return errorResponse(c, 'Sai tên đăng nhập hoặc mật khẩu', 401);
     }
 
     if (user.status === 'banned') {
-      return c.json({ success: false, error: 'Tài khoản của bạn đã bị khóa. Vui lòng liên hệ Admin.' }, 403);
-    }
-
-    if (!user.emailVerified) {
-      return c.json({ success: false, error: 'Tài khoản chưa xác nhận email. Vui lòng kiểm tra hộp thư và click link xác nhận.' }, 403);
+      return errorResponse(c, 'Tài khoản của bạn đã bị khóa. Vui lòng liên hệ Admin.', 403);
     }
 
     const token = generateToken();
@@ -56,36 +53,34 @@ authRouter.post('/login', async (c) => {
       })
       .where(eq(users.id, user.id));
 
-    return c.json({
-      success: true,
-      data: {
-        id: user.id,
-        username: user.username,
-        displayName: user.displayName,
-        email: user.email,
-        phone: user.phone,
-        avatar: user.avatar,
-        role: user.role,
-        token
-      }
+    return successResponse(c, {
+      id: user.id,
+      username: user.username,
+      displayName: user.displayName,
+      email: user.email,
+      phone: user.phone,
+      avatar: user.avatar,
+      role: user.role,
+      token
     });
   } catch (err: any) {
-    console.error('[AuthController - login] Error:', err.message);
-    return c.json({ success: false, error: err.message }, 500);
+    return errorResponse(c, err.message, 500);
   }
 });
 
+// POST /api/auth/logout
 authRouter.post('/logout', authenticate, async (c) => {
   try {
     const user = c.get('user');
     const db = getDb(c.env.DB);
     await db.update(users).set({ token: null, isOnline: false }).where(eq(users.id, user.id));
-    return c.json({ success: true, message: 'Đã đăng xuất' });
+    return successResponse(c, null, 'Đã đăng xuất');
   } catch (err: any) {
-    return c.json({ success: false, error: err.message }, 500);
+    return errorResponse(c, err.message, 500);
   }
 });
 
+// GET /api/auth/me
 authRouter.get('/me', authenticate, async (c) => {
   try {
     const currentUser = c.get('user');
@@ -100,35 +95,37 @@ authRouter.get('/me', authenticate, async (c) => {
       role: users.role,
     }).from(users).where(eq(users.id, currentUser.id));
 
-    if (!user) return c.json({ success: false, error: 'Không tìm thấy người dùng' }, 404);
-    return c.json({ success: true, data: user });
+    if (!user) return errorResponse(c, 'Không tìm thấy người dùng', 404);
+    return successResponse(c, user);
   } catch (err: any) {
-    return c.json({ success: false, error: err.message }, 500);
+    return errorResponse(c, err.message, 500);
   }
 });
 
+// POST /api/auth/ping
 authRouter.post('/ping', authenticate, async (c) => {
   try {
     const user = c.get('user');
     const db = getDb(c.env.DB);
     await db.update(users).set({ lastActive: new Date().toISOString(), isOnline: true }).where(eq(users.id, user.id));
-    return c.json({ success: true });
+    return successResponse(c);
   } catch (err: any) {
-    return c.json({ success: false, error: err.message }, 500);
+    return errorResponse(c, err.message, 500);
   }
 });
 
+// POST /api/auth/change-password
 authRouter.post('/change-password', authenticate, async (c) => {
   try {
     const { currentPassword, newPassword } = await c.req.json();
-    if (!currentPassword || !newPassword) return c.json({ success: false, error: 'Vui lòng nhập đầy đủ mật khẩu' }, 400);
+    if (!currentPassword || !newPassword) return errorResponse(c, 'Vui lòng nhập đầy đủ mật khẩu', 400);
 
     const currentUser = c.get('user');
     const db = getDb(c.env.DB);
     const [user] = await db.select().from(users).where(eq(users.id, currentUser.id));
 
     const isMatch = await bcrypt.compare(currentPassword, user.password);
-    if (!isMatch) return c.json({ success: false, error: 'Mật khẩu hiện tại không đúng' }, 401);
+    if (!isMatch) return errorResponse(c, 'Mật khẩu hiện tại không đúng', 401);
 
     const hashedPw = await bcrypt.hash(newPassword, 10);
     await db.update(users).set({
@@ -137,16 +134,17 @@ authRouter.post('/change-password', authenticate, async (c) => {
       updatedAt: new Date().toISOString(),
     }).where(eq(users.id, user.id));
 
-    return c.json({ success: true, message: 'Đã đổi mật khẩu' });
+    return successResponse(c, null, 'Đã đổi mật khẩu');
   } catch (err: any) {
-    return c.json({ success: false, error: err.message }, 500);
+    return errorResponse(c, err.message, 500);
   }
 });
 
+// PUT /api/auth/profile
 authRouter.put('/profile', authenticate, async (c) => {
   try {
     const { displayName, email, phone, avatar } = await c.req.json();
-    if (!displayName) return c.json({ success: false, error: 'Tên hiển thị không được để trống' }, 400);
+    if (!displayName) return errorResponse(c, 'Tên hiển thị không được để trống', 400);
 
     const currentUser = c.get('user');
     const db = getDb(c.env.DB);
@@ -169,59 +167,41 @@ authRouter.put('/profile', authenticate, async (c) => {
       role: users.role,
     }).from(users).where(eq(users.id, currentUser.id));
 
-    return c.json({ success: true, data: updatedUser });
+    return successResponse(c, updatedUser);
   } catch (err: any) {
-    return c.json({ success: false, error: err.message }, 500);
+    return errorResponse(c, err.message, 500);
   }
 });
 
+// POST /api/auth/register
 authRouter.post('/register', async (c) => {
   try {
-    const { username, password, displayName, email, phone, facebook } = await c.req.json();
-    if (!username || !password || !email) {
-      return c.json({ success: false, error: 'Tên đăng nhập, email và mật khẩu là bắt buộc' }, 400);
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) return c.json({ success: false, error: 'Email không hợp lệ' }, 400);
-
-    const strongRegex = new RegExp("^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\\$%\\^&\\*])(?=.{8,})");
-    if (!strongRegex.test(password)) {
-      return c.json({ success: false, error: 'Mật khẩu phải từ 8 ký tự, gồm chữ hoa, thường, số và ký tự đặc biệt' }, 400);
+    const { username, password, displayName, email, phone } = await c.req.json();
+    if (!username || !password) {
+      return errorResponse(c, 'Tên đăng nhập và mật khẩu là bắt buộc', 400);
     }
 
     const db = getDb(c.env.DB);
     const [existingUser] = await db.select({ id: users.id }).from(users).where(eq(users.username, username));
-    if (existingUser) return c.json({ success: false, error: 'Tên đăng nhập đã tồn tại' }, 400);
-
-    const [existingEmail] = await db.select({ id: users.id }).from(users).where(eq(users.email, email));
-    if (existingEmail) return c.json({ success: false, error: 'Email này đã được đăng ký' }, 400);
+    if (existingUser) return errorResponse(c, 'Tên đăng nhập đã tồn tại', 400);
 
     const hashedPw = await bcrypt.hash(password, 10);
     const verToken = generateToken();
     
-    // In SQLite, dates can be just ISO strings. Let's not worry about verification_token_expires_at for now since it wasn't in schema
     await db.insert(users).values({
       username,
       password: hashedPw,
       displayName: displayName || username,
-      email,
+      email: email || '',
       phone: phone || '',
-      // facebook: facebook || '', // Removed from schema.ts
       role: 'viewer',
-      emailVerified: false,
+      status: 'active',
+      emailVerified: true,
       verificationToken: verToken,
     });
 
-    // We skip sending email on registration via Resend in the worker for now to keep it simple and stateless.
-    // In Phase 3, Firebase Auth handles email verification natively!
-
-    return c.json({
-      success: true,
-      message: `Đăng ký thành công! Vui lòng liên hệ admin để kích hoạt tài khoản hoặc làm theo email (nếu có).`
-    }, 201);
+    return successResponse(c, null, 'Đăng ký tài khoản thành công! Bạn có thể đăng nhập ngay.', 201);
   } catch (err: any) {
-    return c.json({ success: false, error: err.message }, 500);
+    return errorResponse(c, err.message, 500);
   }
 });
-
