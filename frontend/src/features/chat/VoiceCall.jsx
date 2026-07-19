@@ -1,35 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Mic, MicOff, Video, VideoOff, PhoneOff } from 'lucide-react';
 import { useTranslation } from '../../shared/hooks/useTranslation';
+import { PhoneOff } from 'lucide-react';
 
 export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom, addToast }) {
     const { t } = useTranslation();
-    const localVideoRef = useRef(null);
-    const remoteVideoRef = useRef(null);
-    const peerConnectionRef = useRef(null);
-    const localStreamRef = useRef(null);
-
-    const [micMuted, setMicMuted] = useState(false);
-    const [camOff, setCamOff] = useState(false);
-    const [callConnected, setCallConnected] = useState(false);
-    const [duration, setDuration] = useState(0);
-
-    useEffect(() => {
-        if (!callConnected) {
-            setDuration(0);
-            return;
-        }
-        const interval = setInterval(() => {
-            setDuration(prev => prev + 1);
-        }, 1000);
-        return () => clearInterval(interval);
-    }, [callConnected]);
-
-    const formatDuration = (sec) => {
-        const mins = Math.floor(sec / 60).toString().padStart(2, '0');
-        const secs = (sec % 60).toString().padStart(2, '0');
-        return `${mins}:${secs}`;
-    };
+    const jitsiContainerRef = useRef(null);
+    const jitsiApiRef = useRef(null);
+    const [loading, setLoading] = useState(true);
 
     // Keep functions in refs to avoid useEffect dependency triggers on every render
     const addToastRef = useRef(addToast);
@@ -40,142 +17,105 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
         onClearActiveCallRoomRef.current = onClearActiveCallRoom;
     }, [addToast, onClearActiveCallRoom]);
 
+    const handleEndCall = () => {
+        if (jitsiApiRef.current) {
+            jitsiApiRef.current.dispose();
+            jitsiApiRef.current = null;
+        }
+        addToastRef.current(t('call.ended') || 'Cuộc gọi kết thúc.', 'info');
+        onClearActiveCallRoomRef.current();
+    };
+
     useEffect(() => {
-        if (!activeCallRoom) return;
+        if (!activeCallRoom || !jitsiContainerRef.current) return;
 
-        let localStream = null;
-        let pc = null;
+        // Ensure Jitsi API is loaded
+        if (!window.JitsiMeetExternalAPI) {
+            addToastRef.current('Chưa tải được Jitsi API. Vui lòng tải lại trang.', 'error');
+            handleEndCall();
+            return;
+        }
 
-        const initNativeWebRTC = async () => {
-            try {
-                // Get Local Media Stream (Camera & Mic)
-                const isVideo = !!activeCallRoom.requestVideo;
-                setCamOff(!isVideo);
+        // Generate a unique room name for this call
+        // For example: vufamily-room-2-call-12345
+        const roomName = `vufamily-room-${activeCallRoom.roomId}-call-${activeCallRoom.callId}`;
+        
+        console.log(`[Jitsi] Starting call in room: ${roomName}`);
 
-                try {
-                    localStream = await navigator.mediaDevices.getUserMedia({
-                        audio: true,
-                        video: isVideo ? { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' } : false
-                    });
-                } catch (err) {
-                    console.warn('[WebRTC] Camera access failed, falling back to Audio only:', err);
-                    try {
-                        localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-                        setCamOff(true);
-                    } catch (err2) {
-                        console.error('[WebRTC] All media access failed (no mic/cam):', err2);
-                        addToastRef.current(t('call.no_media') || 'Không tìm thấy Micro/Camera. Vẫn đang kết nối...', 'warning');
-                        setCamOff(true);
-                    }
-                }
-
-                if (localStream) {
-                    localStreamRef.current = localStream;
-                    if (localVideoRef.current && isVideo) {
-                        localVideoRef.current.srcObject = localStream;
-                    }
-                }
-
-                // Create RTCPeerConnection with Google Public STUN
-                pc = new RTCPeerConnection({
-                    iceServers: [
-                        { urls: 'stun:stun.l.google.com:19302' },
-                        { urls: 'stun:stun1.l.google.com:19302' }
-                    ]
-                });
-                peerConnectionRef.current = pc;
-
-                // Add Local Tracks to PeerConnection
-                if (localStream) {
-                    localStream.getTracks().forEach(track => {
-                        pc.addTrack(track, localStream);
-                    });
-                }
-
-                // Handle Incoming Remote Stream
-                pc.ontrack = (event) => {
-                    console.log('[WebRTC] Received Remote Stream Track');
-                    if (remoteVideoRef.current && event.streams[0]) {
-                        remoteVideoRef.current.srcObject = event.streams[0];
-                        setCallConnected(true);
-                    }
-                };
-
-                pc.onconnectionstatechange = () => {
-                    console.log('[WebRTC] Connection State:', pc.connectionState);
-                    if (pc.connectionState === 'connected') {
-                        setCallConnected(true);
-                        addToastRef.current(t('call.connected') || 'Đã kết nối cuộc gọi.', 'success');
-                    } else if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed') {
-                        setCallConnected(false);
-                    }
-                };
-
-                // Simulate instant P2P connection readiness
-                setTimeout(() => {
-                    setCallConnected(true);
-                    addToastRef.current(t('call.dialing') || 'Đang gọi...', 'info');
-                }, 400);
-
-            } catch (error) {
-                console.error('[WebRTC] Media init failed:', error);
-                addToastRef.current(t('call.start_error') || 'Lỗi khởi tạo cuộc gọi.', 'error');
-                onClearActiveCallRoomRef.current();
+        const domain = 'meet.jit.si';
+        const options = {
+            roomName: roomName,
+            width: '100%',
+            height: '100%',
+            parentNode: jitsiContainerRef.current,
+            configOverwrite: {
+                startWithAudioMuted: false,
+                startWithVideoMuted: !activeCallRoom.requestVideo,
+                prejoinPageEnabled: false,
+                disableDeepLinking: true,
+                p2p: {
+                    enabled: true // Prefer p2p if only 2 people
+                },
+                resolution: 720
+            },
+            interfaceConfigOverwrite: {
+                DISABLE_JOIN_LEAVE_NOTIFICATIONS: true,
+                SHOW_CHROME_EXTENSION_BANNER: false,
+                SHOW_JITSI_WATERMARK: false,
+                SHOW_WATERMARK_FOR_GUESTS: false,
+                TOOLBAR_BUTTONS: [
+                    'microphone', 'camera', 'desktop', 'fullscreen',
+                    'fodeviceselection', 'hangup', 'profile', 'chat', 'settings',
+                    'raisehand', 'videoquality', 'filmstrip', 'shortcuts',
+                    'tileview', 'select-background', 'mute-everyone', 'security'
+                ]
+            },
+            userInfo: {
+                displayName: user?.full_name || user?.username || 'Thành viên',
+                email: user?.email || '',
             }
         };
 
-        initNativeWebRTC();
+        if (user?.avatar) {
+            options.userInfo.avatarURL = user.avatar.startsWith('http') 
+                ? user.avatar 
+                : `${window.location.origin}${user.avatar}`;
+        }
+
+        try {
+            const api = new window.JitsiMeetExternalAPI(domain, options);
+            jitsiApiRef.current = api;
+
+            api.addEventListener('videoConferenceJoined', () => {
+                setLoading(false);
+                addToastRef.current(t('call.connected') || 'Đã kết nối vào phòng gọi.', 'success');
+            });
+
+            api.addEventListener('videoConferenceLeft', () => {
+                console.log('[Jitsi] User left the conference.');
+                handleEndCall();
+            });
+            
+            api.addEventListener('readyToClose', () => {
+                console.log('[Jitsi] Ready to close (redirect/hangup).');
+                handleEndCall();
+            });
+
+        } catch (e) {
+            console.error('[Jitsi] Init error:', e);
+            addToastRef.current('Lỗi khởi tạo cuộc gọi.', 'error');
+            handleEndCall();
+        }
 
         return () => {
-            // Cleanup media tracks & connection on unmount
-            if (localStreamRef.current) {
-                localStreamRef.current.getTracks().forEach(track => track.stop());
-                localStreamRef.current = null;
+            if (jitsiApiRef.current) {
+                jitsiApiRef.current.dispose();
+                jitsiApiRef.current = null;
             }
-            if (peerConnectionRef.current) {
-                peerConnectionRef.current.close();
-                peerConnectionRef.current = null;
-            }
-            setCallConnected(false);
         };
-    }, [activeCallRoom?.callId, activeCallRoom?.requestVideo, t]);
+    }, [activeCallRoom, user]);
 
     if (!activeCallRoom) return null;
-
-    const handleEndCall = () => {
-        addToast(t('call.ended') || 'Cuộc gọi kết thúc.', 'info');
-        onClearActiveCallRoom();
-    };
-
-    const toggleMic = () => {
-        if (localStreamRef.current) {
-            const audioTrack = localStreamRef.current.getAudioTracks()[0];
-            if (audioTrack) {
-                audioTrack.enabled = !audioTrack.enabled;
-                const isEnabled = audioTrack.enabled;
-                setMicMuted(!isEnabled);
-                addToast(isEnabled ? t('call.mic_enabled') : t('call.mic_disabled'), 'info');
-            }
-        }
-    };
-
-    const toggleCam = () => {
-        if (localStreamRef.current) {
-            const videoTrack = localStreamRef.current.getVideoTracks()[0];
-            if (videoTrack) {
-                videoTrack.enabled = !videoTrack.enabled;
-                const isEnabled = videoTrack.enabled;
-                setCamOff(!isEnabled);
-                addToast(isEnabled ? t('call.cam_enabled') : t('call.cam_disabled'), 'info');
-            } else {
-                setCamOff(prev => {
-                    const nextVal = !prev;
-                    addToast(nextVal ? t('call.cam_disabled') : t('call.cam_enabled'), 'info');
-                    return nextVal;
-                });
-            }
-        }
-    };
 
     return (
         <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/90 backdrop-blur-xl p-0 md:p-6 animate-fade-in">
@@ -190,8 +130,8 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
                                 {activeCallRoom.display_name || t('call.call_label')}
                             </h3>
                             <p className="m-0 text-xs text-zinc-400 font-medium flex items-center gap-2">
-                                <span className={`w-2 h-2 rounded-full ${callConnected ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`} />
-                                {callConnected ? `${t('call.connected') || 'Đã kết nối'} (${formatDuration(duration)})` : (t('call.dialing') || 'Đang gọi...')}
+                                <span className={`w-2 h-2 rounded-full ${!loading ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`} />
+                                {!loading ? t('call.connected') || 'Đã kết nối' : t('call.dialing') || 'Đang gọi...'}
                             </p>
                         </div>
                     </div>
@@ -205,79 +145,16 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
                     </button>
                 </div>
 
-                {/* ── Main Video Stage ── */}
+                {/* ── Main Jitsi Stage ── */}
                 <div className="flex-1 relative bg-zinc-950 flex items-center justify-center overflow-hidden">
-                    
-                    {/* Remote Stream Video / Avatar */}
-                    {activeCallRoom.requestVideo && !camOff ? (
-                        <video
-                            ref={remoteVideoRef}
-                            autoPlay
-                            playsInline
-                            className="w-full h-full object-cover"
-                        />
-                    ) : (
-                        <div className="flex flex-col items-center gap-4 text-center p-6">
-                            <div className="w-28 h-28 rounded-full bg-amber-500/20 border-2 border-amber-500/40 text-amber-400 flex items-center justify-center text-4xl font-extrabold shadow-2xl animate-pulse">
-                                {(activeCallRoom.display_name || 'V').charAt(0).toUpperCase()}
-                            </div>
-                            <div>
-                                <h4 className="text-xl font-bold text-white m-0">{activeCallRoom.display_name || t('call.call_label')}</h4>
-                                <p className="text-sm text-zinc-400 mt-1 font-medium">{t('call.connected') || 'Cuộc gọi thoại Native P2P'}</p>
-                            </div>
+                    {loading && (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-zinc-900 z-10">
+                            <div className="w-12 h-12 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+                            <p className="text-zinc-400 font-medium">Đang kết nối nền tảng...</p>
                         </div>
                     )}
-
-                    {/* Local Stream Video Self-Preview (PIP) */}
-                    {activeCallRoom.requestVideo && !camOff && (
-                        <div className="absolute bottom-6 right-6 w-36 h-48 md:w-44 md:h-60 rounded-2xl overflow-hidden border-2 border-white/20 shadow-2xl bg-zinc-900 z-20">
-                            <video
-                                ref={localVideoRef}
-                                autoPlay
-                                playsInline
-                                muted
-                                className="w-full h-full object-cover -scale-x-100"
-                            />
-                        </div>
-                    )}
+                    <div ref={jitsiContainerRef} className="w-full h-full" />
                 </div>
-
-                {/* ── Bottom Controls ── */}
-                <div className="px-6 py-4 bg-zinc-900/90 border-t border-white/5 flex items-center justify-center gap-6 z-10 shrink-0">
-                    {/* Mute Mic */}
-                    <button
-                        onClick={toggleMic}
-                        className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all ${
-                            micMuted ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' : 'bg-white/10 text-white hover:bg-white/20'
-                        }`}
-                        title={micMuted ? t('call.mute_on') : t('call.mute_off')}
-                    >
-                        {micMuted ? <MicOff size={20} /> : <Mic size={20} />}
-                    </button>
-
-                    {/* Toggle Camera */}
-                    {activeCallRoom.requestVideo && (
-                        <button
-                            onClick={toggleCam}
-                            className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all ${
-                                camOff ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' : 'bg-white/10 text-white hover:bg-white/20'
-                            }`}
-                            title={camOff ? t('call.cam_on') : t('call.cam_off')}
-                        >
-                            {camOff ? <VideoOff size={20} /> : <Video size={20} />}
-                        </button>
-                    )}
-
-                    {/* End Call Button */}
-                    <button
-                        onClick={handleEndCall}
-                        className="w-12 h-12 rounded-2xl bg-rose-600 hover:bg-rose-500 text-white flex items-center justify-center transition-all shadow-lg shadow-rose-600/30 active:scale-95"
-                        title={t('call.end_btn')}
-                    >
-                        <PhoneOff size={22} />
-                    </button>
-                </div>
-
             </div>
         </div>
     );

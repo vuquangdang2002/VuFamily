@@ -546,7 +546,7 @@ export default function App() {
             case 'history':
                 return <HistoryPage isAdmin={isAdmin} user={user} onRefresh={refresh} addToast={addToast} members={members} />;
             case 'chat':
-                return <ChatPage user={user} addToast={addToast} onStartCall={setActiveCallRoom} />;
+                return <ChatPage user={user} addToast={addToast} onStartCall={handleStartCall} />;
             case 'finance':
                 return <FinancePage user={user} addToast={addToast} />;
             case 'requests':
