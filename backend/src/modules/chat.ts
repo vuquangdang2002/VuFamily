@@ -263,7 +263,130 @@ chatRouter.post('/:id/messages', authenticate, async (c) => {
   }
 });
 
+// In-memory real-time call sessions store
+interface CallSession {
+  callId: string;
+  roomId: number;
+  callerId: number;
+  callerName: string;
+  callerAvatar: string | null;
+  requestVideo: boolean;
+  targetUserIds: number[];
+  status: 'ringing' | 'accepted' | 'rejected' | 'ended';
+  startedAt: number;
+  signals: { caller: any[]; receiver: any[] };
+}
+
+const activeCallsMap = new Map<string, CallSession>();
+
 export const callRouter = new Hono<{ Bindings: Env }>();
-// We leave calls unimplemented for now until DO WebRTC implementation,
-// or we can stub them out so that requests don't fail immediately.
-callRouter.all('*', (c) => c.json({ success: false, error: 'WebRTC calls are temporarily unavailable during migration.' }, 503));
+
+// Clean up expired calls (> 60s)
+const cleanupCalls = () => {
+  const now = Date.now();
+  for (const [id, session] of activeCallsMap.entries()) {
+    if (now - session.startedAt > 60000 || session.status === 'ended') {
+      activeCallsMap.delete(id);
+    }
+  }
+};
+
+// POST /api/calls/start
+callRouter.post('/start', authenticate, async (c) => {
+  try {
+    cleanupCalls();
+    const currentUser = c.get('user');
+    const { roomId, requestVideo } = await c.req.json();
+    const db = getDb(c.env.DB);
+
+    const members = await db.select({ userId: chatMembers.userId })
+      .from(chatMembers)
+      .where(eq(chatMembers.roomId, roomId));
+
+    const targetUserIds = members.map(m => m.userId).filter(id => id !== currentUser.id);
+
+    const callId = `call_${roomId}_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+    const session: CallSession = {
+      callId,
+      roomId,
+      callerId: currentUser.id,
+      callerName: currentUser.displayName || currentUser.username,
+      callerAvatar: currentUser.avatar || null,
+      requestVideo: !!requestVideo,
+      targetUserIds,
+      status: 'ringing',
+      startedAt: Date.now(),
+      signals: { caller: [], receiver: [] }
+    };
+
+    activeCallsMap.set(callId, session);
+
+    return c.json({ success: true, data: session });
+  } catch (err: any) {
+    return c.json({ success: false, error: err.message }, 500);
+  }
+});
+
+// GET /api/calls/active
+callRouter.get('/active', authenticate, async (c) => {
+  try {
+    cleanupCalls();
+    const currentUser = c.get('user');
+    const now = Date.now();
+
+    // Find any active or ringing call for this user
+    for (const session of activeCallsMap.values()) {
+      if (session.status === 'ended') continue;
+      const isCaller = session.callerId === currentUser.id;
+      const isTarget = session.targetUserIds.includes(currentUser.id);
+
+      if ((isCaller || isTarget) && (now - session.startedAt < 60000)) {
+        return c.json({ success: true, data: session });
+      }
+    }
+
+    return c.json({ success: true, data: null });
+  } catch (err: any) {
+    return c.json({ success: false, error: err.message }, 500);
+  }
+});
+
+// POST /api/calls/respond
+callRouter.post('/respond', authenticate, async (c) => {
+  try {
+    cleanupCalls();
+    const currentUser = c.get('user');
+    const { callId, action } = await c.req.json();
+
+    const session = activeCallsMap.get(callId);
+    if (!session) {
+      return c.json({ success: false, error: 'Cuộc gọi đã kết thúc hoặc không tồn tại.' }, 404);
+    }
+
+    if (action === 'accept') {
+      session.status = 'accepted';
+    } else if (action === 'reject') {
+      session.status = 'rejected';
+    }
+
+    return c.json({ success: true, data: session });
+  } catch (err: any) {
+    return c.json({ success: false, error: err.message }, 500);
+  }
+});
+
+// POST /api/calls/end
+callRouter.post('/end', authenticate, async (c) => {
+  try {
+    const { callId } = await c.req.json();
+    if (callId && activeCallsMap.has(callId)) {
+      const session = activeCallsMap.get(callId);
+      if (session) session.status = 'ended';
+      activeCallsMap.delete(callId);
+    }
+    return c.json({ success: true });
+  } catch (err: any) {
+    return c.json({ success: false, error: err.message }, 500);
+  }
+});
+

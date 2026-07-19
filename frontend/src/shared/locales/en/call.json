@@ -29,7 +29,7 @@
     "call.mute_off": "Mute",
     "call.cam_on": "Cam On",
     "call.cam_off": "Cam Off",
-    "call.end_btn": "End",
+    "call.end_btn": "End Call",
     "call.speaker": "Speaker",
     "call.earpiece": "Earpiece",
     "call.audio_settings_btn": "Audio",
@@ -43,5 +43,11 @@
     "call.call_label": "Call",
     "call.switched_speaker": "Switched to Speaker",
     "call.switched_earpiece": "Switched to Earpiece",
-    "call.switch_error": "Error switching speaker:"
+    "call.switch_error": "Error switching speaker:",
+    "call.mic_enabled": "Microphone On 🎤",
+    "call.mic_disabled": "Microphone Off 🔇",
+    "call.cam_enabled": "Camera On 📹",
+    "call.cam_disabled": "Camera Off 📷",
+    "call.start_init": "Dialing call signal...",
+    "call.init_failed": "Failed to initialize call."
 }

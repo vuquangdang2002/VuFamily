@@ -19,9 +19,10 @@ Dự án "Vũ Gia" không chỉ là website gia phả thông thường mà đị
 - **Typography & Căn lề (Spacing)**:
   - Font chữ: Inter, Outfit. Chú ý line-height (`leading-relaxed`) và độ nét.
   - Phải sử dụng khoảng cách (gap, margin, padding) một cách RỘNG RÃI, tránh để nội dung bị dính vào nhau (crunched/squished). Đặc biệt với các Form: ưu tiên dùng `flex flex-col gap-4` thay vì `space-y` để tránh lỗi với Fragment.
-- **Micro-interactions (Chuyển động)**:
-  - Mọi nút bấm, card khi hover đều phải có hiệu ứng (VD: `hover:scale-[1.02]`, đổi màu viền, bóng đổ shadow).
-  - Tích hợp Framer Motion để tạo hiệu ứng mượt mà (Fade In, Slide Up) khi render component.
+- **Micro-interactions & Phản hồi Tức thì (Instant Feedback & Optimistic UI)**:
+  - **Click là phải có phản hồi ngay (0ms)**: Mọi thao tác click, toggle, nút bấm của người dùng PHẢI có phản hồi trực quan ngay lập tức (Toast thông báo, hiệu ứng active, hoặc cập nhật giao diện tạm thời Optimistic UI trong `0.00ms`). Tuyệt đối không đứng yên im lặng chờ mạng.
+  - **Tương tác & Gửi API lập tức**: Phát lệnh và gửi API đi ngay trong background. Giao diện thể hiện ngay kết quả dự kiến (Optimistic State), khi API trả về kết quả chính thức thì cập nhật thay thế ngay lập tức.
+  - **Micro-animations**: Mọi nút bấm, card khi hover đều phải có hiệu ứng (`hover:scale-[1.02]`, đổi màu viền, bóng đổ shadow). Tích hợp Framer Motion để tạo hiệu ứng mượt mà.
 
 ## 3. Quy trình bảo trì
 - Không bao giờ xoá code hiện tại mà không test kĩ.

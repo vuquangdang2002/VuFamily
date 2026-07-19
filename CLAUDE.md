@@ -122,6 +122,14 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, fewer "it doesn't actually run" surprises, and clarifying questions come before implementation rather than after mistakes.
 
+## 11. Instant Feedback & Optimistic UI
+
+**Click = Instant 0ms Feedback. Execute API immediately. Render result instantly on response.**
+
+- Every user click, toggle, button action MUST yield instant visual/toast feedback in `0.00ms`. Never leave the UI silent or frozen waiting for network calls.
+- Send API requests immediately in the background while updating the UI optimistically.
+- As soon as the API response arrives, update the final UI state immediately without delay.
+
 ---
 
 ## Development & Testing

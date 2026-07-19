@@ -23,6 +23,7 @@ import HistoryPage from './features/history/HistoryPanel';
 import RequestsPage from './features/requests/RequestsPanel';
 import ChatPage from './features/chat/ChatPage';
 import VoiceCall from './features/chat/VoiceCall';
+import IncomingCallModal from './features/chat/components/IncomingCallModal';
 import GuidePage from './features/guide/GuidePage';
 import FinancePage from './features/finance/FinancePage';
 import HomePage from './features/home/HomePage';
@@ -138,7 +139,87 @@ export default function App() {
         return 'home';
     });
     const [activeCallRoom, setActiveCallRoom] = useState(null);
+    const [incomingCall, setIncomingCall] = useState(null);
     const [sidebarCollapsed, setSidebarCollapsed] = useState(() => window.innerWidth <= 768);
+
+    // Call Signaling Methods
+    const handleStartCall = async (room) => {
+        try {
+            const token = localStorage.getItem('vuFamilyToken');
+            const res = await fetch('/api/calls/start', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
+                body: JSON.stringify({ roomId: room.id, requestVideo: room.requestVideo })
+            });
+            const json = await res.json();
+            if (json.success) {
+                setActiveCallRoom(json.data);
+            } else {
+                setActiveCallRoom({ id: room.id, display_name: room.display_name, requestVideo: room.requestVideo });
+            }
+        } catch (e) {
+            setActiveCallRoom({ id: room.id, display_name: room.display_name, requestVideo: room.requestVideo });
+        }
+    };
+
+    const handleAcceptCall = async () => {
+        if (!incomingCall) return;
+        try {
+            const token = localStorage.getItem('vuFamilyToken');
+            await fetch('/api/calls/respond', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
+                body: JSON.stringify({ callId: incomingCall.callId, action: 'accept' })
+            });
+            setActiveCallRoom(incomingCall);
+        } catch (e) {
+            setActiveCallRoom(incomingCall);
+        } finally {
+            setIncomingCall(null);
+        }
+    };
+
+    const handleRejectCall = async () => {
+        if (!incomingCall) return;
+        try {
+            const token = localStorage.getItem('vuFamilyToken');
+            await fetch('/api/calls/respond', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
+                body: JSON.stringify({ callId: incomingCall.callId, action: 'reject' })
+            });
+        } catch (e) {
+        } finally {
+            setIncomingCall(null);
+        }
+    };
+
+    // Real-time Global Call Listener
+    useEffect(() => {
+        if (!user) return;
+        const interval = setInterval(async () => {
+            try {
+                const token = localStorage.getItem('vuFamilyToken');
+                if (!token) return;
+                const res = await fetch('/api/calls/active', {
+                    headers: { 'x-auth-token': token }
+                });
+                const json = await res.json();
+                if (json.success && json.data) {
+                    const session = json.data;
+                    if (session.callerId !== user.id && session.status === 'ringing') {
+                        setIncomingCall(session);
+                    } else if (session.status === 'rejected' && activeCallRoom?.callId === session.callId) {
+                        addToast(t('call.rejected') || 'Cuộc gọi bị từ chối', 'info');
+                        setActiveCallRoom(null);
+                        setIncomingCall(null);
+                    }
+                }
+            } catch (e) {}
+        }, 800);
+
+        return () => clearInterval(interval);
+    }, [user, activeCallRoom]);
 
     // Sync activePage and sub-resource selections from window.location.pathname on popstate (browser navigation)
     useEffect(() => {
@@ -454,10 +535,26 @@ export default function App() {
             />
 
             <Toast toasts={toasts} />
+
+            <IncomingCallModal 
+                incomingCall={incomingCall} 
+                onAccept={handleAcceptCall} 
+                onReject={handleRejectCall} 
+            />
+
             <VoiceCall 
                 user={user} 
                 activeCallRoom={activeCallRoom} 
-                onClearActiveCallRoom={() => setActiveCallRoom(null)} 
+                onClearActiveCallRoom={() => {
+                    if (activeCallRoom?.callId) {
+                        fetch('/api/calls/end', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'x-auth-token': localStorage.getItem('vuFamilyToken') },
+                            body: JSON.stringify({ callId: activeCallRoom.callId })
+                        }).catch(() => {});
+                    }
+                    setActiveCallRoom(null);
+                }} 
                 addToast={addToast} 
             />
         </div>

@@ -65,8 +65,28 @@ export default function MessagePanel({
         e.preventDefault();
         if (!inputText.trim() || !activeRoomId) return;
 
-        const content = inputText;
-        setInputText(''); // optimistic clear
+        const content = inputText.trim();
+        setInputText(''); // optimistic input clear
+
+        // 1. Instant 0ms Optimistic UI Message Object
+        const tempId = `temp_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+        const tempMsg = {
+            id: tempId,
+            room_id: activeRoomId,
+            sender_id: user.id,
+            content: content,
+            created_at: new Date().toISOString(),
+            sending: true,
+            users: {
+                display_name: user.display_name || user.displayName || user.username,
+                username: user.username,
+                avatar: user.avatar
+            }
+        };
+
+        // Appends to UI in 0ms!
+        setMessages(prev => [...prev, tempMsg]);
+        scrollToBottom();
 
         try {
             const res = await fetch(`${getApiBase()}/chats/${activeRoomId}/messages`, {
@@ -79,8 +99,8 @@ export default function MessagePanel({
             });
             const json = await res.json();
             if (json.success) {
-                // Immediately append + cache
-                setMessages(prev => [...prev, json.data]);
+                // Replace temp message with server confirmed message
+                setMessages(prev => prev.map(m => m.id === tempId ? json.data : m));
                 TrackingHelper.trackSendChatMessage(activeRoom?.type || 'direct');
                 cacheSingleMessage(activeRoomId, json.data).catch((err) => { 
                     myError('CHAT', "ChatPage Background Sync Error:", err); 
@@ -88,13 +108,15 @@ export default function MessagePanel({
                 if (latestMsgTimeRef) {
                     latestMsgTimeRef.current = json.data.created_at;
                 }
-                scrollToBottom();
                 fetchRooms(); // to update read/last msg time
             } else {
-                addToast(json.error || t('chat.send_fail'), 'error');
+                // Remove temp message if failed
+                setMessages(prev => prev.filter(m => m.id !== tempId));
+                addToast(json.error || t('chat.send_fail') || 'Không thể gửi tin nhắn.', 'error');
             }
         } catch (err) {
-            addToast(t('chat.network_error'), 'error');
+            setMessages(prev => prev.filter(m => m.id !== tempId));
+            addToast(t('chat.network_error') || 'Lỗi kết nối mạng.', 'error');
         }
     };
 

@@ -135,7 +135,7 @@ export default function ChatPage({ user, addToast, onStartCall }) {
 
         const interval = setInterval(() => {
             fetchRooms();
-        }, 15000);
+        }, 3000);
         return () => clearInterval(interval);
     }, []);
 
@@ -159,7 +159,7 @@ export default function ChatPage({ user, addToast, onStartCall }) {
 
         const interval = setInterval(() => {
             fetchMessagesIncremental(activeRoomId);
-        }, 5000);
+        }, 600);
 
         return () => clearInterval(interval);
     }, [activeRoomId]);

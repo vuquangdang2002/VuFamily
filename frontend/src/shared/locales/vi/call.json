@@ -24,12 +24,12 @@
     "call.incoming_voice": "Đang gọi cho bạn...",
     "call.dialing": "Đang đổ chuông...",
     "call.reject_btn": "Từ chối",
-    "call.accept_btn": "Nghe",
+    "call.accept_btn": "Nghe máy",
     "call.mute_on": "Bật micro",
     "call.mute_off": "Tắt micro",
     "call.cam_on": "Bật cam",
     "call.cam_off": "Tắt cam",
-    "call.end_btn": "Kết thúc",
+    "call.end_btn": "Kết thúc cuộc gọi",
     "call.speaker": "Loa ngoài",
     "call.earpiece": "Loa trong",
     "call.audio_settings_btn": "Âm thanh",
@@ -43,5 +43,11 @@
     "call.call_label": "Cuộc gọi",
     "call.switched_speaker": "Đã chuyển sang Loa ngoài",
     "call.switched_earpiece": "Đã chuyển sang Loa trong",
-    "call.switch_error": "Lỗi chuyển loa:"
+    "call.switch_error": "Lỗi chuyển loa:",
+    "call.mic_enabled": "Đã bật Micro 🎤",
+    "call.mic_disabled": "Đã tắt Micro 🔇",
+    "call.cam_enabled": "Đã bật Camera 📹",
+    "call.cam_disabled": "Đã tắt Camera 📷",
+    "call.start_init": "Đang phát tín hiệu cuộc gọi...",
+    "call.init_failed": "Không thể khởi tạo cuộc gọi."
 }
