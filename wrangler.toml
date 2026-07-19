@@ -37,3 +37,6 @@ invocation_logs = true
 enabled = false
 persist = true
 head_sampling_rate = 1
+
+[vars]
+LIVEKIT_URL = "wss://vufamily-xvuotmal.livekit.cloud"
