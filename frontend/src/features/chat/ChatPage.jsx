@@ -14,7 +14,7 @@ import MessagePanel from './components/MessagePanel';
 import ChatModals from './components/ChatModals';
 import RightPanel from './components/RightPanel';
 
-export default function ChatPage({ user, addToast, onStartCall }) {
+export default function ChatPage({ user, addToast, onStartCall, availableCalls }) {
     const { t } = useTranslation();
     const [rooms, setRooms] = useState([]);
     const [activeRoomId, setActiveRoomId] = useState(null);
@@ -440,6 +440,7 @@ export default function ChatPage({ user, addToast, onStartCall }) {
                         addToast={addToast}
                         fetchRooms={fetchRooms}
                         latestMsgTimeRef={latestMsgTimeRef}
+                        availableCalls={availableCalls}
                     />
                 </div>
 

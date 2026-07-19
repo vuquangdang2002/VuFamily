@@ -4,7 +4,7 @@ import { localApi } from './shared/services/api';
 import { myLog, myError } from './shared/utils/logger';
 import { I18nHelper } from './shared/services/i18n.js';
 import { TrackingHelper } from './shared/services/TrackingHelper';
-import { ConfigAPI } from './config.js';
+import { ConfigAPI, API_BASE_URL } from './config.js';
 import { useTranslation } from './shared/hooks/useTranslation';
 import { Home, Network, Newspaper, MessageSquare, Menu, Calendar, Wallet, History, ClipboardList, Settings, User, HelpCircle } from 'lucide-react';
 
@@ -229,7 +229,7 @@ export default function App() {
 
         try {
             const token = localStorage.getItem('vuFamilyToken');
-            await fetch('/api/calls/respond', {
+            await fetch(`${API_BASE_URL}/calls/respond`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
                 body: JSON.stringify({ callId: incomingCall.callId, action: 'accept' })
@@ -246,7 +246,7 @@ export default function App() {
         if (!incomingCall) return;
         try {
             const token = localStorage.getItem('vuFamilyToken');
-            await fetch('/api/calls/respond', {
+            await fetch(`${API_BASE_URL}/calls/respond`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
                 body: JSON.stringify({ callId: incomingCall.callId, action: 'reject' })
@@ -257,6 +257,29 @@ export default function App() {
             setIncomingCall(null);
         }
     };
+    
+    useEffect(() => {
+        const handleJoinCall = async (e) => {
+            const session = e.detail;
+            if (!session) return;
+            try {
+                const token = localStorage.getItem('vuFamilyToken');
+                const res = await fetch(`${API_BASE_URL}/calls/respond`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
+                    body: JSON.stringify({ callId: session.callId, action: 'accept' })
+                });
+                const json = await res.json();
+                if (json.success) {
+                    setActiveCallRoom(json.data);
+                }
+            } catch (err) {
+                myError('CALL', 'Error joining call:', err);
+            }
+        };
+        window.addEventListener('app:joinCall', handleJoinCall);
+        return () => window.removeEventListener('app:joinCall', handleJoinCall);
+    }, []);
     
     // Proactive Permission Requests on Initial Load
     useEffect(() => {
@@ -298,25 +321,49 @@ export default function App() {
                 // might produce strings. Always compare as strings for safety.
                 const isNotCaller = String(session.callerId) !== String(user.id);
                 const isRinging = session.status === 'ringing';
-                myLog('CALL', `[Global Call Listener] callerId=${session.callerId}(${typeof session.callerId}), user.id=${user.id}(${typeof user.id}), isNotCaller=${isNotCaller}, status=${session.status}, targetUserIds=${JSON.stringify(session.targetUserIds)}`);
                 
-                if (isNotCaller && isRinging) {
-                    myLog('CALL', '[Global Call Listener] ✅ INCOMING CALL DETECTED! Setting incomingCall state.');
-                    setIncomingCall(session);
-                    // Messenger-style vibration pattern for mobile
-                    if (navigator.vibrate) {
-                        navigator.vibrate([300, 200, 300, 200, 300]);
+                // If I am not the caller, check if I have accepted or rejected
+                const hasAccepted = session.acceptedUserIds?.includes(user.id) || false;
+                const hasRejected = session.rejectedUserIds?.includes(user.id) || false;
+
+                
+                // Track all calls the user is involved in for the "Join" button feature
+                setAvailableCalls(prev => {
+                    const newCalls = new Map(prev);
+                    if (session.status === 'ended') {
+                        newCalls.delete(session.roomId);
+                    } else {
+                        newCalls.set(session.roomId, session);
                     }
-                } else if (session.status === 'rejected' && activeCallRoom?.callId === session.callId) {
-                    addToast(t('call.rejected') || 'Cuộc gọi bị từ chối', 'info');
-                    setActiveCallRoom(null);
-                    setIncomingCall(null);
+                    return newCalls;
+                });
+
+                if (isNotCaller && (isRinging || session.status === 'ongoing') && !hasAccepted && !hasRejected) {
+                    // I have not responded yet, and the call is ringing or ongoing (for group calls)
+                    if (!incomingCall || incomingCall.callId !== session.callId) {
+                        myLog('CALL', '[Global Call Listener] ✅ INCOMING CALL DETECTED! Setting incomingCall state.');
+                        setIncomingCall(session);
+                        // Messenger-style vibration pattern for mobile
+                        if (navigator.vibrate) {
+                            navigator.vibrate([300, 200, 300, 200, 300]);
+                        }
+                    } else {
+                        // Just update the incoming call state (e.g. status changed from ringing to ongoing)
+                        setIncomingCall(session);
+                    }
+                } else if (hasRejected) {
+                    // I rejected it, so I shouldn't see the ringing UI
+                    if (incomingCall?.callId === session.callId) {
+                        setIncomingCall(null);
+                    }
                 } else if (session.status === 'ended') {
                     if (activeCallRoom?.callId === session.callId) {
                         addToast(t('call.ended') || 'Cuộc gọi kết thúc', 'info');
                         setActiveCallRoom(null);
                     }
-                    setIncomingCall(null);
+                    if (incomingCall?.callId === session.callId) {
+                        setIncomingCall(null);
+                    }
                 } else if (activeCallRoom?.callId === session.callId) {
                     // Update activeCallRoom so VoiceCall knows when receiver accepts
                     if (activeCallRoom.status !== session.status || activeCallRoom.connectedAt !== session.connectedAt) {
@@ -475,6 +522,8 @@ export default function App() {
     };
 
     const pendingCount = isAdmin ? localApi.getPendingRequests().length : 0;
+    const [showUsersModal, setShowUsersModal] = useState(false);
+    const [availableCalls, setAvailableCalls] = useState(new Map());
     const [profileModalOpen, setProfileModalOpen] = useState(false);
 
     const renderPage = () => {
@@ -539,7 +588,7 @@ export default function App() {
             case 'history':
                 return <HistoryPage isAdmin={isAdmin} user={user} onRefresh={refresh} addToast={addToast} members={members} />;
             case 'chat':
-                return <ChatPage user={user} addToast={addToast} onStartCall={handleStartCall} />;
+                return <ChatPage user={user} addToast={addToast} onStartCall={handleStartCall} availableCalls={availableCalls} />;
             case 'finance':
                 return <FinancePage user={user} addToast={addToast} />;
             case 'requests':

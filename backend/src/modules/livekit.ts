@@ -30,6 +30,7 @@ livekitRouter.post('/token', authenticate, async (c) => {
       room: roomName,
       canPublish: true,
       canSubscribe: true,
+      canPublishData: true,
     });
 
     // The token is valid for 2 hours

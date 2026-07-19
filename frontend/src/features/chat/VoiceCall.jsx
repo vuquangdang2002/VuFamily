@@ -6,23 +6,27 @@ import { API_BASE_URL } from '../../config';
 import '@livekit/components-styles';
 import {
     LiveKitRoom,
-    VideoConference,
-    RoomAudioRenderer,
     useRemoteParticipants
 } from '@livekit/components-react';
+import CustomVideoRoom from './CustomVideoRoom';
 
-function CallAutoEnder({ onEndCall }) {
+function CallAutoEnder({ onEndCall, addToast }) {
     const remoteParticipants = useRemoteParticipants();
     const [hasConnected, setHasConnected] = useState(false);
+    const { t } = useTranslation();
 
     useEffect(() => {
         if (remoteParticipants.length > 0) {
             setHasConnected(true);
         } else if (hasConnected && remoteParticipants.length === 0) {
             console.log('[LiveKit] All remote participants left. Auto-ending call.');
-            onEndCall();
+            addToast(t('call.others_left') || 'Những người khác đã rời khỏi cuộc gọi.', 'info');
+            const timer = setTimeout(() => {
+                onEndCall();
+            }, 1500);
+            return () => clearTimeout(timer);
         }
-    }, [remoteParticipants.length, hasConnected, onEndCall]);
+    }, [remoteParticipants.length, hasConnected, onEndCall, addToast, t]);
 
     return null;
 }
@@ -102,7 +106,7 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
         return () => {
             isMounted = false;
         };
-    }, [activeCallRoom]);
+    }, [activeCallRoom?.callId]);
 
     if (!activeCallRoom) {
         return null;
@@ -110,8 +114,11 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
 
     if (!token || !serverUrl) {
         return (
-            <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/90 backdrop-blur-xl">
-                <div className="flex flex-col items-center gap-4 text-white">
+            <div className="fixed inset-0 z-[99999] flex flex-col items-center justify-center bg-black/90 backdrop-blur-xl animate-fade-in text-white p-6">
+                <div className="flex flex-col items-center gap-6 text-center max-w-sm">
+                    <div className="w-20 h-20 bg-amber-500/20 rounded-full flex items-center justify-center animate-pulse">
+                        <div className="text-4xl">{activeCallRoom?.requestVideo ? '📹' : '📞'}</div>
+                    </div>
                     <div className="w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full animate-spin" />
                     <p>{t('call.preparing_room') || 'Đang chuẩn bị phòng họp ảo...'}</p>
                     
@@ -165,11 +172,10 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
                             console.error('[LiveKit] Room error:', error);
                             addToastRef.current(error.message || 'Lỗi thiết bị (Camera/Micro) hoặc kết nối LiveKit.', 'error');
                         }}
-                        style={{ height: '100%', display: 'flex', flexDirection: 'column' }}
+                        className="w-full h-full"
                     >
-                        <CallAutoEnder onEndCall={handleEndCall} />
-                        <VideoConference />
-                        <RoomAudioRenderer />
+                        <CallAutoEnder onEndCall={handleEndCall} addToast={addToastRef.current} />
+                        <CustomVideoRoom />
                     </LiveKitRoom>
                 </div>
             </div>

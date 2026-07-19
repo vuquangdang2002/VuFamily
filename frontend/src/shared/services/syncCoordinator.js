@@ -45,6 +45,14 @@ class SyncCoordinator {
         myLog('SYNC', 'Received instant WS call update. Refreshing.');
         this.triggerImmediateSync('calls');
       }
+
+      if (msg.type === 'CALL_SIGNAL') {
+        myLog('SYNC', `[Zero-Delay] Received targeted CALL_SIGNAL action=${msg.action}. Pushing to UI instantly.`);
+        // Bypass HTTP fetch, push the session straight to listeners!
+        if (msg.session) {
+          this.listeners.calls.forEach(cb => cb(msg.session));
+        }
+      }
     });
   }
 

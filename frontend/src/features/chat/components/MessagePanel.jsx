@@ -58,6 +58,7 @@ export default function MessagePanel({
   addToast,
   fetchRooms,
   latestMsgTimeRef,
+  availableCalls,
 }) {
   const { t } = useTranslation();
   const [inputText, setInputText] = useState("");
@@ -208,26 +209,48 @@ export default function MessagePanel({
           )}
         </div>
         <div className="flex items-center gap-1.5 shrink-0 ml-auto">
-          <button
-            className="flex items-center justify-center w-10 h-10 rounded-xl bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-zinc-700 dark:text-zinc-300 transition-colors"
-            title={t("chat.call_voice")}
-            onClick={() => {
-              if (activeRoom?.type === 'group') setShowGroupCallModal(true);
-              else onStartCall({ ...activeRoom, requestVideo: false });
-            }}
-          >
-            <Phone size={18} />
-          </button>
-          <button
-            className="flex items-center justify-center w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 hover:bg-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-400 dark:hover:bg-emerald-500/30 transition-colors shadow-sm"
-            title={t("chat.call_video")}
-            onClick={() => {
-              if (activeRoom?.type === 'group') setShowGroupCallModal(true);
-              else onStartCall({ ...activeRoom, requestVideo: true });
-            }}
-          >
-            <Video size={18} />
-          </button>
+          {availableCalls?.has(activeRoomId) && activeRoom?.type === 'group' && (
+            <button
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold transition-all shadow-md animate-pulse"
+              onClick={() => {
+                // To join, we can just dispatch an accept action or pass the session up
+                const callSession = availableCalls.get(activeRoomId);
+                // We'll let App.jsx handle the join by triggering onStartCall but maybe we need a dedicated onJoinCall? 
+                // Actually, if we just set incomingCall to this session, the IncomingCallModal will show and they can accept it!
+                // Or better, we can directly call API to accept. Let's trigger a custom event.
+                window.dispatchEvent(new CustomEvent('app:joinCall', { detail: callSession }));
+              }}
+            >
+              <Video size={16} />
+              Tham gia
+            </button>
+          )}
+
+          {!availableCalls?.has(activeRoomId) && (
+            <>
+              <button
+                className="flex items-center justify-center w-10 h-10 rounded-xl bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-zinc-700 dark:text-zinc-300 transition-colors"
+                title={t("chat.call_voice")}
+                onClick={() => {
+                  if (activeRoom?.type === 'group') setShowGroupCallModal(true);
+                  else onStartCall({ ...activeRoom, requestVideo: false });
+                }}
+              >
+                <Phone size={18} />
+              </button>
+              <button
+                className="flex items-center justify-center w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 hover:bg-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-400 dark:hover:bg-emerald-500/30 transition-colors shadow-sm"
+                title={t("chat.call_video")}
+                onClick={() => {
+                  if (activeRoom?.type === 'group') setShowGroupCallModal(true);
+                  else onStartCall({ ...activeRoom, requestVideo: true });
+                }}
+              >
+                <Video size={18} />
+              </button>
+            </>
+          )}
+          
           <button
             className="flex items-center justify-center w-10 h-10 rounded-xl bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-zinc-700 dark:text-zinc-300 transition-colors"
             title={t("chat.group_detail")}

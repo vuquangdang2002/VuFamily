@@ -6,7 +6,7 @@ import { Env } from '../index';
 import { authenticate } from '../middleware/auth';
 import { encryptText, decryptText } from '../utils/crypto';
 import { successResponse, errorResponse } from '../utils/response';
-import { broadcast } from './ws';
+import { broadcast, sendToUser } from './ws';
 
 export const chatRouter = new Hono<{ Bindings: Env }>();
 
@@ -295,10 +295,13 @@ interface CallSession {
   callerAvatar: string | null;
   requestVideo: boolean;
   targetUserIds: number[];
-  status: 'ringing' | 'accepted' | 'rejected' | 'ended';
+  status: 'ringing' | 'accepted' | 'rejected' | 'ongoing' | 'ended';
   startedAt: number;
+  endedAt?: number;
   connectedAt?: number;
   signals: { caller: any[]; receiver: any[] };
+  acceptedUserIds?: number[];
+  rejectedUserIds?: number[];
 }
 
 export const callRouter = new Hono<{ Bindings: Env }>();
@@ -344,7 +347,9 @@ callRouter.post('/start', authenticate, async (c) => {
       targetUserIds,
       status: 'ringing',
       startedAt: Date.now(),
-      signals: { caller: [], receiver: [] }
+      signals: { caller: [], receiver: [] },
+      acceptedUserIds: [],
+      rejectedUserIds: []
     };
 
     await db.insert(calls).values({
@@ -355,7 +360,9 @@ callRouter.post('/start', authenticate, async (c) => {
       startedAt: new Date().toISOString()
     });
 
-    broadcast({ type: 'calls_updated', session });
+    const payload = { type: 'CALL_SIGNAL', action: 'start', session };
+    sendToUser(currentUser.id, payload);
+    targetUserIds.forEach(id => sendToUser(id, payload));
 
     return successResponse(c, session);
   } catch (err: any) {
@@ -470,8 +477,12 @@ callRouter.post('/respond', authenticate, async (c) => {
     }
 
     if (action === 'accept') {
-      session.status = 'accepted';
-      session.connectedAt = Date.now();
+      if (!session.acceptedUserIds) session.acceptedUserIds = [];
+      if (!session.acceptedUserIds.includes(currentUser.id)) {
+        session.acceptedUserIds.push(currentUser.id);
+      }
+      session.status = 'ongoing';
+      if (!session.connectedAt) session.connectedAt = Date.now();
       
       await db.update(calls)
         .set({ 
@@ -481,40 +492,57 @@ callRouter.post('/respond', authenticate, async (c) => {
         .where(eq(calls.id, foundCall.id));
         
     } else if (action === 'reject') {
-      session.status = 'rejected';
+      if (!session.rejectedUserIds) session.rejectedUserIds = [];
+      if (!session.rejectedUserIds.includes(currentUser.id)) {
+        session.rejectedUserIds.push(currentUser.id);
+      }
+
+      // Check if EVERY target rejected
+      const allRejected = session.targetUserIds.every(id => session.rejectedUserIds!.includes(id));
       
-      await db.update(calls)
-        .set({ 
-          status: 'rejected',
-          endedAt: new Date().toISOString(),
-          offer: JSON.stringify(session)
-        })
-        .where(eq(calls.id, foundCall.id));
+      if (allRejected) {
+        session.status = 'ended';
+        
+        await db.update(calls)
+          .set({ 
+            status: 'ended',
+            endedAt: new Date().toISOString(),
+            offer: JSON.stringify(session)
+          })
+          .where(eq(calls.id, foundCall.id));
 
-      const content = session.requestVideo ? '=== Cuộc gọi video nhỡ ===' : '=== Cuộc gọi thoại nhỡ ===';
-      const encrypted = tryEncrypt(content, c.env);
-      await db.insert(chatMessages).values({
-        roomId: session.roomId,
-        senderId: session.callerId,
-        content: encrypted
-      });
-      await db.update(chatRooms).set({ updatedAt: new Date().toISOString() }).where(eq(chatRooms.id, session.roomId));
+        const content = session.requestVideo ? '=== Cuộc gọi video nhỡ ===' : '=== Cuộc gọi thoại nhỡ ===';
+        const encrypted = tryEncrypt(content, c.env);
+        await db.insert(chatMessages).values({
+          roomId: session.roomId,
+          senderId: session.callerId,
+          content: encrypted
+        });
+        await db.update(chatRooms).set({ updatedAt: new Date().toISOString() }).where(eq(chatRooms.id, session.roomId));
 
-      broadcast({
-        type: 'chat_message',
-        roomId: session.roomId,
-        message: {
-          id: Math.random(),
-          room_id: session.roomId,
-          sender_id: session.callerId,
-          content: content,
-          created_at: new Date().toISOString(),
-          users: { display_name: session.callerName, username: '', avatar: session.callerAvatar }
-        }
-      });
+        broadcast({
+          type: 'chat_message',
+          roomId: session.roomId,
+          message: {
+            id: Math.random(),
+            room_id: session.roomId,
+            sender_id: session.callerId,
+            content: content,
+            created_at: new Date().toISOString(),
+            users: { display_name: session.callerName, username: '', avatar: session.callerAvatar }
+          }
+        });
+      } else {
+        // Someone rejected, but not everyone. Keep the call going for others.
+        await db.update(calls)
+          .set({ offer: JSON.stringify(session) })
+          .where(eq(calls.id, foundCall.id));
+      }
     }
 
-    broadcast({ type: 'calls_updated', session });
+    const payload = { type: 'CALL_SIGNAL', action: action, session };
+    sendToUser(session.callerId, payload);
+    session.targetUserIds.forEach(id => sendToUser(id, payload));
 
     return successResponse(c, session);
   } catch (err: any) {
@@ -594,7 +622,9 @@ callRouter.post('/end', authenticate, async (c) => {
         }
       });
 
-      broadcast({ type: 'calls_updated', session });
+      const payload = { type: 'CALL_SIGNAL', action: 'end', session };
+      sendToUser(session.callerId, payload);
+      session.targetUserIds.forEach(id => sendToUser(id, payload));
     }
 
     return successResponse(c, null, 'Cuộc gọi đã kết thúc');
