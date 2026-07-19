@@ -346,17 +346,25 @@ callRouter.get('/active', authenticate, async (c) => {
       .from(calls)
       .where(inArray(calls.status, ['calling', 'ongoing']));
 
+    const currentUserId = Number(currentUser.id);
+    console.log(`[CALL DEBUG] GET /active userId=${currentUserId}, activeDbCalls=${activeDbCalls.length}`);
+
     for (const row of activeDbCalls) {
       if (!row.offer) continue;
       try {
         const session = JSON.parse(row.offer);
-        const isCaller = session.callerId === currentUser.id;
-        const isTarget = session.targetUserIds.includes(currentUser.id);
+        const targetIds = (session.targetUserIds || []).map(Number);
+        const callerId = Number(session.callerId);
+        const isCaller = callerId === currentUserId;
+        const isTarget = targetIds.includes(currentUserId);
+
+        console.log(`[CALL DEBUG] row.id=${row.id} callerId=${callerId} targetIds=${JSON.stringify(targetIds)} currentUserId=${currentUserId} isCaller=${isCaller} isTarget=${isTarget} dbStatus=${row.status}`);
 
         if (isCaller || isTarget) {
           // Map DB 'calling' to 'ringing' for the target user, so frontend
-          // can detect incoming calls correctly.
+          // can detect incoming calls correctly (Messenger-style).
           session.status = (isTarget && row.status === 'calling') ? 'ringing' : row.status;
+          console.log(`[CALL DEBUG] ✅ Returning session to user ${currentUserId} with status=${session.status}`);
           return successResponse(c, session);
         }
       } catch (e) {

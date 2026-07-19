@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useTheme } from './shared/components/ThemeToggle';
 import { localApi } from './shared/services/api';
+import { myLog, myError } from './shared/utils/logger';
 import { I18nHelper } from './shared/services/i18n.js';
 import { TrackingHelper } from './shared/services/TrackingHelper';
 import { ConfigAPI } from './config.js';
@@ -196,13 +197,25 @@ export default function App() {
         } finally {
             setIncomingCall(null);
         }
-    };    // Real-time Global Call Listener
+    };    // Real-time Global Call Listener (Messenger-style multi-channel detection)
     useEffect(() => {
         if (!user) return;
         const unsubscribe = syncCoordinator.subscribe('calls', (session) => {
+            myLog('CALL', `[Global Call Listener] Received poll data:`, JSON.stringify(session));
             if (session) {
-                if (session.callerId !== user.id && session.status === 'ringing') {
+                // Type-safe comparison — DB returns numbers, but JSON parse / localStorage 
+                // might produce strings. Always compare as strings for safety.
+                const isNotCaller = String(session.callerId) !== String(user.id);
+                const isRinging = session.status === 'ringing';
+                myLog('CALL', `[Global Call Listener] callerId=${session.callerId}(${typeof session.callerId}), user.id=${user.id}(${typeof user.id}), isNotCaller=${isNotCaller}, status=${session.status}, targetUserIds=${JSON.stringify(session.targetUserIds)}`);
+                
+                if (isNotCaller && isRinging) {
+                    myLog('CALL', '[Global Call Listener] ✅ INCOMING CALL DETECTED! Setting incomingCall state.');
                     setIncomingCall(session);
+                    // Messenger-style vibration pattern for mobile
+                    if (navigator.vibrate) {
+                        navigator.vibrate([300, 200, 300, 200, 300]);
+                    }
                 } else if (session.status === 'rejected' && activeCallRoom?.callId === session.callId) {
                     addToast(t('call.rejected') || 'Cuộc gọi bị từ chối', 'info');
                     setActiveCallRoom(null);
@@ -213,6 +226,8 @@ export default function App() {
                         setActiveCallRoom(null);
                     }
                     setIncomingCall(null);
+                } else {
+                    myLog('CALL', `[Global Call Listener] ⏳ No action: isNotCaller=${isNotCaller}, status=${session.status}`);
                 }
             } else {
                 setIncomingCall(null);
