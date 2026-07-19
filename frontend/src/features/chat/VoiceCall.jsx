@@ -125,6 +125,17 @@ export default function VoiceCall({
           console.log("[Jitsi] Ready to close (redirect/hangup).");
           if (isMounted) handleEndCall();
         });
+
+        api.addEventListener("participantLeft", (participant) => {
+          console.log("[Jitsi] Participant left:", participant);
+          // Check if we are the only one left in the room
+          const participants = api.getParticipantsInfo();
+          if (participants.length === 0) {
+            console.log("[Jitsi] Everyone else left. Ending call.");
+            addToastRef.current("Người dùng bên kia đã kết thúc cuộc gọi.", "info");
+            if (isMounted) handleEndCall();
+          }
+        });
       } catch (e) {
         console.error("[Jitsi] Init error:", e);
         if (isMounted) {

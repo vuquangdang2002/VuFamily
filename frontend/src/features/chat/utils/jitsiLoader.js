@@ -29,17 +29,28 @@ export const loadJitsiApi = () => {
             script.src = `https://${domain}/external_api.js`;
             script.async = true;
 
-            script.onload = () => {
-                console.log(`[JitsiLoader] Tải API thành công từ ${domain}`);
-                resolve(domain);
-            };
+            let isHandled = false;
 
-            script.onerror = () => {
+            const handleFail = () => {
+                if (isHandled) return;
+                isHandled = true;
                 console.warn(`[JitsiLoader] Lỗi tải API từ ${domain}. Đang thử server khác...`);
                 script.remove();
                 currentDomainIndex++;
                 tryNextDomain();
             };
+
+            const timeoutId = setTimeout(handleFail, 4000); // 4 seconds timeout
+
+            script.onload = () => {
+                if (isHandled) return;
+                isHandled = true;
+                clearTimeout(timeoutId);
+                console.log(`[JitsiLoader] Tải API thành công từ ${domain}`);
+                resolve(domain);
+            };
+
+            script.onerror = handleFail;
 
             document.body.appendChild(script);
         };
