@@ -72,7 +72,7 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
             } catch (error) {
                 myError('LiveKit', 'Token fetch failed', error);
                 if (isMounted) {
-                    addToastRef.current('Không thể kết nối đến máy chủ gọi điện.', 'error');
+                    addToastRef.current(t('call.connection_failed') || 'Không thể kết nối đến máy chủ gọi điện.', 'error');
                     handleEndCall();
                 }
             }
@@ -94,11 +94,11 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
             <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/90 backdrop-blur-xl">
                 <div className="flex flex-col items-center gap-4 text-white">
                     <div className="w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full animate-spin" />
-                    <p>Đang chuẩn bị phòng họp ảo...</p>
+                    <p>{t('call.preparing_room') || 'Đang chuẩn bị phòng họp ảo...'}</p>
                     
                     {/* Fallback end call button in case it hangs */}
                     <button onClick={handleEndCall} className="px-6 py-2 bg-rose-600 rounded-full mt-4 flex items-center gap-2 text-sm font-bold shadow-lg hover:bg-rose-500 transition-all">
-                        <PhoneOff size={16} /> Cúp máy
+                        <PhoneOff size={16} /> {t('call.end_call_btn') || 'Cúp máy'}
                     </button>
                 </div>
             </div>

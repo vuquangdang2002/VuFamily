@@ -49,5 +49,8 @@
     "call.cam_enabled": "Camera On 📹",
     "call.cam_disabled": "Camera Off 📷",
     "call.start_init": "Dialing call signal...",
-    "call.init_failed": "Failed to initialize call."
+    "call.init_failed": "Failed to initialize call.",
+    "call.preparing_room": "Preparing virtual meeting room...",
+    "call.end_call_btn": "End Call",
+    "call.connection_failed": "Could not connect to the calling server."
 }
