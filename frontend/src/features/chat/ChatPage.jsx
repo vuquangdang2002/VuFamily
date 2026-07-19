@@ -12,12 +12,14 @@ import { syncCoordinator } from '../../shared/services/syncCoordinator';
 import InboxPanel from './components/InboxPanel';
 import MessagePanel from './components/MessagePanel';
 import ChatModals from './components/ChatModals';
+import RightPanel from './components/RightPanel';
 
 export default function ChatPage({ user, addToast, onStartCall }) {
     const { t } = useTranslation();
     const [rooms, setRooms] = useState([]);
     const [activeRoomId, setActiveRoomId] = useState(null);
     const [messages, setMessages] = useState([]);
+    const [showRightPanel, setShowRightPanel] = useState(false);
     const [loadingRooms, setLoadingRooms] = useState(true);
     const [, setIsCacheLoaded] = useState(false);
 
@@ -423,7 +425,7 @@ export default function ChatPage({ user, addToast, onStartCall }) {
                 </div>
 
                 {/* Message Panel - Hidden on mobile if NO room is active */}
-                <div className={`flex-1 h-full bg-transparent ${!activeRoomId ? 'hidden md:flex md:flex-col' : 'flex flex-col'}`}>
+                <div className={`flex-1 min-w-0 h-full bg-transparent ${!activeRoomId ? 'hidden md:flex md:flex-col' : 'flex flex-col'} ${showRightPanel ? 'hidden lg:flex' : ''}`}>
                     <MessagePanel
                         activeRoomId={activeRoomId}
                         setActiveRoomId={setActiveRoomId}
@@ -432,13 +434,27 @@ export default function ChatPage({ user, addToast, onStartCall }) {
                         setMessages={setMessages}
                         user={user}
                         onStartCall={onStartCall}
-                        setShowGroupInfo={setShowGroupInfo}
+                        showRightPanel={showRightPanel}
+                        setShowRightPanel={setShowRightPanel}
                         handleRenameGroup={handleRenameGroup}
                         addToast={addToast}
                         fetchRooms={fetchRooms}
                         latestMsgTimeRef={latestMsgTimeRef}
                     />
                 </div>
+
+                {/* Right Panel - Info */}
+                {activeRoomId && showRightPanel && (
+                    <div className="w-full lg:w-[320px] xl:w-[360px] h-full shrink-0 border-l border-black/5 dark:border-white/5 bg-white/40 dark:bg-black/20 absolute lg:relative z-20">
+                        <RightPanel 
+                            activeRoom={activeRoom} 
+                            user={user} 
+                            onClose={() => setShowRightPanel(false)}
+                            handleRenameGroup={handleRenameGroup}
+                            handleLeaveGroup={handleLeaveGroup}
+                        />
+                    </div>
+                )}
             </div>
 
             <ChatModals

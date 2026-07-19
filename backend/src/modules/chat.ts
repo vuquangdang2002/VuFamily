@@ -76,6 +76,30 @@ chatRouter.get('/', authenticate, async (c) => {
       };
     });
 
+    // Fetch last message for each room
+    for (const room of enrichedRooms) {
+      const [lastMsg] = await db.select({
+        content: chatMessages.content,
+        createdAt: chatMessages.createdAt,
+        senderId: chatMessages.senderId
+      })
+      .from(chatMessages)
+      .where(eq(chatMessages.roomId, room.id))
+      .orderBy(desc(chatMessages.createdAt))
+      .limit(1);
+
+      if (lastMsg) {
+        let dec = tryDecrypt(lastMsg.content, c.env);
+        // Clean up system messages for preview
+        if (dec.startsWith('=== ') && dec.endsWith(' ===')) {
+           dec = dec.replace(/===/g, '').trim();
+        } else {
+           dec = (lastMsg.senderId === currentUser.id ? 'Bạn: ' : '') + dec;
+        }
+        room.lastMessage = { content: dec, createdAt: lastMsg.createdAt };
+      }
+    }
+
     return successResponse(c, enrichedRooms);
   } catch (err: any) {
     return errorResponse(c, err.message, 500);

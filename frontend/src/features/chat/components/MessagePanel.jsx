@@ -42,7 +42,8 @@ export default function MessagePanel({
     setMessages,
     user,
     onStartCall,
-    setShowGroupInfo,
+    showRightPanel,
+    setShowRightPanel,
     handleRenameGroup,
     addToast,
     fetchRooms,
@@ -172,7 +173,7 @@ export default function MessagePanel({
                     <button className="flex items-center justify-center w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 hover:bg-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-400 dark:hover:bg-emerald-500/30 transition-colors shadow-sm" title={t('chat.call_video')} onClick={() => onStartCall({ ...activeRoom, requestVideo: true })}>
                         <Video size={18} />
                     </button>
-                    <button className="flex items-center justify-center w-10 h-10 rounded-xl bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-zinc-700 dark:text-zinc-300 transition-colors" title={t('chat.group_detail')} onClick={() => setShowGroupInfo(true)}>
+                    <button className="flex items-center justify-center w-10 h-10 rounded-xl bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-zinc-700 dark:text-zinc-300 transition-colors" title={t('chat.group_detail')} onClick={() => setShowRightPanel(!showRightPanel)}>
                         <Info size={18} />
                     </button>
                 </div>
