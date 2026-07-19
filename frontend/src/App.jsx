@@ -291,7 +291,8 @@ export default function App() {
     useEffect(() => {
         if (!user) return;
         const unsubscribe = syncCoordinator.subscribe('calls', (session) => {
-            myLog('CALL', `[Global Call Listener] Received poll data:`, JSON.stringify(session));
+            // Silenced the spammy log
+            // myLog('CALL', `[Global Call Listener] Received poll data:`, JSON.stringify(session));
             if (session) {
                 // Type-safe comparison — DB returns numbers, but JSON parse / localStorage 
                 // might produce strings. Always compare as strings for safety.

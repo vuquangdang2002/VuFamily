@@ -144,7 +144,7 @@ class SyncCoordinator {
     let baseInterval = 600; // Fast sync in millisecond steps
 
     if (socketClient.isConnected) {
-      baseInterval = 3000; // If WebSocket is connected, poll at a relaxed 3s rate as a safe fallback
+      baseInterval = 15000; // If WebSocket is connected, poll at a relaxed 15s rate as a safe fallback
     } else if (!this.isTabActive) {
       baseInterval = 10000; // Slow down to 10s if tab is backgrounded
     } else if (!this.isUserActive) {

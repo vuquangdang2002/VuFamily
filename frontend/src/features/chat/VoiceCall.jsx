@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useTranslation } from '../../shared/hooks/useTranslation';
 import { PhoneOff } from 'lucide-react';
 import { myError } from '../../shared/utils/logger';
+import { API_BASE_URL } from '../../config';
 import '@livekit/components-styles';
 import {
     LiveKitRoom,
@@ -28,7 +29,7 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
         if (activeCallRoom?.callId) {
             try {
                 const authToken = localStorage.getItem('vuFamilyToken');
-                await fetch('/api/calls/end', {
+                await fetch(`${API_BASE_URL}/calls/end`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'x-auth-token': authToken },
                     body: JSON.stringify({ callId: activeCallRoom.callId })
@@ -52,7 +53,7 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
                 const authToken = localStorage.getItem('vuFamilyToken');
                 const roomName = `vufamily-room-${activeCallRoom.roomId}-call-${activeCallRoom.callId}`;
                 
-                const res = await fetch('/api/livekit/token', {
+                const res = await fetch(`${API_BASE_URL}/livekit/token`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'x-auth-token': authToken },
                     body: JSON.stringify({ roomName })
@@ -66,7 +67,7 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
                         setServerUrl(json.data.url);
                     }
                 } else {
-                    throw new Error(json.message || 'Lỗi cấp quyền LiveKit');
+                    throw new Error(json.message || json.error || 'Lỗi cấp quyền LiveKit');
                 }
             } catch (error) {
                 myError('LiveKit', 'Token fetch failed', error);
