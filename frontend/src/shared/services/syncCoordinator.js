@@ -17,6 +17,7 @@ class SyncCoordinator {
     this.inFlightFetches = new Set();
     this.idleTimeoutMs = 3 * 60 * 1000; // 3 minutes idle time
     this.latestMsgTimeMap = new Map();
+    this.authInvalid = false; // Flag to stop all polling when token is invalid
 
     if (typeof window !== 'undefined') {
       this.initActivityTrackers();
@@ -168,6 +169,8 @@ class SyncCoordinator {
     }
 
     // 1. calls: fetch call signaling status every tick (~600ms - 800ms)
+    if (this.authInvalid) return; // Stop all fetches if token is invalid
+
     if (this.listeners.calls.size > 0 && this.shouldFetch('calls', 1)) {
       this.fetchCalls();
     }
@@ -207,6 +210,10 @@ class SyncCoordinator {
       const res = await fetch('/api/calls/active', {
         headers: { 'x-auth-token': token }
       });
+      if (res.status === 401 || res.status === 403) {
+        this.handleUnauthorized();
+        return;
+      }
       const json = await res.json();
       if (json.success) {
         this.listeners.calls.forEach(cb => cb(json.data));
@@ -227,6 +234,10 @@ class SyncCoordinator {
       const res = await fetch('/api/chats', {
         headers: { 'x-auth-token': token }
       });
+      if (res.status === 401 || res.status === 403) {
+        this.handleUnauthorized();
+        return;
+      }
       const json = await res.json();
       if (json.success) {
         this.listeners.rooms.forEach(cb => cb(json.data));
@@ -255,6 +266,10 @@ class SyncCoordinator {
       const res = await fetch(url, {
         headers: { 'x-auth-token': token }
       });
+      if (res.status === 401 || res.status === 403) {
+        this.handleUnauthorized();
+        return;
+      }
       const json = await res.json();
       if (json.success && json.data) {
         this.listeners.messages.forEach(cb => cb(roomId, json.data));
@@ -264,6 +279,18 @@ class SyncCoordinator {
     } finally {
       this.inFlightFetches.delete('messages');
     }
+  }
+
+  handleUnauthorized() {
+    if (this.authInvalid) return; // Already handled
+    this.authInvalid = true;
+    myError('SYNC', 'Token invalid (401). Stopping all sync polling and clearing session.');
+    this.stop();
+    socketClient.disconnect();
+    localStorage.removeItem('vuFamilyToken');
+    localStorage.removeItem('vuFamilyAuth');
+    // Reload page to force re-login
+    window.location.reload();
   }
 }
 
