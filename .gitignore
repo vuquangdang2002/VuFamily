@@ -14,3 +14,4 @@ dist-worker/
 database/backups/
 frontend/dist/
 frontend/node_modules/
+/.agents/skills/taste-skill
