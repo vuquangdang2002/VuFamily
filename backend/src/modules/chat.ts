@@ -96,7 +96,7 @@ chatRouter.get('/', authenticate, async (c) => {
         } else {
            dec = (lastMsg.senderId === currentUser.id ? 'Bạn: ' : '') + dec;
         }
-        room.lastMessage = { content: dec, createdAt: lastMsg.createdAt };
+        (room as any).lastMessage = { content: dec, createdAt: lastMsg.createdAt };
       }
     }
 

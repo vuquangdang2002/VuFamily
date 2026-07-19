@@ -10,11 +10,15 @@ import { eventRouter } from './modules/events';
 import { financeRouter } from './modules/finance';
 import { chatRouter, callRouter } from './modules/chat';
 import { requestRouter } from './modules/requests';
+import { livekitRouter } from './modules/livekit';
 import { handleWebSocketUpgrade } from './modules/ws';
 
 export type Env = {
   DB: D1Database;
   CHAT_ENCRYPTION_KEY?: string;
+  LIVEKIT_API_KEY: string;
+  LIVEKIT_API_SECRET: string;
+  LIVEKIT_URL: string;
 };
 
 const app = new Hono<{ Bindings: Env }>();
@@ -47,6 +51,7 @@ app.route('/api/finance', financeRouter);
 app.route('/api/chats', chatRouter);
 app.route('/api/calls', callRouter);
 app.route('/api/requests', requestRouter);
+app.route('/api/livekit', livekitRouter);
 app.get('/api/ws', handleWebSocketUpgrade);
 
 export default app;
