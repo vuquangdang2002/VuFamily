@@ -11,37 +11,37 @@ html.dark {
     --font-heading: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     --font-body: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 
-    /* ── Nền (Apple Dark Mode) ── */
-    --bg-primary:   #000000;   /* Pitch Black */
-    --bg-secondary: #1C1C1E;   /* Very Dark Gray Background */
-    --bg-card:      #1C1C1E;   /* Apple Solid/Glass Elevated Card */
-    --bg-glass:     rgba(28, 28, 30, 0.75);
-    --bg-hover:     #2C2C2E;
+    /* ── Nền (Premium Dark Mode) ── */
+    --bg-primary:   #050505;   /* Pitch Dark */
+    --bg-secondary: #0D0D12;   /* Elevated Dark Background */
+    --bg-card:      #13131A;   /* Card Background */
+    --bg-glass:     rgba(19, 19, 26, 0.8);
+    --bg-hover:     #1F1F2A;
 
-    /* ── Brand Gold (Giữ lại màu vàng gia phả) ── */
+    /* ── Brand Gold ── */
     --gold:       #D4AF37;
     --gold-light: #F0D060;
     --gold-dark:  #A08520;
     --gold-glow:  rgba(212, 175, 55, 0.15);
 
-    /* ── Primary (Apple Blue) ── */
-    --primary:       #0A84FF;
-    --primary-light: #409CFF;
-    --primary-dark:  #0060D0;
-    --primary-glow:  rgba(10, 132, 255, 0.2);
+    /* ── Primary (Vàng hoàng kim / Cam thương hiệu) ── */
+    --primary:       #fe6e00;   /* Brand Orange */
+    --primary-light: #FFA352;
+    --primary-dark:  #C25400;
+    --primary-glow:  rgba(254, 110, 0, 0.2);
 
     /* ── Sidebar ── */
-    --sidebar-bg:          #1C1C1E;
-    --sidebar-active-bg:   #2C2C2E;
-    --sidebar-active-text: #0A84FF;
-    --sidebar-hover-bg:    #2C2C2E;
-    --sidebar-text:        #8E8E93;
+    --sidebar-bg:          #0D0D12;
+    --sidebar-active-bg:   #13131A;
+    --sidebar-active-text: #fe6e00;
+    --sidebar-hover-bg:    #1F1F2A;
+    --sidebar-text:        #71717A;
     --sidebar-text-active: #FFFFFF;
 
     /* ── Typography ── */
     --text-primary:   #F5F5F7;
-    --text-secondary: rgba(235, 235, 245, 0.6);
-    --text-muted:     rgba(235, 235, 245, 0.3);
+    --text-secondary: #A1A1AA;   /* Brighter high contrast */
+    --text-muted:     #71717A;   /* Clear metadata contrast */
 
     /* ── Accent ── */
     --accent-male:    #0A84FF;
@@ -52,7 +52,7 @@ html.dark {
     --accent-info:    #0A84FF;
 
     /* ── Viền ── */
-    --border-subtle: rgba(255, 255, 255, 0.05);
+    --border-subtle: rgba(255, 255, 255, 0.08);
     --border-glow:   transparent;
 
     /* ── Bóng đổ (Apple Dark Shadows) ── */

@@ -25,24 +25,24 @@ html.light {
     --gold-dark:  #8B6914;
     --gold-glow:  rgba(184, 146, 42, 0.12);
 
-    /* ── Primary (Indigo đậm → contrast tốt trên nền trắng) ── */
-    --primary:       #4338CA;
-    --primary-light: #6366F1;
-    --primary-dark:  #312E81;
-    --primary-glow:  rgba(67, 56, 202, 0.12);
-
+    /* ── Primary (Vàng hoàng kim / Cam đậm → tương phản tốt trên nền trắng) ── */
+    --primary:       #D97706;   /* Deep Amber */
+    --primary-light: #fe6e00;   /* Brand Orange */
+    --primary-dark:  #B45309;
+    --primary-glow:  rgba(254, 110, 0, 0.08);
+ 
     /* ── Sidebar ── */
     --sidebar-bg:          #FFFFFF;
-    --sidebar-active-bg:   #EEF2FF;
-    --sidebar-active-text: #4338CA;
-    --sidebar-hover-bg:    #F1F4FD;
+    --sidebar-active-bg:   rgba(254, 110, 0, 0.08);
+    --sidebar-active-text: #D97706;
+    --sidebar-hover-bg:    rgba(254, 110, 0, 0.03);
     --sidebar-text:        #4B5563;
-    --sidebar-text-active: #1E1B4B;
-
+    --sidebar-text-active: #B45309;
+ 
     /* ── Typography ── */
     --text-primary:   #111827;
     --text-secondary: #374151;
-    --text-muted:     #6B7280;
+    --text-muted:     #555B66;
 
     /* ── Accent ── */
     --accent-male:    #2563EB;

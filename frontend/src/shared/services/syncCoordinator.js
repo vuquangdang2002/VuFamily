@@ -143,7 +143,7 @@ class SyncCoordinator {
     let baseInterval = 600; // Fast sync in millisecond steps
 
     if (socketClient.isConnected) {
-      baseInterval = 15000; // If WebSocket is connected, relax polling to 15s as a fallback safety
+      baseInterval = 3000; // If WebSocket is connected, poll at a relaxed 3s rate as a safe fallback
     } else if (!this.isTabActive) {
       baseInterval = 10000; // Slow down to 10s if tab is backgrounded
     } else if (!this.isUserActive) {
@@ -158,6 +158,14 @@ class SyncCoordinator {
 
   async tick() {
     this.tickCount++;
+
+    // Auto-connect socket if offline but we have a token
+    if (typeof window !== 'undefined' && !socketClient.isConnected) {
+      const token = localStorage.getItem('vuFamilyToken');
+      if (token) {
+        socketClient.connect();
+      }
+    }
 
     // 1. calls: fetch call signaling status every tick (~600ms - 800ms)
     if (this.listeners.calls.size > 0 && this.shouldFetch('calls', 1)) {

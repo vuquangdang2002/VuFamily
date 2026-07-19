@@ -39,14 +39,18 @@
 }
 
 .sidebar-nav-btn.active {
-    @apply bg-blue-600 text-white shadow-md shadow-blue-500/20;
+    background: var(--sidebar-active-bg);
+    color: var(--sidebar-active-text);
+    box-shadow: 0 4px 12px var(--primary-glow);
 }
 
 .sidebar-nav-btn.inactive {
-    @apply text-zinc-600 dark:text-zinc-400;
+    @apply text-zinc-500;
+    color: var(--sidebar-text);
 }
 .sidebar-nav-btn.inactive:hover {
-    @apply bg-black/5 text-zinc-900;
+    background: var(--sidebar-hover-bg);
+    color: var(--sidebar-text-active);
 }
 
 .sidebar-divider {

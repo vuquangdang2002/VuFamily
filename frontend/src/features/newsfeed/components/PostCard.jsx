@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useTranslation } from '../../../shared/hooks/useTranslation';
 import { api } from '../../../shared/services/api';
 import { myError } from '../../../shared/utils/logger';
+import { parseDateSafe } from '../../../shared/utils/date';
 import { TrackingHelper } from '../../../shared/services/TrackingHelper';
 import { MessageCircle, Share2, Trash2, Send, ThumbsUp, User, MoreHorizontal } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -17,7 +18,7 @@ export default function PostCard({ post, user, isAdmin, currentUserId, addToast,
     const [commentText, setCommentText] = useState('');
 
     function timeAgo(dateStr) {
-        const d = new Date(dateStr);
+        const d = parseDateSafe(dateStr);
         const now = new Date();
         const diff = Math.floor((now - d) / 1000);
         if (diff < 60) return t('common.just_now') || 'Vừa xong';

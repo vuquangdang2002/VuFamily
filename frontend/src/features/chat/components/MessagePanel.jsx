@@ -4,6 +4,7 @@ import { getApiBase } from '../../../shared/services/api';
 import { AuthHelper } from '../../../shared/services/AuthHelper';
 import { cacheSingleMessage } from '../../../shared/services/chatCache';
 import { TrackingHelper } from '../../../shared/services/TrackingHelper';
+import { parseDateSafe } from '../../../shared/utils/date';
 import { myError } from '../../../shared/utils/logger';
 import { ChevronLeft, Phone, Video, Info, Edit2, Send, Users, MessageSquarePlus } from 'lucide-react';
 
@@ -225,7 +226,7 @@ export default function MessagePanel({
                                 </div>
                             </div>
                             <span className="text-[10px] font-bold text-zinc-400 mt-1 mx-2">
-                                {new Date(msg.created_at).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                                {parseDateSafe(msg.created_at).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
                             </span>
                         </div>
                     );

@@ -6,6 +6,7 @@ import { offlineCache } from '../utils/offlineCache';
 import { TrackingHelper } from '../services/TrackingHelper';
 import { I18nHelper } from '../services/i18n.js';
 import { syncRemoteConfig } from '../../firebase.js';
+import { socketClient } from '../services/socketClient';
 
 const AUTH_KEY = 'vuFamilyAuth';
 
@@ -182,13 +183,13 @@ export default function useAuthSystem() {
     useEffect(() => {
         if (!user?.token) return;
 
-        fetch(`${getApiBase()}/users/ping`, {
+        fetch(`${getApiBase()}/auth/ping`, {
             method: 'POST',
             headers: { 'x-auth-token': user.token }
         }).catch((e) => { myError('APP', "Ping error on start:", e); });
 
         const intervalId = setInterval(() => {
-            fetch(`${getApiBase()}/users/ping`, {
+            fetch(`${getApiBase()}/auth/ping`, {
                 method: 'POST',
                 headers: { 'x-auth-token': user.token }
             }).catch((e) => { myError('APP', "Ping error loop:", e); });
@@ -266,6 +267,7 @@ export default function useAuthSystem() {
             } catch {}
         }
         localStorage.removeItem(AUTH_KEY);
+        socketClient.disconnect();
         clearChatCache().catch((e) => { myError('APP', "Logout Chat Cache Clear Error:", e); });
         offlineCache.clearAll().catch((e) => { myError('OFFLINE', "Logout Offline Cache Clear Error:", e); });
         

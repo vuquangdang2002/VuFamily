@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { api, localApi, formatDate } from '../../shared/services/api';
 import { TrackingHelper } from '../../shared/services/TrackingHelper';
 import { useTranslation } from '../../shared/hooks/useTranslation';
+import { parseDateSafe } from '../../shared/utils/date';
 import { motion, AnimatePresence } from 'framer-motion';
 
 function DiffView({ before, after, t }) {
@@ -82,7 +83,7 @@ export default function HistoryPage({ isAdmin, user, onRefresh, addToast, member
 
     function timeAgo(dateStr) {
         if (!dateStr) return '';
-        const d = new Date(dateStr);
+        const d = parseDateSafe(dateStr);
         if (isNaN(d.getTime())) return '';
         const now = new Date();
         const diff = Math.floor((now - d) / 1000);

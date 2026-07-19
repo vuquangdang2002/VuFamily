@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { api, formatDate } from '../../shared/services/api';
 import { TrackingHelper } from '../../shared/services/TrackingHelper';
 import { useTranslation } from '../../shared/hooks/useTranslation';
+import { parseDateSafe } from '../../shared/utils/date';
 import { CheckCircle2, XCircle, Clock, ChevronDown, ChevronUp, Users, FileText, AlertCircle } from 'lucide-react';
 
 function ChangesView({ before, changes, t }) {
@@ -67,7 +68,7 @@ function RequestCard({ req, members, isAdmin, handleApprove, handleReject, t }) 
 
     function timeAgo(dateStr) {
         if (!dateStr) return '';
-        const d = new Date(dateStr);
+        const d = parseDateSafe(dateStr);
         if (isNaN(d.getTime())) return '';
         const now = new Date();
         const diff = Math.floor((now - d) / 1000);
