@@ -426,6 +426,7 @@ export default function ChatPage({ user, addToast, onStartCall }) {
                 <div className={`flex-1 h-full bg-transparent ${!activeRoomId ? 'hidden md:flex md:flex-col' : 'flex flex-col'}`}>
                     <MessagePanel
                         activeRoomId={activeRoomId}
+                        setActiveRoomId={setActiveRoomId}
                         activeRoom={activeRoom}
                         messages={messages}
                         setMessages={setMessages}

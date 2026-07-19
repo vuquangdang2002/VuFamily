@@ -13,6 +13,15 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
     const [camOff, setCamOff] = useState(false);
     const [callConnected, setCallConnected] = useState(false);
 
+    // Keep functions in refs to avoid useEffect dependency triggers on every render
+    const addToastRef = useRef(addToast);
+    const onClearActiveCallRoomRef = useRef(onClearActiveCallRoom);
+
+    useEffect(() => {
+        addToastRef.current = addToast;
+        onClearActiveCallRoomRef.current = onClearActiveCallRoom;
+    }, [addToast, onClearActiveCallRoom]);
+
     useEffect(() => {
         if (!activeCallRoom) return;
 
@@ -33,7 +42,6 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
                 } catch (err) {
                     console.warn('[WebRTC] Camera access failed, falling back to Audio only:', err);
                     localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-                    setCamOff(true);
                 }
 
                 localStreamRef.current = localStream;
@@ -68,7 +76,7 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
                     console.log('[WebRTC] Connection State:', pc.connectionState);
                     if (pc.connectionState === 'connected') {
                         setCallConnected(true);
-                        addToast(t('call.connected') || 'Đã kết nối cuộc gọi.', 'success');
+                        addToastRef.current(t('call.connected') || 'Đã kết nối cuộc gọi.', 'success');
                     } else if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed') {
                         setCallConnected(false);
                     }
@@ -77,13 +85,13 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
                 // Simulate instant P2P connection readiness
                 setTimeout(() => {
                     setCallConnected(true);
-                    addToast(t('call.dialing') || 'Đang gọi...', 'info');
+                    addToastRef.current(t('call.dialing') || 'Đang gọi...', 'info');
                 }, 400);
 
             } catch (error) {
                 console.error('[WebRTC] Media init failed:', error);
-                addToast(t('call.start_error') || 'Lỗi khởi tạo cuộc gọi.', 'error');
-                onClearActiveCallRoom();
+                addToastRef.current(t('call.start_error') || 'Lỗi khởi tạo cuộc gọi.', 'error');
+                onClearActiveCallRoomRef.current();
             }
         };
 
@@ -101,7 +109,7 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
             }
             setCallConnected(false);
         };
-    }, [activeCallRoom, t, addToast, onClearActiveCallRoom]);
+    }, [activeCallRoom?.callId, activeCallRoom?.requestVideo, t]);
 
     if (!activeCallRoom) return null;
 

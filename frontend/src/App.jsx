@@ -5,6 +5,7 @@ import { I18nHelper } from './shared/services/i18n.js';
 import { TrackingHelper } from './shared/services/TrackingHelper';
 import { ConfigAPI } from './config.js';
 import { useTranslation } from './shared/hooks/useTranslation';
+import { Home, Network, Newspaper, MessageSquare, Menu, Calendar, Wallet, History, ClipboardList, Settings, User, HelpCircle } from 'lucide-react';
 
 // ── Custom Hooks ──
 import useAuthSystem from './shared/hooks/useAuthSystem';
@@ -142,6 +143,7 @@ export default function App() {
     const [activeCallRoom, setActiveCallRoom] = useState(null);
     const [incomingCall, setIncomingCall] = useState(null);
     const [sidebarCollapsed, setSidebarCollapsed] = useState(() => window.innerWidth <= 768);
+    const [showMobileSheet, setShowMobileSheet] = useState(false);
 
     // Call Signaling Methods
     const handleStartCall = async (room) => {
@@ -482,7 +484,7 @@ export default function App() {
     }
 
     return (
-        <div className="flex h-[100dvh] w-screen bg-zinc-50 dark:bg-black overflow-hidden font-sans text-zinc-900 dark:text-zinc-100 transition-colors duration-300">
+        <div className="app-root-container flex h-[100dvh] w-screen bg-zinc-50 dark:bg-black overflow-hidden font-sans text-zinc-900 dark:text-zinc-100 transition-colors duration-300">
             <Sidebar
                 activePage={activePage}
                 onNavigate={setActivePage}
@@ -508,6 +510,104 @@ export default function App() {
                     {renderPage()}
                 </div>
             </main>
+
+            {/* Mobile Bottom Navigation Bar */}
+            <div className="bottom-nav">
+                <button className={`bottom-nav-item ${activePage === 'home' ? 'active' : ''}`} onClick={() => { setActivePage('home'); setShowMobileSheet(false); }}>
+                    <span className="bottom-nav-item-icon"><Home size={20} /></span>
+                    <span>{t('nav.home') || 'Trang chủ'}</span>
+                </button>
+                <button className={`bottom-nav-item ${activePage === 'tree' ? 'active' : ''}`} onClick={() => { setActivePage('tree'); setShowMobileSheet(false); }}>
+                    <span className="bottom-nav-item-icon"><Network size={20} /></span>
+                    <span>{t('nav.tree') || 'Gia phả'}</span>
+                </button>
+                <button className={`bottom-nav-item ${activePage === 'newsfeed' ? 'active' : ''}`} onClick={() => { setActivePage('newsfeed'); setShowMobileSheet(false); }}>
+                    <span className="bottom-nav-item-icon"><Newspaper size={20} /></span>
+                    <span>{t('nav.newsfeed') || 'Bảng tin'}</span>
+                </button>
+                <button className={`bottom-nav-item ${activePage === 'chat' ? 'active' : ''}`} onClick={() => { setActivePage('chat'); setShowMobileSheet(false); }}>
+                    <span className="bottom-nav-item-icon"><MessageSquare size={20} /></span>
+                    <span>{t('nav.chat') || 'Trò chuyện'}</span>
+                </button>
+                <button className={`bottom-nav-item ${showMobileSheet ? 'active' : ''}`} onClick={() => setShowMobileSheet(!showMobileSheet)}>
+                    <span className="bottom-nav-item-icon"><Menu size={20} /></span>
+                    <span>{t('nav.more') || 'Thêm'}</span>
+                </button>
+            </div>
+
+            {/* Mobile Premium Bottom Sheet Menu */}
+            {showMobileSheet && (
+                <div className="bottom-sheet-overlay" onClick={() => setShowMobileSheet(false)}>
+                    <div className="bottom-sheet" onClick={e => e.stopPropagation()}>
+                        <div className="bottom-sheet-drag-handle" />
+                        <div className="bottom-sheet-title">{t('sidebar.menu_title')}</div>
+                        
+                        <div className="bottom-sheet-grid">
+                            <button className={`bottom-sheet-item ${activePage === 'calendar' ? 'active' : ''}`} onClick={() => { setActivePage('calendar'); setShowMobileSheet(false); }}>
+                                <span className="bottom-sheet-item-icon"><Calendar size={22} /></span>
+                                <span>{t('nav.calendar')}</span>
+                            </button>
+                            <button className={`bottom-sheet-item ${activePage === 'finance' ? 'active' : ''}`} onClick={() => { setActivePage('finance'); setShowMobileSheet(false); }}>
+                                <span className="bottom-sheet-item-icon"><Wallet size={22} /></span>
+                                <span>{t('nav.finance')}</span>
+                            </button>
+                            <button className={`bottom-sheet-item ${activePage === 'history' ? 'active' : ''}`} onClick={() => { setActivePage('history'); setShowMobileSheet(false); }}>
+                                <span className="bottom-sheet-item-icon"><History size={22} /></span>
+                                <span>{t('nav.history')}</span>
+                            </button>
+                            
+                            {(user?.role === 'admin' || user?.role === 'editor') && (
+                                <button className={`bottom-sheet-item ${activePage === 'requests' ? 'active' : ''}`} onClick={() => { setActivePage('requests'); setShowMobileSheet(false); }}>
+                                    <span className="bottom-sheet-item-icon"><ClipboardList size={22} /></span>
+                                    <span>{t('nav.requests')}</span>
+                                    {pendingCount > 0 && <span className="bottom-nav-badge">{pendingCount}</span>}
+                                </button>
+                            )}
+                            
+                            {isAdmin && (
+                                <button className={`bottom-sheet-item ${activePage === 'system' ? 'active' : ''}`} onClick={() => { setActivePage('system'); setShowMobileSheet(false); }}>
+                                    <span className="bottom-sheet-item-icon"><Settings size={22} /></span>
+                                    <span>{t('nav.system')}</span>
+                                </button>
+                            )}
+
+                            <button className="bottom-sheet-item" onClick={() => { setProfileModalOpen(true); setShowMobileSheet(false); }}>
+                                <span className="bottom-sheet-item-icon"><User size={22} /></span>
+                                <span>{t('sidebar.profile_password')}</span>
+                            </button>
+                            
+                            <button className="bottom-sheet-item" onClick={() => { setActivePage('guide'); setShowMobileSheet(false); }}>
+                                <span className="bottom-sheet-item-icon"><HelpCircle size={22} /></span>
+                                <span>{t('sidebar.user_guide')}</span>
+                            </button>
+                        </div>
+
+                        <div className="bottom-sheet-settings">
+                            <div className="bottom-sheet-setting-row">
+                                <span className="bottom-sheet-setting-label">🌓 {t('sidebar.theme_label')}</span>
+                                <div className="bottom-sheet-setting-control">
+                                    <button onClick={(e) => { e.stopPropagation(); setTheme('light', e); }} className={`bottom-sheet-setting-btn ${theme === 'light' ? 'active' : ''}`}>{t('sidebar.theme_light_short')}</button>
+                                    <button onClick={(e) => { e.stopPropagation(); setTheme('dark', e); }} className={`bottom-sheet-setting-btn ${theme === 'dark' ? 'active' : ''}`}>{t('sidebar.theme_dark_short')}</button>
+                                </div>
+                            </div>
+                            
+                            {ConfigAPI.getBoolean('feature_localize_enabled', true) && (
+                                <div className="bottom-sheet-setting-row">
+                                    <span className="bottom-sheet-setting-label">🌐 {t('sidebar.lang_label')}</span>
+                                    <div className="bottom-sheet-setting-control">
+                                        <button onClick={(e) => { e.stopPropagation(); changeLanguage('vi'); }} className={`bottom-sheet-setting-btn ${lang === 'vi' ? 'active' : ''}`}>VI</button>
+                                        <button onClick={(e) => { e.stopPropagation(); changeLanguage('en'); }} className={`bottom-sheet-setting-btn ${lang === 'en' ? 'active' : ''}`}>EN</button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        <button className="bottom-sheet-logout" onClick={() => { handleLogout(); setShowMobileSheet(false); }}>
+                            👋 {t('app.logout')}
+                        </button>
+                    </div>
+                </div>
+            )}
 
             {/* Modals */}
             <MemberModal 

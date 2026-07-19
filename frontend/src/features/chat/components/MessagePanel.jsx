@@ -36,6 +36,7 @@ function formatMessageContent(content) {
 
 export default function MessagePanel({
     activeRoomId,
+    setActiveRoomId,
     activeRoom,
     messages,
     setMessages,
@@ -136,7 +137,7 @@ export default function MessagePanel({
         <div className="flex flex-col h-full bg-transparent w-full relative">
             {/* Chat header */}
             <div className="px-4 py-3 flex items-center gap-3 border-b border-black/5 dark:border-white/5 bg-white/60 dark:bg-black/20 backdrop-blur-xl shrink-0 z-10 shadow-sm">
-                <button className="md:hidden w-10 h-10 flex items-center justify-center rounded-xl bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20 text-zinc-600 dark:text-zinc-300 transition-colors" onClick={() => fetchRooms()}>
+                <button className="md:hidden w-10 h-10 flex items-center justify-center rounded-xl bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20 text-zinc-600 dark:text-zinc-300 transition-colors" onClick={() => setActiveRoomId(null)}>
                     <ChevronLeft size={24} />
                 </button>
                 <div className={`relative w-11 h-11 shrink-0 rounded-[1rem] shadow-sm overflow-hidden flex items-center justify-center text-white font-black text-sm ${activeRoom?.type === 'group' ? 'bg-gradient-to-br from-emerald-400 to-teal-600' : 'bg-gradient-to-br from-amber-400 to-orange-500'}`}>

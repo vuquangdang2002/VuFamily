@@ -1,7 +1,26 @@
 /* ============================================
    RESPONSIVE LAYOUT FIXES (PHASE 3)
    ============================================ */
+.bottom-nav {
+    display: none;
+}
+
+.bottom-sheet-overlay {
+    display: none;
+}
+
 @media (max-width: 768px) {
+    /* Hide desktop sidebar on mobile */
+    .sidebar-container {
+        display: none !important;
+    }
+
+    .app-root-container {
+        flex-direction: column !important;
+        height: 100dvh !important;
+        width: 100vw !important;
+        overflow: hidden !important;
+    }
     /* App Layout Flex Column Configuration */
     .app-layout {
         flex-direction: column !important;
