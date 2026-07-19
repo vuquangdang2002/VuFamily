@@ -376,10 +376,10 @@ export default function ChatPage({ user, addToast, onStartCall }) {
     const currentUserRole = activeRoom?.type === 'group' ? (activeRoom.members?.find(m => m.id === user.id)?.role || 'member') : 'member';
 
     return (
-        <div className="h-full w-full overflow-hidden flex flex-col relative">
-            <div className="flex-1 min-h-0 flex flex-col md:flex-row relative">
+        <div className="h-full w-full p-4 md:p-6 lg:p-8 overflow-hidden flex flex-col relative">
+            <div className="flex-1 min-h-0 flex flex-col md:flex-row relative rounded-[1.5rem] bg-white/60 dark:bg-[#111111]/60 backdrop-blur-xl border border-black/5 dark:border-white/10 shadow-sm overflow-hidden">
                 {/* Inbox Panel - Hidden on mobile if a room is active */}
-                <div className={`w-full md:w-[340px] lg:w-[380px] h-full shrink-0 border-r border-black/5 dark:border-white/5 bg-white/60 dark:bg-[#111111]/60 backdrop-blur-xl ${activeRoomId ? 'hidden md:flex md:flex-col' : 'flex flex-col'}`}>
+                <div className={`w-full md:w-[320px] lg:w-[360px] h-full shrink-0 border-r border-black/5 dark:border-white/5 bg-white/40 dark:bg-black/20 ${activeRoomId ? 'hidden md:flex md:flex-col' : 'flex flex-col'}`}>
                     <InboxPanel
                         rooms={rooms}
                         loadingRooms={loadingRooms}
@@ -391,7 +391,7 @@ export default function ChatPage({ user, addToast, onStartCall }) {
                 </div>
 
                 {/* Message Panel - Hidden on mobile if NO room is active */}
-                <div className={`flex-1 h-full bg-white/40 dark:bg-transparent ${!activeRoomId ? 'hidden md:flex md:flex-col' : 'flex flex-col'}`}>
+                <div className={`flex-1 h-full bg-transparent ${!activeRoomId ? 'hidden md:flex md:flex-col' : 'flex flex-col'}`}>
                     <MessagePanel
                         activeRoomId={activeRoomId}
                         activeRoom={activeRoom}

@@ -170,9 +170,10 @@
 
     "newsfeed.categories": "Categories",
     "newsfeed.contacts_tab": "Contacts & Links",
-    "newsfeed.contest_tab": "Contest (Coming soon)",
-    "newsfeed.header_desc": "Notices, updates, and internal sharing of the Vu family.",
     "newsfeed.header_title": "Newsfeed",
+    "newsfeed.title": "Family Newsfeed",
+    "newsfeed.contest_tab": "Contests & Events",
+    "newsfeed.header_desc": "Announcements, updates, and internal sharing of the Vu family.",
     "newsfeed.no_posts": "No posts yet.",
 
     "profile.avatar_title": "Profile Picture",

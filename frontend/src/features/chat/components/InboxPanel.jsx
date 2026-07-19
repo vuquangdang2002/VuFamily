@@ -19,11 +19,11 @@ export default function InboxPanel({
 
     return (
         <div className="flex flex-col h-full bg-transparent w-full">
-            <div className="px-5 pt-6 pb-4 flex items-center justify-between gap-3 flex-none flex-wrap">
-                <h2 className="text-xl font-extrabold text-zinc-900 dark:text-white m-0 truncate">
+            <div className="px-5 pt-5 pb-4 flex items-center justify-between gap-2 flex-none">
+                <h2 className="text-lg font-extrabold text-zinc-900 dark:text-white m-0 truncate min-w-0 flex-1">
                     {t('chat.messages_title')}
                 </h2>
-                <div className="flex gap-2 flex-none">
+                <div className="flex items-center gap-1.5 shrink-0">
                     <button 
                         className="w-9 h-9 flex items-center justify-center rounded-xl bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20 text-zinc-700 dark:text-zinc-300 transition-colors" 
                         title={t('chat.join_by_code_title')} 
@@ -36,8 +36,8 @@ export default function InboxPanel({
                     >
                         <KeyRound size={16} />
                     </button>
-                    <button className="flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-[13px] bg-blue-600 text-white hover:bg-blue-700 shadow-md transition-colors" onClick={() => setShowNewChat(true)}>
-                        <MessageSquarePlus size={16} /> <span className="hidden sm:inline">{t('chat.new_chat_btn')}</span>
+                    <button className="flex items-center gap-1.5 px-3 py-2 rounded-xl font-bold text-[12px] bg-blue-600 text-white hover:bg-blue-700 shadow-md transition-colors whitespace-nowrap" onClick={() => setShowNewChat(true)}>
+                        <MessageSquarePlus size={15} /> <span>{t('chat.new_chat_btn')}</span>
                     </button>
                 </div>
             </div>

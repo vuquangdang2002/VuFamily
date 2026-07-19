@@ -2,7 +2,7 @@
 
 /* DashboardView.css */
 .dashboard-container {
-    @apply block space-y-6 md:space-y-8 p-4 md:p-8 h-full overflow-y-auto w-full bg-[#0d1117] text-[#c9d1d9];
+    @apply flex flex-col gap-8 lg:gap-10 p-4 md:p-8 h-full overflow-y-auto w-full bg-[#0d1117] text-[#c9d1d9];
 }
 
 .dashboard-hero {
@@ -30,7 +30,7 @@
 }
 
 .dashboard-grid {
-    @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6;
+    @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6;
 }
 
 .dashboard-card {
@@ -65,7 +65,7 @@
 }
 
 .dashboard-stats-panel {
-    @apply block space-y-6;
+    @apply flex flex-col gap-6;
 }
 
 .dashboard-stats-card {
@@ -73,5 +73,5 @@
 }
 
 .dashboard-quote {
-    @apply relative p-6 bg-[#161b22] border border-[#30363d] rounded-xl flex flex-col items-start overflow-hidden shadow-sm;
+    @apply relative p-6 bg-[#161b22] border border-[#30363d] rounded-xl flex flex-col items-start overflow-hidden shadow-sm flex-1;
 }

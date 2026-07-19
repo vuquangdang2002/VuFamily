@@ -10,6 +10,7 @@
     },
     "dependencies": {
         "@tailwindcss/postcss": "^4.3.3",
+        "@tailwindcss/vite": "^4.3.3",
         "clsx": "^2.1.1",
         "firebase": "^12.16.0",
         "framer-motion": "^12.42.2",

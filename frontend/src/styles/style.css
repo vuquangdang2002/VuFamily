@@ -1,4 +1,4 @@
-﻿/* ============================================================
+/* ============================================================
    GIA PHẢ — VuFamily Design System
    Entry point CSS — chỉ chứa import và global base styles
    Theme tokens được tách vào:
@@ -9,7 +9,7 @@
 /* ── Google Fonts ── */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap');
 
-/* ── Tailwind (Cần đặt ở ĐẦU để utilities có thể override) ── */
+/* ── Tailwind CSS v4 ── */
 @import "tailwindcss";
 
 /* ── Theme tokens (load trước tất cả component) ── */
@@ -31,84 +31,102 @@
 @import "../shared/components/Responsive.css";
 @import "../shared/components/Animations.css";
 
+/* ── Tailwind Config ── */
+@source "../";
+
 @theme {
     --font-heading: 'Outfit', sans-serif;
-    --font-body:    'Inter', sans-serif;
+    --font-body: 'Inter', sans-serif;
 }
 
 /* ============================================================
    GLOBAL BASE STYLES
-   (Không chứa màu sắc — màu nằm trong theme-*.css)
+   Wrapped in @layer base so Tailwind @layer utilities can override
    ============================================================ */
 
-*,
-*::before,
-*::after {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-}
+@layer base {
+    *,
+    *::before,
+    *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+    }
 
-html {
-    font-size: 16px;
-    -webkit-font-smoothing: antialiased;
-}
+    html {
+        font-size: 16px;
+        -webkit-font-smoothing: antialiased;
+    }
 
-body {
-    font-family: var(--font-body);
-    background: var(--bg-primary);
-    color: var(--text-primary);
-    height: 100dvh;
-    min-height: 100dvh;
-    overflow: hidden;
-}
+    body {
+        font-family: var(--font-body);
+        background: var(--bg-primary);
+        color: var(--text-primary);
+        height: 100dvh;
+        min-height: 100dvh;
+        overflow: hidden;
+    }
 
-/* ============================================================
-   PREMIUM TYPOGRAPHY & HIERARCHY SYSTEM
-   ============================================================ */
-h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-heading);
-    font-weight: 700;
-    color: var(--text-primary);
-    line-height: 1.25;
-    letter-spacing: -0.02em;
-    margin: 0 0 0.5rem 0;
-}
+    /* ── PREMIUM TYPOGRAPHY & HIERARCHY SYSTEM ── */
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        font-family: var(--font-heading);
+        font-weight: 700;
+        color: var(--text-primary);
+        line-height: 1.25;
+        letter-spacing: -0.02em;
+        margin: 0 0 0.5rem 0;
+    }
 
-p {
-    font-family: var(--font-body);
-    line-height: 1.6;
-    color: var(--text-secondary);
-    margin: 0;
-}
+    p {
+        font-family: var(--font-body);
+        line-height: 1.6;
+        color: var(--text-secondary);
+        margin: 0;
+    }
 
-span, button, select, textarea {
-    font-family: var(--font-body);
-}
+    span,
+    button,
+    select,
+    textarea {
+        font-family: var(--font-body);
+    }
 
-small, .text-small {
-    font-size: 0.8rem; /* 12.8px */
-    color: var(--text-muted);
-}
+    small,
+    .text-small {
+        font-size: 0.8rem;
+        /* 12.8px */
+        color: var(--text-muted);
+    }
 
-input, select, textarea {
-    font-family: var(--font-body);
-    border-radius: var(--radius-sm);
-}
-input:focus, select:focus, textarea:focus {
-    outline: none;
-}
+    input,
+    select,
+    textarea {
+        font-family: var(--font-body);
+        border-radius: var(--radius-sm);
+    }
 
-::selection {
-    background: rgba(67, 56, 202, 0.15);
-    color: var(--text-primary);
-}
+    input:focus,
+    select:focus,
+    textarea:focus {
+        outline: none;
+    }
 
-.app {
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-    width: 100vw;
+    ::selection {
+        background: rgba(67, 56, 202, 0.15);
+        color: var(--text-primary);
+    }
+
+    .app {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        width: 100vw;
+    }
 }
 
 /* ── Smooth CSS Variable Transitions (fallback — mọi browser) ── */
@@ -121,12 +139,14 @@ body,
 .modal,
 .detail-panel,
 .btn,
-input, select, textarea {
+input,
+select,
+textarea {
     transition:
         background-color 350ms ease,
-        border-color     350ms ease,
-        color            200ms ease,
-        box-shadow       350ms ease;
+        border-color 350ms ease,
+        color 200ms ease,
+        box-shadow 350ms ease;
 }
 
 /* ── View Transitions API — Circular Wipe ── */
@@ -135,5 +155,11 @@ input, select, textarea {
     animation: none;
     mix-blend-mode: normal;
 }
-::view-transition-old(root) { z-index: 1; }
-::view-transition-new(root) { z-index: 9999; }
+
+::view-transition-old(root) {
+    z-index: 1;
+}
+
+::view-transition-new(root) {
+    z-index: 9999;
+}

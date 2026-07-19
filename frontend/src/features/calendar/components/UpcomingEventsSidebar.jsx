@@ -28,18 +28,18 @@ export default function UpcomingEventsSidebar({ members, serverEvents = [] }) {
     return (
         <div className="flex flex-col gap-6 w-full h-full">
             {/* Upcoming Birthdays */}
-            <div className="rounded-[1.5rem] p-5 shadow-sm bg-white/60 dark:bg-[#111111]/60 backdrop-blur-xl border border-white/40 dark:border-white/10 flex flex-col gap-4 relative overflow-hidden group">
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-400 to-teal-500 opacity-80" />
+            <div className="rounded-[1.5rem] p-5 md:p-6 pt-6 md:pt-7 shadow-sm bg-white/60 dark:bg-[#111111]/60 backdrop-blur-xl border border-white/40 dark:border-white/10 flex flex-col gap-4 relative overflow-hidden group">
+                <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-emerald-400 to-teal-500 opacity-80" />
                 <div className="flex items-center gap-3 pb-3 border-b border-black/5 dark:border-white/10">
                     <span className="w-10 h-10 rounded-full bg-emerald-50 dark:bg-emerald-500/10 text-emerald-500 flex items-center justify-center text-xl shrink-0 shadow-inner">🎂</span>
-                    <h3 className="text-[15px] font-extrabold text-zinc-900 dark:text-white uppercase tracking-wide">{t('calendar.upcoming_birthday')}</h3>
+                    <h3 className="text-[14px] md:text-[15px] font-extrabold text-zinc-900 dark:text-white uppercase tracking-wide">{t('calendar.upcoming_birthday')}</h3>
                     <span className="ml-auto px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400">{upcomingBirthdays.length}</span>
                 </div>
                 <div className="flex flex-col gap-3">
                     {upcomingBirthdays.length === 0 ? (
-                        <p className="py-4 text-center text-[13px] font-medium text-zinc-500 bg-white/40 dark:bg-white/5 rounded-xl border border-dashed border-black/10 dark:border-white/10">{t('calendar.no_birthday_30')}</p>
+                        <p className="py-5 px-4 text-center text-[13px] font-medium text-zinc-500 bg-white/40 dark:bg-white/5 rounded-xl border border-dashed border-black/10 dark:border-white/10 leading-relaxed">{t('calendar.no_birthday_30')}</p>
                     ) : upcomingBirthdays.map((ev, i) => (
-                        <div key={i} className={`flex items-start gap-3 p-3 rounded-xl border transition-colors shadow-sm ${ev.daysUntil === 0 ? 'bg-emerald-50/50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800/50 ring-1 ring-emerald-500/50' : 'bg-white/80 dark:bg-black/40 border-black/5 dark:border-white/5 hover:bg-white dark:hover:bg-zinc-800'}`}>
+                        <div key={i} className={`flex items-start gap-3 p-3.5 rounded-xl border transition-colors shadow-sm ${ev.daysUntil === 0 ? 'bg-emerald-50/50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800/50 ring-1 ring-emerald-500/50' : 'bg-white/80 dark:bg-black/40 border-black/5 dark:border-white/5 hover:bg-white dark:hover:bg-zinc-800'}`}>
                             <MemberAvatar member={ev.member} size={44} />
                             <div className="flex flex-col flex-1 min-w-0 pt-0.5">
                                 <span className="text-[14px] font-extrabold text-zinc-900 dark:text-white truncate leading-tight mb-0.5">{ev.member.name}</span>
@@ -61,18 +61,18 @@ export default function UpcomingEventsSidebar({ members, serverEvents = [] }) {
             </div>
 
             {/* Upcoming Anniversaries */}
-            <div className="rounded-[1.5rem] p-5 shadow-sm bg-white/60 dark:bg-[#111111]/60 backdrop-blur-xl border border-white/40 dark:border-white/10 flex flex-col gap-4 relative overflow-hidden group">
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-400 to-orange-500 opacity-80" />
+            <div className="rounded-[1.5rem] p-5 md:p-6 pt-6 md:pt-7 shadow-sm bg-white/60 dark:bg-[#111111]/60 backdrop-blur-xl border border-white/40 dark:border-white/10 flex flex-col gap-4 relative overflow-hidden group">
+                <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-amber-400 to-orange-500 opacity-80" />
                 <div className="flex items-center gap-3 pb-3 border-b border-black/5 dark:border-white/10">
                     <span className="w-10 h-10 rounded-full bg-amber-50 dark:bg-amber-500/10 text-amber-500 flex items-center justify-center text-xl shrink-0 shadow-inner">🕯️</span>
-                    <h3 className="text-[15px] font-extrabold text-zinc-900 dark:text-white uppercase tracking-wide">{t('calendar.upcoming_anniversary')}</h3>
+                    <h3 className="text-[14px] md:text-[15px] font-extrabold text-zinc-900 dark:text-white uppercase tracking-wide">{t('calendar.upcoming_anniversary')}</h3>
                     <span className="ml-auto px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400">{upcomingAnniversaries.length}</span>
                 </div>
                 <div className="flex flex-col gap-3">
                     {upcomingAnniversaries.length === 0 ? (
-                        <p className="py-4 text-center text-[13px] font-medium text-zinc-500 bg-white/40 dark:bg-white/5 rounded-xl border border-dashed border-black/10 dark:border-white/10">{t('calendar.no_anniversary_30')}</p>
+                        <p className="py-5 px-4 text-center text-[13px] font-medium text-zinc-500 bg-white/40 dark:bg-white/5 rounded-xl border border-dashed border-black/10 dark:border-white/10 leading-relaxed">{t('calendar.no_anniversary_30')}</p>
                     ) : upcomingAnniversaries.map((ev, i) => (
-                        <div key={i} className={`flex items-start gap-3 p-3 rounded-xl border transition-colors shadow-sm ${ev.daysUntil === 0 ? 'bg-amber-50/50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800/50 ring-1 ring-amber-500/50' : 'bg-white/80 dark:bg-black/40 border-black/5 dark:border-white/5 hover:bg-white dark:hover:bg-zinc-800'}`}>
+                        <div key={i} className={`flex items-start gap-3 p-3.5 rounded-xl border transition-colors shadow-sm ${ev.daysUntil === 0 ? 'bg-amber-50/50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800/50 ring-1 ring-amber-500/50' : 'bg-white/80 dark:bg-black/40 border-black/5 dark:border-white/5 hover:bg-white dark:hover:bg-zinc-800'}`}>
                             <MemberAvatar member={ev.member} size={44} />
                             <div className="flex flex-col flex-1 min-w-0 pt-0.5">
                                 <span className="text-[14px] font-extrabold text-zinc-900 dark:text-white truncate leading-tight mb-0.5">{ev.member.name}</span>
@@ -94,18 +94,18 @@ export default function UpcomingEventsSidebar({ members, serverEvents = [] }) {
             </div>
 
             {/* Upcoming Events (Server) */}
-            <div className="rounded-[1.5rem] p-5 shadow-sm bg-white/60 dark:bg-[#111111]/60 backdrop-blur-xl border border-white/40 dark:border-white/10 flex flex-col gap-4 relative overflow-hidden group">
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 to-indigo-500 opacity-80" />
+            <div className="rounded-[1.5rem] p-5 md:p-6 pt-6 md:pt-7 shadow-sm bg-white/60 dark:bg-[#111111]/60 backdrop-blur-xl border border-white/40 dark:border-white/10 flex flex-col gap-4 relative overflow-hidden group">
+                <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-blue-400 to-indigo-500 opacity-80" />
                 <div className="flex items-center gap-3 pb-3 border-b border-black/5 dark:border-white/10">
                     <span className="w-10 h-10 rounded-full bg-blue-50 dark:bg-blue-500/10 text-blue-500 flex items-center justify-center text-xl shrink-0 shadow-inner">📅</span>
-                    <h3 className="text-[15px] font-extrabold text-zinc-900 dark:text-white uppercase tracking-wide">{t('calendar.upcoming_events')}</h3>
+                    <h3 className="text-[14px] md:text-[15px] font-extrabold text-zinc-900 dark:text-white uppercase tracking-wide">{t('calendar.upcoming_events')}</h3>
                     <span className="ml-auto px-2.5 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400">{upcomingEvents.length}</span>
                 </div>
                 <div className="flex flex-col gap-3">
                     {upcomingEvents.length === 0 ? (
-                        <p className="py-4 text-center text-[13px] font-medium text-zinc-500 bg-white/40 dark:bg-white/5 rounded-xl border border-dashed border-black/10 dark:border-white/10">{t('calendar.no_events_30')}</p>
+                        <p className="py-5 px-4 text-center text-[13px] font-medium text-zinc-500 bg-white/40 dark:bg-white/5 rounded-xl border border-dashed border-black/10 dark:border-white/10 leading-relaxed">{t('calendar.no_events_30')}</p>
                     ) : upcomingEvents.map((ev, i) => (
-                        <div key={i} className={`flex items-start gap-3 p-3 rounded-xl border transition-colors shadow-sm ${ev.daysUntil === 0 ? 'bg-blue-50/50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800/50 ring-1 ring-blue-500/50' : 'bg-white/80 dark:bg-black/40 border-black/5 dark:border-white/5 hover:bg-white dark:hover:bg-zinc-800'}`}>
+                        <div key={i} className={`flex items-start gap-3 p-3.5 rounded-xl border transition-colors shadow-sm ${ev.daysUntil === 0 ? 'bg-blue-50/50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800/50 ring-1 ring-blue-500/50' : 'bg-white/80 dark:bg-black/40 border-black/5 dark:border-white/5 hover:bg-white dark:hover:bg-zinc-800'}`}>
                             <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-500/20 text-blue-500 flex items-center justify-center text-lg shrink-0 border border-blue-200 dark:border-blue-500/30">📅</div>
                             <div className="flex flex-col flex-1 min-w-0 pt-0.5">
                                 <span className="text-[14px] font-extrabold text-zinc-900 dark:text-white truncate leading-tight mb-0.5">{ev.event.title}</span>

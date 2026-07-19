@@ -98,72 +98,72 @@ export default function FinancePage({ user, addToast }) {
                 <div className="absolute bottom-1/4 left-1/3 w-[300px] h-[300px] bg-[#fe6e00]/5 rounded-full blur-[100px] mix-blend-screen" />
             </div>
             {/* ── Header ── */}
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-2 shrink-0">
-                <div className="flex flex-col gap-1">
-                    <h2 className="text-2xl md:text-3xl font-extrabold text-zinc-900 dark:text-white flex items-center gap-2">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-black/5 dark:border-white/5 shrink-0">
+                <div className="flex flex-col gap-1 min-w-0">
+                    <h2 className="text-2xl md:text-3xl font-extrabold text-zinc-900 dark:text-white flex items-center gap-2 truncate">
                         <span className="text-emerald-500">💰</span> {t('finance.title')}
                     </h2>
-                    <p className="text-sm md:text-base font-medium text-zinc-500 dark:text-zinc-400">{t('finance.subtitle')}</p>
+                    <p className="text-xs md:text-sm font-medium text-zinc-500 dark:text-zinc-400">{t('finance.subtitle')}</p>
                 </div>
                 
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap items-center gap-2.5 shrink-0">
                     {isEditorOrAdmin && (
                         <>
-                            <button className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-[13px] bg-white/60 dark:bg-white/5 border border-black/5 dark:border-white/10 text-zinc-700 dark:text-zinc-300 hover:bg-white dark:hover:bg-white/10 shadow-sm transition-all" onClick={() => handleExportCSV(categories)}>
-                                <Upload size={16} /> <span className="hidden sm:inline">{t('finance.export_btn')}</span>
+                            <button className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl font-bold text-[13px] bg-white/60 dark:bg-white/5 border border-black/5 dark:border-white/10 text-zinc-700 dark:text-zinc-300 hover:bg-white dark:hover:bg-white/10 shadow-sm transition-all whitespace-nowrap" onClick={() => handleExportCSV(categories)}>
+                                <Upload size={16} /> <span>{t('finance.export_btn')}</span>
                             </button>
-                            <button className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-[13px] bg-white/60 dark:bg-white/5 border border-black/5 dark:border-white/10 text-zinc-700 dark:text-zinc-300 hover:bg-white dark:hover:bg-white/10 shadow-sm transition-all" onClick={() => { setShowImportModal(true); setParsedTransactions([]); setGoogleSheetUrl(''); }}>
-                                <Download size={16} /> <span className="hidden sm:inline">{t('finance.import_btn')}</span>
+                            <button className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl font-bold text-[13px] bg-white/60 dark:bg-white/5 border border-black/5 dark:border-white/10 text-zinc-700 dark:text-zinc-300 hover:bg-white dark:hover:bg-white/10 shadow-sm transition-all whitespace-nowrap" onClick={() => { setShowImportModal(true); setParsedTransactions([]); setGoogleSheetUrl(''); }}>
+                                <Download size={16} /> <span>{t('finance.import_btn')}</span>
                             </button>
-                            <button className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-[13px] bg-emerald-600 text-white hover:bg-emerald-700 shadow-md transition-all" onClick={() => setShowAddModal(true)}>
+                            <button className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl font-bold text-[13px] bg-emerald-600 text-white hover:bg-emerald-700 shadow-md transition-all whitespace-nowrap" onClick={() => setShowAddModal(true)}>
                                 <Plus size={16} /> {t('finance.add_transaction')}
                             </button>
                         </>
                     )}
                     {isAdmin && (
-                        <button className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-[13px] bg-zinc-800 text-white dark:bg-white dark:text-black hover:bg-black dark:hover:bg-zinc-200 shadow-sm transition-all" onClick={() => setShowLogsModal(true)}>
-                            <History size={16} /> <span className="hidden sm:inline">{t('finance.audit_logs_btn')}</span>
+                        <button className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl font-bold text-[13px] bg-zinc-800 text-white dark:bg-white dark:text-black hover:bg-black dark:hover:bg-zinc-200 shadow-sm transition-all whitespace-nowrap" onClick={() => setShowLogsModal(true)}>
+                            <History size={16} /> <span>{t('finance.audit_logs_btn')}</span>
                         </button>
                     )}
                 </div>
             </div>
 
             {/* ── Balance Cards ── */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 shrink-0">
-                <div className="rounded-[1.5rem] p-5 shadow-sm bg-white/60 dark:bg-[#111111]/60 backdrop-blur-xl border border-black/5 dark:border-white/10 flex items-center gap-4 relative overflow-hidden group">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 shrink-0">
+                <div className="rounded-[1.5rem] p-5 md:p-6 shadow-sm bg-white/60 dark:bg-[#111111]/60 backdrop-blur-xl border border-black/5 dark:border-white/10 flex items-center gap-4 relative overflow-hidden group">
                     <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 to-indigo-500 opacity-80" />
                     <div className="w-12 h-12 rounded-[1rem] bg-blue-50 dark:bg-blue-500/10 text-blue-500 flex items-center justify-center shrink-0">
                         <Landmark size={24} />
                     </div>
-                    <div className="flex flex-col">
-                        <span className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-0.5">{t('finance.total_balance')}</span>
-                        <span className={`text-2xl font-black tracking-tight ${currentBalance >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+                    <div className="flex flex-col min-w-0">
+                        <span className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-0.5 truncate">{t('finance.total_balance')}</span>
+                        <span className={`text-xl lg:text-2xl font-black tracking-tight truncate ${currentBalance >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
                             {formatCurrency(currentBalance)}
                         </span>
                     </div>
                 </div>
                 
-                <div className="rounded-[1.5rem] p-5 shadow-sm bg-white/60 dark:bg-[#111111]/60 backdrop-blur-xl border border-black/5 dark:border-white/10 flex items-center gap-4 relative overflow-hidden group">
+                <div className="rounded-[1.5rem] p-5 md:p-6 shadow-sm bg-white/60 dark:bg-[#111111]/60 backdrop-blur-xl border border-black/5 dark:border-white/10 flex items-center gap-4 relative overflow-hidden group">
                     <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-400 to-teal-500 opacity-80" />
                     <div className="w-12 h-12 rounded-[1rem] bg-emerald-50 dark:bg-emerald-500/10 text-emerald-500 flex items-center justify-center shrink-0">
                         <TrendingUp size={24} />
                     </div>
-                    <div className="flex flex-col">
-                        <span className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-0.5">{t('finance.total_income')}</span>
-                        <span className="text-2xl font-black tracking-tight text-emerald-600 dark:text-emerald-400">
+                    <div className="flex flex-col min-w-0">
+                        <span className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-0.5 truncate">{t('finance.total_income')}</span>
+                        <span className="text-xl lg:text-2xl font-black tracking-tight text-emerald-600 dark:text-emerald-400 truncate">
                             {formatCurrency(totalIncome)}
                         </span>
                     </div>
                 </div>
 
-                <div className="rounded-[1.5rem] p-5 shadow-sm bg-white/60 dark:bg-[#111111]/60 backdrop-blur-xl border border-black/5 dark:border-white/10 flex items-center gap-4 relative overflow-hidden group">
+                <div className="rounded-[1.5rem] p-5 md:p-6 shadow-sm bg-white/60 dark:bg-[#111111]/60 backdrop-blur-xl border border-black/5 dark:border-white/10 flex items-center gap-4 relative overflow-hidden group sm:col-span-2 lg:col-span-1">
                     <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-rose-400 to-pink-500 opacity-80" />
                     <div className="w-12 h-12 rounded-[1rem] bg-rose-50 dark:bg-rose-500/10 text-rose-500 flex items-center justify-center shrink-0">
                         <TrendingDown size={24} />
                     </div>
-                    <div className="flex flex-col">
-                        <span className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-0.5">{t('finance.total_expense')}</span>
-                        <span className="text-2xl font-black tracking-tight text-rose-600 dark:text-rose-400">
+                    <div className="flex flex-col min-w-0">
+                        <span className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-0.5 truncate">{t('finance.total_expense')}</span>
+                        <span className="text-xl lg:text-2xl font-black tracking-tight text-rose-600 dark:text-rose-400 truncate">
                             {formatCurrency(totalExpense)}
                         </span>
                     </div>

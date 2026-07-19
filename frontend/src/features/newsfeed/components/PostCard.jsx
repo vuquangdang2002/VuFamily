@@ -124,20 +124,20 @@ export default function PostCard({ post, user, isAdmin, currentUserId, addToast,
     };
 
     return (
-        <GlassCard className="p-5 md:p-6 flex flex-col gap-4">
+        <div className="bg-[#161b22] border border-[#30363d] rounded-xl shadow-sm p-6 flex flex-col gap-4">
             {/* Header */}
             <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#fe6e00]/20 to-amber-500/20 flex items-center justify-center border border-[#fe6e00]/30 shadow-sm shrink-0 text-[#fe6e00]">
                     {(post.author_role || post.authorRole) === 'admin' ? '👑' : <User size={18} />}
                 </div>
                 <div className="flex flex-col flex-1 min-w-0">
-                    <span className="font-bold text-[15px] text-zinc-900 dark:text-white truncate flex items-center gap-2">
+                    <span className="font-bold text-[15px] text-white truncate flex items-center gap-2">
                         {post.author}
                         {(post.author_role || post.authorRole) === 'admin' && (
                             <span className="px-1.5 py-0.5 rounded-md bg-rose-500/10 text-rose-500 text-[10px] uppercase font-bold tracking-wider border border-rose-500/20">Admin</span>
                         )}
                     </span>
-                    <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">{timeAgo(post.created_at)}</span>
+                    <span className="text-xs font-medium text-[#8b949e]">{timeAgo(post.created_at || post.createdAt)}</span>
                 </div>
                 {(isAdmin || (currentUserId && post.author_id === currentUserId)) && (
                     <button 
@@ -151,21 +151,21 @@ export default function PostCard({ post, user, isAdmin, currentUserId, addToast,
             </div>
             
             {/* Content */}
-            <div className="text-[15px] whitespace-pre-wrap leading-relaxed text-zinc-800 dark:text-zinc-200">
+            <div className="text-[15px] text-[#c9d1d9] whitespace-pre-wrap leading-relaxed break-words">
                 {post.content}
             </div>
 
             {/* Summary */}
             {(Object.keys(post.reactions || {}).length > 0 || (post.comment_count > 0)) && (
-                <div className="flex justify-between items-center text-[13px] pb-2 border-b border-black/5 dark:border-white/10 text-zinc-500 dark:text-zinc-400 font-medium">
+                <div className="flex justify-between items-center text-[13px] pb-2 border-b border-[#30363d] text-[#8b949e] font-medium">
                     <div className="flex items-center">
                         {Object.keys(post.reactions || {}).filter(e => post.reactions[e].count > 0).slice(0, 3).map((e, idx) => (
-                            <span key={e} className={`bg-white dark:bg-zinc-800 border border-black/5 dark:border-white/10 rounded-full p-0.5 text-xs shadow-sm ${idx > 0 ? '-ml-1.5' : ''} relative z-[${10-idx}]`}>
+                            <span key={e} className={`bg-[#161b22] border border-[#30363d] rounded-full p-0.5 text-xs shadow-sm ${idx > 0 ? '-ml-1.5' : ''} relative z-[${10-idx}]`}>
                                 {e}
                             </span>
                         ))}
                         {Object.values(post.reactions || {}).reduce((sum, r) => sum + (r.count || 0), 0) > 0 && (
-                            <span className="ml-2 font-semibold text-zinc-600 dark:text-zinc-300">
+                            <span className="ml-2 font-semibold text-[#c9d1d9]">
                                 {Object.values(post.reactions || {}).reduce((sum, r) => sum + (r.count || 0), 0)}
                             </span>
                         )}
@@ -179,11 +179,11 @@ export default function PostCard({ post, user, isAdmin, currentUserId, addToast,
             {/* Actions Bar */}
             <div className="flex flex-wrap gap-2 pt-1">
                 <div className="relative group">
-                    <div className="absolute bottom-full left-0 mb-3 hidden group-hover:flex rounded-[1.5rem] shadow-xl p-1.5 gap-1.5 z-20 bg-white dark:bg-[#1C1C1E] border border-black/5 dark:border-white/10 animate-in fade-in slide-in-from-bottom-2">
+                    <div className="absolute bottom-full left-0 mb-3 hidden group-hover:flex rounded-[1.5rem] shadow-xl p-1.5 gap-1.5 z-20 bg-[#161b22] border border-[#30363d] animate-in fade-in slide-in-from-bottom-2">
                         {EMOJIS.map(emoji => (
                             <button
                                 key={emoji}
-                                className="w-10 h-10 rounded-full hover:scale-125 hover:bg-black/5 dark:hover:bg-white/10 transition-all text-xl flex items-center justify-center origin-bottom"
+                                className="w-10 h-10 rounded-full hover:scale-125 hover:bg-[#30363d] transition-all text-xl flex items-center justify-center origin-bottom"
                                 onClick={() => handleReaction(emoji)}
                             >
                                 {emoji}
@@ -191,7 +191,7 @@ export default function PostCard({ post, user, isAdmin, currentUserId, addToast,
                         ))}
                     </div>
                     <button
-                        className={`flex items-center justify-center gap-2 px-4 py-2 rounded-xl transition-all font-bold text-[13px] ${userReaction ? 'bg-[#fe6e00]/10 text-[#fe6e00]' : 'bg-transparent text-zinc-600 dark:text-zinc-400 hover:bg-black/5 dark:hover:bg-white/5'}`}
+                        className={`flex items-center justify-center gap-2 px-4 py-2 rounded-xl transition-all font-bold text-[13px] ${userReaction ? 'bg-[#fe6e00]/10 text-[#fe6e00]' : 'bg-transparent text-[#8b949e] hover:bg-[#30363d]'}`}
                         onClick={() => handleReaction(userReaction ? userReaction : '👍')}
                     >
                         {userReaction ? <span className="text-base leading-none">{userReaction}</span> : <ThumbsUp size={16} className="mb-0.5" />}
@@ -200,7 +200,7 @@ export default function PostCard({ post, user, isAdmin, currentUserId, addToast,
                 </div>
                 
                 <button 
-                    className={`flex items-center justify-center gap-2 px-4 py-2 rounded-xl transition-colors font-bold text-[13px] ${isExpanded ? 'bg-black/5 dark:bg-white/10 text-zinc-900 dark:text-white' : 'bg-transparent text-zinc-600 dark:text-zinc-400 hover:bg-black/5 dark:hover:bg-white/5'}`}
+                    className={`flex items-center justify-center gap-2 px-4 py-2 rounded-xl transition-colors font-bold text-[13px] ${isExpanded ? 'bg-[#30363d] text-white' : 'bg-transparent text-[#8b949e] hover:bg-[#30363d]'}`}
                     onClick={toggleComments}
                 >
                     <MessageCircle size={16} />
@@ -208,7 +208,7 @@ export default function PostCard({ post, user, isAdmin, currentUserId, addToast,
                 </button>
 
                 <button 
-                    className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-transparent text-zinc-600 dark:text-zinc-400 hover:bg-black/5 dark:hover:bg-white/5 transition-colors font-bold text-[13px] ml-auto" 
+                    className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-transparent text-[#8b949e] hover:bg-[#30363d] transition-colors font-bold text-[13px] ml-auto" 
                     onClick={() => addToast(t('newsfeed.share_coming') || 'Tính năng chia sẻ đang phát triển')}
                 >
                     <Share2 size={16} />
@@ -223,32 +223,34 @@ export default function PostCard({ post, user, isAdmin, currentUserId, addToast,
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: 'auto', opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
-                        className="overflow-hidden flex flex-col gap-4 border-t border-black/5 dark:border-white/10"
+                        className="overflow-hidden flex flex-col gap-4 border-t border-[#30363d]"
                     >
                         <div className="pt-4 flex flex-col gap-5">
                             {comments.map(c => (
                                 <div key={c.id} className="flex gap-3 group/comment">
-                                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm shrink-0 bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 text-zinc-600 dark:text-zinc-400">
+                                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm shrink-0 bg-[#30363d] text-[#c9d1d9]">
                                         {(c.author_role || c.authorRole) === 'admin' ? '👑' : <User size={14} />}
                                     </div>
-                                    <div className="flex flex-col flex-1">
-                                        <div className="rounded-[1.25rem] rounded-tl-sm p-3.5 bg-black/5 dark:bg-white/5 relative">
-                                            <div className="font-bold text-[13px] mb-0.5 text-zinc-900 dark:text-white flex items-center gap-2">
+                                    <div className="flex flex-col flex-1 min-w-0 bg-[#0d1117] border border-[#30363d] rounded-2xl px-4 py-3 relative">
+                                        <div className="flex items-center justify-between gap-2 mb-1">
+                                            <span className="font-bold text-[13px] text-white">
                                                 {c.author}
-                                            </div>
-                                            <div className="text-[14px] leading-relaxed text-zinc-700 dark:text-zinc-300">{c.content}</div>
-                                            {isAdmin && (
-                                                <button 
-                                                    className="absolute -right-2 -top-2 opacity-0 group-hover/comment:opacity-100 w-7 h-7 flex items-center justify-center shadow-md rounded-full bg-white dark:bg-zinc-800 border border-black/5 dark:border-white/10 text-rose-500 transition-all hover:scale-110" 
-                                                    onClick={() => handleDeleteComment(c.id)} 
-                                                >
-                                                    <Trash2 size={12} />
-                                                </button>
-                                            )}
+                                            </span>
+                                            <span className="text-[11px] text-[#8b949e]">
+                                                {timeAgo(c.created_at || c.createdAt)}
+                                            </span>
                                         </div>
-                                        <div className="flex gap-3 mt-1 ml-1 text-xs font-bold text-zinc-500 dark:text-zinc-500">
-                                            <span>{timeAgo(c.created_at)}</span>
+                                        <div className="text-[13px] text-[#c9d1d9] leading-relaxed break-words">
+                                            {c.content}
                                         </div>
+                                        {isAdmin && (
+                                            <button 
+                                                className="absolute -right-2 -top-2 opacity-0 group-hover/comment:opacity-100 w-7 h-7 flex items-center justify-center shadow-md rounded-full bg-[#161b22] border border-[#30363d] text-rose-500 transition-all hover:scale-110" 
+                                                onClick={() => handleDeleteComment(c.id)} 
+                                            >
+                                                <Trash2 size={12} />
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
                             ))}
@@ -257,9 +259,11 @@ export default function PostCard({ post, user, isAdmin, currentUserId, addToast,
                                 <div className="w-8 h-8 rounded-full shrink-0 flex items-center justify-center bg-gradient-to-tr from-[#fe6e00]/20 to-amber-500/20 text-[#fe6e00] border border-[#fe6e00]/30 shadow-sm">
                                     {user?.role === 'admin' ? '👑' : <User size={14} />}
                                 </div>
-                                <div className="flex-1 bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 rounded-[1.25rem] rounded-bl-sm flex items-end p-1.5 focus-within:ring-2 focus-within:ring-[#fe6e00]/50 transition-all">
-                                    <textarea 
-                                        rows={1}
+                                <div className="flex-1 flex items-end gap-2">
+                                    <input 
+                                        type="text"
+                                        className="flex-1 bg-[#0d1117] border border-[#30363d] rounded-full px-4 py-2.5 text-[13px] text-[#c9d1d9] placeholder:text-[#8b949e] outline-none focus:border-[#fe6e00]/50 transition-colors"
+                                        placeholder={t('newsfeed.write_comment') || 'Viết bình luận...'}
                                         value={commentText}
                                         onChange={e => setCommentText(e.target.value)}
                                         onKeyDown={e => {
@@ -268,8 +272,6 @@ export default function PostCard({ post, user, isAdmin, currentUserId, addToast,
                                                 handleAddComment();
                                             }
                                         }}
-                                        placeholder={t('newsfeed.write_comment') || 'Viết bình luận...'}
-                                        className="w-full bg-transparent outline-none resize-none px-3 py-2 text-[14px] text-zinc-900 dark:text-white placeholder:text-zinc-500 min-h-[40px] max-h-[120px] custom-scrollbar"
                                     />
                                     <button 
                                         onClick={handleAddComment}
@@ -284,6 +286,6 @@ export default function PostCard({ post, user, isAdmin, currentUserId, addToast,
                     </motion.div>
                 )}
             </AnimatePresence>
-        </GlassCard>
+        </div>
     );
 }

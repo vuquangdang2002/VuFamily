@@ -171,10 +171,11 @@
 
     "newsfeed.categories": "Chuyên mục",
     "newsfeed.contacts_tab": "Danh bạ & Liên hệ",
-    "newsfeed.contest_tab": "Cuộc thi (Sắp ra mắt)",
+    "newsfeed.contest_tab": "Cuộc thi & Sự kiện",
     "newsfeed.header_desc": "Thông báo, cập nhật và chia sẻ nội bộ của dòng họ Vũ.",
     "newsfeed.header_title": "Newsfeed",
     "newsfeed.no_posts": "Chưa có bài đăng nào.",
+    "newsfeed.title": "Bản tin dòng họ",
 
     "profile.avatar_title": "Ảnh đại diện",
 

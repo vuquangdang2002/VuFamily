@@ -16,7 +16,7 @@ export default function DashboardView({ user, greetingText, dateDisplay, totalMe
             initial="hidden" animate="visible" variants={containerVariants}
         >
             {/* ── Welcome Hero Banner ── */}
-            <motion.div className="dashboard-hero" variants={cardVariants}>
+            <motion.div className="dashboard-hero shrink-0" variants={cardVariants}>
                 <div className="relative z-10 flex flex-col gap-3 max-w-2xl">
                     <div className="dashboard-pill">
                         <Sparkles size={14} /> {t('dashboard.family_name') || 'Gia tộc Vũ tộc'}
@@ -38,7 +38,7 @@ export default function DashboardView({ user, greetingText, dateDisplay, totalMe
             </motion.div>
 
             {/* ── Quick Navigation Dashboard Grid ── */}
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-6 shrink-0">
                 <h3 className="dashboard-grid-title"><LayoutList size={20} className="text-[#8b949e]" /> {t('dashboard.main_features') || 'Tính năng chính'}</h3>
                 <motion.div className="dashboard-grid" variants={containerVariants}>
                     {[

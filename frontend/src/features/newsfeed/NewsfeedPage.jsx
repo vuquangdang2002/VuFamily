@@ -155,7 +155,7 @@ export default function NewsfeedPage({ user, isAdmin, addToast, members = [], on
     };
 
     return (
-        <div className="flex flex-col h-full w-full relative overflow-hidden bg-zinc-50 dark:bg-black">
+        <div className="flex flex-col h-full w-full relative overflow-hidden bg-[#0d1117] text-[#c9d1d9]">
             {/* ── Background Elements ── */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none select-none z-0">
                 <div className="absolute top-[10%] right-[-10%] w-[500px] h-[500px] bg-amber-500/10 dark:bg-amber-500/20 rounded-full blur-[120px] mix-blend-screen dark:mix-blend-lighten"></div>
@@ -166,36 +166,35 @@ export default function NewsfeedPage({ user, isAdmin, addToast, members = [], on
             <TopBar user={user} onSearch={setPostSearchQuery} />
 
             {/* Main Content Area */}
-            <div className="flex flex-col lg:flex-row flex-1 gap-6 min-h-0 overflow-y-auto px-4 md:px-6 lg:px-8 pb-8 pt-4 custom-scrollbar z-10 w-full">
+            <div className="flex flex-col lg:flex-row flex-1 gap-8 lg:gap-10 min-h-0 overflow-y-auto p-4 md:p-8 custom-scrollbar z-10 w-full">
                 
-                {/* Left Area: Content (70%) */}
-                <div className="flex-1 flex flex-col gap-6 lg:max-w-[70%] shrink-0 w-full">
+                {/* Left Area: Content */}
+                <div className="flex-1 flex flex-col gap-6 min-w-0">
                     
                     {tab === 'posts' && (
                         <>
                             {/* Header Card */}
-                            <GlassCard className="p-6 md:p-8 flex flex-col items-start justify-center overflow-hidden gradient">
-                                <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 to-transparent pointer-events-none"></div>
-                                <div className="relative z-10 flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 text-[#fe6e00] font-bold text-xs uppercase tracking-wider mb-3 border border-[#fe6e00]/20">
+                            <div className="bg-[#161b22] border border-[#30363d] rounded-[1.5rem] shadow-sm p-6 md:p-8 flex flex-col items-start justify-center overflow-hidden relative shrink-0">
+                                <div className="relative z-10 flex items-center gap-2 px-3 py-1 rounded-full bg-[#fe6e00]/10 text-[#fe6e00] font-bold text-xs uppercase tracking-wider mb-3 border border-[#fe6e00]/20">
                                     <span className="text-sm">📄</span> {t('newsfeed.title') || 'Bản tin dòng họ'}
                                 </div>
-                                <h2 className="relative z-10 text-3xl md:text-4xl font-extrabold text-zinc-900 dark:text-white mb-2 tracking-tight">{t('newsfeed.header_title') || 'Newsfeed'}</h2>
-                                <p className="relative z-10 text-[15px] font-medium text-zinc-600 dark:text-zinc-400">
+                                <h2 className="relative z-10 text-2xl md:text-3xl lg:text-4xl font-extrabold tracking-tight text-white mb-2">{t('newsfeed.header_title') || 'Newsfeed'}</h2>
+                                <p className="relative z-10 text-[#8b949e] text-sm md:text-base font-medium">
                                     {t('newsfeed.header_desc') || 'Thông báo, cập nhật và chia sẻ nội bộ của dòng họ Vũ.'}
                                 </p>
-                            </GlassCard>
+                            </div>
 
                             {/* Create Post Card */}
                             {canEdit && (
-                                <GlassCard className="p-5 md:p-6 flex flex-col gap-4">
+                                <div className="bg-[#161b22] border border-[#30363d] rounded-[1.5rem] shadow-sm p-5 md:p-6 flex flex-col gap-4 shrink-0">
                                     <div className="flex items-center gap-3">
                                         <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#fe6e00]/20 to-amber-500/20 flex items-center justify-center text-[#fe6e00] border border-[#fe6e00]/30 shadow-sm">
                                             <span className="text-lg">{user?.role === 'admin' ? '👑' : '👤'}</span>
                                         </div>
-                                        <span className="font-bold text-[15px] text-zinc-900 dark:text-white">{user?.displayName}</span>
+                                        <span className="font-bold text-[15px] text-white">{user?.displayName}</span>
                                     </div>
                                     <textarea
-                                        className="w-full rounded-2xl p-4 outline-none resize-none bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 text-zinc-900 dark:text-white placeholder:text-zinc-500 focus:ring-2 focus:ring-[#fe6e00]/50 transition-all custom-scrollbar"
+                                        className="w-full rounded-xl p-4 outline-none resize-none bg-[#0d1117] border border-[#30363d] text-[#c9d1d9] placeholder:text-[#8b949e] focus:border-[#fe6e00]/50 transition-all custom-scrollbar"
                                         placeholder={t('newsfeed.write_post') || 'Bạn muốn thông báo điều gì?'}
                                         value={newPost}
                                         onChange={e => setNewPost(e.target.value)}
@@ -214,7 +213,7 @@ export default function NewsfeedPage({ user, isAdmin, addToast, members = [], on
                                             {t('newsfeed.post_btn') || 'Đăng bài'}
                                         </GlowingButton>
                                     </div>
-                                </GlassCard>
+                                </div>
                             )}
 
                             {/* Posts Section */}
@@ -237,12 +236,12 @@ export default function NewsfeedPage({ user, isAdmin, addToast, members = [], on
                                         />
                                     ))}
                                     {filteredPosts.length === 0 && (
-                                        <GlassCard className="flex flex-col items-center justify-center p-12 text-center">
-                                            <div className="w-16 h-16 bg-black/5 dark:bg-white/5 rounded-full flex items-center justify-center mb-4 border border-black/5 dark:border-white/10">
+                                        <div className="bg-[#161b22] border border-[#30363d] rounded-xl shadow-sm flex flex-col items-center justify-center p-12 text-center">
+                                            <div className="w-16 h-16 bg-[#0d1117] rounded-full flex items-center justify-center mb-4 border border-[#30363d]">
                                                 <span className="text-3xl opacity-50">📰</span>
                                             </div>
-                                            <p className="font-medium text-zinc-600 dark:text-zinc-400">{t('newsfeed.no_posts') || 'Chưa có bài đăng nào.'}</p>
-                                        </GlassCard>
+                                            <p className="font-medium text-[#8b949e]">{t('newsfeed.no_posts') || 'Chưa có bài đăng nào.'}</p>
+                                        </div>
                                     )}
                                 </div>
                             )}
@@ -256,29 +255,29 @@ export default function NewsfeedPage({ user, isAdmin, addToast, members = [], on
                     )}
                 </div>
 
-                {/* Right Area: Navigation (30%) */}
-                <div className="w-full lg:w-[30%] flex-shrink-0">
-                    <GlassCard className="p-5 flex flex-col gap-2 sticky top-4">
-                        <h3 className="text-[11px] font-bold uppercase tracking-widest text-zinc-500 dark:text-zinc-400 ml-4 mb-2">{t('newsfeed.categories') || 'Chuyên mục'}</h3>
+                {/* Right Area: Navigation */}
+                <div className="w-full lg:w-[320px] shrink-0">
+                    <div className="bg-[#161b22] border border-[#30363d] rounded-xl shadow-sm p-6 flex flex-col gap-2 sticky top-4">
+                        <h3 className="text-[11px] font-bold uppercase tracking-widest text-[#8b949e] ml-4 mb-2">{t('newsfeed.categories') || 'Chuyên mục'}</h3>
                         
                         <button 
                             onClick={() => switchTab('posts')} 
-                            className={`flex items-center gap-3 w-full text-left p-4 rounded-xl transition-all font-semibold text-[15px] ${tab === 'posts' ? 'bg-[#fe6e00]/10 text-[#fe6e00] shadow-sm border border-[#fe6e00]/20' : 'text-zinc-600 dark:text-zinc-400 hover:bg-black/5 dark:hover:bg-white/5'}`}
+                            className={`flex items-center gap-3 w-full text-left p-4 rounded-xl transition-all font-semibold text-[15px] ${tab === 'posts' ? 'bg-[#fe6e00]/10 text-[#fe6e00] shadow-sm border border-[#fe6e00]/20' : 'text-[#8b949e] hover:bg-[#0d1117]'}`}
                         >
                             <span className="text-xl">📄</span> {t('newsfeed.header_title') || 'Newsfeed'}
                         </button>
                         
                         <button 
                             onClick={() => switchTab('contacts')} 
-                            className={`flex items-center gap-3 w-full text-left p-4 rounded-xl transition-all font-semibold text-[15px] ${tab === 'contacts' ? 'bg-[#fe6e00]/10 text-[#fe6e00] shadow-sm border border-[#fe6e00]/20' : 'text-zinc-600 dark:text-zinc-400 hover:bg-black/5 dark:hover:bg-white/5'}`}
+                            className={`flex items-center gap-3 w-full text-left p-4 rounded-xl transition-all font-semibold text-[15px] ${tab === 'contacts' ? 'bg-[#fe6e00]/10 text-[#fe6e00] shadow-sm border border-[#fe6e00]/20' : 'text-[#8b949e] hover:bg-[#0d1117]'}`}
                         >
                             <span className="text-xl">📱</span> {t('newsfeed.contacts_tab') || 'Danh bạ & Liên hệ'}
                         </button>
 
-                        <button className="flex items-center gap-3 w-full text-left p-4 rounded-xl transition-all font-semibold text-[15px] text-zinc-500 dark:text-zinc-500 opacity-60 cursor-not-allowed">
+                        <button className="flex items-center gap-3 w-full text-left p-4 rounded-xl transition-all font-semibold text-[15px] text-[#8b949e] opacity-60 cursor-not-allowed">
                             <span className="text-xl grayscale">🏆</span> {t('newsfeed.contest_tab') || 'Cuộc thi (Sắp ra mắt)'}
                         </button>
-                    </GlassCard>
+                    </div>
                 </div>
 
             </div>
