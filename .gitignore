@@ -4,7 +4,7 @@ database/*.db
 .env
 .vercel
 client/dist/
-public/
+/public/
 .DS_Store
 *.apks
 *.apk
