@@ -85,7 +85,11 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
         };
     }, [activeCallRoom]);
 
-    if (!activeCallRoom || !token || !serverUrl) {
+    if (!activeCallRoom) {
+        return null;
+    }
+
+    if (!token || !serverUrl) {
         return (
             <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/90 backdrop-blur-xl">
                 <div className="flex flex-col items-center gap-4 text-white">
