@@ -149,17 +149,49 @@ export default function App() {
     // Call Signaling Methods
     const checkMediaPermissions = async (requestVideo) => {
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({
-                audio: true,
-                video: requestVideo ? true : false
-            });
+            let stream;
+            try {
+                // Wrap getUserMedia in a Promise.race with a 5s timeout to prevent hanging
+                const mediaPromise = navigator.mediaDevices.getUserMedia({
+                    audio: true,
+                    video: requestVideo ? true : false
+                });
+                
+                const timeoutPromise = new Promise((resolve, reject) => {
+                    setTimeout(() => reject(new Error('MediaRequestTimeout')), 5000);
+                });
+
+                stream = await Promise.race([mediaPromise, timeoutPromise]);
+            } catch (err) {
+                if (err.message === 'MediaRequestTimeout') {
+                    myLog('CALL', '[MediaCheck] getUserMedia hung (timeout). Allowing call to proceed.');
+                    addToast('Kiểm tra quyền thiết bị quá lâu. Vẫn tiếp tục cuộc gọi...', 'warning');
+                    return true;
+                }
+                if (requestVideo) {
+                    myLog('CALL', '[MediaCheck] Video requested but failed (maybe no webcam). Falling back to audio only.');
+                    const audioPromise = navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+                    const timeoutPromise2 = new Promise((resolve, reject) => setTimeout(() => reject(new Error('MediaRequestTimeout')), 5000));
+                    stream = await Promise.race([audioPromise, timeoutPromise2]);
+                    if (!stream) throw new Error('Timeout');
+                } else {
+                    throw err;
+                }
+            }
             // Stop tracks immediately since VoiceCall will request them again
-            stream.getTracks().forEach(track => track.stop());
+            if (stream) stream.getTracks().forEach(track => track.stop());
             return true;
         } catch (err) {
-            myError('CALL', '[MediaCheck] Permission denied or not found:', err);
-            addToast('Không thể thực hiện cuộc gọi: Vui lòng cấp quyền truy cập Micro/Camera trong cài đặt trình duyệt.', 'error');
-            return false;
+            myError('CALL', '[MediaCheck] Media error:', err);
+            if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+                addToast('Không có quyền truy cập Micro/Camera. Cuộc gọi vẫn sẽ kết nối (chế độ không hình/tiếng).', 'warning');
+            } else if (err.name === 'NotFoundError') {
+                addToast('Không tìm thấy thiết bị Micro/Camera. Cuộc gọi vẫn sẽ kết nối.', 'warning');
+            } else {
+                addToast('Cảnh báo thiết bị (' + (err.name || err.message) + '). Cuộc gọi vẫn tiếp tục.', 'warning');
+            }
+            // Always return true so the user can test the connection regardless of hardware issues
+            return true;
         }
     };
 
@@ -292,6 +324,11 @@ export default function App() {
                         setActiveCallRoom(null);
                     }
                     setIncomingCall(null);
+                } else if (activeCallRoom?.callId === session.callId) {
+                    // Update activeCallRoom so VoiceCall knows when receiver accepts
+                    if (activeCallRoom.status !== session.status || activeCallRoom.connectedAt !== session.connectedAt) {
+                        setActiveCallRoom(session);
+                    }
                 } else {
                     myLog('CALL', `[Global Call Listener] ⏳ No action: isNotCaller=${isNotCaller}, status=${session.status}`);
                 }
