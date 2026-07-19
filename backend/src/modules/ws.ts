@@ -80,14 +80,6 @@ export async function handleWebSocketUpgrade(c: Context) {
         }, server);
       }
 
-      // WebRTC Signaling Forwarding (Targeted)
-      if (['webrtc_offer', 'webrtc_answer', 'webrtc_ice_candidate'].includes(data.type)) {
-        if (data.targetUserId) {
-          // Attach senderId so the receiver knows who sent the signal
-          data.senderId = authSocket.userId;
-          sendToUser(Number(data.targetUserId), data);
-        }
-      }
     } catch (e) {
       console.error('WS message processing error:', e);
     }
