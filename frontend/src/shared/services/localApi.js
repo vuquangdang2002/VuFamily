@@ -5,6 +5,7 @@ import {
     SAMPLE_MEMBERS, SAMPLE_ACHIEVEMENTS, 
     SAMPLE_POSTS, SAMPLE_REQUESTS, SAMPLE_HISTORY 
 } from './sampleData.js';
+import { myError } from '../utils/logger';
 
 const STORAGE_KEY = 'vuFamilyTree';
 const ACH_KEY = 'vuFamilyAchievements';
@@ -27,7 +28,9 @@ function getLocalHistory() {
     try {
         const hist = JSON.parse(localStorage.getItem(HISTORY_KEY));
         if (hist && hist.length > 0) return hist;
-    } catch (e) {}
+    } catch (e) {
+        myError('LOCAL_API', 'Error parsing local history from localStorage:', e);
+    }
     if (!localStorage.getItem(HISTORY_KEY)) saveLocalHistory(SAMPLE_HISTORY);
     return [...SAMPLE_HISTORY];
 }
@@ -38,7 +41,9 @@ function getLocalRequests() {
     try {
         const reqs = JSON.parse(localStorage.getItem(REQUESTS_KEY));
         if (reqs && reqs.length > 0) return reqs;
-    } catch (e) {}
+    } catch (e) {
+        myError('LOCAL_API', 'Error parsing local requests from localStorage:', e);
+    }
     if (!localStorage.getItem(REQUESTS_KEY)) saveLocalRequests(SAMPLE_REQUESTS);
     return [...SAMPLE_REQUESTS];
 }
@@ -374,7 +379,9 @@ export const localApi = {
         try {
             const posts = JSON.parse(localStorage.getItem('vuFamilyPosts'));
             if (posts && posts.length > 0) return posts;
-        } catch (e) {}
+        } catch (e) {
+            myError('LOCAL_API', 'Error parsing local posts from localStorage:', e);
+        }
         if (!localStorage.getItem('vuFamilyPosts')) this.savePosts(SAMPLE_POSTS);
         return [...SAMPLE_POSTS];
     },

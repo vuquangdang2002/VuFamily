@@ -35,6 +35,7 @@ import Toolbar from './shared/components/Toolbar';
 import Toast from './shared/components/Toast';
 import SplashLoading from './shared/components/SplashLoading';
 import ForceChangePasswordModal from './features/auth/ForceChangePasswordModal';
+import { syncCoordinator } from './shared/services/syncCoordinator';
 
 // ── Routing Constants & Helper ──
 const PAGE_TO_PATH = {
@@ -192,35 +193,31 @@ export default function App() {
         } finally {
             setIncomingCall(null);
         }
-    };
-
-    // Real-time Global Call Listener
+    };    // Real-time Global Call Listener
     useEffect(() => {
         if (!user) return;
-        const interval = setInterval(async () => {
-            try {
-                const token = localStorage.getItem('vuFamilyToken');
-                if (!token) return;
-                const res = await fetch('/api/calls/active', {
-                    headers: { 'x-auth-token': token }
-                });
-                const json = await res.json();
-                if (json.success && json.data) {
-                    const session = json.data;
-                    if (session.callerId !== user.id && session.status === 'ringing') {
-                        setIncomingCall(session);
-                    } else if (session.status === 'rejected' && activeCallRoom?.callId === session.callId) {
-                        addToast(t('call.rejected') || 'Cuộc gọi bị từ chối', 'info');
+        const unsubscribe = syncCoordinator.subscribe('calls', (session) => {
+            if (session) {
+                if (session.callerId !== user.id && session.status === 'ringing') {
+                    setIncomingCall(session);
+                } else if (session.status === 'rejected' && activeCallRoom?.callId === session.callId) {
+                    addToast(t('call.rejected') || 'Cuộc gọi bị từ chối', 'info');
+                    setActiveCallRoom(null);
+                    setIncomingCall(null);
+                } else if (session.status === 'ended') {
+                    if (activeCallRoom?.callId === session.callId) {
+                        addToast(t('call.ended') || 'Cuộc gọi kết thúc', 'info');
                         setActiveCallRoom(null);
-                        setIncomingCall(null);
                     }
+                    setIncomingCall(null);
                 }
-            } catch (e) {}
-        }, 800);
+            } else {
+                setIncomingCall(null);
+            }
+        });
 
-        return () => clearInterval(interval);
+        return unsubscribe;
     }, [user, activeCallRoom]);
-
     // Sync activePage and sub-resource selections from window.location.pathname on popstate (browser navigation)
     useEffect(() => {
         const handlePopState = () => {

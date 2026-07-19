@@ -6,6 +6,7 @@ import { Env } from '../index';
 import { authenticate } from '../middleware/auth';
 import { encryptText, decryptText } from '../utils/crypto';
 import { successResponse, errorResponse } from '../utils/response';
+import { broadcast } from './ws';
 
 export const chatRouter = new Hono<{ Bindings: Env }>();
 
@@ -237,7 +238,7 @@ chatRouter.post('/:id/messages', authenticate, async (c) => {
 
     await db.update(chatRooms).set({ updatedAt: new Date().toISOString() }).where(eq(chatRooms.id, roomId));
 
-    return successResponse(c, {
+    const msgData = {
       id: newMessage.id,
       room_id: newMessage.roomId,
       sender_id: newMessage.senderId,
@@ -248,7 +249,15 @@ chatRouter.post('/:id/messages', authenticate, async (c) => {
         username: currentUser.username,
         avatar: currentUser.avatar
       }
+    };
+
+    broadcast({
+      type: 'chat_message',
+      roomId,
+      message: msgData
     });
+
+    return successResponse(c, msgData);
   } catch (err: any) {
     return errorResponse(c, err.message, 500);
   }
@@ -309,6 +318,7 @@ callRouter.post('/start', authenticate, async (c) => {
     };
 
     activeCallsMap.set(callId, session);
+    broadcast({ type: 'calls_updated', session });
 
     return successResponse(c, session);
   } catch (err: any) {
@@ -357,6 +367,8 @@ callRouter.post('/respond', authenticate, async (c) => {
       session.status = 'rejected';
     }
 
+    broadcast({ type: 'calls_updated', session });
+
     return successResponse(c, session);
   } catch (err: any) {
     return errorResponse(c, err.message, 500);
@@ -369,7 +381,10 @@ callRouter.post('/end', authenticate, async (c) => {
     const { callId } = await c.req.json();
     if (callId && activeCallsMap.has(callId)) {
       const session = activeCallsMap.get(callId);
-      if (session) session.status = 'ended';
+      if (session) {
+        session.status = 'ended';
+        broadcast({ type: 'calls_updated', session });
+      }
       activeCallsMap.delete(callId);
     }
     return successResponse(c, null, 'Cuộc gọi đã kết thúc');

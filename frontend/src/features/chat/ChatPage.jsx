@@ -7,6 +7,7 @@ import {
 } from '../../shared/services/chatCache';
 import { myLog, myError, myWarning } from '../../shared/utils/logger';
 import { useTranslation } from '../../shared/hooks/useTranslation';
+import { syncCoordinator } from '../../shared/services/syncCoordinator';
 
 import InboxPanel from './components/InboxPanel';
 import MessagePanel from './components/MessagePanel';
@@ -76,7 +77,10 @@ export default function ChatPage({ user, addToast, onStartCall }) {
                 cacheMessages(roomId, serverMsgs).catch(e => myError('CHAT', "[ChatPage] Error caching messages:", e));
                 myLog('CHAT', `[ChatPage - fetchMessagesFull] Loaded ${serverMsgs.length} messages successfully.`);
 
-                if (serverMsgs.length > 0) latestMsgTimeRef.current = serverMsgs[serverMsgs.length - 1].created_at;
+                if (serverMsgs.length > 0) {
+                    latestMsgTimeRef.current = serverMsgs[serverMsgs.length - 1].created_at;
+                    syncCoordinator.setLatestMsgTime(roomId, latestMsgTimeRef.current);
+                }
                 isFirstLoadRef.current = false;
             }
         } catch (e) {
@@ -133,22 +137,32 @@ export default function ChatPage({ user, addToast, onStartCall }) {
         fetchRooms();
         fetchPublicUsers();
 
-        const interval = setInterval(() => {
-            fetchRooms();
-        }, 3000);
-        return () => clearInterval(interval);
+        const unsubscribe = syncCoordinator.subscribe('rooms', (data) => {
+            setRooms(data);
+            setLoadingRooms(false);
+            cacheRooms(data).catch(() => {});
+        });
+
+        return unsubscribe;
     }, []);
 
     // Room switch: Load cached messages first, then full fetch
     useEffect(() => {
-        if (!activeRoomId) return;
+        if (!activeRoomId) {
+            syncCoordinator.setActiveRoomId(null);
+            return;
+        }
+
+        syncCoordinator.setActiveRoomId(activeRoomId);
         isFirstLoadRef.current = true;
         latestMsgTimeRef.current = null;
 
         getCachedMessages(activeRoomId).then(cached => {
             if (cached.length > 0) {
                 setMessages(cached);
-                latestMsgTimeRef.current = cached[cached.length - 1].created_at;
+                const lastTime = cached[cached.length - 1].created_at;
+                latestMsgTimeRef.current = lastTime;
+                syncCoordinator.setLatestMsgTime(activeRoomId, lastTime);
                 isFirstLoadRef.current = false;
             }
         }).catch((e) => { 
@@ -157,11 +171,29 @@ export default function ChatPage({ user, addToast, onStartCall }) {
 
         fetchMessagesFull(activeRoomId);
 
-        const interval = setInterval(() => {
-            fetchMessagesIncremental(activeRoomId);
-        }, 600);
+        const unsubscribe = syncCoordinator.subscribe('messages', (roomId, data) => {
+            if (roomId !== activeRoomId) return;
+            if (data && data.length > 0) {
+                hasShownMessagesOfflineRef.current = false;
+                setMessages(prev => {
+                    const existingIds = new Set(prev.map(m => m.id));
+                    const unique = data.filter(m => !existingIds.has(m.id));
+                    if (unique.length === 0) return prev;
+                    const merged = [...prev, ...unique];
+                    cacheMessages(roomId, merged).catch(e => myError('CHAT', "[ChatPage] Error caching new messages:", e));
+                    
+                    const lastTime = data[data.length - 1].created_at;
+                    latestMsgTimeRef.current = lastTime;
+                    syncCoordinator.setLatestMsgTime(roomId, lastTime);
+                    return merged;
+                });
+            }
+        });
 
-        return () => clearInterval(interval);
+        return () => {
+            unsubscribe();
+            syncCoordinator.setActiveRoomId(null);
+        };
     }, [activeRoomId]);
 
     const handleCreateRoom = async () => {

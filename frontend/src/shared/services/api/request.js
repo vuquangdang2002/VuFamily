@@ -19,13 +19,22 @@ export async function request(url, options = {}) {
     }
 
     const baseUrl = getApiBase();
-    const res = await fetch(`${baseUrl}${url}`, {
-        ...options,
-        headers,
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Lỗi server');
-    return data;
+    try {
+        const res = await fetch(`${baseUrl}${url}`, {
+            ...options,
+            headers,
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Lỗi server');
+        return data;
+    } catch (err) {
+        // Normalize network connection errors for local recovery fallback
+        const isNetworkErr = err.name === 'TypeError' || err.message.includes('fetch') || err.message.includes('Failed');
+        if (isNetworkErr) {
+            throw new Error('SERVER_UNAVAILABLE');
+        }
+        throw err;
+    }
 }
 
 export const mapToCamelCase = (m) => ({

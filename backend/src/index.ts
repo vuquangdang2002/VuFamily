@@ -10,6 +10,7 @@ import { eventRouter } from './modules/events';
 import { financeRouter } from './modules/finance';
 import { chatRouter, callRouter } from './modules/chat';
 import { requestRouter } from './modules/requests';
+import { handleWebSocketUpgrade } from './modules/ws';
 
 export type Env = {
   DB: D1Database;
@@ -46,5 +47,6 @@ app.route('/api/finance', financeRouter);
 app.route('/api/chats', chatRouter);
 app.route('/api/calls', callRouter);
 app.route('/api/requests', requestRouter);
+app.get('/api/ws', handleWebSocketUpgrade);
 
 export default app;

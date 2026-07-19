@@ -119,7 +119,9 @@ export function getEventsForDate(members, year, month, day, serverEvents = []) {
                     if (annSolar.getMonth() === month && annSolar.getDay() === day) {
                         events.push({ type: 'anniversary', member: m });
                     }
-                } catch (e) {}
+                } catch (e) {
+                    console.error('Error calculating anniversary solar date:', e);
+                }
             }
         }
     });
