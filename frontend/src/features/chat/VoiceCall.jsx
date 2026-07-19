@@ -16,12 +16,26 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
         addToastRef.current = addToast;
         onClearActiveCallRoomRef.current = onClearActiveCallRoom;
     }, [addToast, onClearActiveCallRoom]);
-
-    const handleEndCall = () => {
+    const handleEndCall = async () => {
         if (jitsiApiRef.current) {
             jitsiApiRef.current.dispose();
             jitsiApiRef.current = null;
         }
+        
+        // Notify backend that we ended the call
+        if (activeCallRoom?.callId) {
+            try {
+                const token = localStorage.getItem('vuFamilyToken');
+                await fetch('/api/calls/end', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
+                    body: JSON.stringify({ callId: activeCallRoom.callId })
+                });
+            } catch (e) {
+                console.error('[VoiceCall] Failed to end call on backend', e);
+            }
+        }
+
         addToastRef.current(t('call.ended') || 'Cuộc gọi kết thúc.', 'info');
         onClearActiveCallRoomRef.current();
     };
@@ -101,6 +115,18 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
                 handleEndCall();
             });
 
+            const hideLoading = () => setLoading(false);
+            api.addEventListener('cameraError', hideLoading);
+            api.addEventListener('micError', hideLoading);
+            api.addEventListener('errorOccurred', hideLoading);
+
+            // Force hide loading after 5 seconds in case browser blocks the event
+            const fallbackTimer = setTimeout(() => {
+                setLoading(false);
+            }, 5000);
+
+            jitsiApiRef.current._fallbackTimer = fallbackTimer;
+
         } catch (e) {
             console.error('[Jitsi] Init error:', e);
             addToastRef.current('Lỗi khởi tạo cuộc gọi.', 'error');
@@ -109,6 +135,9 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
 
         return () => {
             if (jitsiApiRef.current) {
+                if (jitsiApiRef.current._fallbackTimer) {
+                    clearTimeout(jitsiApiRef.current._fallbackTimer);
+                }
                 jitsiApiRef.current.dispose();
                 jitsiApiRef.current = null;
             }
@@ -148,9 +177,9 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
                 {/* ── Main Jitsi Stage ── */}
                 <div className="flex-1 relative bg-zinc-950 flex items-center justify-center overflow-hidden">
                     {loading && (
-                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-zinc-900 z-10">
-                            <div className="w-12 h-12 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-                            <p className="text-zinc-400 font-medium">Đang kết nối nền tảng...</p>
+                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-zinc-900/80 backdrop-blur-sm z-10 pointer-events-none transition-opacity duration-500">
+                            <div className="w-12 h-12 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mb-4 shadow-lg"></div>
+                            <p className="text-zinc-300 font-medium animate-pulse">Đang kết nối nền tảng, vui lòng cấp quyền Camera/Mic...</p>
                         </div>
                     )}
                     <div ref={jitsiContainerRef} className="w-full h-full" />
