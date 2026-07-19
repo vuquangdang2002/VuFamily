@@ -201,6 +201,27 @@ class SyncCoordinator {
     }
   }
 
+  getWsState() {
+    if (!this.ws) return 'CLOSED';
+    switch (this.ws.readyState) {
+      case WebSocket.CONNECTING: return 'CONNECTING';
+      case WebSocket.OPEN: return 'OPEN';
+      case WebSocket.CLOSING: return 'CLOSING';
+      case WebSocket.CLOSED: return 'CLOSED';
+      default: return 'UNKNOWN';
+    }
+  }
+
+  send(data) {
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify(data));
+      return true;
+    } else {
+      myError('SYNC', 'WebSocket not open, cannot send:', data);
+      return false;
+    }
+  }
+
   async fetchCalls() {
     this.inFlightFetches.add('calls');
     try {

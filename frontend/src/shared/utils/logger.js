@@ -12,16 +12,16 @@ export const LOG_FLAGS = {
     CALL: true,
     WEBRTC: false,
     CACHE: false,
-    HUB: true,
-    NEWSFEED: true,
-    REQUEST: true,
-    HISTORY: true,
-    CALENDAR: true,
-    ACCOUNTS: true,
-    APP: true,
-    FIREBASE: true,
-    CONFIG: true,
-    ANALYTICS: true
+    HUB: false,
+    NEWSFEED: false,
+    REQUEST: false,
+    HISTORY: false,
+    CALENDAR: false,
+    ACCOUNTS: false,
+    APP: false,
+    FIREBASE: false,
+    CONFIG: false,
+    ANALYTICS: false
 };
 
 export function myLog(flag, ...args) {

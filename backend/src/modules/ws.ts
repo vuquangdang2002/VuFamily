@@ -21,6 +21,20 @@ export function broadcast(data: any, excludeSocket?: WebSocket) {
   }
 }
 
+export function sendToUser(userId: number, data: any) {
+  const payload = JSON.stringify(data);
+  for (const client of activeSockets) {
+    if (client.userId === userId) {
+      try {
+        client.socket.send(payload);
+      } catch (e) {
+        console.error(`WS Send failed for user ${userId}, removing client:`, e);
+        activeSockets.delete(client);
+      }
+    }
+  }
+}
+
 export async function handleWebSocketUpgrade(c: Context) {
   const upgradeHeader = c.req.header('Upgrade');
   if (!upgradeHeader || upgradeHeader.toLowerCase() !== 'websocket') {
@@ -45,7 +59,7 @@ export async function handleWebSocketUpgrade(c: Context) {
         const token = data.token;
         if (token) {
           // Verify token against database or environment (simplified mock check for demo)
-          authSocket.userId = data.userId || 1;
+          authSocket.userId = Number(data.userId) || 1;
           authSocket.username = data.username || 'user';
           // Confirm connection
           server.send(JSON.stringify({ type: 'auth_success' }));
@@ -57,13 +71,22 @@ export async function handleWebSocketUpgrade(c: Context) {
         server.send(JSON.stringify({ type: 'pong' }));
       }
 
-      // Chat Message Forwarding (fallback if client broadcasts directly via WebSocket)
+      // Chat Message Forwarding
       if (data.type === 'chat_message') {
         broadcast({
           type: 'chat_message',
           roomId: data.roomId,
           message: data.message
         }, server);
+      }
+
+      // WebRTC Signaling Forwarding (Targeted)
+      if (['webrtc_offer', 'webrtc_answer', 'webrtc_ice_candidate'].includes(data.type)) {
+        if (data.targetUserId) {
+          // Attach senderId so the receiver knows who sent the signal
+          data.senderId = authSocket.userId;
+          sendToUser(Number(data.targetUserId), data);
+        }
       }
     } catch (e) {
       console.error('WS message processing error:', e);
