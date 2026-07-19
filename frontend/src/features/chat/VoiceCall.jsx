@@ -8,7 +8,24 @@ import {
     LiveKitRoom,
     VideoConference,
     RoomAudioRenderer,
+    useRemoteParticipants
 } from '@livekit/components-react';
+
+function CallAutoEnder({ onEndCall }) {
+    const remoteParticipants = useRemoteParticipants();
+    const [hasConnected, setHasConnected] = useState(false);
+
+    useEffect(() => {
+        if (remoteParticipants.length > 0) {
+            setHasConnected(true);
+        } else if (hasConnected && remoteParticipants.length === 0) {
+            console.log('[LiveKit] All remote participants left. Auto-ending call.');
+            onEndCall();
+        }
+    }, [remoteParticipants.length, hasConnected, onEndCall]);
+
+    return null;
+}
 
 export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom, addToast }) {
     const { t } = useTranslation();
@@ -60,9 +77,11 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
                 });
                 
                 const json = await res.json();
+                console.log('[DEBUG VoiceCall] fetchLiveKitToken API Response:', json);
                 
                 if (json.success && json.data) {
                     if (isMounted) {
+                        console.log('[DEBUG VoiceCall] Setting token and serverUrl:', json.data.token ? 'YES' : 'NO', json.data.url);
                         setToken(json.data.token);
                         setServerUrl(json.data.url);
                     }
@@ -142,8 +161,13 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
                         serverUrl={serverUrl}
                         connect={true}
                         onDisconnected={handleEndCall}
+                        onError={(error) => {
+                            console.error('[LiveKit] Room error:', error);
+                            addToastRef.current(error.message || 'Lỗi thiết bị (Camera/Micro) hoặc kết nối LiveKit.', 'error');
+                        }}
                         style={{ height: '100%', display: 'flex', flexDirection: 'column' }}
                     >
+                        <CallAutoEnder onEndCall={handleEndCall} />
                         <VideoConference />
                         <RoomAudioRenderer />
                     </LiveKitRoom>
