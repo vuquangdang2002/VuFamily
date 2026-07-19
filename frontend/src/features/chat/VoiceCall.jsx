@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useTranslation } from '../../shared/hooks/useTranslation';
 import { PhoneOff } from 'lucide-react';
-import { myError } from '../../shared/services/logger';
+import { myError } from '../../shared/utils/logger';
 import '@livekit/components-styles';
 import {
     LiveKitRoom,
