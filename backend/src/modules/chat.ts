@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { getDb } from '../db/client';
-import { chatRooms, chatMembers, chatMessages, users } from '../db/schema';
+import { chatRooms, chatMembers, chatMessages, users, calls } from '../db/schema';
 import { eq, and, desc, inArray, sql } from 'drizzle-orm';
 import { Env } from '../index';
 import { authenticate } from '../middleware/auth';
@@ -273,29 +273,30 @@ interface CallSession {
   targetUserIds: number[];
   status: 'ringing' | 'accepted' | 'rejected' | 'ended';
   startedAt: number;
+  connectedAt?: number;
   signals: { caller: any[]; receiver: any[] };
 }
 
-const activeCallsMap = new Map<string, CallSession>();
-
 export const callRouter = new Hono<{ Bindings: Env }>();
 
-const cleanupCalls = () => {
-  const now = Date.now();
-  for (const [id, session] of activeCallsMap.entries()) {
-    if (now - session.startedAt > 60000 || session.status === 'ended') {
-      activeCallsMap.delete(id);
-    }
-  }
+const dbCleanupCalls = async (db: any) => {
+  const cutoff = new Date(Date.now() - 60000).toISOString();
+  await db.update(calls)
+    .set({ status: 'ended', endedAt: new Date().toISOString() })
+    .where(and(
+      inArray(calls.status, ['calling', 'ongoing']),
+      sql`${calls.startedAt} < ${cutoff}`
+    ));
 };
 
 // POST /api/calls/start
 callRouter.post('/start', authenticate, async (c) => {
   try {
-    cleanupCalls();
     const currentUser = c.get('user');
     const { roomId, requestVideo } = await c.req.json();
     const db = getDb(c.env.DB);
+
+    await dbCleanupCalls(db);
 
     const members = await db.select({ userId: chatMembers.userId })
       .from(chatMembers)
@@ -317,7 +318,14 @@ callRouter.post('/start', authenticate, async (c) => {
       signals: { caller: [], receiver: [] }
     };
 
-    activeCallsMap.set(callId, session);
+    await db.insert(calls).values({
+      roomId,
+      callerId: currentUser.id,
+      status: 'calling',
+      offer: JSON.stringify(session),
+      startedAt: new Date().toISOString()
+    });
+
     broadcast({ type: 'calls_updated', session });
 
     return successResponse(c, session);
@@ -329,17 +337,28 @@ callRouter.post('/start', authenticate, async (c) => {
 // GET /api/calls/active
 callRouter.get('/active', authenticate, async (c) => {
   try {
-    cleanupCalls();
     const currentUser = c.get('user');
-    const now = Date.now();
+    const db = getDb(c.env.DB);
+    
+    await dbCleanupCalls(db);
 
-    for (const session of activeCallsMap.values()) {
-      if (session.status === 'ended') continue;
-      const isCaller = session.callerId === currentUser.id;
-      const isTarget = session.targetUserIds.includes(currentUser.id);
+    const activeDbCalls = await db.select()
+      .from(calls)
+      .where(inArray(calls.status, ['calling', 'ongoing']));
 
-      if ((isCaller || isTarget) && (now - session.startedAt < 60000)) {
-        return successResponse(c, session);
+    for (const row of activeDbCalls) {
+      if (!row.offer) continue;
+      try {
+        const session = JSON.parse(row.offer);
+        const isCaller = session.callerId === currentUser.id;
+        const isTarget = session.targetUserIds.includes(currentUser.id);
+
+        if (isCaller || isTarget) {
+          session.status = row.status;
+          return successResponse(c, session);
+        }
+      } catch (e) {
+        console.error('[WebRTC] Active call parse error:', e);
       }
     }
 
@@ -352,19 +371,78 @@ callRouter.get('/active', authenticate, async (c) => {
 // POST /api/calls/respond
 callRouter.post('/respond', authenticate, async (c) => {
   try {
-    cleanupCalls();
     const currentUser = c.get('user');
     const { callId, action } = await c.req.json();
+    const db = getDb(c.env.DB);
 
-    const session = activeCallsMap.get(callId);
-    if (!session) {
+    const activeDbCalls = await db.select()
+      .from(calls)
+      .where(inArray(calls.status, ['calling', 'ongoing']));
+
+    let foundCall = null;
+    let session: CallSession | null = null;
+
+    for (const row of activeDbCalls) {
+      if (!row.offer) continue;
+      try {
+        const parsed = JSON.parse(row.offer);
+        if (parsed.callId === callId) {
+          foundCall = row;
+          session = parsed;
+          break;
+        }
+      } catch (e) {
+        console.error('[WebRTC] Respond call parse error:', e);
+      }
+    }
+
+    if (!foundCall || !session) {
       return errorResponse(c, 'Cuộc gọi đã kết thúc hoặc không tồn tại.', 404);
     }
 
     if (action === 'accept') {
       session.status = 'accepted';
+      session.connectedAt = Date.now();
+      
+      await db.update(calls)
+        .set({ 
+          status: 'ongoing',
+          offer: JSON.stringify(session)
+        })
+        .where(eq(calls.id, foundCall.id));
+        
     } else if (action === 'reject') {
       session.status = 'rejected';
+      
+      await db.update(calls)
+        .set({ 
+          status: 'rejected',
+          endedAt: new Date().toISOString(),
+          offer: JSON.stringify(session)
+        })
+        .where(eq(calls.id, foundCall.id));
+
+      const content = session.requestVideo ? '=== Cuộc gọi video nhỡ ===' : '=== Cuộc gọi thoại nhỡ ===';
+      const encrypted = tryEncrypt(content, c.env);
+      await db.insert(chatMessages).values({
+        roomId: session.roomId,
+        senderId: session.callerId,
+        content: encrypted
+      });
+      await db.update(chatRooms).set({ updatedAt: new Date().toISOString() }).where(eq(chatRooms.id, session.roomId));
+
+      broadcast({
+        type: 'chat_message',
+        roomId: session.roomId,
+        message: {
+          id: Math.random(),
+          room_id: session.roomId,
+          sender_id: session.callerId,
+          content: content,
+          created_at: new Date().toISOString(),
+          users: { display_name: session.callerName, username: '', avatar: session.callerAvatar }
+        }
+      });
     }
 
     broadcast({ type: 'calls_updated', session });
@@ -379,14 +457,77 @@ callRouter.post('/respond', authenticate, async (c) => {
 callRouter.post('/end', authenticate, async (c) => {
   try {
     const { callId } = await c.req.json();
-    if (callId && activeCallsMap.has(callId)) {
-      const session = activeCallsMap.get(callId);
-      if (session) {
-        session.status = 'ended';
-        broadcast({ type: 'calls_updated', session });
+    const db = getDb(c.env.DB);
+
+    const activeDbCalls = await db.select()
+      .from(calls)
+      .where(inArray(calls.status, ['calling', 'ongoing']));
+
+    let foundCall = null;
+    let session: CallSession | null = null;
+
+    for (const row of activeDbCalls) {
+      if (!row.offer) continue;
+      try {
+        const parsed = JSON.parse(row.offer);
+        if (parsed.callId === callId) {
+          foundCall = row;
+          session = parsed;
+          break;
+        }
+      } catch (e) {
+        console.error('[WebRTC] End call parse error:', e);
       }
-      activeCallsMap.delete(callId);
     }
+
+    if (foundCall && session) {
+      session.status = 'ended';
+      
+      await db.update(calls)
+        .set({ 
+          status: 'ended',
+          endedAt: new Date().toISOString(),
+          offer: JSON.stringify(session)
+        })
+        .where(eq(calls.id, foundCall.id));
+
+      let content = '';
+      if (session.connectedAt) {
+        const durationSec = Math.round((Date.now() - session.connectedAt) / 1000);
+        const mins = Math.floor(durationSec / 60).toString().padStart(2, '0');
+        const secs = (durationSec % 60).toString().padStart(2, '0');
+        const durationStr = `${mins}:${secs}`;
+        content = session.requestVideo 
+          ? `=== Cuộc gọi video kết thúc (Thời lượng: ${durationStr}) ===` 
+          : `=== Cuộc gọi thoại kết thúc (Thời lượng: ${durationStr}) ===`;
+      } else {
+        content = session.requestVideo ? '=== Cuộc gọi video nhỡ ===' : '=== Cuộc gọi thoại nhỡ ===';
+      }
+
+      const encrypted = tryEncrypt(content, c.env);
+      await db.insert(chatMessages).values({
+        roomId: session.roomId,
+        senderId: session.callerId,
+        content: encrypted
+      });
+      await db.update(chatRooms).set({ updatedAt: new Date().toISOString() }).where(eq(chatRooms.id, session.roomId));
+
+      broadcast({
+        type: 'chat_message',
+        roomId: session.roomId,
+        message: {
+          id: Math.random(),
+          room_id: session.roomId,
+          sender_id: session.callerId,
+          content: content,
+          created_at: new Date().toISOString(),
+          users: { display_name: session.callerName, username: '', avatar: session.callerAvatar }
+        }
+      });
+
+      broadcast({ type: 'calls_updated', session });
+    }
+
     return successResponse(c, null, 'Cuộc gọi đã kết thúc');
   } catch (err: any) {
     return errorResponse(c, err.message, 500);

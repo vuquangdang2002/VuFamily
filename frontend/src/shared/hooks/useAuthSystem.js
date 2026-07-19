@@ -162,10 +162,12 @@ export default function useAuthSystem() {
                     setLoadingStatus(I18nHelper.t('splash.loading_profile'));
                     const freshUser = { ...stored, ...data.data };
                     localStorage.setItem(AUTH_KEY, JSON.stringify(freshUser));
+                    if (freshUser.token) localStorage.setItem('vuFamilyToken', freshUser.token);
                     setUser(freshUser);
                 } else if (res.status === 401 || res.status === 403 || !data.success) {
                     // Only clear cache if token is explicitly rejected (expired or invalid)
                     localStorage.removeItem(AUTH_KEY);
+                    localStorage.removeItem('vuFamilyToken');
                     setUser(null);
                 } else {
                     // Retain session on other 500s
@@ -221,6 +223,7 @@ export default function useAuthSystem() {
             if (data.success) {
                 const authData = { ...data.data, source: 'api' };
                 localStorage.setItem(AUTH_KEY, JSON.stringify(authData));
+                if (authData.token) localStorage.setItem('vuFamilyToken', authData.token);
                 setUser(authData);
                 TrackingHelper.trackLoginSuccess('token');
                 if (isAutoReset) {
@@ -244,6 +247,7 @@ export default function useAuthSystem() {
                 if (u) {
                     const authData = { username: u.username, displayName: u.displayName, role: u.role, source: 'local' };
                     localStorage.setItem(AUTH_KEY, JSON.stringify(authData));
+                    localStorage.removeItem('vuFamilyToken');
                     setUser(authData);
                     TrackingHelper.trackLoginSuccess('local');
                     addToast(I18nHelper.t('app.login_welcome_offline').replace('{name}', u.displayName));
@@ -264,9 +268,12 @@ export default function useAuthSystem() {
                     method: 'POST', 
                     headers: { 'x-auth-token': user.token } 
                 }); 
-            } catch {}
+            } catch (err) {
+                console.error('Logout request failed:', err);
+            }
         }
         localStorage.removeItem(AUTH_KEY);
+        localStorage.removeItem('vuFamilyToken');
         socketClient.disconnect();
         clearChatCache().catch((e) => { myError('APP', "Logout Chat Cache Clear Error:", e); });
         offlineCache.clearAll().catch((e) => { myError('OFFLINE', "Logout Offline Cache Clear Error:", e); });

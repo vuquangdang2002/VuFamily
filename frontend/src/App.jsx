@@ -657,7 +657,9 @@ export default function App() {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json', 'x-auth-token': localStorage.getItem('vuFamilyToken') },
                             body: JSON.stringify({ callId: activeCallRoom.callId })
-                        }).catch(() => {});
+                        }).catch((err) => {
+                            console.error('Failed to end call session on server:', err);
+                        });
                     }
                     setActiveCallRoom(null);
                 }} 

@@ -27,3 +27,7 @@ Dự án "Vũ Gia" không chỉ là website gia phả thông thường mà đị
 ## 3. Quy trình bảo trì
 - Không bao giờ xoá code hiện tại mà không test kĩ.
 - Khi làm mới 1 component to, hãy tạo file test/backup hoặc làm theo Checklist chia nhỏ.
+
+## 4. Xử lý lỗi và Ghi nhật ký (Error Handling & Logging)
+- **Tuyệt đối KHÔNG nuốt lỗi (No swallowed errors)**: Tất cả các khối lệnh `try...catch` hoặc `.catch()` của Promise/Fetch **bắt buộc** phải ghi log báo lỗi ra console (sử dụng `console.error`, `console.warn` hoặc hàm `myError` của dự án) thay vì bỏ trống hoặc chỉ có block catch rỗng.
+- **Chi tiết lỗi**: Nhật ký lỗi phải in ra đối tượng lỗi đầy đủ (`e` hoặc `error`) và chỉ rõ ngữ cảnh lỗi xảy ra.

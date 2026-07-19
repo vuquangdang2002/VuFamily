@@ -12,6 +12,24 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
     const [micMuted, setMicMuted] = useState(false);
     const [camOff, setCamOff] = useState(false);
     const [callConnected, setCallConnected] = useState(false);
+    const [duration, setDuration] = useState(0);
+
+    useEffect(() => {
+        if (!callConnected) {
+            setDuration(0);
+            return;
+        }
+        const interval = setInterval(() => {
+            setDuration(prev => prev + 1);
+        }, 1000);
+        return () => clearInterval(interval);
+    }, [callConnected]);
+
+    const formatDuration = (sec) => {
+        const mins = Math.floor(sec / 60).toString().padStart(2, '0');
+        const secs = (sec % 60).toString().padStart(2, '0');
+        return `${mins}:${secs}`;
+    };
 
     // Keep functions in refs to avoid useEffect dependency triggers on every render
     const addToastRef = useRef(addToast);
@@ -42,6 +60,7 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
                 } catch (err) {
                     console.warn('[WebRTC] Camera access failed, falling back to Audio only:', err);
                     localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+                    setCamOff(true);
                 }
 
                 localStreamRef.current = localStream;
@@ -138,6 +157,12 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
                 const isEnabled = videoTrack.enabled;
                 setCamOff(!isEnabled);
                 addToast(isEnabled ? t('call.cam_enabled') : t('call.cam_disabled'), 'info');
+            } else {
+                setCamOff(prev => {
+                    const nextVal = !prev;
+                    addToast(nextVal ? t('call.cam_disabled') : t('call.cam_enabled'), 'info');
+                    return nextVal;
+                });
             }
         }
     };
@@ -156,7 +181,7 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
                             </h3>
                             <p className="m-0 text-xs text-zinc-400 font-medium flex items-center gap-2">
                                 <span className={`w-2 h-2 rounded-full ${callConnected ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`} />
-                                {callConnected ? (t('call.connected') || 'Đã kết nối (P2P Native < 15ms)') : (t('call.dialing') || 'Đang gọi...')}
+                                {callConnected ? `${t('call.connected') || 'Đã kết nối'} (${formatDuration(duration)})` : (t('call.dialing') || 'Đang gọi...')}
                             </p>
                         </div>
                     </div>
