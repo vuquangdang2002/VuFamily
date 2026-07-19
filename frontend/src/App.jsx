@@ -197,10 +197,6 @@ export default function App() {
 
     const handleStartCall = async (room) => {
         myLog('CALL', `[handleStartCall] 📞 Initiating call for room: id=${room.id}, name=${room.display_name}, video=${room.requestVideo}`);
-        
-        // 1. Check permissions BEFORE creating the call
-        const hasPermission = await checkMediaPermissions(room.requestVideo);
-        if (!hasPermission) return;
 
         try {
             const token = localStorage.getItem('vuFamilyToken');
@@ -226,14 +222,6 @@ export default function App() {
 
     const handleAcceptCall = async () => {
         if (!incomingCall) return;
-
-        // 1. Check permissions BEFORE accepting
-        const hasPermission = await checkMediaPermissions(incomingCall.requestVideo);
-        if (!hasPermission) {
-            // User denied permission -> auto reject the call instead
-            handleRejectCall();
-            return;
-        }
 
         try {
             const token = localStorage.getItem('vuFamilyToken');
