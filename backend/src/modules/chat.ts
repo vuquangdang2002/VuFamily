@@ -354,7 +354,9 @@ callRouter.get('/active', authenticate, async (c) => {
         const isTarget = session.targetUserIds.includes(currentUser.id);
 
         if (isCaller || isTarget) {
-          session.status = row.status;
+          // Map DB 'calling' to 'ringing' for the target user, so frontend
+          // can detect incoming calls correctly.
+          session.status = (isTarget && row.status === 'calling') ? 'ringing' : row.status;
           return successResponse(c, session);
         }
       } catch (e) {

@@ -192,6 +192,7 @@ export default function App() {
                 body: JSON.stringify({ callId: incomingCall.callId, action: 'reject' })
             });
         } catch (e) {
+            myError('CALL', 'Error rejecting call:', e);
         } finally {
             setIncomingCall(null);
         }
