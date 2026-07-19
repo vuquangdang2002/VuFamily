@@ -176,12 +176,6 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
 
                 {/* ── Main Jitsi Stage ── */}
                 <div className="flex-1 relative bg-zinc-950 flex items-center justify-center overflow-hidden">
-                    {loading && (
-                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-zinc-900/80 backdrop-blur-sm z-10 pointer-events-none transition-opacity duration-500">
-                            <div className="w-12 h-12 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mb-4 shadow-lg"></div>
-                            <p className="text-zinc-300 font-medium animate-pulse">Đang kết nối nền tảng, vui lòng cấp quyền Camera/Mic...</p>
-                        </div>
-                    )}
                     <div ref={jitsiContainerRef} className="w-full h-full" />
                 </div>
             </div>

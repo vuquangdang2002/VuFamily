@@ -317,7 +317,7 @@ const dbCleanupCalls = async (db: any) => {
 callRouter.post('/start', authenticate, async (c) => {
   try {
     const currentUser = c.get('user');
-    const { roomId, requestVideo } = await c.req.json();
+    const { roomId, requestVideo, selectedUserIds } = await c.req.json();
     const db = getDb(c.env.DB);
 
     await dbCleanupCalls(db);
@@ -326,7 +326,12 @@ callRouter.post('/start', authenticate, async (c) => {
       .from(chatMembers)
       .where(eq(chatMembers.roomId, roomId));
 
-    const targetUserIds = members.map(m => m.userId).filter(id => id !== currentUser.id);
+    let targetUserIds = members.map(m => m.userId).filter(id => id !== currentUser.id);
+    
+    // If frontend sent specific users to call (e.g. Group Call selection), filter them
+    if (selectedUserIds && Array.isArray(selectedUserIds) && selectedUserIds.length > 0) {
+      targetUserIds = targetUserIds.filter(id => selectedUserIds.includes(id));
+    }
 
     const callId = `call_${roomId}_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
     const session: CallSession = {

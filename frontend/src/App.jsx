@@ -203,7 +203,11 @@ export default function App() {
             const res = await fetch('/api/calls/start', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
-                body: JSON.stringify({ roomId: room.id, requestVideo: room.requestVideo })
+                body: JSON.stringify({ 
+                    roomId: room.id, 
+                    requestVideo: room.requestVideo,
+                    selectedUserIds: room.selectedUserIds 
+                })
             });
             const json = await res.json();
             myLog('CALL', `[handleStartCall] API response: success=${json.success}, data=`, JSON.stringify(json.data));
