@@ -147,7 +147,29 @@ export default function App() {
     const [showMobileSheet, setShowMobileSheet] = useState(false);
 
     // Call Signaling Methods
+    const checkMediaPermissions = async (requestVideo) => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({
+                audio: true,
+                video: requestVideo ? true : false
+            });
+            // Stop tracks immediately since VoiceCall will request them again
+            stream.getTracks().forEach(track => track.stop());
+            return true;
+        } catch (err) {
+            myError('CALL', '[MediaCheck] Permission denied or not found:', err);
+            addToast('Không thể thực hiện cuộc gọi: Vui lòng cấp quyền truy cập Micro/Camera trong cài đặt trình duyệt.', 'error');
+            return false;
+        }
+    };
+
     const handleStartCall = async (room) => {
+        myLog('CALL', `[handleStartCall] 📞 Initiating call for room: id=${room.id}, name=${room.display_name}, video=${room.requestVideo}`);
+        
+        // 1. Check permissions BEFORE creating the call
+        const hasPermission = await checkMediaPermissions(room.requestVideo);
+        if (!hasPermission) return;
+
         try {
             const token = localStorage.getItem('vuFamilyToken');
             const res = await fetch('/api/calls/start', {
@@ -156,18 +178,31 @@ export default function App() {
                 body: JSON.stringify({ roomId: room.id, requestVideo: room.requestVideo })
             });
             const json = await res.json();
+            myLog('CALL', `[handleStartCall] API response: success=${json.success}, data=`, JSON.stringify(json.data));
             if (json.success) {
+                myLog('CALL', `[handleStartCall] ✅ Call created successfully! callId=${json.data?.callId}, targetUserIds=${JSON.stringify(json.data?.targetUserIds)}`);
                 setActiveCallRoom(json.data);
             } else {
+                myError('CALL', `[handleStartCall] ❌ API returned error:`, json.error);
                 setActiveCallRoom({ id: room.id, display_name: room.display_name, requestVideo: room.requestVideo });
             }
         } catch (e) {
+            myError('CALL', '[handleStartCall] ❌ Network error:', e);
             setActiveCallRoom({ id: room.id, display_name: room.display_name, requestVideo: room.requestVideo });
         }
     };
 
     const handleAcceptCall = async () => {
         if (!incomingCall) return;
+
+        // 1. Check permissions BEFORE accepting
+        const hasPermission = await checkMediaPermissions(incomingCall.requestVideo);
+        if (!hasPermission) {
+            // User denied permission -> auto reject the call instead
+            handleRejectCall();
+            return;
+        }
+
         try {
             const token = localStorage.getItem('vuFamilyToken');
             await fetch('/api/calls/respond', {
@@ -197,7 +232,38 @@ export default function App() {
         } finally {
             setIncomingCall(null);
         }
-    };    // Real-time Global Call Listener (Messenger-style multi-channel detection)
+    };
+    
+    // Proactive Permission Requests on Initial Load
+    useEffect(() => {
+        if (!user) return;
+        
+        const requestInitialPermissions = async () => {
+            // Only ask once per session to avoid annoying the user if they keep refreshing
+            if (sessionStorage.getItem('initialPermissionsRequested')) return;
+            sessionStorage.setItem('initialPermissionsRequested', 'true');
+
+            try {
+                // Request Notification Permission
+                if ('Notification' in window && Notification.permission === 'default') {
+                    await Notification.requestPermission();
+                }
+
+                // Request Microphone & Camera Permission proactively
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+                stream.getTracks().forEach(track => track.stop()); // Immediately stop to turn off camera light
+                myLog('APP', 'Initial media permissions granted proactively.');
+            } catch (e) {
+                myLog('APP', 'Initial proactive media permission request failed or denied:', e);
+            }
+        };
+
+        // Delay slightly to ensure UI is loaded and ready
+        const timer = setTimeout(requestInitialPermissions, 1500);
+        return () => clearTimeout(timer);
+    }, [user]);
+
+    // Real-time Global Call Listener (Messenger-style multi-channel detection)
     useEffect(() => {
         if (!user) return;
         const unsubscribe = syncCoordinator.subscribe('calls', (session) => {

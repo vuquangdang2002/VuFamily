@@ -378,6 +378,36 @@ callRouter.get('/active', authenticate, async (c) => {
   }
 });
 
+// DEBUG: GET /api/calls/debug — Temporary endpoint to inspect all calls in DB
+callRouter.get('/debug', authenticate, async (c) => {
+  try {
+    const currentUser = c.get('user');
+    const db = getDb(c.env.DB);
+    
+    const allCalls = await db.select().from(calls);
+    const result = allCalls.map(row => {
+      let parsed = null;
+      try { parsed = JSON.parse(row.offer || '{}'); } catch(e) {}
+      return {
+        id: row.id,
+        roomId: row.roomId,
+        callerId: row.callerId,
+        status: row.status,
+        startedAt: row.startedAt,
+        endedAt: row.endedAt,
+        sessionCallerId: parsed?.callerId,
+        sessionTargetUserIds: parsed?.targetUserIds,
+        sessionStatus: parsed?.status,
+        currentUserId: currentUser.id,
+        currentUserIdType: typeof currentUser.id,
+      };
+    });
+    return successResponse(c, { totalCalls: allCalls.length, calls: result });
+  } catch (err: any) {
+    return errorResponse(c, err.message, 500);
+  }
+});
+
 // POST /api/calls/respond
 callRouter.post('/respond', authenticate, async (c) => {
   try {

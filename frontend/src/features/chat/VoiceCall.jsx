@@ -59,13 +59,21 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
                     });
                 } catch (err) {
                     console.warn('[WebRTC] Camera access failed, falling back to Audio only:', err);
-                    localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-                    setCamOff(true);
+                    try {
+                        localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+                        setCamOff(true);
+                    } catch (err2) {
+                        console.error('[WebRTC] All media access failed (no mic/cam):', err2);
+                        addToastRef.current(t('call.no_media') || 'Không tìm thấy Micro/Camera. Vẫn đang kết nối...', 'warning');
+                        setCamOff(true);
+                    }
                 }
 
-                localStreamRef.current = localStream;
-                if (localVideoRef.current && isVideo) {
-                    localVideoRef.current.srcObject = localStream;
+                if (localStream) {
+                    localStreamRef.current = localStream;
+                    if (localVideoRef.current && isVideo) {
+                        localVideoRef.current.srcObject = localStream;
+                    }
                 }
 
                 // Create RTCPeerConnection with Google Public STUN
@@ -78,9 +86,11 @@ export default function VoiceCall({ user, activeCallRoom, onClearActiveCallRoom,
                 peerConnectionRef.current = pc;
 
                 // Add Local Tracks to PeerConnection
-                localStream.getTracks().forEach(track => {
-                    pc.addTrack(track, localStream);
-                });
+                if (localStream) {
+                    localStream.getTracks().forEach(track => {
+                        pc.addTrack(track, localStream);
+                    });
+                }
 
                 // Handle Incoming Remote Stream
                 pc.ontrack = (event) => {
