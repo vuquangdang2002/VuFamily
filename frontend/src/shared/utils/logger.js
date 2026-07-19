@@ -8,8 +8,8 @@ export const ENABLE_MYLOG = true;
 
 // Specific module toggles
 export const LOG_FLAGS = {
-    CHAT: true,
-    CALL: true,
+    CHAT: false,
+    CALL: false,
     WEBRTC: false,
     CACHE: false,
     HUB: false,

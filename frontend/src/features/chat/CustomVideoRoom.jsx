@@ -32,9 +32,7 @@ function LayoutManager({ layout }) {
     return (
         <div className="flex-1 min-h-0 relative p-2 md:p-4">
             {layout === 'grid' && (
-                <GridLayout tracks={tracks}>
-                    <ParticipantTile />
-                </GridLayout>
+                <GridLayout tracks={tracks} />
             )}
             {layout === 'sidebar' && (
                 <div className="flex flex-col md:flex-row h-full w-full gap-4">
@@ -46,9 +44,7 @@ function LayoutManager({ layout }) {
                         )}
                     </div>
                     <div className="w-full md:w-1/4 h-[120px] md:h-full md:min-w-[200px] md:max-w-[300px]">
-                        <CarouselLayout tracks={tracks}>
-                            <ParticipantTile />
-                        </CarouselLayout>
+                        <CarouselLayout tracks={tracks} />
                     </div>
                 </div>
             )}
